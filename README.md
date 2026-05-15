@@ -17,16 +17,27 @@ curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | 
 syn --version
 ```
 
-### 2. Создай проект и запусти AI
+### 2. Создай проект — Synapse сам настроит OpenCode
 
 ```bash
 mkdir my-pet-project
 cd my-pet-project
 syn init
+```
+
+`syn init` создаёт проект и автоматически прописывает MCP конфиг в `.opencode/mcp.json`.
+OpenCode сам запустит `syn mcp` при старте — ничего дополнительно настраивать не нужно.
+
+### 3. Запусти AI и начни разработку
+
+```bash
 opencode
 ```
 
-### 3. Начни разработку — просто говори AI что хочешь
+Внутри OpenCode AI-агент уже видит все инструменты Synapse:
+`semantic_search`, `view_signatures`, `graphrag_query`.
+
+### 4. Просто говори AI что хочешь — просто говори AI что хочешь
 
 Внутри OpenCode:
 

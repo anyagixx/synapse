@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "synapse": {
+      "command": "syn",
+      "args": ["mcp"],
+      "env": {},
+      "description": "Synapse — code intelligence, search, GraphRAG, proxy, compression"
+    }
+  }
+}

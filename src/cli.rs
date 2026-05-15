@@ -207,6 +207,25 @@ impl InitCmd {
         std::fs::write(&config_path, &config_toml)?;
         println!("Created configuration at {}", config_path.display());
 
+        // Create .opencode directory with MCP config
+        let opencode_dir = root.join(".opencode");
+        std::fs::create_dir_all(&opencode_dir)?;
+        let mcp_config = serde_json::json!({
+            "mcpServers": {
+                "synapse": {
+                    "command": "syn",
+                    "args": ["mcp"],
+                    "env": {},
+                    "description": "Synapse — code search, GraphRAG, proxy, compression"
+                }
+            }
+        });
+        let mcp_path = opencode_dir.join("mcp.json");
+        if !mcp_path.exists() {
+            std::fs::write(&mcp_path, serde_json::to_string_pretty(&mcp_config)?)?;
+            println!("Created MCP config for OpenCode at {}", mcp_path.display());
+        }
+
         // Create docs directory
         std::fs::create_dir_all(root.join("docs"))?;
 
@@ -240,7 +259,8 @@ impl InitCmd {
 
         println!();
         println!("Project ready at {}", root.display());
-        println!("Next: opencode  (start AI agent and describe what you want)");
+        println!("Synapse MCP server configured for OpenCode.");
+        println!("Next: opencode  (Synapse tools will be available automatically)");
         Ok(())
     }
 }
