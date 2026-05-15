@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "syn", version, about = "Synapse — Unified AI Agent Engineering Platform")]
@@ -207,23 +208,50 @@ impl InitCmd {
         std::fs::write(&config_path, &config_toml)?;
         println!("Created configuration at {}", config_path.display());
 
-        // Create .opencode directory with MCP config
-        let opencode_dir = root.join(".opencode");
-        std::fs::create_dir_all(&opencode_dir)?;
+        // Install Synapse MCP server to OpenCode user config
+        let opencode_config_dir = dirs::config_dir()
+            .unwrap_or_else(|| PathBuf::from("~/.config"))
+            .join("opencode");
+        std::fs::create_dir_all(&opencode_config_dir)?;
+
         let mcp_config = serde_json::json!({
+            "$schema": "https://opencode.ai/config.json",
             "mcpServers": {
                 "synapse": {
                     "command": "syn",
                     "args": ["mcp"],
-                    "env": {},
                     "description": "Synapse — code search, GraphRAG, proxy, compression"
                 }
             }
         });
-        let mcp_path = opencode_dir.join("mcp.json");
-        if !mcp_path.exists() {
-            std::fs::write(&mcp_path, serde_json::to_string_pretty(&mcp_config)?)?;
-            println!("Created MCP config for OpenCode at {}", mcp_path.display());
+
+        let opencode_config_path = opencode_config_dir.join("opencode.jsonc");
+        let existing = std::fs::read_to_string(&opencode_config_path).ok()
+            .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok());
+
+        match existing {
+            Some(mut existing_config) => {
+                if let Some(obj) = existing_config.as_object_mut() {
+                    if !obj.contains_key("mcpServers") || !obj["mcpServers"].as_object()
+                        .map(|s| s.contains_key("synapse"))
+                        .unwrap_or(false)
+                    {
+                        obj.insert("mcpServers".into(), serde_json::json!({
+                            "synapse": {
+                                "command": "syn",
+                                "args": ["mcp"],
+                                "description": "Synapse — code search, GraphRAG, proxy, compression"
+                            }
+                        }));
+                        std::fs::write(&opencode_config_path, serde_json::to_string_pretty(&existing_config)?)?;
+                        println!("Added Synapse MCP server to OpenCode config at {}", opencode_config_path.display());
+                    }
+                }
+            }
+            None => {
+                std::fs::write(&opencode_config_path, serde_json::to_string_pretty(&mcp_config)?)?;
+                println!("Created OpenCode config with Synapse MCP at {}", opencode_config_path.display());
+            }
         }
 
         // Create docs directory

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcpServers": {
+    "synapse": {
+      "command": "syn",
+      "args": ["mcp"],
+      "description": "Synapse — code search, GraphRAG, proxy, compression"
+    }
+  }
+}
