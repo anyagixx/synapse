@@ -13,7 +13,7 @@ Synapse + OpenCode превращают твою идею в готовое пр
 ### 1. Установи
 
 ```bash
-curl -fsSL https://github.com/anyagixx/synapse/releases/latest/download/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
 syn --version
 ```
 
@@ -79,7 +79,7 @@ Synapse объединяет четыре мощных инструмента в
 ### Установка
 
 ```bash
-curl -fsSL https://github.com/anyagixx/synapse/releases/latest/download/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
 
 # Или через Cargo:
 cargo install --git https://github.com/anyagixx/synapse
