@@ -12,4 +12,4 @@ pub mod utils;
 pub mod grace;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const NAME: &str = "synapse";
+pub const NAME: &str = "syn";

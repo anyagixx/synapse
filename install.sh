@@ -43,7 +43,13 @@ else
     echo ""
     echo "Building from source instead..."
     if command -v cargo &> /dev/null; then
-        cargo install --git "https://github.com/${REPO}" --tag "$VERSION"
+        echo "Installing package 'synapse' with binary 'syn'..."
+        cargo install --git "https://github.com/${REPO}" --tag "$VERSION" --bin syn
+        # Create convenience symlink
+        if [ -f "$HOME/.cargo/bin/syn" ]; then
+            BIN_NAME="syn"
+            INSTALL_DIR="$HOME/.cargo/bin"
+        fi
     else
         echo "Rust is required to build from source."
         echo "Install Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"

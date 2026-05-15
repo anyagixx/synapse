@@ -89,7 +89,7 @@ impl SynapseHandler {
                         "tools": {}
                     },
                     "serverInfo": {
-                        "name": "synapse",
+                        "name": "syn",
                         "version": crate::VERSION
                     }
                 }))
