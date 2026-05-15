@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEV-PLAN>
+  <PHASES>
+    <P1 name="core">
+      <MODULES>
+        <M-AUTH>
+          <PURPOSE>User authentication and session management</PURPOSE>
+          <SCOPE>Login, logout, token refresh, password reset</SCOPE>
+          <DEPENDS></DEPENDS>
+          <LINKS>requirements.xml#UC-1</LINKS>
+        </M-AUTH>
+        <M-CORE>
+          <PURPOSE>Core business logic</PURPOSE>
+          <SCOPE>Primary application operations</SCOPE>
+          <DEPENDS>M-AUTH</DEPENDS>
+          <LINKS>requirements.xml#UC-2</LINKS>
+        </M-CORE>
+      </MODULES>
+      <DATA-FLOWS>
+        <F1>User → M-AUTH → M-CORE</F1>
+      </DATA-FLOWS>
+    </P1>
+  </PHASES>
+</DEV-PLAN>

@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo build --release --target ${{ matrix.target }}
+      - run: cp target/${{ matrix.target }}/release/synapse syn${{ matrix.target == 'x86_64-pc-windows-msvc' && '.exe' || '' }}
+      - run: tar czf syn-${{ matrix.target }}.tar.gz syn*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: syn-${{ matrix.target }}
+          path: syn-${{ matrix.target }}.tar.gz
+
+  create-release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Synapse ${{ github.ref_name }}
+          draft: true
+          files: syn-*/syn-*.tar.gz

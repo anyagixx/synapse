@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<REQUIREMENTS>
+  <PURPOSE>What problem does this project solve?</PURPOSE>
+  <VERSION>0.1.0</VERSION>
+  <ACTORS>
+    <ACTOR-USER>End user of the application</ACTOR-USER>
+    <ACTOR-ADMIN>System administrator</ACTOR-ADMIN>
+  </ACTORS>
+  <USE-CASES>
+    <UC-1>User can register and log in</UC-1>
+    <UC-2>User can perform core operations</UC-2>
+    <UC-3>Admin can manage users</UC-3>
+  </USE-CASES>
+  <CONSTRAINTS>
+    <C-PERF>Response time under 200ms</C-PERF>
+    <C-SECURE>Authentication required for all endpoints</C-SECURE>
+  </CONSTRAINTS>
+</REQUIREMENTS>

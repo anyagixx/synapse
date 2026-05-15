@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION-PLAN>
+  <GLOBAL-POLICY>Wave-level verification required for each PR.</GLOBAL-POLICY>
+  <MODULES>
+    <M-AUTH>
+      <V1>Login with valid credentials returns token</V1>
+      <V2>Login with invalid credentials returns 401</V2>
+      <V3>Token refresh works within expiry</V3>
+    </M-AUTH>
+    <M-CORE>
+      <V1>Core operations succeed with valid auth</V1>
+      <V2>Core operations fail without auth</V2>
+    </M-CORE>
+  </MODULES>
+  <PHASE-GATES>
+    <PG1 name="core">
+      <REQUIRES>M-AUTH:V1,V2,V3; M-CORE:V1,V2</REQUIRES>
+    </PG1>
+  </PHASE-GATES>
+</VERIFICATION-PLAN>

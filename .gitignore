@@ -1,0 +1,13 @@
+/target
+.env
+.env.local
+*.swp
+*.swo
+.DS_Store
+.vscode
+.idea
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+benchmark/results

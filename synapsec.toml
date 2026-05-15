@@ -1,0 +1,32 @@
+# Configuration — `synapsec.toml`
+
+[project]
+name = "my-project"
+version = "0.1.0"
+strictness = false
+
+[index]
+chunk_size = 2000
+chunk_overlap = 100
+require_git = true
+
+[search]
+max_results = 20
+similarity_threshold = 0.65
+hybrid_enabled = false
+
+[proxy]
+enabled = true
+passthrough_max_chars = 2000
+
+[compress]
+output_level = "full"
+input_enabled = true
+
+[tracking]
+enabled = true
+history_days = 90
+
+[graphrag]
+enabled = false
+use_llm = false

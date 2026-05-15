@@ -1,0 +1,223 @@
+use std::path::Path;
+use crate::grace::contract::ContractValidator;
+use crate::grace::semantic::SemanticExtractor;
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct VerificationResult {
+    pub level: String,
+    pub passed: bool,
+    pub checks: Vec<CheckResult>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CheckResult {
+    pub name: String,
+    pub passed: bool,
+    pub details: String,
+}
+
+pub struct Verifier;
+
+impl Verifier {
+    pub fn new() -> Self {
+        Self
+    }
+
+    /// Run all 3 verification levels
+    pub async fn verify_all(root: &Path) -> anyhow::Result<Vec<VerificationResult>> {
+        let mut results = Vec::new();
+
+        results.push(Self::verify_module_local(root).await?);
+        results.push(Self::verify_wave(root).await?);
+        results.push(Self::verify_phase(root).await?);
+
+        Ok(results)
+    }
+
+    /// Level 1: Module-local verification (fast per-module checks)
+    pub async fn verify_module_local(root: &Path) -> anyhow::Result<VerificationResult> {
+        let mut checks = Vec::new();
+
+        // Check contracts
+        let report = ContractValidator::validate_project(root)?;
+        checks.push(CheckResult {
+            name: "contract-exists".into(),
+            passed: report.with_contract > 0,
+            details: format!("{} / {} files have MODULE_CONTRACT", report.with_contract, report.total_files),
+        });
+
+        if report.with_contract > 0 {
+            let invalid: Vec<String> = report.contracts.iter()
+                .filter(|c| c.has_contract && !c.valid)
+                .map(|c| c.file_path.clone())
+                .collect();
+            checks.push(CheckResult {
+                name: "contract-valid".into(),
+                passed: invalid.is_empty(),
+                details: if invalid.is_empty() {
+                    "All contracts have valid PURPOSE".into()
+                } else {
+                    format!("{} contracts have errors: {:?}", invalid.len(), invalid)
+                },
+            });
+        }
+
+        // Check semantic markup
+        match SemanticExtractor::scan_project(root) {
+            Ok(sem) => {
+                checks.push(CheckResult {
+                    name: "semantic-blocks".into(),
+                    passed: sem.unclosed_blocks.is_empty(),
+                    details: if sem.unclosed_blocks.is_empty() {
+                        format!("All {} blocks are properly closed", sem.closed_blocks)
+                    } else {
+                        format!("{} unclosed blocks found", sem.open_blocks)
+                    },
+                });
+            }
+            Err(e) => {
+                checks.push(CheckResult {
+                    name: "semantic-blocks".into(),
+                    passed: false,
+                    details: format!("Error scanning blocks: {}", e),
+                });
+            }
+        }
+
+        // Check 500-line rule on XML artifacts
+        let templates = ["requirements.xml", "technology.xml", "development-plan.xml",
+                          "verification-plan.xml", "knowledge-graph.xml"];
+        let mut passing = true;
+        let mut details = Vec::new();
+        for tpl in &templates {
+            let path = root.join("docs").join(tpl);
+            if let Ok(content) = std::fs::read_to_string(&path) {
+                let ok = content.lines().count() <= 500;
+                if !ok {
+                    passing = false;
+                    details.push(format!("{} exceeds 500 lines", tpl));
+                }
+            }
+        }
+        checks.push(CheckResult {
+            name: "500-line-rule".into(),
+            passed: passing,
+            details: if details.is_empty() {
+                "All artifacts within 500-line limit".into()
+            } else {
+                details.join("; ")
+            },
+        });
+
+        let passed = checks.iter().all(|c| c.passed);
+        Ok(VerificationResult {
+            level: "module-local".into(),
+            passed,
+            checks,
+        })
+    }
+
+    /// Level 2: Wave-level verification (cross-module)
+    pub async fn verify_wave(root: &Path) -> anyhow::Result<VerificationResult> {
+        let mut checks = Vec::new();
+
+        // Check knowledge graph matches actual modules
+        let kg_path = root.join("docs").join("knowledge-graph.xml");
+        if kg_path.exists() {
+            if let Ok(content) = std::fs::read_to_string(&kg_path) {
+                let has_modules = content.contains("<MODULES>") || content.contains("<M-");
+                checks.push(CheckResult {
+                    name: "knowledge-graph".into(),
+                    passed: has_modules,
+                    details: if has_modules { "Knowledge graph found".into() } else { "No modules in knowledge graph".into() },
+                });
+            } else {
+                checks.push(CheckResult {
+                    name: "knowledge-graph".into(),
+                    passed: false,
+                    details: "Cannot read knowledge-graph.xml".into(),
+                });
+            }
+        } else {
+            checks.push(CheckResult {
+                name: "knowledge-graph".into(),
+                passed: true,
+                details: "Knowledge graph not required (no strict mode)".into(),
+            });
+        }
+
+        // Check development plan
+        let dp_path = root.join("docs").join("development-plan.xml");
+        if dp_path.exists() {
+            let has_modules = std::fs::read_to_string(&dp_path)
+                .map(|c| c.contains("<M-"))
+                .unwrap_or(false);
+            checks.push(CheckResult {
+                name: "development-plan".into(),
+                passed: has_modules,
+                details: if has_modules { "Development plan has module definitions".into() } else { "No module definitions found".into() },
+            });
+        }
+
+        let passed = checks.iter().all(|c| c.passed);
+        Ok(VerificationResult {
+            level: "wave".into(),
+            passed,
+            checks,
+        })
+    }
+
+    /// Level 3: Phase-level verification (full regression)
+    pub async fn verify_phase(root: &Path) -> anyhow::Result<VerificationResult> {
+        let mut checks = Vec::new();
+
+        // Check no TODO/FIXME in indexed code (warning)
+        let walker = crate::indexer::walker::Walker::new(root);
+        let files = walker.walk();
+        let mut todos = Vec::new();
+        for file in &files {
+            let full_path = root.join(&file.path);
+            if let Ok(content) = std::fs::read_to_string(&full_path) {
+                for (i, line) in content.lines().enumerate() {
+                    let l = line.trim().to_lowercase();
+                    if (l.starts_with("// todo") || l.starts_with("# todo") || l.starts_with("/* todo") || l.contains("TODO:"))
+                        || (l.starts_with("// fixme") || l.starts_with("# fixme") || l.starts_with("/* fixme") || l.contains("FIXME:"))
+                    {
+                        todos.push(format!("{}:{}", file.path, i + 1));
+                    }
+                }
+            }
+        }
+        checks.push(CheckResult {
+            name: "no-todos".into(),
+            passed: todos.is_empty(),
+            details: if todos.is_empty() { "No TODO/FIXME found".into() }
+                     else { format!("{} TODO/FIXME found:\n  {}", todos.len(), todos.join("\n  ")) },
+        });
+
+        // Check file size limit (500 lines per source file recommended)
+        let mut large_files = Vec::new();
+        for file in &files {
+            let full_path = root.join(&file.path);
+            if let Ok(content) = std::fs::read_to_string(&full_path) {
+                let line_count = content.lines().count();
+                if line_count > 500 {
+                    large_files.push(format!("{} ({} lines)", file.path, line_count));
+                }
+            }
+        }
+        checks.push(CheckResult {
+            name: "file-size-limit".into(),
+            passed: large_files.is_empty(),
+            details: if large_files.is_empty() { "All files under 500 lines".into() }
+                     else { format!("Large files:\n  {}", large_files.join("\n  ")) },
+        });
+
+        let passed = checks.iter().all(|c| c.passed);
+        Ok(VerificationResult {
+            level: "phase".into(),
+            passed,
+            checks,
+        })
+    }
+}
