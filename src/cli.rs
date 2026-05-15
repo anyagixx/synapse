@@ -186,7 +186,64 @@ macro_rules! cmd_run {
     };
 }
 
-cmd_run!(InitCmd, PlanCmd, ExecuteCmd, LogsCmd, TelemetryCmd);
+cmd_run!(PlanCmd, ExecuteCmd, LogsCmd, TelemetryCmd);
+
+impl InitCmd {
+    pub async fn run(&self, config: Config) -> anyhow::Result<()> {
+        let root = std::env::current_dir()?;
+
+        // Check if already a Synapse project
+        if root.join("synapsec.toml").exists() {
+            println!("Already a Synapse project at {}", root.display());
+            return Ok(());
+        }
+
+        // Create project config
+        let config_path = Config::path()?;
+        if let Some(parent) = config_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let config_toml = toml::to_string_pretty(&config)?;
+        std::fs::write(&config_path, &config_toml)?;
+        println!("Created configuration at {}", config_path.display());
+
+        // Create docs directory
+        std::fs::create_dir_all(root.join("docs"))?;
+
+        // Create GRACE templates if they don't exist
+        let templates = [
+            ("docs/requirements.xml", include_str!("../templates/requirements.xml")),
+            ("docs/technology.xml", include_str!("../templates/technology.xml")),
+            ("docs/development-plan.xml", include_str!("../templates/development-plan.xml")),
+            ("docs/verification-plan.xml", include_str!("../templates/verification-plan.xml")),
+            ("docs/knowledge-graph.xml", include_str!("../templates/knowledge-graph.xml")),
+        ];
+        for (path, content) in &templates {
+            let full = root.join(path);
+            if !full.exists() {
+                std::fs::write(&full, content)?;
+            }
+        }
+        println!("Created GRACE templates in docs/");
+
+        // Check for source files and auto-index
+        let walker = crate::indexer::walker::Walker::new(&root);
+        let files = walker.walk();
+        if !files.is_empty() {
+            let indexer = crate::indexer::Indexer::new(&config);
+            println!("Found {} source files. Indexing...", files.len());
+            indexer.index_directory(&root).await?;
+            println!("Index complete.");
+        } else {
+            println!("No source files found yet. Run `syn index` after adding code.");
+        }
+
+        println!();
+        println!("Project ready at {}", root.display());
+        println!("Next: opencode  (start AI agent and describe what you want)");
+        Ok(())
+    }
+}
 
 // Commands with args that have placeholder implementations
 impl SearchCmd {

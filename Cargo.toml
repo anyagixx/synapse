@@ -6,9 +6,6 @@ edition = "2021"
 [[bin]]
 name = "syn"
 path = "src/main.rs"
-description = "Unified AI Agent Engineering Platform"
-authors = ["Synapse Contributors"]
-license = "Apache-2.0"
 repository = "https://github.com/synapse-ai/synapse"
 homepage = "https://synapse.dev"
 readme = "README.md"
