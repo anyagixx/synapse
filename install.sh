@@ -23,7 +23,7 @@ if [ "$VERSION" = "latest" ]; then
     VERSION="v0.1.0"
 fi
 
-TAR="synapse-${ARCH}-${OS}.tar.gz"
+TAR="syn-${ARCH}-${OS}.tar.gz"
 URL="https://github.com/${REPO}/releases/download/${VERSION}/${TAR}"
 
 echo "Downloading Synapse ${VERSION} for ${ARCH}-${OS}..."
