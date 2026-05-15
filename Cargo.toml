@@ -2,6 +2,10 @@
 name = "synapse"
 version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "syn"
+path = "src/main.rs"
 description = "Unified AI Agent Engineering Platform"
 authors = ["Synapse Contributors"]
 license = "Apache-2.0"

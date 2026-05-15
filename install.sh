@@ -3,7 +3,7 @@ set -euo pipefail
 
 VERSION="${1:-v0.1.0}"
 REPO="anyagixx/synapse"
-BIN_NAME="synapse"
+BIN_NAME="syn"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 case "$(uname -s)" in
@@ -23,7 +23,7 @@ if [ "$VERSION" = "latest" ]; then
     VERSION="v0.1.0"
 fi
 
-TAR="${BIN_NAME}-${ARCH}-${OS}.tar.gz"
+TAR="synapse-${ARCH}-${OS}.tar.gz"
 URL="https://github.com/${REPO}/releases/download/${VERSION}/${TAR}"
 
 echo "Downloading Synapse ${VERSION} for ${ARCH}-${OS}..."
