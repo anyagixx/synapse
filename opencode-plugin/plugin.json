@@ -1,6 +1,6 @@
 {
   "name": "synapse",
-  "version": "0.2.0",
+  "version": "0.4.1",
   "description": "Synapse — AI Agent Engineering Platform: MCP tools for code intelligence, proxy, compression, GRACE methodology",
   "author": "Synapse Contributors",
   "license": "Apache-2.0",

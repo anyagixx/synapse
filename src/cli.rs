@@ -203,10 +203,16 @@ impl InitCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
 
+        // AGENTS.md — GRACE constitution at project root (OpenCode reads this automatically)
+        let agents_path = root.join("AGENTS.md");
+        if !agents_path.exists() {
+            std::fs::write(&agents_path, include_str!("../.opencode/rules/synapse.md"))?;
+        }
+
         let opencode_dir = root.join(".opencode");
         std::fs::create_dir_all(&opencode_dir)?;
 
-        // MCP auto-start config — in PROJECT ROOT (not .opencode/)
+        // MCP auto-start config — in PROJECT ROOT
         let oc_config_path = root.join("opencode.jsonc");
         let mcp_config = serde_json::json!({
             "$schema": "https://opencode.ai/config.json",
@@ -261,8 +267,9 @@ impl InitCmd {
         println!("Synapse hooks installed at {}", root.display());
         println!();
         println!("What was created:");
+        println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
         println!("  opencode.jsonc              — MCP auto-start (8 tools for LLM)");
-        println!("  .opencode/plugins/synapse.ts — auto-proxy + context");
+        println!("  .opencode/plugins/synapse.ts — auto-proxy + GRACE system context");
         println!("  .opencode/rules/synapse.md   — tool reference for LLM");
         println!();
         println!("Done. Now run: opencode");
