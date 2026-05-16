@@ -1,7 +1,6 @@
 # GRACE Methodology — Project Constitution
 
-> **These rules are mandatory. They define HOW this project is built.**
-> Architecture first. Code second. Never the other way around.
+> **These rules are mandatory. Architecture first. Code second. Never the other way around.**
 
 ---
 
@@ -16,7 +15,10 @@ Create files in this exact order:
 <?xml version="1.0" encoding="UTF-8"?>
 <REQUIREMENTS>
   <META><PROJECT>name</PROJECT><DESCRIPTION>what it does</DESCRIPTION><LANGUAGE>rust|python|ts|go</LANGUAGE></META>
-  <REQUIREMENT><NAME>Feature</NAME><PURPOSE>why needed</PURPOSE><DEPENDS>other features</DEPENDS></REQUIREMENT>
+  <UC-1><Actor>User</Actor><Action>create note</Action><Goal>persist text with title</Goal></UC-1>
+  <NonGoals>what is explicitly OUT of scope</NonGoals>
+  <Risks>what could go wrong</Risks>
+  <OpenQuestions>what needs clarification</OpenQuestions>
 </REQUIREMENTS>
 ```
 
@@ -24,8 +26,8 @@ Create files in this exact order:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <TECHNOLOGY>
-  <STACK><LANGUAGE>python</LANGUAGE><FRAMEWORK>fastapi</FRAMEWORK><DATABASE>sqlite</DATABASE></STACK>
-  <TOOLS><TOOL purpose="testing">pytest</TOOL></TOOLS>
+  <STACK><LANGUAGE>rust</LANGUAGE><FRAMEWORK></FRAMEWORK><DATABASE></DATABASE></STACK>
+  <TOOLS><TOOL purpose="build">cargo</TOOL><TOOL purpose="test">cargo test</TOOL></TOOLS>
 </TECHNOLOGY>
 ```
 
@@ -33,13 +35,31 @@ Create files in this exact order:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <DEVELOPMENT_PLAN>
+  <META><GENERATED_BY>LLM</GENERATED_BY></META>
+  <ArchitectureNotes>key design decisions</ArchitectureNotes>
   <PHASES>
-    <PHASE id="1" name="Foundation">
+    <Phase-1 name="Foundation" status="pending">
       <MODULES>
-        <M-1><ID>M-CORE</ID><NAME>Module Name</NAME><PURPOSE>What it does</PURPOSE><FILES><FILE>src/module.rs</FILE></FILES></M-1>
+        <M-CORE name="Core" type="CORE_LOGIC" status="planned">
+          <PURPOSE>Core application logic</PURPOSE>
+          <contract><inputs></inputs><outputs></outputs><errors></errors></contract>
+          <FILES><FILE>src/core.rs</FILE></FILES>
+          <verification-ref>V-M-CORE</verification-ref>
+        </M-CORE>
       </MODULES>
-    </PHASE>
+    </Phase-1>
   </PHASES>
+  <DataFlows>
+    <DF-1 name="CreateNote" trigger="user submits form">
+      <step-1 module="M-CORE">validate input</step-1>
+      <step-2 module="M-STORAGE">persist to DB</step-2>
+      <evidence>log: [Core][create_note] saved id={}</evidence>
+    </DF-1>
+  </DataFlows>
+  <ImplementationOrder>
+    <Phase-1><step-1 module="M-CORE">implement core types and create_note</step-1></Phase-1>
+  </ImplementationOrder>
+  <ExecutionPolicy><controller>main agent</controller><worker_per_module>1</worker_per_module></ExecutionPolicy>
   <DEPENDENCIES><DEP from="M-CORE" to="M-STORAGE"/></DEPENDENCIES>
 </DEVELOPMENT_PLAN>
 ```
@@ -48,8 +68,27 @@ Create files in this exact order:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <VERIFICATION_PLAN>
-  <GLOBAL_POLICY><DETERMINISTIC_FIRST>true</DETERMINISTIC_FIRST></GLOBAL_POLICY>
-  <MODULE_VERIFICATION id="V-M-CORE"><MODULE_ID>M-CORE</MODULE_ID><UNIT_TESTS>test_module</UNIT_TESTS></MODULE_VERIFICATION>
+  <GlobalPolicy>
+    <deterministic-first>true</deterministic-first>
+    <log-format>[Module][function][BLOCK_NAME] message</log-format>
+    <redaction>no secrets in logs</redaction>
+  </GlobalPolicy>
+  <ModuleVerification>
+    <V-M-CORE MODULE="M-CORE" PRIORITY="critical">
+      <unit-tests>test_core</unit-tests>
+      <required-log-markers><marker>[Core][create_note][CREATE]</marker></required-log-markers>
+      <required-trace-assertions><assert>CREATE log appears exactly once per call</assert></required-trace-assertions>
+      <failure-packet>
+        <scenario>create_note with empty title</scenario>
+        <expected>error returned, no log emitted</expected>
+        <observed>check actual behavior</observed>
+        <suggested>validate before persist, add early return</suggested>
+      </failure-packet>
+    </V-M-CORE>
+  </ModuleVerification>
+  <PhaseGates>
+    <Gate-Phase-1><requires>all V-M-* module checks PASS</requires><command>syn verify</command></Gate-Phase-1>
+  </PhaseGates>
 </VERIFICATION_PLAN>
 ```
 
@@ -57,24 +96,31 @@ Create files in this exact order:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <KNOWLEDGE_GRAPH>
-  <NODES><NODE id="M-CORE"><NAME>Core</NAME><KIND>module</KIND><PATH>src/core.rs</PATH></NODE></NODES>
-  <RELATIONSHIPS><REL from="M-CORE" to="M-STORAGE" type="depends_on"/></RELATIONSHIPS>
+  <NODES>
+    <M-CORE TYPE="CORE_LOGIC" STATUS="implemented">
+      <NAME>Core Module</NAME><PATH>src/core.rs</PATH>
+      <exports><fn-create_note>creates and persists a note</fn-create_note></exports>
+      <verification-ref>V-M-CORE</verification-ref>
+    </M-CORE>
+  </NODES>
+  <CrossLinks><CrossLink from="M-CORE" to="M-STORAGE" relation="depends_on"/></CrossLinks>
 </KNOWLEDGE_GRAPH>
 ```
 
 ### Phase 0 STOP Gates
-- If `docs/requirements.xml` is missing → **STOP. Ask user what to build. Create the file.**
-- If `docs/development-plan.xml` is missing → **STOP. Design the architecture. Create the file.**
-- If `docs/verification-plan.xml` is missing → **STOP. Plan verification. Create the file.**
+- If `docs/requirements.xml` is missing → **STOP. Ask user what to build.**
+- If `docs/technology.xml` is missing → **STOP. Define the tech stack.**
+- If `docs/development-plan.xml` is missing → **STOP. Design architecture with M-xxx modules, Phase-N gates, DF-xxx dataflows.**
+- If `docs/verification-plan.xml` is missing → **STOP. Define V-M-xxx verification per module.**
 - If ANY Phase 0 file is missing → **DO NOT write source code.**
 - Only when ALL 5 exist → proceed to Phase 1.
 
 ---
 
-## Phase 1+ — Implementation (only after Phase 0 complete)
+## Phase 1+ — Implementation
 
-### 1. Never Write Code Without a Contract
-Before creating or editing any source file, it MUST have a MODULE_CONTRACT:
+### Every source file MUST have this structure:
+
 ```
 // MODULE_CONTRACT
 // MODULE_ID: M-XXX
@@ -83,55 +129,72 @@ Before creating or editing any source file, it MUST have a MODULE_CONTRACT:
 // DEPENDS: [module dependencies]
 // LINKS: [knowledge graph references]
 
+// START_MODULE_MAP
+// create_note — Creates and persists a new note
+// search_notes — Returns notes matching query text
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v1.0.0 — Initial implementation]
+// END_CHANGE_SUMMARY
+
 // START_public_api
-... code ...
+... module-level code ...
 // END_public_api
 ```
-Code implements the contract. The contract is the source of truth.
 
-### 2. Semantic Markup Is Load-Bearing Structure
-Every function/struct/class MUST be wrapped in START_/END_ blocks:
+### Every function MUST have a contract:
+
 ```
+// START_CONTRACT_create_note
+// PURPOSE: Create a new note and persist to storage
+// INPUTS: { title: String — note title }, { content: String — note body }
+// OUTPUTS: { Note — the created note with id assigned }
+// SIDE_EFFECTS: writes to database, emits [Core][create_note][CREATE] log
+// LINKS: M-STORAGE, V-M-CORE
 // START_create_note
-pub fn create_note(...) { ... }
+pub fn create_note(title: &str, content: &str) -> Note { ... }
 // END_create_note
 ```
-These are NOT comments — they are structural anchors for verification tools.
 
-### 3. Follow the Development Plan EXACTLY
-- Implement modules in Phase order (1, then 2, then 3...)
-- Each module gets its MODULE_CONTRACT before code
-- After each module: call `verify_project` MCP tool
-- If verification fails: **STOP and fix before next module**
-- Update `docs/knowledge-graph.xml` after each module
+### Semantic Markup Rules
 
-### 4. ALWAYS Verify After Changes
-After every code change, call `verify_project` MCP tool.
-If verification FAILS: STOP and fix before continuing.
-NEVER skip a failing verification step.
+1. **500-token granularity**: blocks should be ~500 TOKENS (not lines). If larger, split into sub-blocks.
+2. **Unique block names**: every START_X/END_X pair must have a unique name within the file.
+3. **Names describe WHAT, not HOW**: use `VALIDATE_INPUT` not `checkIfNullAndTrim`.
+4. **Paired markers**: every START_X must have END_X. No orphans.
+5. **Test files too**: substantial test files use the same structure (MODULE_CONTRACT, MODULE_MAP, blocks, CHANGE_SUMMARY).
+6. **Log format**: `[ModuleName][functionName][BLOCK_NAME] descriptive message` — structured, stable fields, redacted secrets.
 
-### 5. Review Before Committing
-Before declaring work done, call `review_code` MCP tool (mode: scoped).
-Fix all critical issues before proceeding.
+### PCAM (Purpose, Constraints, Autonomy, Metrics)
 
-### 6. Search Before Writing
-Before writing new code, call `semantic_search` to find existing patterns.
+- **Purpose**: Defined by MODULE_CONTRACT — WHAT to build.
+- **Constraints**: Defined by development plan and knowledge graph — BOUNDARIES.
+- **Autonomy**: You choose HOW to implement within boundaries.
+- **Metrics**: CONTRACT OUTCOMES + verification evidence = DONE criteria.
 
-### 7. Top-Down Synthesis (NEVER VIOLATE)
+### Development Workflow
+
 ```
-Phase 0: Architecture → Docs (5 XML files)
-Phase 1+: Contracts → Code → Tests → Verify → Review
+Phase 0:   Architecture → 5 XML docs (M-xxx, V-M-xxx, DF-xxx, Phase-N)
+Phase 1-N: Per module:
+  1. Read MODULE_CONTRACT + knowledge graph
+  2. Write code with contracts, MODULE_MAP, CHANGE_SUMMARY, semantic blocks
+  3. Call verify_project — if FAIL: STOP and fix
+  4. Call review_code (scoped) — fix critical issues
+  5. Update CHANGE_SUMMARY
+  6. Update knowledge-graph.xml
+Phase Gate: Call verify_project (phase level) + review_code (full)
 ```
-NEVER jump to code before Phase 0 is complete.
 
-### 8. Governed Autonomy
-You choose HOW to implement. Contracts and plans define WHAT.
-If a contract seems wrong — PROPOSE a change, don't silently deviate.
+### Stop Gates
 
-### 9. Stop If Unsure
-- If requirements unclear: **STOP and ASK user**
-- If verification fails repeatedly: **STOP and report**
-- If architectural drift detected: **STOP and propose plan revision**
+- Requirements unclear → **STOP and ASK user**
+- Phase 0 incomplete → **STOP, do not write code**
+- verify_project FAIL → **STOP, fix, re-verify**
+- review_code finds critical → **STOP, fix before next module**
+- Architectural drift → **STOP, propose plan revision**
+- Contract seems wrong → **STOP, propose change, get approval**
 
 ---
 
@@ -139,9 +202,13 @@ If a contract seems wrong — PROPOSE a change, don't silently deviate.
 
 | Tool | When |
 |------|------|
-| `semantic_search` | Before writing code |
-| `view_signatures` | Understand file structure |
-| `graphrag_query` | Navigate module relationships |
-| `verify_project` | After EVERY change |
-| `review_code` | Before declaring done |
-| `project_status` | Show health |
+| `semantic_search` | Before writing code — find existing patterns |
+| `view_signatures` | Understand file structure quickly |
+| `graphrag_query` | Navigate module relationships (overview, search, find-path) |
+| `verify_project` | After EVERY change — 3 levels: module-local, wave, phase |
+| `review_code` | Before declaring done — scoped (per-module) or full (phase gate) |
+| `project_status` | Overall health: contracts, markup, verification, token economy |
+| `token_savings` | Cost tracking — commands, tokens saved, estimated $ saved |
+| `compress_text` | Compress verbose text before adding to context (3 levels) |
+
+Shell commands (git, cargo, npm, etc.) are auto-proxied through `syn proxy` for token savings.

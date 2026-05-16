@@ -71,6 +71,64 @@ impl Verifier {
                     format!("{} contracts have errors: {:?}", invalid.len(), invalid)
                 },
             });
+
+            // Check MODULE_MAP
+            let missing_map: Vec<String> = report
+                .contracts
+                .iter()
+                .filter(|c| c.has_contract && !c.has_module_map)
+                .map(|c| c.file_path.clone())
+                .collect();
+            checks.push(CheckResult {
+                name: "module-map".into(),
+                passed: missing_map.is_empty(),
+                details: if missing_map.is_empty() {
+                    "All contracted files have MODULE_MAP".into()
+                } else {
+                    format!(
+                        "{} files missing MODULE_MAP: {:?}",
+                        missing_map.len(),
+                        missing_map
+                    )
+                },
+            });
+
+            // Check CHANGE_SUMMARY
+            let missing_cs: Vec<String> = report
+                .contracts
+                .iter()
+                .filter(|c| c.has_contract && !c.has_change_summary)
+                .map(|c| c.file_path.clone())
+                .collect();
+            checks.push(CheckResult {
+                name: "change-summary".into(),
+                passed: missing_cs.is_empty(),
+                details: if missing_cs.is_empty() {
+                    "All contracted files have CHANGE_SUMMARY".into()
+                } else {
+                    format!(
+                        "{} files missing CHANGE_SUMMARY: {:?}",
+                        missing_cs.len(),
+                        missing_cs
+                    )
+                },
+            });
+
+            // Check function contracts
+            let total_fn: usize = report
+                .contracts
+                .iter()
+                .map(|c| c.function_contracts.len())
+                .sum();
+            checks.push(CheckResult {
+                name: "function-contracts".into(),
+                passed: total_fn > 0,
+                details: if total_fn > 0 {
+                    format!("{} function contracts found", total_fn)
+                } else {
+                    "No function contracts (START_CONTRACT_name)".into()
+                },
+            });
         }
 
         // Check semantic markup
@@ -85,6 +143,22 @@ impl Verifier {
                         format!("{} unclosed blocks found", sem.open_blocks)
                     },
                 });
+                checks.push(CheckResult {
+                    name: "unique-block-names".into(),
+                    passed: sem.duplicate_name_blocks.is_empty(),
+                    details: if sem.duplicate_name_blocks.is_empty() {
+                        "All block names are unique".into()
+                    } else {
+                        format!(
+                            "{} duplicate block names: {:?}",
+                            sem.duplicate_name_blocks.len(),
+                            sem.duplicate_name_blocks
+                                .iter()
+                                .map(|b| format!("{} in {}", b.name, b.file_path))
+                                .collect::<Vec<_>>()
+                        )
+                    },
+                });
             }
             Err(e) => {
                 checks.push(CheckResult {
@@ -95,7 +169,7 @@ impl Verifier {
             }
         }
 
-        // Check 500-line rule on XML artifacts
+        // Check 500-token rule on XML artifacts (tokens ≈ chars/4)
         let templates = [
             "requirements.xml",
             "technology.xml",
@@ -108,18 +182,22 @@ impl Verifier {
         for tpl in &templates {
             let path = root.join("docs").join(tpl);
             if let Ok(content) = std::fs::read_to_string(&path) {
-                let ok = content.lines().count() <= 500;
+                let token_estimate = content.len() / 4;
+                let ok = token_estimate <= 2000; // ~500 tokens
                 if !ok {
                     passing = false;
-                    details.push(format!("{} exceeds 500 lines", tpl));
+                    details.push(format!(
+                        "{} exceeds ~500 tokens (est. {} tokens)",
+                        tpl, token_estimate
+                    ));
                 }
             }
         }
         checks.push(CheckResult {
-            name: "500-line-rule".into(),
+            name: "500-token-rule".into(),
             passed: passing,
             details: if details.is_empty() {
-                "All artifacts within 500-line limit".into()
+                "All artifacts within ~500 token limit".into()
             } else {
                 details.join("; ")
             },

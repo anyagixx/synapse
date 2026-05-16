@@ -20,6 +20,7 @@ pub struct SemanticReport {
     pub open_blocks: usize,
     pub closed_blocks: usize,
     pub unclosed_blocks: Vec<SemanticBlock>,
+    pub duplicate_name_blocks: Vec<SemanticBlock>,
     pub blocks: Vec<SemanticBlock>,
 }
 
@@ -123,6 +124,19 @@ impl SemanticExtractor {
                 let blocks = Self::extract_blocks(&full_path, &content);
                 if !blocks.is_empty() {
                     report.files_with_blocks += 1;
+                    // Detect duplicate block names within the file
+                    let mut seen: std::collections::HashMap<String, usize> =
+                        std::collections::HashMap::new();
+                    for block in &blocks {
+                        *seen.entry(block.name.clone()).or_insert(0) += 1;
+                    }
+                    for (name, count) in &seen {
+                        if *count > 1 {
+                            if let Some(block) = blocks.iter().find(|b| b.name == *name) {
+                                report.duplicate_name_blocks.push(block.clone());
+                            }
+                        }
+                    }
                     for block in blocks {
                         if block.is_closed {
                             report.closed_blocks += 1;

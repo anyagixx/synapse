@@ -10,7 +10,20 @@ pub struct ModuleContract {
     pub links: Vec<String>,
     pub has_contract: bool,
     pub valid: bool,
+    pub has_module_map: bool,
+    pub has_change_summary: bool,
+    pub function_contracts: Vec<FunctionContract>,
     pub errors: Vec<String>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct FunctionContract {
+    pub name: String,
+    pub purpose: Option<String>,
+    pub inputs: Vec<String>,
+    pub outputs: Vec<String>,
+    pub side_effects: Vec<String>,
+    pub links: Vec<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -47,11 +60,13 @@ impl ContractValidator {
             links: Vec::new(),
             has_contract: false,
             valid: false,
+            has_module_map: false,
+            has_change_summary: false,
+            function_contracts: Vec::new(),
             errors: Vec::new(),
         };
 
         let contract_block = Self::find_contract_block(content);
-
         let block = match contract_block {
             Some(b) => b,
             None => return mc,
@@ -59,7 +74,17 @@ impl ContractValidator {
 
         mc.has_contract = true;
 
-        // Extract module ID from filename or contract
+        // Check for MODULE_MAP
+        mc.has_module_map =
+            content.contains("// START_MODULE_MAP") || content.contains("# START_MODULE_MAP");
+
+        // Check for CHANGE_SUMMARY
+        mc.has_change_summary = content.contains("// START_CHANGE_SUMMARY")
+            || content.contains("# START_CHANGE_SUMMARY");
+
+        // Extract function contracts
+        mc.function_contracts = Self::extract_function_contracts(content);
+
         let lines: Vec<&str> = block.lines().collect();
         for line in &lines {
             let trimmed = line.trim();
@@ -70,7 +95,6 @@ impl ContractValidator {
                     .trim();
                 Self::parse_field(&mut mc, val);
             }
-            // Also match /* ... */ style
             if trimmed.starts_with('*') {
                 let val = trimmed.trim_start_matches('*').trim();
                 Self::parse_field(&mut mc, val);
@@ -81,33 +105,44 @@ impl ContractValidator {
         if mc.purpose.is_none() {
             mc.errors.push("Missing PURPOSE in MODULE_CONTRACT".into());
         }
+        if !mc.has_module_map {
+            mc.errors.push("Missing MODULE_MAP".into());
+        }
+        if !mc.has_change_summary {
+            mc.errors.push("Missing CHANGE_SUMMARY".into());
+        }
+        if mc.function_contracts.is_empty() {
+            mc.errors
+                .push("Missing function contracts (START_CONTRACT_name)".into());
+        }
         mc
     }
 
-    fn find_contract_block(content: &str) -> Option<String> {
-        // Find MODULE_CONTRACT marker and extract the entire comment block
-        let start_marker = content.find("// MODULE_CONTRACT")?;
+    fn extract_function_contracts(content: &str) -> Vec<FunctionContract> {
+        let mut contracts = Vec::new();
+        extract_contracts_style(content, "//", &mut contracts);
+        extract_contracts_style(content, "#", &mut contracts);
+        contracts
+    }
 
-        // Find the start of the line containing the marker
+    fn find_contract_block(content: &str) -> Option<String> {
+        let start_marker = content.find("// MODULE_CONTRACT")?;
         let block_start = content[..start_marker]
             .rfind('\n')
             .map(|i| i + 1)
             .unwrap_or(0);
-
-        // Extract all consecutive comment lines (// or #) after the marker
         let mut block_end = start_marker;
         let after_marker = &content[start_marker..];
         for line in after_marker.lines() {
             let trimmed = line.trim();
             if trimmed.starts_with("//") || trimmed.starts_with('#') || trimmed.starts_with('*') {
-                block_end += line.len() + 1; // +1 for newline
+                block_end += line.len() + 1;
             } else if trimmed.is_empty() {
                 block_end += line.len() + 1;
             } else {
                 break;
             }
         }
-
         Some(content[block_start..block_end.min(content.len())].to_string())
     }
 
@@ -170,8 +205,73 @@ impl ContractValidator {
             contracts,
         })
     }
+}
 
-    pub fn enforce_500_lines(content: &str) -> bool {
-        content.lines().count() <= 500
+fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<FunctionContract>) {
+    let pattern = format!(r"{} START_CONTRACT_(\w+)", prefix);
+    let re = regex::Regex::new(&pattern).unwrap();
+    let mut starts = Vec::new();
+    for cap in re.captures_iter(content) {
+        let name = cap[1].to_string();
+        if contracts.iter().any(|c| c.name == name) {
+            continue;
+        }
+        if let Some(m) = cap.get(0) {
+            starts.push((m.start(), name));
+        }
+    }
+    for (start_pos, name) in &starts {
+        let after_start = &content[*start_pos..];
+        let end_marker = format!("{} END_{}", prefix, name);
+        let alt_prefix = if prefix == "//" { "#" } else { "//" };
+        let alt_marker = format!("{} END_{}", alt_prefix, name);
+        let end_pos = after_start
+            .find(&end_marker)
+            .or_else(|| after_start.find(&alt_marker));
+        if let Some(end_off) = end_pos {
+            let body = &after_start[..end_off];
+            let body_start = body.find('\n').map(|i| i + 1).unwrap_or(0);
+            let body_text = &body[body_start..];
+            let mut fc = FunctionContract {
+                name: name.clone(),
+                purpose: None,
+                inputs: Vec::new(),
+                outputs: Vec::new(),
+                side_effects: Vec::new(),
+                links: Vec::new(),
+            };
+            for line in body_text.lines() {
+                let t = line.trim().trim_start_matches(prefix).trim();
+                let t = t.trim_start_matches(alt_prefix).trim();
+                if let Some(p) = t.strip_prefix("PURPOSE:") {
+                    fc.purpose = Some(p.trim().to_string());
+                } else if let Some(i) = t.strip_prefix("INPUTS:") {
+                    fc.inputs = i
+                        .split("}, {")
+                        .map(|s| s.trim().trim_matches('{').trim_matches('}').to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                } else if let Some(o) = t.strip_prefix("OUTPUTS:") {
+                    fc.outputs = o
+                        .split("}, {")
+                        .map(|s| s.trim().trim_matches('{').trim_matches('}').to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                } else if let Some(s) = t.strip_prefix("SIDE_EFFECTS:") {
+                    fc.side_effects = s
+                        .split(',')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                } else if let Some(l) = t.strip_prefix("LINKS:") {
+                    fc.links = l
+                        .split(',')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                }
+            }
+            contracts.push(fc);
+        }
     }
 }

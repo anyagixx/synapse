@@ -33,6 +33,7 @@ impl Reviewer {
     pub fn review(root: &Path, mode: &str) -> anyhow::Result<ReviewReport> {
         match mode {
             "scoped" => Self::scoped_gate(root),
+            "wave-audit" => Self::wave_audit(root),
             "full" => Self::full_integrity(root),
             _ => Self::scoped_gate(root),
         }
@@ -46,11 +47,21 @@ impl Reviewer {
         let unclosed = sem.unclosed_blocks;
         sections.push(ReviewSection {
             name: "semantic-markup".into(),
-            passed: unclosed.is_empty(),
-            details: format!("{} blocks, {} unclosed", sem.total_blocks, unclosed.len()),
+            passed: unclosed.is_empty() && sem.duplicate_name_blocks.is_empty(),
+            details: format!(
+                "{} blocks, {} unclosed, {} duplicates",
+                sem.total_blocks,
+                unclosed.len(),
+                sem.duplicate_name_blocks.len()
+            ),
             issues: unclosed
                 .iter()
                 .map(|b| format!("Unclosed: {} at {}", b.name, b.file_path))
+                .chain(
+                    sem.duplicate_name_blocks
+                        .iter()
+                        .map(|b| format!("Duplicate: {} at {}", b.name, b.file_path)),
+                )
                 .collect(),
         });
 
@@ -71,6 +82,65 @@ impl Reviewer {
         let passed = sections.iter().all(|s| s.passed);
         Ok(ReviewReport {
             mode: "scoped".into(),
+            passed,
+            sections,
+        })
+    }
+
+    fn wave_audit(root: &Path) -> anyhow::Result<ReviewReport> {
+        let mut sections = Self::scoped_gate(root)?.sections;
+
+        // Cross-module import/dependency check
+        let report = ContractValidator::validate_project(root)?;
+        let mut dep_issues = Vec::new();
+        for c in &report.contracts {
+            if !c.has_contract {
+                continue;
+            }
+            // Check DEPENDS reference actual modules
+            for dep in &c.depends {
+                let found = report
+                    .contracts
+                    .iter()
+                    .any(|other| other.module_id.as_deref() == Some(dep.as_str()));
+                if !found && dep != "N/A" && !dep.is_empty() {
+                    dep_issues.push(format!("{} depends on unknown module {}", c.file_path, dep));
+                }
+            }
+        }
+        sections.push(ReviewSection {
+            name: "cross-module-deps".into(),
+            passed: dep_issues.is_empty(),
+            details: format!("{} dependency issues", dep_issues.len()),
+            issues: dep_issues,
+        });
+
+        // Knowledge graph consistency with actual imports
+        let kg_path = root.join("docs").join("knowledge-graph.xml");
+        if kg_path.exists() {
+            let kg_content = std::fs::read_to_string(&kg_path).unwrap_or_default();
+            let mut kg_issues = Vec::new();
+            for c in &report.contracts {
+                if !c.has_contract || c.depends.is_empty() {
+                    continue;
+                }
+                for dep in &c.depends {
+                    if !kg_content.contains(dep.as_str()) {
+                        kg_issues.push(format!("{}:{} not in knowledge-graph", c.file_path, dep));
+                    }
+                }
+            }
+            sections.push(ReviewSection {
+                name: "graph-consistency".into(),
+                passed: kg_issues.is_empty(),
+                details: format!("{} graph mismatches", kg_issues.len()),
+                issues: kg_issues,
+            });
+        }
+
+        let passed = sections.iter().all(|s| s.passed);
+        Ok(ReviewReport {
+            mode: "wave-audit".into(),
             passed,
             sections,
         })
