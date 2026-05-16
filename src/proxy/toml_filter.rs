@@ -1,5 +1,27 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-PROXY-FILTER
+// PURPOSE: TOML filter engine — applies regex-based output transformations from TOML filter definitions
+// SCOPE: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, 8-stage pipeline
+// DEPENDS: N/A
+// LINKS: builtin_filters.toml, ~/.config/synapse/filters.toml, .synapse/filters.toml
+
+// START_MODULE_MAP
+// FilterDef — TOML filter definition with match, replace, strip, truncate rules
+// ReplaceRule — Regex replace rule (pattern → replacement)
+// FilterFile — TOML file containing filter definitions
+// FilterSource — Source of a filter (BuiltIn, User, Project)
+// FilterEngine — Loads and applies TOML output filters
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use std::path::Path;
 
+// START_public_api
+
+// START_FilterDef
 #[derive(serde::Deserialize, Clone, Default)]
 pub struct FilterDef {
     pub match_command: Option<String>,
@@ -15,27 +37,36 @@ pub struct FilterDef {
     pub max_lines: Option<usize>,
     pub on_empty: Option<String>,
 }
+// END_FilterDef
 
+// START_ReplaceRule
 #[derive(serde::Deserialize, Clone)]
 pub struct ReplaceRule {
     pub pattern: String,
     pub replacement: String,
 }
+// END_ReplaceRule
 
+// START_FilterFile
 #[derive(serde::Deserialize, Default)]
 pub struct FilterFile {
     pub filters: Vec<FilterDef>,
 }
+// END_FilterFile
 
+// START_FilterSource
 pub enum FilterSource {
     BuiltIn,
     User,
     Project,
 }
+// END_FilterSource
 
+// START_FilterEngine
 pub struct FilterEngine {
     filters: Vec<(FilterDef, FilterSource)>,
 }
+// END_FilterEngine
 
 impl Default for FilterEngine {
     fn default() -> Self {
@@ -44,6 +75,11 @@ impl Default for FilterEngine {
 }
 
 impl FilterEngine {
+    // START_CONTRACT_FilterEngine::new
+    // PURPOSE: Create a new FilterEngine, loading built-in, user, and project filters
+    // OUTPUTS: { Self }
+    // SIDE_EFFECTS: reads TOML filter files from disk
+    // START_fe_new
     pub fn new() -> Self {
         let mut engine = Self {
             filters: Vec::new(),
@@ -76,6 +112,7 @@ impl FilterEngine {
 
         engine
     }
+    // END_fe_new
 
     fn load_builtin() -> Option<Vec<FilterDef>> {
         let toml_str = include_str!("builtin_filters.toml");
@@ -89,6 +126,11 @@ impl FilterEngine {
         Some(file.filters)
     }
 
+    // START_CONTRACT_FilterEngine::find_filter
+    // PURPOSE: Find a matching filter for a given command string
+    // INPUTS: { cmd: &str — command to match }
+    // OUTPUTS: { Option<&FilterDef> }
+    // START_fe_find_filter
     pub fn find_filter(&self, cmd: &str) -> Option<&FilterDef> {
         let cmd = cmd.trim();
         let re = regex::Regex::new(r"^(\w+|-+)+").ok()?;
@@ -111,7 +153,13 @@ impl FilterEngine {
         }
         None
     }
+    // END_fe_find_filter
 
+    // START_CONTRACT_FilterEngine::apply
+    // PURPOSE: Apply a filter definition to command output via 8-stage pipeline
+    // INPUTS: { filter: &FilterDef }, { output: &str — raw command output }
+    // OUTPUTS: { String — filtered output }
+    // START_fe_apply
     pub fn apply(&self, filter: &FilterDef, output: &str) -> String {
         let mut result = output.to_string();
 
@@ -233,6 +281,7 @@ impl FilterEngine {
 
         final_lines.join("\n")
     }
+    // END_fe_apply
 
     fn remove_ansi(s: &str) -> String {
         let re = regex::Regex::new("\x1b\\[[0-9;]*m").unwrap();
@@ -318,3 +367,4 @@ mod tests {
         assert!(result.contains("error"));
     }
 }
+// END_public_api

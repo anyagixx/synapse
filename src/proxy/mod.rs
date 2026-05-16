@@ -1,3 +1,18 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-PROXY
+// PURPOSE: Proxy executor — intercepts shell commands, applies TOML filters, tracks token savings
+// SCOPE: Proxy struct, FilterEngine integration, CommandRunner integration, token tracking
+// DEPENDS: M-CONFIG, M-TRACKING, M-PROXY-RUNNER, M-PROXY-FILTER, M-UTILS
+// LINKS: filters.toml
+
+// START_MODULE_MAP
+// Proxy — Command proxy combining filter engine, command runner, and token tracker
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 pub mod runner;
 pub mod toml_filter;
 
@@ -6,13 +21,21 @@ use crate::tracking::Tracker;
 use runner::CommandRunner;
 use toml_filter::FilterEngine;
 
+// START_public_api
+
+// START_Proxy
 pub struct Proxy {
     config: Config,
     engine: FilterEngine,
     tracker: Tracker,
 }
+// END_Proxy
 
 impl Proxy {
+    // START_CONTRACT_Proxy::new
+    // PURPOSE: Create a new Proxy with the given config
+    // OUTPUTS: { Self }
+    // START_proxy_new
     pub fn new(config: &Config) -> Self {
         Self {
             config: config.clone(),
@@ -20,7 +43,14 @@ impl Proxy {
             tracker: Tracker::new(config),
         }
     }
+    // END_proxy_new
 
+    // START_CONTRACT_Proxy::execute
+    // PURPOSE: Execute a shell command through the proxy: run, filter output, track tokens
+    // INPUTS: { cmd_parts: &[String] — command and args }
+    // OUTPUTS: { anyhow::Result<String> — filtered output }
+    // SIDE_EFFECTS: runs external command, writes tracking data
+    // START_proxy_execute
     pub async fn execute(&self, cmd_parts: &[String]) -> anyhow::Result<String> {
         if cmd_parts.is_empty() {
             return Err(anyhow::anyhow!("No command specified"));
@@ -76,4 +106,6 @@ impl Proxy {
 
         Ok(output)
     }
+    // END_proxy_execute
 }
+// END_public_api

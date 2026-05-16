@@ -1,9 +1,28 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRAPHRAG-BUILDER
+// PURPOSE: Graph builder — constructs CodeGraph from indexed storage with import and hierarchy relationships
+// SCOPE: GraphBuilder struct, build from storage blocks and files, extract_imports for multi-language
+// DEPENDS: M-GRAPHRAG-TYPES, M-INDEXER-STORAGE, M-INDEXER-WALKER
+// LINKS: N/A
+
+// START_MODULE_MAP
+// GraphBuilder — Builds a CodeGraph from indexed code blocks and file list
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::graphrag::types::*;
 use crate::indexer::storage::Storage;
 use crate::indexer::walker::Walker;
 use std::path::Path;
 
+// START_public_api
+
+// START_GraphBuilder
 pub struct GraphBuilder;
+// END_GraphBuilder
 
 impl Default for GraphBuilder {
     fn default() -> Self {
@@ -12,11 +31,20 @@ impl Default for GraphBuilder {
 }
 
 impl GraphBuilder {
+    // START_CONTRACT_GraphBuilder::new
+    // PURPOSE: Create a new GraphBuilder
+    // OUTPUTS: { Self }
+    // START_gb_new
     pub fn new() -> Self {
         Self
     }
+    // END_gb_new
 
-    /// Build a code graph from the indexed storage
+    // START_CONTRACT_GraphBuilder::build
+    // PURPOSE: Build a code graph from indexed storage — nodes from files, relationships from imports and hierarchy
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<CodeGraph> }
+    // START_gb_build
     pub fn build(root: &Path) -> anyhow::Result<CodeGraph> {
         let mut graph = CodeGraph::new();
 
@@ -134,6 +162,7 @@ impl GraphBuilder {
 
         Ok(graph)
     }
+    // END_gb_build
 }
 
 fn extract_imports(content: &str, language: &str) -> Vec<String> {
@@ -236,3 +265,4 @@ fn extract_imports(content: &str, language: &str) -> Vec<String> {
     }
     imports
 }
+// END_public_api

@@ -1,5 +1,30 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-CONFIG
+// PURPOSE: Config loading from TOML — loads synapsec.toml, creates default if missing
+// SCOPE: Config struct definitions, TOML deserialization, default config generation, path resolution
+// DEPENDS: N/A
+// LINKS: synapsec.toml
+
+// START_MODULE_MAP
+// Config — Top-level config struct (project, index, search, proxy, compress, tracking, graphrag)
+// ProjectConfig — Project metadata (name, version, strictness)
+// IndexConfig — Indexer settings (chunk_size, chunk_overlap, require_git)
+// SearchConfig — Search settings (max_results, similarity_threshold, hybrid_enabled)
+// ProxyConfig — Proxy settings (enabled, passthrough_max_chars)
+// CompressConfig — Compress settings (output_level, input_enabled)
+// TrackingConfig — Tracking settings (enabled, history_days)
+// GraphRagConfig — GraphRAG settings (enabled, use_llm)
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use std::path::PathBuf;
 
+// START_public_api
+
+// START_Config
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 pub struct Config {
     pub project: ProjectConfig,
@@ -96,6 +121,8 @@ impl Config {
     }
 }
 
+// END_Config
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -133,3 +160,4 @@ impl Default for Config {
         }
     }
 }
+// END_public_api

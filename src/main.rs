@@ -1,7 +1,27 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-MAIN
+// PURPOSE: Binary entry point — parses CLI, loads config, dispatches commands via tokio runtime
+// SCOPE: CLI argument parsing, tracing init, command dispatch
+// DEPENDS: M-LIB (cli, config)
+// LINKS: Cargo.toml
+
+// START_MODULE_MAP
+// main — Entry point: init tracing, parse CLI, load config, dispatch command
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use clap::Parser;
 use syn::cli::SynCli;
 use syn::config::Config;
 
+// START_CONTRACT_main
+// PURPOSE: Initialize tracing subscriber, parse CLI arguments, load config, dispatch command via tokio
+// OUTPUTS: { anyhow::Result — ok on success, error on failure }
+// SIDE_EFFECTS: initializes tracing, executes selected CLI command
+// START_main
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
@@ -35,3 +55,4 @@ fn main() -> anyhow::Result<()> {
         }
     })
 }
+// END_main

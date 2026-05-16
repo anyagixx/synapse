@@ -1,5 +1,24 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-INDEXER-PARSER
+// PURPOSE: Tree-sitter AST parser — extracts code blocks (functions, structs, classes) with fallback
+// SCOPE: ParserEngine, CodeBlock, tree-sitter parsing for Rust/Python/JS/TS/Go, regex fallback
+// DEPENDS: N/A (tree-sitter grammars loaded at runtime)
+// LINKS: N/A
+
+// START_MODULE_MAP
+// CodeBlock — Extracted code block with name, kind, line range, content
+// ParserEngine — Tree-sitter based code block parser with multi-language support
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use tree_sitter::{Language, Parser};
 
+// START_public_api
+
+// START_CodeBlock
 pub struct CodeBlock {
     pub name: String,
     pub kind: String,
@@ -7,8 +26,11 @@ pub struct CodeBlock {
     pub end_line: usize,
     pub content: String,
 }
+// END_CodeBlock
 
+// START_ParserEngine
 pub struct ParserEngine;
+// END_ParserEngine
 
 impl Default for ParserEngine {
     fn default() -> Self {
@@ -17,9 +39,14 @@ impl Default for ParserEngine {
 }
 
 impl ParserEngine {
+    // START_CONTRACT_ParserEngine::new
+    // PURPOSE: Create a new ParserEngine
+    // OUTPUTS: { Self }
+    // START_parser_engine_new
     pub fn new() -> Self {
         Self
     }
+    // END_parser_engine_new
 
     fn get_language(&self, lang: &str) -> Option<Language> {
         Some(match lang {
@@ -32,6 +59,11 @@ impl ParserEngine {
         })
     }
 
+    // START_CONTRACT_ParserEngine::parse
+    // PURPOSE: Parse source code into CodeBlocks using tree-sitter (with fallback)
+    // INPUTS: { code: &str — source code }, { lang: &str — language identifier }
+    // OUTPUTS: { Vec<CodeBlock> — extracted code blocks }
+    // START_parser_engine_parse
     pub fn parse(&self, code: &str, lang: &str) -> Vec<CodeBlock> {
         let language = match self.get_language(lang) {
             Some(l) => l,
@@ -57,6 +89,7 @@ impl ParserEngine {
         }
         blocks
     }
+    // END_parser_engine_parse
 
     fn extract_blocks(
         cursor: &mut tree_sitter::TreeCursor,
@@ -360,3 +393,4 @@ mod tests {
         assert!(blocks.is_empty());
     }
 }
+// END_public_api

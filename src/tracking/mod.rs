@@ -1,23 +1,55 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-TRACKING
+// PURPOSE: SQLite token tracker — records command token usage and provides stats
+// SCOPE: Tracker struct, token recording to SQLite, stats querying, TrackingStats model
+// DEPENDS: M-CONFIG
+// LINKS: tracking.db
+
+// START_MODULE_MAP
+// Tracker — Token usage tracker backed by SQLite
+// TrackingStats — Aggregate token economy statistics
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::config::Config;
 use std::path::PathBuf;
 
+// START_public_api
+
+// START_Tracker
 pub struct Tracker {
     config: Config,
 }
 
+// END_Tracker
+
 impl Tracker {
+    // START_CONTRACT_Tracker::new
+    // PURPOSE: Create a new Tracker with the given config
+    // INPUTS: { config: &Config }
+    // OUTPUTS: { Self }
+    // START_tracker_new
     pub fn new(config: &Config) -> Self {
         Self {
             config: config.clone(),
         }
     }
+    // END_tracker_new
 
+    // START_CONTRACT_Tracker::db_path
+    // PURPOSE: Return the path to the SQLite tracking database
+    // OUTPUTS: { anyhow::Result<PathBuf> }
+    // START_tracker_db_path
     pub fn db_path() -> anyhow::Result<PathBuf> {
         let data_dir = dirs::data_dir()
             .ok_or_else(|| anyhow::anyhow!("Cannot find data directory"))?
             .join("synapse");
         Ok(data_dir.join("tracking.db"))
     }
+    // END_tracker_db_path
 
     #[allow(dead_code)]
     fn project_db_path() -> anyhow::Result<PathBuf> {
@@ -36,6 +68,12 @@ impl Tracker {
         Ok(data_dir.join(format!("tracking-{}.db", project_hash)))
     }
 
+    // START_CONTRACT_Tracker::record
+    // PURPOSE: Record a proxied command with token counts into SQLite
+    // INPUTS: { cmd: &str — command string }, { input_tokens: u32 }, { output_tokens: u32 }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes to SQLite database
+    // START_tracker_record
     pub async fn record(
         &self,
         cmd: &str,
@@ -83,7 +121,12 @@ impl Tracker {
         }
         Ok(())
     }
+    // END_tracker_record
 
+    // START_CONTRACT_Tracker::get_stats
+    // PURPOSE: Retrieve aggregate tracking statistics for the current project
+    // OUTPUTS: { anyhow::Result<TrackingStats> }
+    // START_tracker_get_stats
     pub async fn get_stats(&self) -> anyhow::Result<TrackingStats> {
         let db_path = Self::db_path()?;
         let project = std::env::current_dir()
@@ -128,8 +171,10 @@ impl Tracker {
         }
         Ok(stats)
     }
+    // END_tracker_get_stats
 }
 
+// START_TrackingStats
 #[derive(serde::Serialize, Default, Debug)]
 pub struct TrackingStats {
     pub total_commands: u64,
@@ -138,3 +183,5 @@ pub struct TrackingStats {
     pub total_saved_tokens: u64,
     pub avg_savings_pct: f64,
 }
+// END_TrackingStats
+// END_public_api

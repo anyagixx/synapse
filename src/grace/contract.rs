@@ -1,5 +1,26 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRACE-CONTRACT
+// PURPOSE: MODULE_CONTRACT validator — scans source files for GRACE contract blocks and validates them
+// SCOPE: ModuleContract, FunctionContract, ContractReport models, ContractValidator with scan_file and validate_project
+// DEPENDS: M-INDEXER-WALKER
+// LINKS: N/A
+
+// START_MODULE_MAP
+// ModuleContract — Parsed MODULE_CONTRACT block from a source file
+// FunctionContract — Parsed START_CONTRACT block for a function
+// ContractReport — Aggregate contract validation report
+// ContractValidator — Scans and validates GRACE contract blocks
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use std::path::Path;
 
+// START_public_api
+
+// START_ModuleContract
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ModuleContract {
     pub file_path: String,
@@ -15,7 +36,9 @@ pub struct ModuleContract {
     pub function_contracts: Vec<FunctionContract>,
     pub errors: Vec<String>,
 }
+// END_ModuleContract
 
+// START_FunctionContract
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct FunctionContract {
     pub name: String,
@@ -25,7 +48,9 @@ pub struct FunctionContract {
     pub side_effects: Vec<String>,
     pub links: Vec<String>,
 }
+// END_FunctionContract
 
+// START_ContractReport
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ContractReport {
     pub total_files: usize,
@@ -35,8 +60,11 @@ pub struct ContractReport {
     pub invalid: usize,
     pub contracts: Vec<ModuleContract>,
 }
+// END_ContractReport
 
+// START_ContractValidator
 pub struct ContractValidator;
+// END_ContractValidator
 
 impl Default for ContractValidator {
     fn default() -> Self {
@@ -45,10 +73,20 @@ impl Default for ContractValidator {
 }
 
 impl ContractValidator {
+    // START_CONTRACT_ContractValidator::new
+    // PURPOSE: Create a new ContractValidator
+    // OUTPUTS: { Self }
+    // START_cv_new
     pub fn new() -> Self {
         Self
     }
+    // END_cv_new
 
+    // START_CONTRACT_ContractValidator::scan_file
+    // PURPOSE: Scan a single source file for GRACE contract blocks
+    // INPUTS: { path: &Path — file path }, { content: &str — file content }
+    // OUTPUTS: { ModuleContract — parsed contract (may be invalid) }
+    // START_cv_scan_file
     pub fn scan_file(path: &Path, content: &str) -> ModuleContract {
         let file_path = path.to_string_lossy().to_string();
         let mut mc = ModuleContract {
@@ -117,6 +155,7 @@ impl ContractValidator {
         }
         mc
     }
+    // END_cv_scan_file
 
     fn extract_function_contracts(content: &str) -> Vec<FunctionContract> {
         let mut contracts = Vec::new();
@@ -170,6 +209,11 @@ impl ContractValidator {
         }
     }
 
+    // START_CONTRACT_ContractValidator::validate_project
+    // PURPOSE: Validate all source files in a project for GRACE contract compliance
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<ContractReport> }
+    // START_cv_validate_project
     pub fn validate_project(root: &Path) -> anyhow::Result<ContractReport> {
         let mut contracts = Vec::new();
         let walker = crate::indexer::walker::Walker::new(root);
@@ -207,6 +251,7 @@ impl ContractValidator {
             contracts,
         })
     }
+    // END_cv_validate_project
 }
 
 fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<FunctionContract>) {
@@ -332,3 +377,4 @@ mod tests {
         assert_eq!(mc.function_contracts[0].inputs.len(), 1);
     }
 }
+// END_public_api

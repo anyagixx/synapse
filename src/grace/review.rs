@@ -1,14 +1,36 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRACE-REVIEW
+// PURPOSE: GRACE integrity review — checks semantic markup, contracts, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-CONTRACT, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// LINKS: docs/knowledge-graph.xml, docs/verification-plan.xml
+
+// START_MODULE_MAP
+// ReviewReport — Full review report with sections
+// ReviewSection — Single review section with issues list
+// Reviewer — GRACE integrity reviewer with scoped, wave-audit, and full modes
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::grace::contract::ContractValidator;
 use crate::grace::semantic::SemanticExtractor;
 use std::path::Path;
 
+// START_public_api
+
+// START_ReviewReport
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ReviewReport {
     pub mode: String,
     pub passed: bool,
     pub sections: Vec<ReviewSection>,
 }
+// END_ReviewReport
 
+// START_ReviewSection
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ReviewSection {
     pub name: String,
@@ -16,8 +38,11 @@ pub struct ReviewSection {
     pub details: String,
     pub issues: Vec<String>,
 }
+// END_ReviewSection
 
+// START_Reviewer
 pub struct Reviewer;
+// END_Reviewer
 
 impl Default for Reviewer {
     fn default() -> Self {
@@ -26,10 +51,20 @@ impl Default for Reviewer {
 }
 
 impl Reviewer {
+    // START_CONTRACT_Reviewer::new
+    // PURPOSE: Create a new Reviewer
+    // OUTPUTS: { Self }
+    // START_reviewer_new
     pub fn new() -> Self {
         Self
     }
+    // END_reviewer_new
 
+    // START_CONTRACT_Reviewer::review
+    // PURPOSE: Run GRACE integrity review with the given mode
+    // INPUTS: { root: &Path }, { mode: &str — scoped|wave-audit|full }
+    // OUTPUTS: { anyhow::Result<ReviewReport> }
+    // START_reviewer_review
     pub fn review(root: &Path, mode: &str) -> anyhow::Result<ReviewReport> {
         match mode {
             "scoped" => Self::scoped_gate(root),
@@ -38,6 +73,7 @@ impl Reviewer {
             _ => Self::scoped_gate(root),
         }
     }
+    // END_reviewer_review
 
     fn scoped_gate(root: &Path) -> anyhow::Result<ReviewReport> {
         let mut sections = Vec::new();
@@ -238,3 +274,4 @@ impl Reviewer {
         })
     }
 }
+// END_public_api

@@ -1,6 +1,25 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRACE-REFRESH
+// PURPOSE: Artifact synchronization — detects drift between code and knowledge graph/verification plan
+// SCOPE: Refresher struct, RefreshReport, knowledge graph parsing, verification plan parsing, drift detection
+// DEPENDS: M-GRACE-CONTRACT
+// LINKS: docs/knowledge-graph.xml, docs/verification-plan.xml
+
+// START_MODULE_MAP
+// RefreshReport — Drift detection report with suggested actions
+// Refresher — Syncs code modules with KG and verification plan
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::grace::contract::ContractValidator;
 use std::path::Path;
 
+// START_public_api
+
+// START_RefreshReport
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct RefreshReport {
     pub total_modules: usize,
@@ -13,8 +32,11 @@ pub struct RefreshReport {
     pub contract_issues: Vec<String>,
     pub suggested_actions: Vec<String>,
 }
+// END_RefreshReport
 
+// START_Refresher
 pub struct Refresher;
+// END_Refresher
 
 impl Default for Refresher {
     fn default() -> Self {
@@ -23,10 +45,20 @@ impl Default for Refresher {
 }
 
 impl Refresher {
+    // START_CONTRACT_Refresher::new
+    // PURPOSE: Create a new Refresher
+    // OUTPUTS: { Self }
+    // START_refresher_new
     pub fn new() -> Self {
         Self
     }
+    // END_refresher_new
 
+    // START_CONTRACT_Refresher::refresh
+    // PURPOSE: Sync knowledge graph and verification plan with code, detect drift
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<RefreshReport> }
+    // START_refresher_refresh
     pub fn refresh(root: &Path) -> anyhow::Result<RefreshReport> {
         let contract_report = ContractValidator::validate_project(root)?;
         let mut report = RefreshReport {
@@ -162,4 +194,6 @@ impl Refresher {
         report.suggested_actions.dedup();
         Ok(report)
     }
+    // END_refresher_refresh
 }
+// END_public_api

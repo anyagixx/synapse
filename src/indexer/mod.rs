@@ -1,12 +1,31 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-INDEXER
+// PURPOSE: Code indexer — walks, parses, stores, and searches code blocks with BM25 and vector search
+// SCOPE: Indexer struct, SearchResult, index_directory, search, hybrid_search, view_signatures
+// DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-CONFIG
+// LINKS: N/A
+
+// START_MODULE_MAP
+// SearchResult — Search result with path, language, name, kind, lines, content, score
+// Indexer — Main indexer combining walker, parser, and storage
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 pub mod parser;
 pub mod storage;
 pub mod walker;
 
 use crate::config::Config;
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::RwLock;
 use storage::Storage;
 
+// START_public_api
+
+// START_SearchResult
 pub struct SearchResult {
     pub path: String,
     pub language: String,
@@ -17,29 +36,43 @@ pub struct SearchResult {
     pub content: String,
     pub score: f64,
 }
+// END_SearchResult
 
+// START_Indexer
 pub struct Indexer {
     pub config: Config,
-    pub storage: Mutex<Option<Storage>>,
+    pub storage: RwLock<Option<Storage>>,
 }
+// END_Indexer
 
 impl Indexer {
+    // START_CONTRACT_Indexer::new
+    // PURPOSE: Create a new Indexer
+    // OUTPUTS: { Self }
+    // START_indexer_new
     pub fn new(config: &Config) -> Self {
         Self {
             config: config.clone(),
-            storage: Mutex::new(None),
+            storage: RwLock::new(None),
         }
     }
+    // END_indexer_new
 
     #[allow(clippy::needless_lifetimes)]
-    fn get_storage(&self, root: &Path) -> std::sync::MutexGuard<'_, Option<Storage>> {
-        let mut guard = self.storage.lock().unwrap();
+    fn get_storage(&self, root: &Path) -> std::sync::RwLockWriteGuard<'_, Option<Storage>> {
+        let mut guard = self.storage.write().unwrap();
         if guard.is_none() {
             *guard = Some(Storage::new(root));
         }
         guard
     }
 
+    // START_CONTRACT_Indexer::index_directory
+    // PURPOSE: Walk, parse, and index all source files in a directory
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes indexed blocks to storage
+    // START_indexer_index_directory
     pub async fn index_directory(&self, root: &Path) -> anyhow::Result<()> {
         let walker = walker::Walker::new(root);
         let files = walker.walk();
@@ -93,17 +126,26 @@ impl Indexer {
         );
         Ok(())
     }
+    // END_indexer_index_directory
 
+    // START_CONTRACT_Indexer::search
+    // PURPOSE: BM25 search across indexed code blocks
+    // INPUTS: { query: &str }, { max_results: usize }
+    // OUTPUTS: { anyhow::Result<Vec<SearchResult>> }
+    // START_indexer_search
     pub async fn search(
         &self,
         query: &str,
         max_results: usize,
     ) -> anyhow::Result<Vec<SearchResult>> {
         let root = std::env::current_dir()?;
-        let mut guard = self.storage.lock().unwrap();
-        if guard.is_none() {
-            *guard = Some(crate::indexer::storage::Storage::new(&root));
+        {
+            let mut guard = self.storage.write().unwrap();
+            if guard.is_none() {
+                *guard = Some(crate::indexer::storage::Storage::new(&root));
+            }
         }
+        let guard = self.storage.read().unwrap();
         let storage = guard.as_ref().unwrap();
         let results = storage.search_with_scores(query, max_results);
         Ok(results
@@ -120,17 +162,26 @@ impl Indexer {
             })
             .collect())
     }
+    // END_indexer_search
 
+    // START_CONTRACT_Indexer::hybrid_search
+    // PURPOSE: Combined BM25 + vector search with deduplication
+    // INPUTS: { query: &str }, { max_results: usize }
+    // OUTPUTS: { anyhow::Result<Vec<SearchResult>> }
+    // START_indexer_hybrid_search
     pub async fn hybrid_search(
         &self,
         query: &str,
         max_results: usize,
     ) -> anyhow::Result<Vec<SearchResult>> {
         let root = std::env::current_dir()?;
-        let mut guard = self.storage.lock().unwrap();
-        if guard.is_none() {
-            *guard = Some(crate::indexer::storage::Storage::new(&root));
+        {
+            let mut guard = self.storage.write().unwrap();
+            if guard.is_none() {
+                *guard = Some(crate::indexer::storage::Storage::new(&root));
+            }
         }
+        let guard = self.storage.read().unwrap();
         let storage = guard.as_ref().unwrap();
 
         // Get BM25 results
@@ -172,7 +223,13 @@ impl Indexer {
             })
             .collect())
     }
+    // END_indexer_hybrid_search
 
+    // START_CONTRACT_Indexer::view_signatures
+    // PURPOSE: Parse and return function/class signatures from a file
+    // INPUTS: { path_str: &str — file path }
+    // OUTPUTS: { anyhow::Result<Vec<String>> — list of signature strings }
+    // START_indexer_view_signatures
     pub async fn view_signatures(&self, path_str: &str) -> anyhow::Result<Vec<String>> {
         let full_path = std::env::current_dir()?.join(path_str);
         let code = tokio::fs::read_to_string(&full_path).await?;
@@ -213,6 +270,7 @@ impl Indexer {
             .collect())
     }
 }
+// END_indexer_view_signatures
 
 fn fallback_signatures(code: &str) -> Vec<String> {
     let mut sigs = Vec::new();
@@ -227,3 +285,4 @@ fn fallback_signatures(code: &str) -> Vec<String> {
     }
     sigs
 }
+// END_public_api

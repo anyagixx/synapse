@@ -1,30 +1,65 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-MCP-LSP
+// PURPOSE: LSP client bridge — sends textDocument/hover, go-to-definition, references to language servers
+// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, LSP protocol via stdio
+// DEPENDS: N/A
+// LINKS: N/A
+
+// START_MODULE_MAP
+// LspHoverResult — Hover information from LSP
+// LspDefinitionResult — Go-to-definition result
+// LspReferenceResult — References result
+// LspClient — LSP protocol client bridge
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use std::process::{Command, Stdio};
 
-#[derive(serde::Serialize)]
+// START_public_api
+
+// START_LspHoverResult
 pub struct LspHoverResult {
     pub contents: String,
     pub range: Option<(usize, usize)>,
 }
+// END_LspHoverResult
 
-#[derive(serde::Serialize)]
+// START_LspDefinitionResult
 pub struct LspDefinitionResult {
     pub uri: String,
     pub range: (usize, usize, usize, usize), // start_line, start_col, end_line, end_col
 }
+// END_LspDefinitionResult
 
-#[derive(serde::Serialize)]
+// START_LspReferenceResult
 pub struct LspReferenceResult {
     pub uri: String,
     pub ranges: Vec<(usize, usize, usize, usize)>,
 }
+// END_LspReferenceResult
 
+// START_LspClient
 pub struct LspClient;
+// END_LspClient
 
 impl LspClient {
+    // START_CONTRACT_LspClient::new
+    // PURPOSE: Create a new LspClient
+    // OUTPUTS: { Self }
+    // START_lsp_client_new
     pub fn new() -> Self {
         Self
     }
+    // END_lsp_client_new
 
+    // START_CONTRACT_LspClient::hover
+    // PURPOSE: Send textDocument/hover request to language server
+    // INPUTS: { file: &str }, { line: u32 }, { column: u32 }
+    // OUTPUTS: { anyhow::Result<LspHoverResult> }
+    // START_lsp_client_hover
     pub fn hover(&self, file: &str, line: u32, column: u32) -> anyhow::Result<LspHoverResult> {
         let cmd = Self::detect_lsp_command(file)?;
         let uri = format!("file://{}", std::fs::canonicalize(file)?.display());
@@ -45,7 +80,13 @@ impl LspClient {
             range: None,
         })
     }
+    // END_lsp_client_hover
 
+    // START_CONTRACT_LspClient::go_to_def
+    // PURPOSE: Send textDocument/definition request
+    // INPUTS: { file: &str }, { line: u32 }, { column: u32 }
+    // OUTPUTS: { anyhow::Result<Vec<LspDefinitionResult>> }
+    // START_lsp_client_go_to_def
     pub fn go_to_def(
         &self,
         file: &str,
@@ -78,7 +119,13 @@ impl LspClient {
         }
         Ok(results)
     }
+    // END_lsp_client_go_to_def
 
+    // START_CONTRACT_LspClient::references
+    // PURPOSE: Send textDocument/references request
+    // INPUTS: { file: &str }, { line: u32 }, { column: u32 }
+    // OUTPUTS: { anyhow::Result<Vec<LspReferenceResult>> }
+    // START_lsp_client_references
     pub fn references(
         &self,
         file: &str,
@@ -112,6 +159,7 @@ impl LspClient {
             ranges,
         }])
     }
+    // END_lsp_client_references
 
     fn detect_lsp_command(file: &str) -> anyhow::Result<Vec<String>> {
         let ext = std::path::Path::new(file)
@@ -189,3 +237,4 @@ impl LspClient {
         )
     }
 }
+// END_public_api

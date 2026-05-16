@@ -1,3 +1,21 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRACE-STATUS
+// PURPOSE: Project health collector — aggregates contracts, semantic, verification, drift, token economy, system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, print_report
+// DEPENDS: M-GRACE-CONTRACT, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
+// LINKS: docs/
+
+// START_MODULE_MAP
+// StatusReport — Full project health report
+// TokenEconomy — Token usage statistics
+// SystemInfo — System metadata (version, paths)
+// StatusCollector — Collects and prints project health
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::config::Config;
 use crate::grace::contract::{ContractReport, ContractValidator};
 use crate::grace::refresh::Refresher;
@@ -6,6 +24,9 @@ use crate::grace::verify::Verifier;
 use crate::tracking::Tracker;
 use std::path::Path;
 
+// START_public_api
+
+// START_StatusReport
 #[derive(Debug, serde::Serialize)]
 pub struct StatusReport {
     pub contracts: ContractReport,
@@ -16,7 +37,9 @@ pub struct StatusReport {
     pub system: SystemInfo,
     pub next_actions: Vec<String>,
 }
+// END_StatusReport
 
+// START_TokenEconomy
 #[derive(Debug, serde::Serialize)]
 pub struct TokenEconomy {
     pub total_commands: u64,
@@ -24,7 +47,9 @@ pub struct TokenEconomy {
     pub avg_savings_pct: f64,
     pub db_size: String,
 }
+// END_TokenEconomy
 
+// START_SystemInfo
 #[derive(Debug, serde::Serialize)]
 pub struct SystemInfo {
     pub version: String,
@@ -32,8 +57,11 @@ pub struct SystemInfo {
     pub data_path: String,
     pub project_path: String,
 }
+// END_SystemInfo
 
+// START_StatusCollector
 pub struct StatusCollector;
+// END_StatusCollector
 
 impl Default for StatusCollector {
     fn default() -> Self {
@@ -42,10 +70,20 @@ impl Default for StatusCollector {
 }
 
 impl StatusCollector {
+    // START_CONTRACT_StatusCollector::new
+    // PURPOSE: Create a new StatusCollector
+    // OUTPUTS: { Self }
+    // START_sc_new
     pub fn new() -> Self {
         Self
     }
+    // END_sc_new
 
+    // START_CONTRACT_StatusCollector::collect
+    // PURPOSE: Collect full project health report
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<StatusReport> }
+    // START_sc_collect
     pub async fn collect(root: &Path) -> anyhow::Result<StatusReport> {
         let contracts = ContractValidator::validate_project(root)?;
         let semantic = SemanticExtractor::scan_project(root)?;
@@ -117,7 +155,14 @@ impl StatusCollector {
             next_actions,
         })
     }
+    // END_sc_collect
 
+    // START_CONTRACT_StatusCollector::print_report
+    // PURPOSE: Print formatted health report to stdout
+    // INPUTS: { report: &StatusReport }
+    // OUTPUTS: prints to stdout
+    // SIDE_EFFECTS: prints to stdout
+    // START_sc_print_report
     pub fn print_report(report: &StatusReport) {
         println!("╔══════════════════════════════════════╗");
         println!("║       Synapse Project Health        ║");
@@ -224,4 +269,6 @@ impl StatusCollector {
             }
         }
     }
+    // END_sc_print_report
 }
+// END_public_api

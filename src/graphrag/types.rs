@@ -1,5 +1,27 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRAPHRAG-TYPES
+// PURPOSE: Graph data types — CodeNode, CodeRelationship, CodeGraph, RelationType, GraphOverview
+// SCOPE: Graph type definitions, node search, path finding, graph overview
+// DEPENDS: N/A
+// LINKS: N/A
+
+// START_MODULE_MAP
+// RelationType — Types of code relationships (implements, extends, imports, calls, etc.)
+// CodeNode — Code graph node (module/file with symbols, imports, exports)
+// CodeRelationship — Edge between two code nodes
+// CodeGraph — Full code graph with search and navigation
+// GraphOverview — Summary statistics for a graph
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use serde::{Deserialize, Serialize};
 
+// START_public_api
+
+// START_RelationType
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RelationType {
     Implements,
@@ -17,6 +39,7 @@ pub enum RelationType {
     ParentModule,
     ChildModule,
 }
+// END_RelationType
 
 impl RelationType {
     pub fn weight(&self) -> f64 {
@@ -72,6 +95,7 @@ impl RelationType {
     }
 }
 
+// START_CodeNode
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeNode {
     pub id: String,
@@ -85,7 +109,9 @@ pub struct CodeNode {
     pub imports: Vec<String>,
     pub exports: Vec<String>,
 }
+// END_CodeNode
 
+// START_CodeRelationship
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeRelationship {
     pub source_id: String,
@@ -94,12 +120,15 @@ pub struct CodeRelationship {
     pub weight: f64,
     pub description: Option<String>,
 }
+// END_CodeRelationship
 
+// START_CodeGraph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeGraph {
     pub nodes: Vec<CodeNode>,
     pub relationships: Vec<CodeRelationship>,
 }
+// END_CodeGraph
 
 impl Default for CodeGraph {
     fn default() -> Self {
@@ -221,9 +250,12 @@ impl CodeGraph {
     }
 }
 
+// START_GraphOverview
 #[derive(Debug, Clone, Serialize)]
 pub struct GraphOverview {
     pub total_nodes: usize,
     pub total_relationships: usize,
     pub node_types: Vec<String>,
 }
+// END_GraphOverview
+// END_public_api

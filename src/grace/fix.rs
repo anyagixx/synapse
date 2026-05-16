@@ -1,6 +1,25 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRACE-FIX
+// PURPOSE: Debug/fix module — diagnoses issues via knowledge graph navigation and indexed search
+// SCOPE: Debugger struct, FixResult, diagnose via semantic search
+// DEPENDS: M-INDEXER-STORAGE
+// LINKS: N/A
+
+// START_MODULE_MAP
+// FixResult — Debug/fix result with related modules, suggested blocks, diagnosis
+// Debugger — Diagnoses issues using indexed code
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::indexer::storage::Storage;
 use std::path::Path;
 
+// START_public_api
+
+// START_FixResult
 #[derive(Debug, serde::Serialize)]
 pub struct FixResult {
     pub description: String,
@@ -8,8 +27,11 @@ pub struct FixResult {
     pub suggested_blocks: Vec<String>,
     pub diagnosis: String,
 }
+// END_FixResult
 
+// START_Debugger
 pub struct Debugger;
+// END_Debugger
 
 impl Default for Debugger {
     fn default() -> Self {
@@ -18,11 +40,20 @@ impl Default for Debugger {
 }
 
 impl Debugger {
+    // START_CONTRACT_Debugger::new
+    // PURPOSE: Create a new Debugger
+    // OUTPUTS: { Self }
+    // START_debugger_new
     pub fn new() -> Self {
         Self
     }
+    // END_debugger_new
 
-    /// Debug via knowledge graph navigation
+    // START_CONTRACT_Debugger::diagnose
+    // PURPOSE: Diagnose a bug description via knowledge graph navigation
+    // INPUTS: { description: &str — bug description }, { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<FixResult> }
+    // START_debugger_diagnose
     pub async fn diagnose(description: &str, root: &Path) -> anyhow::Result<FixResult> {
         let storage = Storage::new(root);
 
@@ -71,6 +102,7 @@ impl Debugger {
             diagnosis,
         })
     }
+    // END_debugger_diagnose
 }
 
 fn truncate(s: &str, max: usize) -> String {
@@ -80,3 +112,4 @@ fn truncate(s: &str, max: usize) -> String {
         format!("{}...", &s[..max])
     }
 }
+// END_public_api

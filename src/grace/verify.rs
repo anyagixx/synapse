@@ -1,22 +1,47 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRACE-VERIFY
+// PURPOSE: 3-level verification — module-local, wave, phase checks for GRACE compliance
+// SCOPE: Verifier struct, VerificationResult, CheckResult, verify_all, verify_module_local, verify_wave, verify_phase
+// DEPENDS: M-GRACE-CONTRACT, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
+
+// START_MODULE_MAP
+// VerificationResult — Per-level verification result with check list
+// CheckResult — Single verification check result
+// Verifier — Runs 3-level GRACE verification
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::grace::contract::ContractValidator;
 use crate::grace::semantic::SemanticExtractor;
 use std::path::Path;
 
+// START_public_api
+
+// START_VerificationResult
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct VerificationResult {
     pub level: String,
     pub passed: bool,
     pub checks: Vec<CheckResult>,
 }
+// END_VerificationResult
 
+// START_CheckResult
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct CheckResult {
     pub name: String,
     pub passed: bool,
     pub details: String,
 }
+// END_CheckResult
 
+// START_Verifier
 pub struct Verifier;
+// END_Verifier
 
 impl Default for Verifier {
     fn default() -> Self {
@@ -25,11 +50,20 @@ impl Default for Verifier {
 }
 
 impl Verifier {
+    // START_CONTRACT_Verifier::new
+    // PURPOSE: Create a new Verifier
+    // OUTPUTS: { Self }
+    // START_verifier_new
     pub fn new() -> Self {
         Self
     }
+    // END_verifier_new
 
-    /// Run all 3 verification levels
+    // START_CONTRACT_Verifier::verify_all
+    // PURPOSE: Run all 3 verification levels (module-local, wave, phase)
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<Vec<VerificationResult>> }
+    // START_verifier_verify_all
     pub async fn verify_all(root: &Path) -> anyhow::Result<Vec<VerificationResult>> {
         let mut results = Vec::new();
 
@@ -39,8 +73,13 @@ impl Verifier {
 
         Ok(results)
     }
+    // END_verifier_verify_all
 
-    /// Level 1: Module-local verification (fast per-module checks)
+    // START_CONTRACT_Verifier::verify_module_local
+    // PURPOSE: Level 1 — per-module checks (contracts, semantic, 500-token, traces)
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<VerificationResult> }
+    // START_verifier_verify_module_local
     pub async fn verify_module_local(root: &Path) -> anyhow::Result<VerificationResult> {
         let mut checks = Vec::new();
 
@@ -241,8 +280,13 @@ impl Verifier {
             checks,
         })
     }
+    // END_verifier_verify_module_local
 
-    /// Level 2: Wave-level verification (cross-module)
+    // START_CONTRACT_Verifier::verify_wave
+    // PURPOSE: Level 2 — cross-module checks (knowledge graph, development plan)
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<VerificationResult> }
+    // START_verifier_verify_wave
     pub async fn verify_wave(root: &Path) -> anyhow::Result<VerificationResult> {
         let mut checks = Vec::new();
 
@@ -299,8 +343,13 @@ impl Verifier {
             checks,
         })
     }
+    // END_verifier_verify_wave
 
-    /// Level 3: Phase-level verification (full regression)
+    // START_CONTRACT_Verifier::verify_phase
+    // PURPOSE: Level 3 — full regression (TODO/FIXME check, file size limits)
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<VerificationResult> }
+    // START_verifier_verify_phase
     pub async fn verify_phase(root: &Path) -> anyhow::Result<VerificationResult> {
         let mut checks = Vec::new();
 
@@ -369,4 +418,6 @@ impl Verifier {
             checks,
         })
     }
+    // END_verifier_verify_phase
 }
+// END_public_api

@@ -1,18 +1,48 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-HOOKS
+// PURPOSE: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode
+// SCOPE: HookManager struct, install/uninstall/status for opencode agent, file generation
+// DEPENDS: M-CONFIG
+// LINKS: .opencode/
+
+// START_MODULE_MAP
+// HookManager — Manages Synapse hook files for AI agent integration
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::config::Config;
 use std::path::Path;
 
+// START_public_api
+
+// START_HookManager
 pub struct HookManager {
     #[allow(dead_code)]
     config: Config,
 }
+// END_HookManager
 
 impl HookManager {
+    // START_CONTRACT_HookManager::new
+    // PURPOSE: Create a new HookManager
+    // OUTPUTS: { Self }
+    // START_hookmanager_new
     pub fn new(config: &Config) -> Self {
         Self {
             config: config.clone(),
         }
     }
+    // END_hookmanager_new
 
+    // START_CONTRACT_HookManager::install
+    // PURPOSE: Install Synapse hooks for a given agent (opencode/all)
+    // INPUTS: { agent: &str — target agent name }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: creates files in .opencode/, prints status
+    // START_hookmanager_install
     pub fn install(&self, agent: &str) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         match agent {
@@ -31,6 +61,7 @@ impl HookManager {
             }
         }
     }
+    // END_hookmanager_install
 
     fn install_opencode(&self, root: &Path) -> anyhow::Result<()> {
         let opencode_dir = root.join(".opencode");
@@ -119,6 +150,12 @@ echo "[synapse] Shell proxy hooks loaded"
         Ok(())
     }
 
+    // START_CONTRACT_HookManager::uninstall
+    // PURPOSE: Uninstall Synapse hooks for a given agent
+    // INPUTS: { agent: &str — target agent name }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: removes hook files from .opencode/
+    // START_hookmanager_uninstall
     pub fn uninstall(&self, agent: &str) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         match agent {
@@ -161,7 +198,13 @@ echo "[synapse] Shell proxy hooks loaded"
             }
         }
     }
+    // END_hookmanager_uninstall
 
+    // START_CONTRACT_HookManager::status
+    // PURPOSE: Report the installation status of all Synapse hook files
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: prints status to stdout
+    // START_hookmanager_status
     pub fn status(&self) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         println!("Synapse Hook Status for {}", root.display());
@@ -203,4 +246,6 @@ echo "[synapse] Shell proxy hooks loaded"
 
         Ok(())
     }
+    // END_hookmanager_status
 }
+// END_public_api

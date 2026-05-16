@@ -1,17 +1,47 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-MCP-SERVER
+// PURPOSE: MCP JSON-RPC server — serves Synapse tools over stdio for AI agent consumption
+// SCOPE: McpServer, SynapseHandler, JSON-RPC message handling, 8+ MCP tools (semantic_search, view_signatures, graphrag_query, etc.)
+// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-GRACE, M-TRACKING, M-COMPRESS
+// LINKS: N/A
+
+// START_MODULE_MAP
+// McpServer — MCP server entry point (stdio and HTTP stubs)
+// SynapseHandler — MCP message handler with 8+ tool implementations
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::config::Config;
 use crate::graphrag::GraphRag;
 use crate::indexer::Indexer;
 use std::fmt::Display;
-use std::sync::Mutex;
+use std::sync::RwLock;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+// START_public_api
+
+// START_McpServer
 pub struct McpServer;
+// END_McpServer
 
 impl McpServer {
+    // START_CONTRACT_McpServer::new
+    // PURPOSE: Create a new McpServer
+    // OUTPUTS: { Self }
+    // START_mcp_server_new
     pub fn new(_config: Config) -> Self {
         Self
     }
+    // END_mcp_server_new
 
+    // START_CONTRACT_McpServer::start_stdio
+    // PURPOSE: Start MCP server on stdio — reads JSON-RPC messages from stdin, writes responses to stdout
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: blocks on stdio I/O
+    // START_mcp_server_start_stdio
     pub async fn start_stdio(self) -> anyhow::Result<()> {
         tracing::info!("MCP server running on stdio");
         let root = std::env::current_dir().unwrap_or_default();
@@ -68,7 +98,13 @@ impl McpServer {
         }
         Ok(())
     }
+    // END_mcp_server_start_stdio
 
+    // START_CONTRACT_McpServer::start_http
+    // PURPOSE: HTTP MCP server stub — delegates to stdio for now
+    // INPUTS: { bind: &str }
+    // OUTPUTS: { anyhow::Result<()> }
+    // START_mcp_server_start_http
     pub async fn start_http(self, bind: &str) -> anyhow::Result<()> {
         tracing::info!(
             "MCP HTTP not yet implemented. Use: socat tcp-l:{} exec:syn mcp",
@@ -76,13 +112,16 @@ impl McpServer {
         );
         self.start_stdio().await
     }
+    // END_mcp_server_start_http
 }
 
+// START_SynapseHandler
 pub struct SynapseHandler {
     indexer: Indexer,
-    graphrag: Mutex<Option<GraphRag>>,
+    graphrag: RwLock<Option<GraphRag>>,
     initialized: bool,
 }
+// END_SynapseHandler
 
 impl Default for SynapseHandler {
     fn default() -> Self {
@@ -91,13 +130,17 @@ impl Default for SynapseHandler {
 }
 
 impl SynapseHandler {
+    // START_CONTRACT_SynapseHandler::new
+    // PURPOSE: Create a new SynapseHandler with pre-loaded indexer and graph
+    // OUTPUTS: { Self }
+    // START_sh_new
     pub fn new() -> Self {
         let config = Config::load().unwrap_or_default();
         let indexer = Indexer::new(&config);
         let mut graphrag = GraphRag::new();
         // Try to find index from current directory
         if let Ok(cwd) = std::env::current_dir() {
-            let mut guard = indexer.storage.lock().unwrap();
+            let mut guard = indexer.storage.write().unwrap();
             if guard.is_none() {
                 *guard = Some(crate::indexer::storage::Storage::new(&cwd));
             }
@@ -106,10 +149,11 @@ impl SynapseHandler {
         }
         Self {
             indexer,
-            graphrag: Mutex::new(Some(graphrag)),
+            graphrag: RwLock::new(Some(graphrag)),
             initialized: false,
         }
     }
+    // END_sh_new
 
     pub async fn handle_message(&mut self, line: &str) -> serde_json::Value {
         let msg: serde_json::Value = match serde_json::from_str(line) {
@@ -338,7 +382,7 @@ impl SynapseHandler {
         args: &serde_json::Value,
     ) -> serde_json::Value {
         let operation = args["operation"].as_str().unwrap_or("search");
-        let guard = self.graphrag.lock().unwrap();
+        let guard = self.graphrag.read().unwrap();
         let graphrag = match guard.as_ref() {
             Some(g) => g,
             None => return self.error(id, -32603, "GraphRAG not built. Run `syn index` first."),
@@ -784,3 +828,4 @@ fn suggest_fix(check: &str) -> String {
         _ => "Review the check details and fix the reported issue".into(),
     }
 }
+// END_public_api

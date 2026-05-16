@@ -1,29 +1,65 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-INDEXER-WALKER
+// PURPOSE: File system walker — discovers source files respecting .gitignore and .synignore
+// SCOPE: Walker struct, file discovery with language detection, ignore rules
+// DEPENDS: N/A
+// LINKS: .gitignore, .synignore
+
+// START_MODULE_MAP
+// IndexFile — Discovered source file with path and language
+// Walker — File system walker with gitignore-aware traversal
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use ignore::WalkBuilder;
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+// START_public_api
+
+// START_IndexFile
 pub struct IndexFile {
     pub path: String,
     pub language: String,
 }
+// END_IndexFile
 
+// START_Walker
 pub struct Walker {
     root: std::path::PathBuf,
     total: AtomicUsize,
 }
+// END_Walker
 
 impl Walker {
+    // START_CONTRACT_Walker::new
+    // PURPOSE: Create a new Walker for a given root directory
+    // OUTPUTS: { Self }
+    // START_walker_new
     pub fn new(root: &Path) -> Self {
         Self {
             root: root.to_path_buf(),
             total: AtomicUsize::new(0),
         }
     }
+    // END_walker_new
 
+    // START_CONTRACT_Walker::total
+    // PURPOSE: Return the total number of discovered files
+    // OUTPUTS: { usize }
+    // START_walker_total
     pub fn total(&self) -> usize {
         self.total.load(Ordering::Relaxed)
     }
+    // END_walker_total
 
+    // START_CONTRACT_Walker::walk
+    // PURPOSE: Walk the directory tree and collect all source files
+    // OUTPUTS: { Vec<IndexFile> — discovered files }
+    // START_walker_walk
     pub fn walk(&self) -> Vec<IndexFile> {
         let mut files = Vec::new();
         let walker = WalkBuilder::new(&self.root)
@@ -60,6 +96,7 @@ impl Walker {
         }
         files
     }
+    // END_walker_walk
 }
 
 fn detect_language(path: &Path) -> Option<String> {
@@ -88,3 +125,4 @@ fn detect_language(path: &Path) -> Option<String> {
         },
     }
 }
+// END_public_api

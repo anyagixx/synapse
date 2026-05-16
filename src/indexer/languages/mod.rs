@@ -1,7 +1,28 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-INDEXER-LANGS
+// PURPOSE: Language trait definitions and implementations for code parsing
+// SCOPE: LanguageParser trait, 14 language structs (Rust, Python, TS, JS, Go, PHP, Cpp, Ruby, Java, Bash, Json, Css, Lua, Markdown), detect_language
+// DEPENDS: N/A
+// LINKS: N/A
+
+// START_MODULE_MAP
+// LanguageParser — Trait for language name and extensions
+// Rust, Python, TypeScript, JavaScript, Go, Php, Cpp, Ruby, Java, Bash, Json, Css, Lua, Markdown — Language implementations
+// detect_language — Detect language from file extension
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
+// START_public_api
+
+// START_LanguageParser
 pub trait LanguageParser {
     fn name(&self) -> &'static str;
     fn extensions(&self) -> &'static [&'static str];
 }
+// END_LanguageParser
 
 pub struct Rust;
 pub struct Python;
@@ -75,6 +96,11 @@ impl LanguageParser for Markdown {
     fn extensions(&self) -> &'static [&'static str] { &["md"] }
 }
 
+// START_CONTRACT_detect_language
+// PURPOSE: Detect language from file extension, returning a boxed LanguageParser
+// INPUTS: { path: &Path — file path }
+// OUTPUTS: { Option<Box<dyn LanguageParser>> }
+// START_detect_language
 pub fn detect_language(path: &std::path::Path) -> Option<Box<dyn LanguageParser>> {
     let ext = path.extension()?.to_str()?;
     let parsers: Vec<Box<dyn LanguageParser>> = vec![
@@ -91,3 +117,5 @@ pub fn detect_language(path: &std::path::Path) -> Option<Box<dyn LanguageParser>
     }
     None
 }
+// END_detect_language
+// END_public_api

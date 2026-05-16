@@ -1,6 +1,25 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-GRACE-SEMANTIC
+// PURPOSE: Semantic block scanner — extracts START_/END_ block pairs from source files
+// SCOPE: SemanticExtractor, SemanticBlock, SemanticReport, extract_blocks, scan_project
+// DEPENDS: M-INDEXER-WALKER
+// LINKS: N/A
+
+// START_MODULE_MAP
+// SemanticBlock — A single START/END block with name, location, content, closure status
+// SemanticReport — Aggregate semantic markup report across project
+// SemanticExtractor — Scans project for semantic block markers
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use std::path::Path;
 
-/// A semantic block defined by START/END markers.
+// START_public_api
+
+// START_SemanticBlock
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SemanticBlock {
     pub name: String,
@@ -10,8 +29,9 @@ pub struct SemanticBlock {
     pub content: String,
     pub is_closed: bool,
 }
+// END_SemanticBlock
 
-/// Report of semantic markup across the project.
+// START_SemanticReport
 #[derive(Debug, Clone, serde::Serialize, Default)]
 pub struct SemanticReport {
     pub total_files: usize,
@@ -23,8 +43,11 @@ pub struct SemanticReport {
     pub duplicate_name_blocks: Vec<SemanticBlock>,
     pub blocks: Vec<SemanticBlock>,
 }
+// END_SemanticReport
 
+// START_SemanticExtractor
 pub struct SemanticExtractor;
+// END_SemanticExtractor
 
 impl Default for SemanticExtractor {
     fn default() -> Self {
@@ -33,11 +56,20 @@ impl Default for SemanticExtractor {
 }
 
 impl SemanticExtractor {
+    // START_CONTRACT_SemanticExtractor::new
+    // PURPOSE: Create a new SemanticExtractor
+    // OUTPUTS: { Self }
+    // START_se_new
     pub fn new() -> Self {
         Self
     }
+    // END_se_new
 
-    /// Extract all START_BLOCK/END_BLOCK pairs from a file
+    // START_CONTRACT_SemanticExtractor::extract_blocks
+    // PURPOSE: Extract all START_/END_ block pairs from a single file
+    // INPUTS: { path: &Path }, { content: &str }
+    // OUTPUTS: { Vec<SemanticBlock> }
+    // START_se_extract_blocks
     pub fn extract_blocks(path: &Path, content: &str) -> Vec<SemanticBlock> {
         let file_path = path.to_string_lossy().to_string();
         let mut blocks = Vec::new();
@@ -48,7 +80,7 @@ impl SemanticExtractor {
             let trimmed = line.trim();
             let line_num = i + 1;
 
-            // START_BLOCK_NAME
+            // START_BLOCK_NAME — skip CONTRACT_ markers (they pair with actual START)
             if let Some(name) = trimmed
                 .strip_prefix("// START_")
                 .or_else(|| trimmed.strip_prefix("# START_"))
@@ -56,26 +88,17 @@ impl SemanticExtractor {
                 .or_else(|| trimmed.strip_prefix("* START_"))
             {
                 let name = name.trim().trim_end_matches("*/").trim().to_string();
-                if !name.is_empty() {
+                if !name.is_empty() && !name.starts_with("CONTRACT_") {
                     stack.push((name, line_num));
                 }
             }
-            // START_NAME without BLOCK_ prefix
-            else if let Some(name) = trimmed
-                .strip_prefix("// START_")
-                .or_else(|| trimmed.strip_prefix("# START_"))
-            {
-                let name = name.trim().to_string();
-                if !name.is_empty() {
-                    stack.push((name.clone(), line_num));
-                }
-            }
 
-            // END_BLOCK_NAME or END_NAME
-            let is_end = trimmed.starts_with("// END_")
+            // END_BLOCK_NAME or END_NAME — skip CONTRACT_ markers
+            let is_end = (trimmed.starts_with("// END_")
                 || trimmed.starts_with("# END_")
                 || trimmed.starts_with("/* END_")
-                || trimmed.starts_with("* END_");
+                || trimmed.starts_with("* END_"))
+                && !trimmed.contains("END_CONTRACT_");
 
             if is_end && !stack.is_empty() {
                 let (name, start_line) = stack.pop().unwrap();
@@ -110,8 +133,13 @@ impl SemanticExtractor {
 
         blocks
     }
+    // END_se_extract_blocks
 
-    /// Scan entire project for semantic markup
+    // START_CONTRACT_SemanticExtractor::scan_project
+    // PURPOSE: Scan entire project for semantic blocks
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<SemanticReport> }
+    // START_se_scan_project
     pub fn scan_project(root: &Path) -> anyhow::Result<SemanticReport> {
         let mut report = SemanticReport::default();
         let walker = crate::indexer::walker::Walker::new(root);
@@ -153,4 +181,6 @@ impl SemanticExtractor {
         report.total_blocks = report.closed_blocks + report.open_blocks;
         Ok(report)
     }
+    // END_se_scan_project
 }
+// END_public_api

@@ -1,3 +1,22 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-CLI
+// PURPOSE: CLI command definitions and handlers — clap-powered CLI structs and run() impls for all commands
+// SCOPE: SynCli, Command enum, all Cmd structs (Init, Index, Search, View, etc.), cmd_run! macro, all command handlers
+// DEPENDS: M-CONFIG, M-INDEXER, M-GRACE, M-PROXY, M-COMPRESS, M-TRACKING, M-GRAPHRAG, M-HOOKS, M-DASHBOARD, M-MCP
+// LINKS: Cargo.toml
+
+// START_MODULE_MAP
+// SynCli — Top-level CLI struct (clap Parser)
+// Command — CLI command enum with all subcommands
+// InitCmd, IndexCmd, SearchCmd, ViewCmd, GrepCmd, VerifyCmd, ReviewCmd, FixCmd, ExplainCmd, StatusCmd — Command structs
+// GraphRagCmd, GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, DoctorCmd, RefreshCmd, HistoryCmd, ServeCmd — Command structs
+// HooksCmd, PlanCmd, ExecuteCmd, LogsCmd, TelemetryCmd, McpProxyCmd — Command structs
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -793,7 +812,7 @@ impl IndexCmd {
         indexer.index_directory(&root).await?;
 
         let total = {
-            let guard = indexer.storage.lock().unwrap();
+            let guard = indexer.storage.read().unwrap();
             guard.as_ref().map(|s| s.count()).unwrap_or(0)
         };
         println!("Index complete: {} code blocks", total);
@@ -877,7 +896,7 @@ async fn watch_and_reindex(root: std::path::PathBuf) -> anyhow::Result<()> {
                 let indexer = crate::indexer::Indexer::new(&config);
                 indexer.index_directory(&root).await?;
 
-                let guard = indexer.storage.lock().unwrap();
+                let guard = indexer.storage.read().unwrap();
                 let total = guard.as_ref().map(|s| s.count()).unwrap_or(0);
                 drop(guard);
 

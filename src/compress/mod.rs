@@ -1,17 +1,47 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-COMPRESS
+// PURPOSE: Caveman text compressor — multi-level compression (lite, full, ultra) for AI context efficiency
+// SCOPE: Compressor struct, compress_output, compress_file, restore_file, lite/full/ultra levels
+// DEPENDS: M-CONFIG
+// LINKS: N/A
+
+// START_MODULE_MAP
+// Compressor — Text compression engine with lite/full/ultra levels and file I/O
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use crate::config::Config;
 
+// START_public_api
+
+// START_Compressor
 pub struct Compressor {
     config: Config,
 }
 
+// END_Compressor
+
 impl Compressor {
+    // START_CONTRACT_Compressor::new
+    // PURPOSE: Create a new Compressor with the given config
+    // INPUTS: { config: &Config — application config }
+    // OUTPUTS: { Self — new Compressor instance }
+    // START_compressor_new
     pub fn new(config: &Config) -> Self {
         Self {
             config: config.clone(),
         }
     }
+    // END_compressor_new
 
-    /// Compress AI output text (caveman mode)
+    // START_CONTRACT_Compressor::compress_output
+    // PURPOSE: Compress AI output text using the configured level
+    // INPUTS: { input: &str — text to compress }
+    // OUTPUTS: { String — compressed text }
+    // START_compress_output
     pub fn compress_output(&self, input: &str) -> String {
         let level = self.config.compress.output_level.as_str();
         match level {
@@ -20,8 +50,8 @@ impl Compressor {
             _ => self.compress_full(input),
         }
     }
+    // END_compress_output
 
-    /// Lite: remove filler words, keep grammar
     fn compress_lite(&self, input: &str) -> String {
         let mut result = input.to_string();
         let fillers = [
@@ -59,7 +89,6 @@ impl Compressor {
         result
     }
 
-    /// Full: drop articles, filler, pleasantries
     fn compress_full(&self, input: &str) -> String {
         let mut result = self.compress_lite(input);
 
@@ -135,7 +164,11 @@ impl Compressor {
         result.trim().to_string()
     }
 
-    /// Compress a file for AI context
+    // START_CONTRACT_Compressor::compress_file
+    // PURPOSE: Compress a file for AI context, creating backup before overwriting
+    // INPUTS: { path: &Path — file to compress }
+    // OUTPUTS: { anyhow::Result<()> — ok on success }
+    // START_compress_file
     pub async fn compress_file(&self, path: &std::path::Path) -> anyhow::Result<()> {
         let content = tokio::fs::read_to_string(path).await?;
         if content.len() < 50 {
@@ -162,8 +195,13 @@ impl Compressor {
         );
         Ok(())
     }
+    // END_compress_file
 
-    /// Restore original from backup
+    // START_CONTRACT_Compressor::restore_file
+    // PURPOSE: Restore original file from backup
+    // INPUTS: { path: &Path — compressed file to restore }
+    // OUTPUTS: { anyhow::Result<()> — ok on success }
+    // START_restore_file
     pub async fn restore_file(&self, path: &std::path::Path) -> anyhow::Result<()> {
         let backup = path.with_extension("original.md");
         if backup.exists() {
@@ -174,4 +212,6 @@ impl Compressor {
         }
         Ok(())
     }
+    // END_restore_file
 }
+// END_public_api

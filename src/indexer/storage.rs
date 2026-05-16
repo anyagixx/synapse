@@ -1,5 +1,24 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-INDEXER-STORAGE
+// PURPOSE: JSON block storage with search — BM25 ranking and n-gram vector search
+// SCOPE: Storage struct, StoredBlock, JSON persistence, BM25 scoring, cosine similarity
+// DEPENDS: N/A
+// LINKS: N/A
+
+// START_MODULE_MAP
+// StoredBlock — Serializable code block for JSON storage
+// Storage — JSON-backed block store with BM25 and vector search
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// END_CHANGE_SUMMARY
+
 use std::path::{Path, PathBuf};
 
+// START_public_api
+
+// START_StoredBlock
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct StoredBlock {
     pub id: String,
@@ -11,13 +30,21 @@ pub struct StoredBlock {
     pub start_line: usize,
     pub end_line: usize,
 }
+// END_StoredBlock
 
+// START_Storage
 pub struct Storage {
     db_path: PathBuf,
     blocks: Vec<StoredBlock>,
 }
+// END_Storage
 
 impl Storage {
+    // START_CONTRACT_Storage::new
+    // PURPOSE: Create or load a Storage for a project root
+    // OUTPUTS: { Self }
+    // SIDE_EFFECTS: reads/writes blocks.json
+    // START_storage_new
     pub fn new(project_root: &Path) -> Self {
         let hash = simple_hash(project_root);
         let db_dir = dirs::data_dir()
@@ -37,19 +64,41 @@ impl Storage {
         };
         Self { db_path, blocks }
     }
+    // END_storage_new
 
+    // START_CONTRACT_Storage::count
+    // PURPOSE: Return the number of stored blocks
+    // OUTPUTS: { usize }
+    // START_storage_count
     pub fn count(&self) -> usize {
         self.blocks.len()
     }
+    // END_storage_count
 
+    // START_CONTRACT_Storage::all_blocks
+    // PURPOSE: Return a reference to all stored blocks
+    // OUTPUTS: { &[StoredBlock] }
+    // START_storage_all_blocks
     pub fn all_blocks(&self) -> &[StoredBlock] {
         &self.blocks
     }
+    // END_storage_all_blocks
 
+    // START_CONTRACT_Storage::is_empty
+    // PURPOSE: Check if storage has no blocks
+    // OUTPUTS: { bool }
+    // START_storage_is_empty
     pub fn is_empty(&self) -> bool {
         self.blocks.is_empty()
     }
+    // END_storage_is_empty
 
+    // START_CONTRACT_Storage::store_blocks
+    // PURPOSE: Replace blocks for given file paths and persist to JSON
+    // INPUTS: { new_blocks: Vec<StoredBlock> }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: flushes to blocks.json
+    // START_storage_store_blocks
     pub fn store_blocks(&mut self, new_blocks: Vec<StoredBlock>) -> anyhow::Result<()> {
         let mut seen_files: std::collections::HashSet<String> = std::collections::HashSet::new();
         for b in &new_blocks {
@@ -59,13 +108,25 @@ impl Storage {
         self.blocks.extend(new_blocks);
         self.flush()
     }
+    // END_storage_store_blocks
 
+    // START_CONTRACT_Storage::flush
+    // PURPOSE: Write blocks to JSON file on disk
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes to blocks.json
+    // START_storage_flush
     pub fn flush(&self) -> anyhow::Result<()> {
         let json = serde_json::to_string_pretty(&self.blocks)?;
         std::fs::write(&self.db_path, &json)?;
         Ok(())
     }
+    // END_storage_flush
 
+    // START_CONTRACT_Storage::search
+    // PURPOSE: BM25 text search over stored blocks
+    // INPUTS: { query: &str }, { max_results: usize }
+    // OUTPUTS: { Vec<StoredBlock> }
+    // START_storage_search
     pub fn search(&self, query: &str, max_results: usize) -> Vec<StoredBlock> {
         if query.trim().is_empty() {
             return Vec::new();
@@ -75,7 +136,13 @@ impl Storage {
             .map(|(b, _)| b)
             .collect()
     }
+    // END_storage_search
 
+    // START_CONTRACT_Storage::search_with_scores
+    // PURPOSE: BM25 search returning scored results
+    // INPUTS: { query: &str }, { max_results: usize }
+    // OUTPUTS: { Vec<(StoredBlock, f64)> }
+    // START_storage_search_with_scores
     pub fn search_with_scores(&self, query: &str, max_results: usize) -> Vec<(StoredBlock, f64)> {
         let query_lower = query.to_lowercase();
         if query_lower.trim().is_empty() {
@@ -100,7 +167,13 @@ impl Storage {
         scored.truncate(max_results);
         scored.into_iter().map(|(s, b)| (b, s)).collect()
     }
+    // END_storage_search_with_scores
 
+    // START_CONTRACT_Storage::vector_search
+    // PURPOSE: N-gram vector search with cosine similarity
+    // INPUTS: { query: &str }, { max_results: usize }
+    // OUTPUTS: { Vec<(StoredBlock, f64)> }
+    // START_storage_vector_search
     pub fn vector_search(&self, query: &str, max_results: usize) -> Vec<(StoredBlock, f64)> {
         let query_vec = ngram_vectorize(query);
         if query_vec.is_empty() {
@@ -131,6 +204,7 @@ impl Storage {
         scored.truncate(max_results);
         scored.into_iter().map(|(s, b)| (b, s)).collect()
     }
+    // END_storage_vector_search
 }
 
 fn score_block(block: &StoredBlock, query_lower: &str, query_words: &[&str]) -> f64 {
@@ -249,10 +323,11 @@ fn tokenize(text: &str) -> Vec<String> {
 }
 
 fn simple_hash(path: &Path) -> String {
-    use std::hash::{Hash, Hasher};
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    path.to_string_lossy().hash(&mut hasher);
-    format!("{:x}", hasher.finish())
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(path.to_string_lossy().as_bytes());
+    let result = hasher.finalize();
+    result.iter().take(8).map(|b| format!("{:02x}", b)).collect::<String>()
 }
 
 fn ngram_vectorize(text: &str) -> std::collections::HashMap<u64, f64> {
@@ -440,3 +515,4 @@ mod tests {
         assert!(t.contains(&"var".to_string()));
     }
 }
+// END_public_api
