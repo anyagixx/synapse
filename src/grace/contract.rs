@@ -126,7 +126,9 @@ impl ContractValidator {
     }
 
     fn find_contract_block(content: &str) -> Option<String> {
-        let start_marker = content.find("// MODULE_CONTRACT")?;
+        let start_marker = content
+            .find("// MODULE_CONTRACT")
+            .or_else(|| content.find("# MODULE_CONTRACT"))?;
         let block_start = content[..start_marker]
             .rfind('\n')
             .map(|i| i + 1)
@@ -273,5 +275,60 @@ fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<Func
             }
             contracts.push(fc);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn test_scan_file_with_contract() {
+        let code = "// MODULE_CONTRACT\n// MODULE_ID: M-TEST\n// PURPOSE: Test module\n// SCOPE: Testing\n// DEPENDS: M-DB\n// LINKS: docs/kg.xml\n\n// START_MODULE_MAP\n// test_fn — does testing\n// END_MODULE_MAP\n\n// START_CHANGE_SUMMARY\n// LAST_CHANGE: [v1.0.0 — Initial]\n// END_CHANGE_SUMMARY\n\n// START_CONTRACT_test_fn\n// PURPOSE: Run test\n// INPUTS: { name: String — test name }\n// OUTPUTS: { bool — success }\n// SIDE_EFFECTS: prints to stdout\n// START_test_fn\nfn test_fn(name: &str) -> bool { true }\n// END_test_fn";
+        let mc = ContractValidator::scan_file(Path::new("src/test.rs"), code);
+        assert!(mc.has_contract);
+        assert_eq!(mc.module_id.as_deref(), Some("M-TEST"));
+        assert!(mc.purpose.is_some());
+        assert_eq!(mc.depends.len(), 1);
+        assert!(mc.has_module_map);
+        assert!(mc.has_change_summary);
+        assert_eq!(mc.function_contracts.len(), 1);
+        assert_eq!(mc.function_contracts[0].name, "test_fn");
+        assert!(mc.function_contracts[0].purpose.is_some());
+        assert_eq!(mc.function_contracts[0].inputs.len(), 1);
+        assert_eq!(mc.function_contracts[0].outputs.len(), 1);
+        assert_eq!(mc.function_contracts[0].side_effects.len(), 1);
+        assert!(mc.valid);
+    }
+
+    #[test]
+    fn test_scan_file_without_contract() {
+        let code = "fn main() {}\nfn helper() {}";
+        let mc = ContractValidator::scan_file(Path::new("src/main.rs"), code);
+        assert!(!mc.has_contract);
+        assert!(!mc.has_module_map);
+        assert!(!mc.has_change_summary);
+        assert!(mc.function_contracts.is_empty());
+        assert!(!mc.valid);
+    }
+
+    #[test]
+    fn test_scan_file_missing_purpose() {
+        let code = "// MODULE_CONTRACT\n// MODULE_ID: M-BAD\nfn foo() {}";
+        let mc = ContractValidator::scan_file(Path::new("src/bad.rs"), code);
+        assert!(mc.has_contract);
+        assert!(!mc.valid);
+        assert!(!mc.errors.is_empty());
+    }
+
+    #[test]
+    fn test_extract_function_contracts_python() {
+        let code = "# MODULE_CONTRACT\n# MODULE_ID: M-PY\n# PURPOSE: Python test\n\n# START_CONTRACT_greet\n# PURPOSE: Say hello\n# INPUTS: { name: str — user name }\n# OUTPUTS: { str — greeting }\n# START_greet\ndef greet(name): return f'Hello {name}'\n# END_greet";
+        let mc = ContractValidator::scan_file(Path::new("src/mod.py"), code);
+        assert!(mc.has_contract);
+        assert_eq!(mc.function_contracts.len(), 1);
+        assert_eq!(mc.function_contracts[0].name, "greet");
+        assert_eq!(mc.function_contracts[0].inputs.len(), 1);
     }
 }

@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::grace::contract::{ContractReport, ContractValidator};
+use crate::grace::refresh::Refresher;
 use crate::grace::semantic::{SemanticExtractor, SemanticReport};
 use crate::grace::verify::Verifier;
 use crate::tracking::Tracker;
@@ -10,8 +11,10 @@ pub struct StatusReport {
     pub contracts: ContractReport,
     pub semantic: SemanticReport,
     pub verification: Vec<super::verify::VerificationResult>,
+    pub drift: Option<super::refresh::RefreshReport>,
     pub token_economy: TokenEconomy,
     pub system: SystemInfo,
+    pub next_actions: Vec<String>,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -47,6 +50,7 @@ impl StatusCollector {
         let contracts = ContractValidator::validate_project(root)?;
         let semantic = SemanticExtractor::scan_project(root)?;
         let verification = Verifier::verify_all(root).await?;
+        let drift = Refresher::refresh(root).ok();
 
         let config = Config::load().unwrap_or_default();
         let tracker = Tracker::new(&config);
@@ -56,6 +60,40 @@ impl StatusCollector {
         let db_size = std::fs::metadata(&db_path)
             .map(|m| format!("{:.1} KB", m.len() as f64 / 1024.0))
             .unwrap_or_else(|_| "N/A".into());
+
+        let mut next_actions = Vec::new();
+        if contracts.with_contract == 0 {
+            next_actions.push("Add MODULE_CONTRACT to source files".into());
+        }
+        if contracts.invalid > 0 {
+            next_actions.push(format!("Fix {} invalid contracts", contracts.invalid));
+        }
+        if !semantic.duplicate_name_blocks.is_empty() {
+            next_actions.push(format!(
+                "Fix {} duplicate block names",
+                semantic.duplicate_name_blocks.len()
+            ));
+        }
+
+        let all_verify_pass = verification.iter().all(|v| v.passed);
+        if !all_verify_pass {
+            next_actions.push("Run 'syn verify' to see failing checks".into());
+        }
+
+        let phase0_done = root.join("docs/requirements.xml").exists()
+            && root.join("docs/technology.xml").exists()
+            && root.join("docs/development-plan.xml").exists()
+            && root.join("docs/verification-plan.xml").exists()
+            && root.join("docs/knowledge-graph.xml").exists();
+        if !phase0_done {
+            next_actions.push("Complete Phase 0: create all 5 docs/ files".into());
+        }
+
+        if let Some(ref d) = drift {
+            if !d.not_in_graph.is_empty() || !d.not_in_verification.is_empty() {
+                next_actions.push("Run 'syn refresh' to sync artifacts".into());
+            }
+        }
 
         Ok(StatusReport {
             token_economy: TokenEconomy {
@@ -75,6 +113,8 @@ impl StatusCollector {
             contracts,
             semantic,
             verification,
+            drift,
+            next_actions,
         })
     }
 
@@ -95,10 +135,39 @@ impl StatusCollector {
             report.contracts.without_contract
         );
         println!("║  Valid contracts:       {:<12}║", report.contracts.valid);
+        println!(
+            "║  Invalid contracts:     {:<12}║",
+            report.contracts.invalid
+        );
+        let with_map: usize = report
+            .contracts
+            .contracts
+            .iter()
+            .filter(|c| c.has_module_map)
+            .count();
+        let with_cs: usize = report
+            .contracts
+            .contracts
+            .iter()
+            .filter(|c| c.has_change_summary)
+            .count();
+        let total_fn: usize = report
+            .contracts
+            .contracts
+            .iter()
+            .map(|c| c.function_contracts.len())
+            .sum();
+        println!("║  With MODULE_MAP:       {:<12}║", with_map);
+        println!("║  With CHANGE_SUMMARY:   {:<12}║", with_cs);
+        println!("║  Function contracts:   {:<12}║", total_fn);
         println!("╠══════════════════════════════════════╣");
         println!("║ SEMANTIC MARKUP                      ║");
         println!("║  Total blocks:    {:<19}║", report.semantic.total_blocks);
         println!("║  Unclosed blocks: {:<19}║", report.semantic.open_blocks);
+        println!(
+            "║  Duplicate names: {:<19}║",
+            report.semantic.duplicate_name_blocks.len()
+        );
         println!("╠══════════════════════════════════════╣");
         println!("║ VERIFICATION                         ║");
         for v in &report.verification {
@@ -124,5 +193,35 @@ impl StatusCollector {
             report.token_economy.db_size
         );
         println!("╚══════════════════════════════════════╝");
+
+        if let Some(ref drift) = report.drift {
+            if !drift.not_in_graph.is_empty()
+                || !drift.not_in_verification.is_empty()
+                || !drift.in_graph_not_in_code.is_empty()
+            {
+                println!();
+                println!("DRIFT DETECTED (run 'syn refresh' for details):");
+                if !drift.not_in_graph.is_empty() {
+                    println!(
+                        "  {} modules not in knowledge graph",
+                        drift.not_in_graph.len()
+                    );
+                }
+                if !drift.not_in_verification.is_empty() {
+                    println!(
+                        "  {} modules not in verification plan",
+                        drift.not_in_verification.len()
+                    );
+                }
+            }
+        }
+
+        if !report.next_actions.is_empty() {
+            println!();
+            println!("NEXT ACTIONS:");
+            for a in &report.next_actions {
+                println!("  → {}", a);
+            }
+        }
     }
 }

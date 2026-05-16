@@ -36,6 +36,7 @@ pub enum Command {
     GraphRag(GraphRagCmd),
     Hooks(HooksCmd),
     Doctor(DoctorCmd),
+    Refresh(RefreshCmd),
 }
 
 macro_rules! cmd_struct {
@@ -183,6 +184,13 @@ pub struct ConfigCmd {
 #[derive(clap::Args)]
 #[command(about = "Run diagnostic checks on the Synapse setup")]
 pub struct DoctorCmd;
+
+#[derive(clap::Args)]
+#[command(about = "Sync knowledge graph and verification plan with code")]
+pub struct RefreshCmd {
+    #[arg(long)]
+    pub json: bool,
+}
 
 use crate::config::Config;
 
@@ -1041,6 +1049,74 @@ impl DoctorCmd {
             if !oc_rules || !oc_plugin || !oc_mcp {
                 println!("  • Run: syn init");
             }
+        }
+
+        Ok(())
+    }
+}
+
+impl RefreshCmd {
+    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
+        let root = std::env::current_dir()?;
+        let report = crate::grace::refresh::Refresher::refresh(&root)?;
+
+        if self.json {
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            return Ok(());
+        }
+
+        println!("=== GRACE Refresh Report ===");
+        println!();
+        println!("Code modules with contracts: {}", report.total_modules);
+        println!("  In knowledge-graph:      {}", report.in_graph);
+        println!("  In verification-plan:    {}", report.in_verification);
+        println!();
+
+        if !report.not_in_graph.is_empty() {
+            println!("Modules NOT in knowledge-graph.xml:");
+            for m in &report.not_in_graph {
+                println!("  ✗ {}", m);
+            }
+            println!();
+        }
+
+        if !report.in_graph_not_in_code.is_empty() {
+            println!("Stale entries in knowledge-graph.xml (not in code):");
+            for m in &report.in_graph_not_in_code {
+                println!("  ✗ {}", m);
+            }
+            println!();
+        }
+
+        if !report.not_in_verification.is_empty() {
+            println!("Modules NOT in verification-plan.xml:");
+            for m in &report.not_in_verification {
+                println!("  ✗ {}", m);
+            }
+            println!();
+        }
+
+        if !report.contract_issues.is_empty() {
+            println!("Contract issues:");
+            for i in &report.contract_issues {
+                println!("  ✗ {}", i);
+            }
+            println!();
+        }
+
+        if !report.suggested_actions.is_empty() {
+            println!("Suggested actions:");
+            for a in &report.suggested_actions {
+                println!("  → {}", a);
+            }
+            println!();
+        }
+
+        if report.not_in_graph.is_empty()
+            && report.not_in_verification.is_empty()
+            && report.contract_issues.is_empty()
+        {
+            println!("All modules synced. No drift detected.");
         }
 
         Ok(())

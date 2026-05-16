@@ -1,6 +1,7 @@
 pub mod contract;
 pub mod explain;
 pub mod fix;
+pub mod refresh;
 pub mod review;
 pub mod semantic;
 pub mod status;
@@ -13,12 +14,6 @@ use verify::Verifier;
 pub use contract::ModuleContract;
 
 pub struct GraceEngine;
-
-impl Default for GraceEngine {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl GraceEngine {
     pub fn new() -> Self {
@@ -39,5 +34,15 @@ impl GraceEngine {
 
     pub fn semantic_report(root: &Path) -> anyhow::Result<semantic::SemanticReport> {
         semantic::SemanticExtractor::scan_project(root)
+    }
+
+    pub fn refresh_project(root: &Path) -> anyhow::Result<refresh::RefreshReport> {
+        refresh::Refresher::refresh(root)
+    }
+}
+
+impl Default for GraceEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }

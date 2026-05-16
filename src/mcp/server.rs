@@ -209,6 +209,14 @@ impl SynapseHandler {
                                 },
                                 "required": ["text"]
                             }
+                        },
+                        {
+                            "name": "refresh_project",
+                            "description": "Sync knowledge graph and verification plan with code. Detects drift — modules in code but not in graph/plan, stale entries. Returns suggested actions.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {}
+                            }
                         }
                     ]
                 }))
@@ -230,6 +238,7 @@ impl SynapseHandler {
                     "project_status" => self.handle_status(id, args).await,
                     "token_savings" => self.handle_gain(id, args).await,
                     "compress_text" => self.handle_compress(id, args).await,
+                    "refresh_project" => self.handle_refresh(id, args).await,
                     _ => self.error(id, -32601, format!("Unknown tool: {}", name)),
                 }
             }
@@ -643,6 +652,30 @@ impl SynapseHandler {
                 "isError": false
             }),
         )
+    }
+
+    async fn handle_refresh(
+        &self,
+        id: Option<serde_json::Value>,
+        _args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let root = match std::env::current_dir() {
+            Ok(r) => r,
+            Err(e) => return self.error(id, -32603, format!("cwd error: {}", e)),
+        };
+        match crate::grace::refresh::Refresher::refresh(&root) {
+            Ok(report) => {
+                let text = serde_json::to_string_pretty(&report).unwrap_or_default();
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
+            }
+            Err(e) => self.error(id, -32603, format!("Refresh error: {}", e)),
+        }
     }
 
     fn result(

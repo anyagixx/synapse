@@ -1,3 +1,4 @@
+#![allow(clippy::if_same_then_else)]
 pub mod cli;
 pub mod compress;
 pub mod config;
