@@ -327,7 +327,11 @@ fn simple_hash(path: &Path) -> String {
     let mut hasher = Sha256::new();
     hasher.update(path.to_string_lossy().as_bytes());
     let result = hasher.finalize();
-    result.iter().take(8).map(|b| format!("{:02x}", b)).collect::<String>()
+    result
+        .iter()
+        .take(8)
+        .map(|b| format!("{:02x}", b))
+        .collect::<String>()
 }
 
 fn ngram_vectorize(text: &str) -> std::collections::HashMap<u64, f64> {

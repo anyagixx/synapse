@@ -27,14 +27,34 @@ use axum::{routing::get, Json, Router};
 pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
     let app = Router::new()
         .route("/health", get(health))
+        .route("/", get(index_html))
         .route("/api/status", get(api_status))
         .route("/api/graph", get(api_graph))
         .route("/api/tokens", get(api_tokens));
 
     let listener = tokio::net::TcpListener::bind(bind).await?;
-    tracing::info!("Synapse dashboard: http://{}", bind);
-    axum::serve(listener, app).await?;
+    tracing::info!(
+        "Synapse dashboard: http://{} (HTML: http://{}/)",
+        bind,
+        bind
+    );
+    // Graceful shutdown on Ctrl+C
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
     Ok(())
+}
+
+async fn shutdown_signal() {
+    tokio::signal::ctrl_c().await.ok();
+    tracing::info!("Shutting down dashboard...");
+}
+
+async fn index_html() -> axum::response::Html<String> {
+    axum::response::Html(format!(
+        r#"<!DOCTYPE html><html><head><title>Synapse Dashboard</title><meta charset="utf-8"><style>body{{font-family:system-ui;max-width:800px;margin:2em auto;padding:1em;background:#111;color:#eee}}h1{{color:#5c9cf5}}.card{{background:#1a1a1a;border-radius:8px;padding:1em;margin:1em 0}}pre{{background:#0a0a0a;padding:1em;border-radius:4px;overflow-x:auto}}.pass{{color:#4caf50}}.fail{{color:#f44336}}.node{{display:inline-block;background:#2a2a3a;border-radius:4px;padding:0.3em 0.6em;margin:0.2em}}</style></head><body><h1>Synapse Dashboard v{}</h1><div class="card"><h2>Health</h2><a href="/api/status" class="pass">/api/status</a> | <a href="/api/graph">/api/graph</a> | <a href="/api/tokens">/api/tokens</a></div></body></html>"#,
+        crate::VERSION
+    ))
 }
 // END_start_dashboard
 

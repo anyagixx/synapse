@@ -27,6 +27,7 @@ fn main() -> anyhow::Result<()> {
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
+        .json()
         .init();
 
     let cli = SynCli::parse();

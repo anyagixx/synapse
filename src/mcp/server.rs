@@ -287,10 +287,33 @@ impl SynapseHandler {
                         },
                         {
                             "name": "refresh_project",
-                            "description": "Sync knowledge graph and verification plan with code. Detects drift — modules in code but not in graph/plan, stale entries. Returns suggested actions.",
+                            "description": "Sync knowledge graph and verification plan with code.",
+                            "inputSchema": { "type": "object", "properties": {} }
+                        },
+                        {
+                            "name": "suggest_contract",
+                            "description": "Generate a MODULE_CONTRACT template for a new module. Provide module name and purpose.",
                             "inputSchema": {
                                 "type": "object",
-                                "properties": {}
+                                "properties": {
+                                    "module_name": { "type": "string", "description": "Module name (e.g. 'auth')" },
+                                    "purpose": { "type": "string", "description": "What the module does" },
+                                    "language": { "type": "string", "description": "Language: rust | python | ts | go" }
+                                },
+                                "required": ["module_name", "purpose"]
+                            }
+                        },
+                        {
+                            "name": "lsp_hover",
+                            "description": "Get type/signature information at a position via LSP.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": { "type": "string", "description": "File path" },
+                                    "line": { "type": "number", "description": "Line (1-based)" },
+                                    "column": { "type": "number", "description": "Column (0-based)" }
+                                },
+                                "required": ["file", "line", "column"]
                             }
                         }
                     ]
@@ -314,6 +337,8 @@ impl SynapseHandler {
                     "token_savings" => self.handle_gain(id, args).await,
                     "compress_text" => self.handle_compress(id, args).await,
                     "refresh_project" => self.handle_refresh(id, args).await,
+                    "suggest_contract" => self.handle_suggest_contract(id, args).await,
+                    "lsp_hover" => self.handle_lsp_hover(id, args).await,
                     _ => self.error(id, -32601, format!("Unknown tool: {}", name)),
                 }
             }
@@ -766,6 +791,52 @@ impl SynapseHandler {
                 )
             }
             Err(e) => self.error(id, -32603, format!("Refresh error: {}", e)),
+        }
+    }
+
+    async fn handle_suggest_contract(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let name = args["module_name"].as_str().unwrap_or("module");
+        let purpose = args["purpose"].as_str().unwrap_or("TBD");
+        let lang = args["language"].as_str().unwrap_or("rust");
+        let comment = match lang {
+            "py" => "#",
+            _ => "//",
+        };
+        let module_id = format!("M-{}", name.to_uppercase().replace(' ', "_"));
+        let text = format!(
+            "{c} MODULE_CONTRACT\n{c} MODULE_ID: {id}\n{c} PURPOSE: {p}\n{c} SCOPE: {n}\n{c} DEPENDS:\n{c} LINKS:\n\n{c} START_MODULE_MAP\n{c} END_MODULE_MAP\n\n{c} START_CHANGE_SUMMARY\n{c} LAST_CHANGE: [v1.0.0 — Initial implementation]\n{c} END_CHANGE_SUMMARY\n\n{c} START_public_api\n{c} END_public_api",
+            c = comment, id = module_id, p = purpose, n = name
+        );
+        self.result(
+            id,
+            serde_json::json!({
+                "content": [{"type": "text", "text": text}],
+                "isError": false
+            }),
+        )
+    }
+
+    async fn handle_lsp_hover(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let file = args["file"].as_str().unwrap_or("");
+        let line = args["line"].as_u64().unwrap_or(0) as u32;
+        let col = args["column"].as_u64().unwrap_or(0) as u32;
+        match crate::mcp::lsp::LspClient::new().hover(file, line, col) {
+            Ok(h) => self.result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": h.contents}],
+                    "isError": false
+                }),
+            ),
+            Err(e) => self.error(id, -32603, format!("LSP hover: {}", e)),
         }
     }
 
