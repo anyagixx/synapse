@@ -418,7 +418,7 @@ impl InitCmd {
         println!();
         println!("What was created:");
         println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
-        println!("  opencode.jsonc              — MCP auto-start (8 tools for LLM)");
+        println!("  opencode.jsonc              — MCP auto-start (12 tools for LLM)");
         println!("  docs/                        — Phase 0 architecture templates (5 XML files)");
         println!("  .opencode/plugins/synapse.ts — auto-proxy + GRACE system context");
         println!("  .opencode/rules/synapse.md   — tool reference for LLM");

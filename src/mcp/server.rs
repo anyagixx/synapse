@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server — serves Synapse tools over stdio for AI agent consumption
-// SCOPE: McpServer, SynapseHandler, JSON-RPC message handling, 8+ MCP tools (semantic_search, view_signatures, graphrag_query, etc.)
+// SCOPE: McpServer, SynapseHandler, JSON-RPC message handling, 12 MCP tools (semantic_search, view_signatures, graphrag_query, etc.)
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-GRACE, M-TRACKING, M-COMPRESS
 // LINKS: N/A
 
@@ -315,6 +315,19 @@ impl SynapseHandler {
                                 },
                                 "required": ["file", "line", "column"]
                             }
+                        },
+                        {
+                            "name": "lsp_references",
+                            "description": "Find all references to a symbol at a position via LSP.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": { "type": "string", "description": "File path" },
+                                    "line": { "type": "number", "description": "Line (1-based)" },
+                                    "column": { "type": "number", "description": "Column (0-based)" }
+                                },
+                                "required": ["file", "line", "column"]
+                            }
                         }
                     ]
                 }))
@@ -339,6 +352,7 @@ impl SynapseHandler {
                     "refresh_project" => self.handle_refresh(id, args).await,
                     "suggest_contract" => self.handle_suggest_contract(id, args).await,
                     "lsp_hover" => self.handle_lsp_hover(id, args).await,
+                    "lsp_references" => self.handle_lsp_references(id, args).await,
                     _ => self.error(id, -32601, format!("Unknown tool: {}", name)),
                 }
             }
@@ -837,6 +851,36 @@ impl SynapseHandler {
                 }),
             ),
             Err(e) => self.error(id, -32603, format!("LSP hover: {}", e)),
+        }
+    }
+
+    async fn handle_lsp_references(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let file = args["file"].as_str().unwrap_or("");
+        let line = args["line"].as_u64().unwrap_or(0) as u32;
+        let col = args["column"].as_u64().unwrap_or(0) as u32;
+        match crate::mcp::lsp::LspClient::new().references(file, line, col) {
+            Ok(refs) => {
+                let text = if refs.is_empty() {
+                    "No references found".into()
+                } else {
+                    refs.iter()
+                        .map(|r| format!("{} ({} ranges)", r.uri, r.ranges.len()))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                };
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
+            }
+            Err(e) => self.error(id, -32603, format!("LSP references: {}", e)),
         }
     }
 

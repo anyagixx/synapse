@@ -1,59 +1,41 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -e
 
-VERSION="${1:-v0.1.0}"
-REPO="anyagixx/synapse"
-BIN_NAME="syn"
-INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
+VERSION="${1:-v2.1.0}"
+ARCH="x86_64"
+OS="unknown-linux-gnu"
 
 case "$(uname -s)" in
-    Linux)  OS="unknown-linux-musl" ;;
+    Linux)  OS="unknown-linux-gnu" ;;
     Darwin) OS="apple-darwin" ;;
-    *)      echo "Unsupported OS"; exit 1 ;;
 esac
 
 case "$(uname -m)" in
-    x86_64)  ARCH="x86_64" ;;
-    aarch64) ARCH="aarch64" ;;
-    arm64)   ARCH="aarch64" ;;
-    *)       echo "Unsupported arch"; exit 1 ;;
+    x86_64) ARCH="x86_64" ;;
+    aarch64|arm64) ARCH="aarch64" ;;
 esac
 
-if [ "$VERSION" = "latest" ]; then
-    VERSION="v0.1.0"
-fi
+echo "Installing Synapse ${VERSION} for ${ARCH}-${OS}..."
 
-TAR="syn-${ARCH}-${OS}.tar.gz"
-URL="https://github.com/${REPO}/releases/download/${VERSION}/${TAR}"
+# Try GitHub release download
+TARBALL="syn-${ARCH}-${OS}.tar.gz"
+URL="https://github.com/anyagixx/synapse/releases/download/${VERSION}/${TARBALL}"
 
-echo "Downloading Synapse ${VERSION} for ${ARCH}-${OS}..."
-mkdir -p "$INSTALL_DIR"
-
-if curl -fsSL "$URL" -o "/tmp/${TAR}"; then
-    tar xzf "/tmp/${TAR}" -C "$INSTALL_DIR"
-    chmod +x "${INSTALL_DIR}/${BIN_NAME}"
-    rm -f "/tmp/${TAR}"
-    echo "Installed to ${INSTALL_DIR}/${BIN_NAME}"
-    echo ""
-    echo "Run 'synapse --help' to get started."
-    echo "For non-developers: run 'opencode' and describe what you want to build."
+if curl -fsSL "$URL" -o /tmp/syn.tar.gz 2>/dev/null; then
+    tar -xzf /tmp/syn.tar.gz -C /tmp
+    sudo cp /tmp/syn /usr/local/bin/syn 2>/dev/null || cp /tmp/syn ~/.local/bin/syn 2>/dev/null || {
+        mkdir -p ~/.local/bin
+        cp /tmp/syn ~/.local/bin/syn
+    }
+    chmod +x ~/.local/bin/syn 2>/dev/null || true
+    rm /tmp/syn.tar.gz /tmp/syn 2>/dev/null
+    echo "Synapse ${VERSION} installed successfully."
 else
-    echo "No pre-built binary for your platform at:"
-    echo "  $URL"
-    echo ""
-    echo "Building from source instead..."
-    if command -v cargo &> /dev/null; then
-        echo "Installing package 'synapse' with binary 'syn'..."
-        cargo install --git "https://github.com/${REPO}" --tag "$VERSION" --bin syn
-        # Create convenience symlink
-        if [ -f "$HOME/.cargo/bin/syn" ]; then
-            BIN_NAME="syn"
-            INSTALL_DIR="$HOME/.cargo/bin"
-        fi
-    else
-        echo "Rust is required to build from source."
-        echo "Install Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
-        echo "Then re-run this script."
-        exit 1
-    fi
+    echo "No pre-built binary for ${ARCH}-${OS}. Building from source..."
+    command -v cargo >/dev/null 2>&1 || { echo "Rust not installed. Run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"; exit 1; }
+    cargo install --git https://github.com/anyagixx/synapse --tag "${VERSION}"
 fi
+
+echo ""
+echo "Run 'syn --help' to get started."
+echo "Quickstart: mkdir my-project && cd my-project && syn init && opencode"

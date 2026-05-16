@@ -12,7 +12,7 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1001 synapse
 
-COPY --from=builder /app/target/release/synapse /usr/local/bin/syn
+COPY --from=builder /app/target/release/syn /usr/local/bin/syn
 
 USER synapse
 HEALTHCHECK --interval=30s --timeout=3s CMD syn --help || exit 1

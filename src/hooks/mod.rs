@@ -93,7 +93,7 @@ impl HookManager {
             current["mcp"] = mcp_config["mcp"].clone();
             std::fs::write(&oc_config_path, &serde_json::to_string_pretty(&current)?)?;
         }
-        println!("  .opencode/opencode.jsonc   (MCP auto-start)");
+        println!("  opencode.jsonc              (project root) → MCP auto-start");
 
         // 3. Plugin file
         let plugins_dir = opencode_dir.join("plugins");
@@ -172,7 +172,7 @@ echo "[synapse] Shell proxy hooks loaded"
                     }
                 }
                 // Don't remove opencode.jsonc (may have other config), just remove MCP section
-                let oc_config_path = root.join(".opencode/opencode.jsonc");
+                let oc_config_path = root.join("opencode.jsonc"); // Config is at project root
                 if oc_config_path.exists() {
                     let existing = std::fs::read_to_string(&oc_config_path)?;
                     if let Ok(mut current) = serde_json::from_str::<serde_json::Value>(&existing) {

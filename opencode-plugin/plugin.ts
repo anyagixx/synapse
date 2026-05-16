@@ -56,7 +56,7 @@ Before writing ANY source file, these 5 docs MUST exist:
 - After each phase: call review_code
 
 ### MCP Tools (use proactively)
-semantic_search | view_signatures | graphrag_query | verify_project | review_code | project_status | token_savings | compress_text
+semantic_search | view_signatures | graphrag_query | verify_project | review_code | refresh_project | suggest_contract | project_status | token_savings | compress_text | lsp_hover | lsp_references
 
 Shell commands auto-proxied for token savings.`)
     },

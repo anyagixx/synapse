@@ -1,11 +1,11 @@
 [package]
 name = "syn"
-version = "0.2.0"
+version = "2.1.0"
 edition = "2021"
 description = "Unified AI Agent Engineering Platform"
 authors = ["Synapse Contributors"]
 license = "Apache-2.0"
-repository = "https://github.com/synapse-ai/synapse"
+repository = "https://github.com/anyagixx/synapse"
 homepage = "https://synapse.dev"
 readme = "README.md"
 

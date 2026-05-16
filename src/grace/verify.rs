@@ -396,7 +396,11 @@ impl Verifier {
             let full_path = root.join(&file.path);
             if let Ok(content) = std::fs::read_to_string(&full_path) {
                 let line_count = content.lines().count();
-                let max_lines = if file.path.starts_with("tests/") { 500 } else { 1300 };
+                let max_lines = if file.path.starts_with("tests/") {
+                    500
+                } else {
+                    1300
+                };
                 if line_count > max_lines {
                     large_files.push(format!("{} ({} lines)", file.path, line_count));
                 }
