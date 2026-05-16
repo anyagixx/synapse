@@ -54,7 +54,7 @@ impl HookManager {
                 }
             }
         });
-        let oc_config_path = opencode_dir.join("opencode.jsonc");
+        let oc_config_path = root.join("opencode.jsonc");
         let existing = std::fs::read_to_string(&oc_config_path).unwrap_or_default();
         let mut current: serde_json::Value =
             serde_json::from_str(&existing).unwrap_or(serde_json::json!({}));

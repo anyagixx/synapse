@@ -95,7 +95,7 @@ impl SynapseHandler {
                 self.result(
                     id,
                     serde_json::json!({
-                        "protocolVersion": "2025-11-05",
+                        "protocolVersion": "2024-11-05",
                         "capabilities": {
                             "tools": {}
                         },

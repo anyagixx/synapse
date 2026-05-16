@@ -206,8 +206,8 @@ impl InitCmd {
         let opencode_dir = root.join(".opencode");
         std::fs::create_dir_all(&opencode_dir)?;
 
-        // MCP auto-start config
-        let oc_config_path = opencode_dir.join("opencode.jsonc");
+        // MCP auto-start config — in PROJECT ROOT (not .opencode/)
+        let oc_config_path = root.join("opencode.jsonc");
         let mcp_config = serde_json::json!({
             "$schema": "https://opencode.ai/config.json",
             "mcp": {
@@ -261,7 +261,7 @@ impl InitCmd {
         println!("Synapse hooks installed at {}", root.display());
         println!();
         println!("What was created:");
-        println!("  .opencode/opencode.jsonc     — MCP auto-start (8 tools for LLM)");
+        println!("  opencode.jsonc              — MCP auto-start (8 tools for LLM)");
         println!("  .opencode/plugins/synapse.ts — auto-proxy + context");
         println!("  .opencode/rules/synapse.md   — tool reference for LLM");
         println!();
@@ -849,8 +849,7 @@ impl DoctorCmd {
             "missing — run `syn init`"
         );
 
-        let oc_mcp = root.join(".opencode/opencode.jsonc").exists()
-            || root.join(".opencode/opencode.json").exists();
+        let oc_mcp = root.join("opencode.jsonc").exists() || root.join("opencode.json").exists();
         check!(
             "opencode mcp",
             oc_mcp,
