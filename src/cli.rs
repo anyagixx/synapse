@@ -209,11 +209,12 @@ impl InitCmd {
         // MCP auto-start config
         let oc_config_path = opencode_dir.join("opencode.jsonc");
         let mcp_config = serde_json::json!({
-            "mcpServers": {
+            "$schema": "https://opencode.ai/config.json",
+            "mcp": {
                 "synapse": {
-                    "command": "syn",
-                    "args": ["mcp"],
-                    "env": {}
+                    "type": "local",
+                    "command": ["syn", "mcp"],
+                    "enabled": true
                 }
             }
         });

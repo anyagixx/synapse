@@ -45,11 +45,12 @@ impl HookManager {
 
         // 2. MCP auto-start config
         let mcp_config = serde_json::json!({
-            "mcpServers": {
+            "$schema": "https://opencode.ai/config.json",
+            "mcp": {
                 "synapse": {
-                    "command": "syn",
-                    "args": ["mcp"],
-                    "env": {}
+                    "type": "local",
+                    "command": ["syn", "mcp"],
+                    "enabled": true
                 }
             }
         });
@@ -57,8 +58,8 @@ impl HookManager {
         let existing = std::fs::read_to_string(&oc_config_path).unwrap_or_default();
         let mut current: serde_json::Value =
             serde_json::from_str(&existing).unwrap_or(serde_json::json!({}));
-        if current.get("mcpServers").is_none() {
-            current["mcpServers"] = mcp_config["mcpServers"].clone();
+        if current.get("mcp").is_none() {
+            current["mcp"] = mcp_config["mcp"].clone();
             std::fs::write(&oc_config_path, &serde_json::to_string_pretty(&current)?)?;
         }
         println!("  .opencode/opencode.jsonc   (MCP auto-start)");
@@ -139,7 +140,7 @@ echo "[synapse] Shell proxy hooks loaded"
                     let existing = std::fs::read_to_string(&oc_config_path)?;
                     if let Ok(mut current) = serde_json::from_str::<serde_json::Value>(&existing) {
                         if let Some(obj) = current.as_object_mut() {
-                            obj.remove("mcpServers");
+                            obj.remove("mcp");
                             if !obj.is_empty() {
                                 std::fs::write(
                                     &oc_config_path,
