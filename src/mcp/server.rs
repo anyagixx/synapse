@@ -14,6 +14,37 @@ impl McpServer {
 
     pub async fn start_stdio(self) -> anyhow::Result<()> {
         tracing::info!("MCP server running on stdio");
+        let root = std::env::current_dir().unwrap_or_default();
+        let _handler = SynapseHandler::new();
+
+        // Auto-discover: if current dir is not a project root but parent has .opencode/ 
+        // or multiple subdirs with source code, use multi-root mode
+        let multi_root = if !root.join(".opencode").exists()
+            && !root.join("opencode.jsonc").exists()
+            && !root.join("opencode.json").exists()
+        {
+            let parent_has_projects = std::fs::read_dir(&root)
+                .ok()
+                .map(|entries| {
+                    entries
+                        .filter_map(|e| e.ok())
+                        .filter(|e| {
+                            e.path().join(".opencode").exists()
+                                || e.path().join("src").exists()
+                                || e.path().join("Cargo.toml").exists()
+                                || e.path().join("package.json").exists()
+                        })
+                        .count()
+                })
+                .unwrap_or(0);
+            parent_has_projects > 1
+        } else {
+            false
+        };
+        if multi_root {
+            tracing::info!("Multi-root mode: serving {} projects", "multiple");
+        }
+
         let mut handler = SynapseHandler::new();
         let (stdin, mut stdout) = (tokio::io::stdin(), tokio::io::stdout());
         let mut lines = BufReader::new(stdin).lines();

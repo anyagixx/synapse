@@ -37,6 +37,8 @@ pub enum Command {
     Hooks(HooksCmd),
     Doctor(DoctorCmd),
     Refresh(RefreshCmd),
+    #[command(name = "history")]
+    History(HistoryCmd),
 }
 
 macro_rules! cmd_struct {
@@ -190,6 +192,14 @@ pub struct DoctorCmd;
 pub struct RefreshCmd {
     #[arg(long)]
     pub json: bool,
+}
+
+#[derive(clap::Args)]
+#[command(about = "Search git history for code changes")]
+pub struct HistoryCmd {
+    pub query: Vec<String>,
+    #[arg(long, default_value_t = 20)]
+    pub max_results: u32,
 }
 
 use crate::config::Config;
@@ -1119,6 +1129,43 @@ impl RefreshCmd {
             println!("All modules synced. No drift detected.");
         }
 
+        Ok(())
+    }
+}
+
+impl HistoryCmd {
+    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
+        let root = std::env::current_dir()?;
+        let query = self.query.join(" ");
+        if query.is_empty() {
+            anyhow::bail!("Usage: syn history <query> [--max-results N]");
+        }
+        let query_lower = query.to_lowercase();
+
+        let output = std::process::Command::new("git")
+            .args(["log", "--oneline", "--all", "-n", "100", "--no-merges"])
+            .current_dir(&root)
+            .output();
+        let mut results = Vec::new();
+        if let Ok(out) = output {
+            let text = String::from_utf8_lossy(&out.stdout);
+            for line in text.lines() {
+                if line.to_lowercase().contains(&query_lower) {
+                    results.push(line.to_string());
+                }
+            }
+        }
+
+        if results.is_empty() {
+            println!("No git history matching '{}'", query);
+            return Ok(());
+        }
+
+        results.truncate(self.max_results as usize);
+        println!("=== Git History: '{}' ===", query);
+        for r in &results {
+            println!("  {}", r);
+        }
         Ok(())
     }
 }
