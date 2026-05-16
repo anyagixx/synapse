@@ -61,9 +61,12 @@ macro_rules! cmd_struct {
     };
 }
 
-cmd_struct!(InitCmd, "Bootstrap a new Synapse project",
-    interactive: bool,
-);
+#[derive(clap::Args)]
+#[command(about = "Bootstrap a new Synapse project")]
+pub struct InitCmd {
+    #[arg(long)]
+    pub interactive: bool,
+}
 #[derive(clap::Args)]
 #[command(about = "Index codebase for semantic search")]
 pub struct IndexCmd {
