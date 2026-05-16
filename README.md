@@ -1,30 +1,30 @@
 # Synapse
 
 > **AI Agent Engineering Platform — works transparently through OpenCode CLI**
-> Code intelligence + Token proxy + Compression + GRACE methodology
-> *8 MCP tools. Phase 0 gate. Zero cognitive overhead for humans.*
+> *12 MCP tools. Phase 0 gate. Self-verified. Zero overhead for humans.*
 
 ---
 
 ## Как это работает
 
 ```
-Ты → OpenCode CLI → LLM (принимает решения)
-                        │
-          ┌─────────────┼─────────────┐
-          ▼             ▼             ▼
-     MCP Tools       Plugin       AGENTS.md
-   (8 инструментов)  (proxy,      (GRACE
+Ты → OpenCode CLI → LLM
+                       │
+         ┌─────────────┼─────────────┐
+         ▼             ▼             ▼
+    MCP Tools       Plugin       AGENTS.md
+  (12 инструментов)  (proxy,      (GRACE
                      GRACE)       конституция)
-          │
-          ▼
-      Synapse (фоновый движок)
+         │
+         ▼
+     Synapse (фоновый движок)
 ```
 
-Ты просто общаешься с AI через `opencode`. Synapse невидимо:
-- Даёт LLM 8 MCP-инструментов для поиска и проверки кода
-- Автоматически фильтрует вывод shell-команд (экономия 60-90% токенов)
-- **Принуждает GRACE методологию: Phase 0 (docs ДО кода), контракты, верификация**
+Ты общаешься с AI через `opencode`. Synapse невидимо:
+- Даёт LLM **12 MCP-инструментов** для поиска, проверки и генерации кода
+- Авто-фильтрует вывод shell-команд (экономия 60-90% токенов)
+- **Принуждает GRACE методологию**: Phase 0, контракты, верификация, ревью
+- **Сам проходит собственные проверки**: `syn verify` → ALL PASS
 
 ---
 
@@ -48,16 +48,15 @@ cd synapse && make install
 
 ```bash
 mkdir my-project && cd my-project
-syn init          # 1 сек: AGENTS.md + 5 XML-шаблонов + MCP + плагин
-opencode          # LLM видит Phase 0 gate
-# LLM: "Вижу пустой requirements.xml — что делаем?"
+syn init          # 1 сек: интеграция с OpenCode
+opencode          # LLM видит 12 MCP инструментов + Phase 0 gate
+# LLM: "Что ты хочешь построить?"
 # Ты:  "Приложение для заметок с поиском"
-# LLM: заполняет 5 docs → пишет код с MODULE_CONTRACT → verify → review
 ```
 
 ---
 
-## Phase 0 — Архитектура перед кодом (GRACE enforcement)
+## Phase 0 — Архитектура перед кодом
 
 LLM **не может писать код** пока не созданы 5 файлов в `docs/`:
 
@@ -69,22 +68,26 @@ LLM **не может писать код** пока не созданы 5 фа�
 | `docs/verification-plan.xml` | Как проверяем |
 | `docs/knowledge-graph.xml` | Связи между модулями |
 
-AGENTS.md содержит `STOP`-правило: «You are in Phase 0 until ALL 5 files exist. You MAY NOT write source code.»
+AGENTS.md содержит STOP-правило: «You MAY NOT write source code in Phase 0.»
 
 ---
 
-## 8 MCP Tools (LLM вызывает сама)
+## 12 MCP Tools
 
-| Инструмент | Что делает |
+| Инструмент | Назначение |
 |-----------|-----------|
-| `semantic_search` | Поиск по коду с BM25 (14 языков) |
+| `semantic_search` | BM25 + векторный поиск (14 языков) |
 | `view_signatures` | Сигнатуры функций и классов |
 | `graphrag_query` | Граф знаний — узлы, связи, пути |
-| `verify_project` | 3 уровня проверки (контракты, структура, TODO) |
-| `review_code` | Ревью — контракты, нейминг, секреты |
+| `verify_project` | 3 уровня проверки (11 проверок) |
+| `review_code` | 3 режима ревью (scoped/wave-audit/full) |
 | `project_status` | Полный health-отчёт |
 | `token_savings` | Статистика экономии токенов |
 | `compress_text` | Сжатие текста (3 уровня) |
+| `refresh_project` | Синхронизация графа и плана с кодом |
+| `suggest_contract` | Генерация MODULE_CONTRACT шаблона |
+| `lsp_hover` | Тип/сигнатура через LSP |
+| `lsp_references` | Поиск использований символа |
 
 ---
 
@@ -92,7 +95,7 @@ AGENTS.md содержит `STOP`-правило: «You are in Phase 0 until ALL
 
 ```
 my-project/
-├── AGENTS.md                     ← GRACE конституция (читается каждую сессию)
+├── AGENTS.md                     ← GRACE конституция
 ├── opencode.jsonc                ← MCP авто-старт
 ├── docs/                         ← Phase 0: 5 XML-шаблонов
 │   ├── requirements.xml
@@ -101,23 +104,28 @@ my-project/
 │   ├── verification-plan.xml
 │   └── knowledge-graph.xml
 └── .opencode/
-    ├── plugins/synapse.ts        ← авто-прокси + GRACE-контекст
+    ├── plugins/synapse.ts        ← авто-прокси + GRACE
     ├── rules/synapse.md          ← инструкции для LLM
-    └── package.json              ← зависимости плагина
+    └── package.json              ← зависимости
 ```
 
 ---
 
-## CLI команды (диагностика)
+## CLI команды
 
 | Команда | Назначение |
 |---------|-----------|
-| `syn init` | Установка всех хуков + шаблонов |
-| `syn index` | Индексация кодовой базы |
-| `syn index --watch` | Авто-переиндексация при изменениях |
-| `syn doctor` | Диагностика: 10 проверок |
+| `syn init` | Установка интеграции |
+| `syn index` / `--watch` | Индексация + авто-переиндексация |
+| `syn search "q"` | Прямой поиск по коду |
+| `syn verify` | 3 уровня проверки |
+| `syn review` | Ревью кода |
+| `syn refresh` | Синхронизация artifacts |
 | `syn status` | Health-отчёт |
-| `syn proxy -- <cmd>` | Ручной запуск через фильтр |
+| `syn doctor` | Диагностика (10 проверок) |
+| `syn history "q"` | Поиск по git-истории |
+| `syn serve` | Web дашборд |
+| `syn proxy -- <cmd>` | Ручной прокси |
 | `syn gain` | Статистика экономии |
 
 ---
@@ -126,10 +134,10 @@ my-project/
 
 | Компонент | Описание |
 |-----------|----------|
-| **Octocode** | AST-индексация (tree-sitter: 5 языков) + fallback (14 языков), BM25 поиск |
+| **Octocode** | AST-индексация (5 языков) + fallback (14), BM25 + векторный + гибридный поиск |
 | **RTK Proxy** | 30+ TOML-фильтров, 8-стадийный пайплайн, авто-прокси через плагин |
-| **Caveman** | 3 уровня сжатия текста (lite/full/ultra) |
-| **GRACE** | Phase 0 gate, контракты, 3 уровня верификации, граф знаний (15 типов) |
+| **Caveman** | 3 уровня сжатия (lite/full/ultra) |
+| **GRACE** | Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 11 проверок, 3 режима ревью |
 
 ---
 
@@ -138,13 +146,16 @@ my-project/
 | Метрика | Значение |
 |---------|----------|
 | Бинарник | ~13 MB release |
-| Зависимости | 0 (всё включено) |
-| MCP инструментов | 8 |
-| CLI команд | 15 |
+| Зависимости | 0 (всё включено: SQLite, axum, rayon) |
+| MCP инструментов | **12** |
+| CLI команд | 17 |
+| Проверок verify | 11 |
+| Режимов review | 3 |
 | Doctor проверок | 10 |
-| Языков индексации | 5 (AST) + 9 (fallback) = 14 |
-| Тестов | 20 |
-| Clippy warnings | 0 |
+| Языков индексации | 14 |
+| Тестов | **28** (24 unit + 4 integration) |
+| Контрактов в своём коде | **34/34** |
+| self-verify | **ALL PASS** |
 
 ## License
 
