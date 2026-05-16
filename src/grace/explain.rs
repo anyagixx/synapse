@@ -1,5 +1,5 @@
-use std::path::Path;
 use crate::indexer::storage::Storage;
+use std::path::Path;
 
 #[derive(Debug, serde::Serialize)]
 pub struct ExplainResult {
@@ -10,6 +10,12 @@ pub struct ExplainResult {
 
 pub struct Explainer;
 
+impl Default for Explainer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Explainer {
     pub fn new() -> Self {
         Self
@@ -19,14 +25,18 @@ impl Explainer {
         let storage = Storage::new(root);
         let results = storage.search(query, 8);
 
-        let mut sources: Vec<String> = results.iter()
+        let mut sources: Vec<String> = results
+            .iter()
             .map(|b| format!("{}:{} — {}", b.path, b.start_line, b.name))
             .collect();
         sources.sort();
         sources.dedup();
 
         let answer = if sources.is_empty() {
-            format!("No relevant code found for '{}'. Run `syn index` first.", query)
+            format!(
+                "No relevant code found for '{}'. Run `syn index` first.",
+                query
+            )
         } else {
             let mut ans = format!("Found {} relevant code sections:\n\n", sources.len());
             for (i, src) in sources.iter().enumerate() {

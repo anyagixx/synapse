@@ -1,5 +1,5 @@
-use std::path::Path;
 use crate::indexer::storage::Storage;
+use std::path::Path;
 
 #[derive(Debug, serde::Serialize)]
 pub struct FixResult {
@@ -10,6 +10,12 @@ pub struct FixResult {
 }
 
 pub struct Debugger;
+
+impl Default for Debugger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl Debugger {
     pub fn new() -> Self {
@@ -24,21 +30,38 @@ impl Debugger {
         let related = storage.search(description, 10);
 
         // 2. Build diagnosis
-        let mut modules: Vec<String> = related.iter()
+        let mut modules: Vec<String> = related
+            .iter()
             .map(|b| format!("{}:{} — {} ('{}')", b.path, b.start_line, b.kind, b.name))
             .collect();
         modules.sort();
         modules.dedup();
 
-        let blocks: Vec<String> = related.iter()
+        let blocks: Vec<String> = related
+            .iter()
             .take(5)
-            .map(|b| format!("{}:{} ({})\n  {}", b.path, b.start_line, b.name, truncate(&b.content, 200)))
+            .map(|b| {
+                format!(
+                    "{}:{} ({})\n  {}",
+                    b.path,
+                    b.start_line,
+                    b.name,
+                    truncate(&b.content, 200)
+                )
+            })
             .collect();
 
         let diagnosis = if modules.is_empty() {
-            format!("No indexed code relates to '{}'. Run `syn index` first.", description)
+            format!(
+                "No indexed code relates to '{}'. Run `syn index` first.",
+                description
+            )
         } else {
-            format!("Found {} relevant code blocks across {} modules.", related.len(), modules.len())
+            format!(
+                "Found {} relevant code blocks across {} modules.",
+                related.len(),
+                modules.len()
+            )
         };
 
         Ok(FixResult {
@@ -51,5 +74,9 @@ impl Debugger {
 }
 
 fn truncate(s: &str, max: usize) -> String {
-    if s.len() <= max { s.to_string() } else { format!("{}...", &s[..max]) }
+    if s.len() <= max {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max])
+    }
 }

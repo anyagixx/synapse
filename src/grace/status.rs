@@ -1,9 +1,9 @@
-use std::path::Path;
-use crate::grace::contract::{ContractValidator, ContractReport};
+use crate::config::Config;
+use crate::grace::contract::{ContractReport, ContractValidator};
 use crate::grace::semantic::{SemanticExtractor, SemanticReport};
 use crate::grace::verify::Verifier;
 use crate::tracking::Tracker;
-use crate::config::Config;
+use std::path::Path;
 
 #[derive(Debug, serde::Serialize)]
 pub struct StatusReport {
@@ -31,6 +31,12 @@ pub struct SystemInfo {
 }
 
 pub struct StatusCollector;
+
+impl Default for StatusCollector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl StatusCollector {
     pub fn new() -> Self {
@@ -60,7 +66,9 @@ impl StatusCollector {
             },
             system: SystemInfo {
                 version: crate::VERSION.into(),
-                config_path: Config::path().map(|p| p.display().to_string()).unwrap_or_default(),
+                config_path: Config::path()
+                    .map(|p| p.display().to_string())
+                    .unwrap_or_default(),
                 data_path: db_path.display().to_string(),
                 project_path: root.display().to_string(),
             },
@@ -78,8 +86,14 @@ impl StatusCollector {
         println!("║ Project: {:<32}║", report.system.project_path);
         println!("╠══════════════════════════════════════╣");
         println!("║ CONTRACTS                            ║");
-        println!("║  Files with contract:    {:<12}║", report.contracts.with_contract);
-        println!("║  Files without contract: {:<12}║", report.contracts.without_contract);
+        println!(
+            "║  Files with contract:    {:<12}║",
+            report.contracts.with_contract
+        );
+        println!(
+            "║  Files without contract: {:<12}║",
+            report.contracts.without_contract
+        );
         println!("║  Valid contracts:       {:<12}║", report.contracts.valid);
         println!("╠══════════════════════════════════════╣");
         println!("║ SEMANTIC MARKUP                      ║");
@@ -93,10 +107,22 @@ impl StatusCollector {
         }
         println!("╠══════════════════════════════════════╣");
         println!("║ TOKEN ECONOMY                        ║");
-        println!("║  Commands tracked:  {:<15}║", report.token_economy.total_commands);
-        println!("║  Tokens saved:      {:<15}║", report.token_economy.total_saved);
-        println!("║  Avg savings:       {:<15.1}║", report.token_economy.avg_savings_pct);
-        println!("║  DB size:           {:<15}║", report.token_economy.db_size);
+        println!(
+            "║  Commands tracked:  {:<15}║",
+            report.token_economy.total_commands
+        );
+        println!(
+            "║  Tokens saved:      {:<15}║",
+            report.token_economy.total_saved
+        );
+        println!(
+            "║  Avg savings:       {:<15.1}║",
+            report.token_economy.avg_savings_pct
+        );
+        println!(
+            "║  DB size:           {:<15}║",
+            report.token_economy.db_size
+        );
         println!("╚══════════════════════════════════════╝");
     }
 }

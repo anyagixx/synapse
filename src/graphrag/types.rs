@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum RelationType {
@@ -23,7 +23,10 @@ impl RelationType {
         match self {
             Self::Implements | Self::Extends | Self::Configures => 1.0,
             Self::ArchitecturalDependency => 0.9,
-            Self::FactoryCreates | Self::ObserverPattern | Self::StrategyPattern | Self::AdapterPattern => 0.8,
+            Self::FactoryCreates
+            | Self::ObserverPattern
+            | Self::StrategyPattern
+            | Self::AdapterPattern => 0.8,
             Self::Imports | Self::Calls | Self::Uses => 0.7,
             Self::SiblingModule | Self::ParentModule | Self::ChildModule => 0.3,
         }
@@ -48,7 +51,7 @@ impl RelationType {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s {
             "implements" => Some(Self::Implements),
             "extends" => Some(Self::Extends),
@@ -98,6 +101,12 @@ pub struct CodeGraph {
     pub relationships: Vec<CodeRelationship>,
 }
 
+impl Default for CodeGraph {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CodeGraph {
     pub fn new() -> Self {
         Self {
@@ -121,7 +130,8 @@ impl CodeGraph {
     }
 
     pub fn get_relationships(&self, node_id: &str) -> Vec<&CodeRelationship> {
-        self.relationships.iter()
+        self.relationships
+            .iter()
             .filter(|r| r.source_id == node_id || r.target_id == node_id)
             .collect()
     }
@@ -133,7 +143,13 @@ impl CodeGraph {
         path
     }
 
-    fn dfs(&self, current: &str, target: &str, visited: &mut std::collections::HashSet<String>, path: &mut Vec<String>) -> bool {
+    fn dfs(
+        &self,
+        current: &str,
+        target: &str,
+        visited: &mut std::collections::HashSet<String>,
+        path: &mut Vec<String>,
+    ) -> bool {
         if current == target {
             path.push(current.to_string());
             return true;
@@ -143,9 +159,13 @@ impl CodeGraph {
         }
         path.push(current.to_string());
         for rel in &self.relationships {
-            let next = if rel.source_id == current { Some(&rel.target_id) }
-                      else if rel.target_id == current { Some(&rel.source_id) }
-                      else { None };
+            let next = if rel.source_id == current {
+                Some(&rel.target_id)
+            } else if rel.target_id == current {
+                Some(&rel.source_id)
+            } else {
+                None
+            };
             if let Some(n) = next {
                 if self.dfs(n, target, visited, path) {
                     return true;
@@ -159,13 +179,21 @@ impl CodeGraph {
     /// Find nodes by text search (name, path, symbols)
     pub fn search_nodes(&self, query: &str) -> Vec<&CodeNode> {
         let q = query.to_lowercase();
-        let mut results: Vec<(f64, &CodeNode)> = self.nodes.iter()
+        let mut results: Vec<(f64, &CodeNode)> = self
+            .nodes
+            .iter()
             .map(|n| {
                 let mut score = 0.0;
-                if n.name.to_lowercase().contains(&q) { score += 10.0; }
-                if n.path.to_lowercase().contains(&q) { score += 5.0; }
+                if n.name.to_lowercase().contains(&q) {
+                    score += 10.0;
+                }
+                if n.path.to_lowercase().contains(&q) {
+                    score += 5.0;
+                }
                 for sym in &n.symbols {
-                    if sym.to_lowercase().contains(&q) { score += 3.0; }
+                    if sym.to_lowercase().contains(&q) {
+                        score += 3.0;
+                    }
                 }
                 (score, n)
             })
@@ -177,14 +205,18 @@ impl CodeGraph {
 
     pub fn overview(&self) -> GraphOverview {
         let node_types: Vec<&str> = self.nodes.iter().map(|n| n.kind.as_str()).collect();
-        let mut type_counts: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+        let mut type_counts: std::collections::HashMap<&str, usize> =
+            std::collections::HashMap::new();
         for t in node_types {
             *type_counts.entry(t).or_insert(0) += 1;
         }
         GraphOverview {
             total_nodes: self.nodes.len(),
             total_relationships: self.relationships.len(),
-            node_types: type_counts.iter().map(|(k, v)| format!("{}: {}", k, v)).collect(),
+            node_types: type_counts
+                .iter()
+                .map(|(k, v)| format!("{}: {}", k, v))
+                .collect(),
         }
     }
 }

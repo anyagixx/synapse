@@ -1,9 +1,15 @@
-use std::path::Path;
 use crate::graphrag::types::*;
-use crate::indexer::walker::Walker;
 use crate::indexer::storage::Storage;
+use crate::indexer::walker::Walker;
+use std::path::Path;
 
 pub struct GraphBuilder;
+
+impl Default for GraphBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl GraphBuilder {
     pub fn new() -> Self {
@@ -27,7 +33,8 @@ impl GraphBuilder {
             let size = content.as_ref().map(|c| c.lines().count()).unwrap_or(0);
 
             // Extract symbols from blocks for this file
-            let symbols: Vec<String> = blocks.iter()
+            let symbols: Vec<String> = blocks
+                .iter()
                 .filter(|b| b.path == file.path)
                 .map(|b| b.name.clone())
                 .collect();
@@ -54,7 +61,9 @@ impl GraphBuilder {
         }
 
         // 2. Create relationships from imports
-        let node_imports: Vec<(String, Vec<String>)> = graph.nodes.iter()
+        let node_imports: Vec<(String, Vec<String>)> = graph
+            .nodes
+            .iter()
             .map(|n| (n.id.clone(), n.imports.clone()))
             .collect();
         let node_ids: Vec<String> = graph.nodes.iter().map(|n| n.id.clone()).collect();
@@ -63,12 +72,12 @@ impl GraphBuilder {
             for import in imports {
                 if let Some(target_id) = node_ids.iter().find(|id| {
                     id.ends_with(&format!("/{}", import))
-                    || id.ends_with(&format!("/{}.rs", import))
-                    || id.ends_with(&format!("/{}.py", import))
-                    || id.ends_with(&format!("/{}.ts", import))
-                    || id.ends_with(&format!("/{}.js", import))
-                    || id.ends_with(&format!("/{}.go", import))
-                    || id.contains(&format!("/{}/", import))
+                        || id.ends_with(&format!("/{}.rs", import))
+                        || id.ends_with(&format!("/{}.py", import))
+                        || id.ends_with(&format!("/{}.ts", import))
+                        || id.ends_with(&format!("/{}.js", import))
+                        || id.ends_with(&format!("/{}.go", import))
+                        || id.contains(&format!("/{}/", import))
                 }) {
                     graph.add_relationship(CodeRelationship {
                         source_id: node_id.clone(),
@@ -82,12 +91,16 @@ impl GraphBuilder {
         }
 
         // 3. Create hierarchy relationships (parent/child module)
-        let mut module_map: std::collections::BTreeMap<String, Vec<String>> = std::collections::BTreeMap::new();
+        let mut module_map: std::collections::BTreeMap<String, Vec<String>> =
+            std::collections::BTreeMap::new();
         for node_id in &node_ids {
             if let Some(parent) = std::path::Path::new(node_id).parent() {
                 let parent_str = parent.to_string_lossy().to_string();
                 if !parent_str.is_empty() && parent_str != "." {
-                    module_map.entry(parent_str).or_default().push(node_id.clone());
+                    module_map
+                        .entry(parent_str)
+                        .or_default()
+                        .push(node_id.clone());
                 }
             }
         }
@@ -130,12 +143,12 @@ fn extract_imports(content: &str, language: &str) -> Vec<String> {
             for line in content.lines() {
                 let t = line.trim();
                 if let Some(rest) = t.strip_prefix("use ") {
-                    let path = rest.split("::")
-                        .next()
-                        .unwrap_or("")
-                        .trim()
-                        .to_string();
-                    if !path.is_empty() && !path.starts_with("crate") && !path.starts_with("self") && !path.starts_with("super") {
+                    let path = rest.split("::").next().unwrap_or("").trim().to_string();
+                    if !path.is_empty()
+                        && !path.starts_with("crate")
+                        && !path.starts_with("self")
+                        && !path.starts_with("super")
+                    {
                         imports.push(path);
                     }
                 }
@@ -153,13 +166,27 @@ fn extract_imports(content: &str, language: &str) -> Vec<String> {
             for line in content.lines() {
                 let t = line.trim();
                 if let Some(rest) = t.strip_prefix("import ") {
-                    let name = rest.split(' ').next().unwrap_or("").split('.').next().unwrap_or("").to_string();
+                    let name = rest
+                        .split(' ')
+                        .next()
+                        .unwrap_or("")
+                        .split('.')
+                        .next()
+                        .unwrap_or("")
+                        .to_string();
                     if !name.is_empty() {
                         imports.push(name);
                     }
                 }
                 if let Some(rest) = t.strip_prefix("from ") {
-                    let name = rest.split(' ').nth(1).unwrap_or("").split('.').next().unwrap_or("").to_string();
+                    let name = rest
+                        .split(' ')
+                        .nth(1)
+                        .unwrap_or("")
+                        .split('.')
+                        .next()
+                        .unwrap_or("")
+                        .to_string();
                     if !name.is_empty() {
                         imports.push(name);
                     }
@@ -178,7 +205,12 @@ fn extract_imports(content: &str, language: &str) -> Vec<String> {
                     }
                 }
                 if let Some(rest) = t.strip_prefix("require(") {
-                    let path = rest.trim_end_matches(')').trim().trim_matches('"').trim_matches('\'').to_string();
+                    let path = rest
+                        .trim_end_matches(')')
+                        .trim()
+                        .trim_matches('"')
+                        .trim_matches('\'')
+                        .to_string();
                     if !path.starts_with('.') {
                         imports.push(path);
                     }

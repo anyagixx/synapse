@@ -1,9 +1,9 @@
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use crate::config::Config;
+use crate::graphrag::GraphRag;
+use crate::indexer::Indexer;
 use std::fmt::Display;
 use std::sync::Mutex;
-use crate::graphrag::GraphRag;
-use crate::config::Config;
-use crate::indexer::Indexer;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 pub struct McpServer;
 
@@ -39,7 +39,10 @@ impl McpServer {
     }
 
     pub async fn start_http(self, bind: &str) -> anyhow::Result<()> {
-        tracing::info!("MCP HTTP not yet implemented. Use: socat tcp-l:{} exec:syn mcp", bind);
+        tracing::info!(
+            "MCP HTTP not yet implemented. Use: socat tcp-l:{} exec:syn mcp",
+            bind
+        );
         self.start_stdio().await
     }
 }
@@ -48,6 +51,12 @@ pub struct SynapseHandler {
     indexer: Indexer,
     graphrag: Mutex<Option<GraphRag>>,
     initialized: bool,
+}
+
+impl Default for SynapseHandler {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SynapseHandler {
@@ -83,16 +92,19 @@ impl SynapseHandler {
         match method {
             "initialize" => {
                 self.initialized = true;
-                self.result(id, serde_json::json!({
-                    "protocolVersion": "2025-11-05",
-                    "capabilities": {
-                        "tools": {}
-                    },
-                    "serverInfo": {
-                        "name": "syn",
-                        "version": crate::VERSION
-                    }
-                }))
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "protocolVersion": "2025-11-05",
+                        "capabilities": {
+                            "tools": {}
+                        },
+                        "serverInfo": {
+                            "name": "syn",
+                            "version": crate::VERSION
+                        }
+                    }),
+                )
             }
             "tools/list" => {
                 if !self.initialized {
@@ -183,7 +195,11 @@ impl SynapseHandler {
         }
     }
 
-    async fn handle_search(&self, id: Option<serde_json::Value>, args: &serde_json::Value) -> serde_json::Value {
+    async fn handle_search(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
         let query = args["query"].as_str().unwrap_or("");
         let max = args["max_results"].as_u64().unwrap_or(10) as usize;
 
@@ -192,25 +208,45 @@ impl SynapseHandler {
                 let text = if results.is_empty() {
                     "No results found. Try running `syn index` first.".to_string()
                 } else {
-                    results.iter().enumerate().map(|(i, r)| {
-                        let preview = if r.content.len() > 150 {
-                            format!("{}...", &r.content[..150])
-                        } else {
-                            r.content.clone()
-                        };
-                        format!("{}. {} ({}:{}-{})\n   {}", i + 1, r.path, r.language, r.start_line, r.end_line, preview)
-                    }).collect::<Vec<_>>().join("\n\n")
+                    results
+                        .iter()
+                        .enumerate()
+                        .map(|(i, r)| {
+                            let preview = if r.content.len() > 150 {
+                                format!("{}...", &r.content[..150])
+                            } else {
+                                r.content.clone()
+                            };
+                            format!(
+                                "{}. {} ({}:{}-{})\n   {}",
+                                i + 1,
+                                r.path,
+                                r.language,
+                                r.start_line,
+                                r.end_line,
+                                preview
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n\n")
                 };
-                self.result(id, serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }))
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
             }
             Err(e) => self.error(id, -32603, format!("Search error: {}", e)),
         }
     }
 
-    fn handle_graphrag(&self, id: Option<serde_json::Value>, args: &serde_json::Value) -> serde_json::Value {
+    fn handle_graphrag(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
         let operation = args["operation"].as_str().unwrap_or("search");
         let guard = self.graphrag.lock().unwrap();
         let graphrag = match guard.as_ref() {
@@ -219,21 +255,25 @@ impl SynapseHandler {
         };
 
         match operation {
-            "overview" => {
-                match graphrag.overview() {
-                    Some(ov) => self.result(id, serde_json::json!({
+            "overview" => match graphrag.overview() {
+                Some(ov) => self.result(
+                    id,
+                    serde_json::json!({
                         "content": [{"type": "text", "text": format!(
                             "Graph Overview:\n  Nodes: {}\n  Relationships: {}\n  Types:\n    {}",
                             ov.total_nodes, ov.total_relationships, ov.node_types.join("\n    ")
                         )}],
                         "isError": false
-                    })),
-                    None => self.result(id, serde_json::json!({
+                    }),
+                ),
+                None => self.result(
+                    id,
+                    serde_json::json!({
                         "content": [{"type": "text", "text": "Empty graph"}],
                         "isError": false
-                    })),
-                }
-            }
+                    }),
+                ),
+            },
             "search" => {
                 let query = args["query"].as_str().unwrap_or("");
                 if query.is_empty() {
@@ -243,14 +283,29 @@ impl SynapseHandler {
                 let text = if nodes.is_empty() {
                     "No nodes found".to_string()
                 } else {
-                    nodes.iter().enumerate().map(|(i, n)| {
-                        format!("{}. {} — {} ({}:{})", i+1, n.name, n.kind, n.path, n.size_lines)
-                    }).collect::<Vec<_>>().join("\n")
+                    nodes
+                        .iter()
+                        .enumerate()
+                        .map(|(i, n)| {
+                            format!(
+                                "{}. {} — {} ({}:{})",
+                                i + 1,
+                                n.name,
+                                n.kind,
+                                n.path,
+                                n.size_lines
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
                 };
-                self.result(id, serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }))
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
             }
             "get-node" => {
                 let node_id = args["node_id"].as_str().unwrap_or("");
@@ -283,15 +338,26 @@ impl SynapseHandler {
                 let text = if rels.is_empty() {
                     format!("No relationships for {}", node_id)
                 } else {
-                    rels.iter().map(|r| {
-                        format!("{} --[{}]--> {} (w={})",
-                            r.source_id, r.relation_type.label(), r.target_id, r.weight)
-                    }).collect::<Vec<_>>().join("\n")
+                    rels.iter()
+                        .map(|r| {
+                            format!(
+                                "{} --[{}]--> {} (w={})",
+                                r.source_id,
+                                r.relation_type.label(),
+                                r.target_id,
+                                r.weight
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
                 };
-                self.result(id, serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }))
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
             }
             "find-path" => {
                 let from = args["from"].as_str().unwrap_or("");
@@ -305,16 +371,27 @@ impl SynapseHandler {
                 } else {
                     path.join(" -> ")
                 };
-                self.result(id, serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }))
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
             }
-            _ => self.error(id, -32601, format!("Unknown graphrag operation: {}", operation)),
+            _ => self.error(
+                id,
+                -32601,
+                format!("Unknown graphrag operation: {}", operation),
+            ),
         }
     }
 
-    async fn handle_view_signatures(&self, id: Option<serde_json::Value>, args: &serde_json::Value) -> serde_json::Value {
+    async fn handle_view_signatures(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
         let path = args["path"].as_str().unwrap_or("");
 
         match self.indexer.view_signatures(path).await {
@@ -324,16 +401,23 @@ impl SynapseHandler {
                 } else {
                     sigs.join("\n")
                 };
-                self.result(id, serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }))
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
             }
             Err(e) => self.error(id, -32603, format!("Error: {}", e)),
         }
     }
 
-    fn result(&self, id: Option<serde_json::Value>, result: serde_json::Value) -> serde_json::Value {
+    fn result(
+        &self,
+        id: Option<serde_json::Value>,
+        result: serde_json::Value,
+    ) -> serde_json::Value {
         let mut resp = serde_json::json!({
             "jsonrpc": "2.0",
             "result": result
@@ -344,7 +428,12 @@ impl SynapseHandler {
         resp
     }
 
-    fn error(&self, id: Option<serde_json::Value>, code: i32, message: impl Display) -> serde_json::Value {
+    fn error(
+        &self,
+        id: Option<serde_json::Value>,
+        code: i32,
+        message: impl Display,
+    ) -> serde_json::Value {
         let mut resp = serde_json::json!({
             "jsonrpc": "2.0",
             "error": {

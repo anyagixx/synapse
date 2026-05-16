@@ -1,18 +1,24 @@
 pub mod contract;
-pub mod semantic;
-pub mod verify;
-pub mod review;
-pub mod fix;
 pub mod explain;
+pub mod fix;
+pub mod review;
+pub mod semantic;
 pub mod status;
+pub mod verify;
 
+use contract::ContractValidator;
 use std::path::Path;
 use verify::Verifier;
-use contract::ContractValidator;
 
 pub use contract::ModuleContract;
 
 pub struct GraceEngine;
+
+impl Default for GraceEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl GraceEngine {
     pub fn new() -> Self {

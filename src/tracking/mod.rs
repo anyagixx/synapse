@@ -7,7 +7,9 @@ pub struct Tracker {
 
 impl Tracker {
     pub fn new(config: &Config) -> Self {
-        Self { config: config.clone() }
+        Self {
+            config: config.clone(),
+        }
     }
 
     pub fn db_path() -> anyhow::Result<PathBuf> {
@@ -53,8 +55,9 @@ impl Tracker {
                     saved_tokens INTEGER NOT NULL,
                     savings_pct REAL NOT NULL,
                     project_path TEXT DEFAULT ''
-                );"
-            ).ok();
+                );",
+            )
+            .ok();
             conn.execute(
                 "INSERT INTO commands (original_cmd, input_tokens, output_tokens, saved_tokens, savings_pct, project_path)
                  VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
@@ -79,24 +82,26 @@ impl Tracker {
                     saved_tokens INTEGER NOT NULL,
                     savings_pct REAL NOT NULL,
                     project_path TEXT DEFAULT ''
-                );"
-            ).ok();
+                );",
+            )
+            .ok();
 
             if let Ok(mut stmt) = conn.prepare(
                 "SELECT COUNT(*), COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0),
                         COALESCE(SUM(saved_tokens),0), COALESCE(AVG(savings_pct),0)
-                 FROM commands"
+                 FROM commands",
             ) {
-                if let Ok(row) = stmt.query_row([], |row| {
-                    stats.total_commands = row.get(0)?;
-                    stats.total_input_tokens = row.get(1)?;
-                    stats.total_output_tokens = row.get(2)?;
-                    stats.total_saved_tokens = row.get(3)?;
-                    stats.avg_savings_pct = row.get(4)?;
-                    Ok(())
-                }) {
-                    let _ = row;
-                }
+                if stmt
+                    .query_row([], |row| {
+                        stats.total_commands = row.get(0)?;
+                        stats.total_input_tokens = row.get(1)?;
+                        stats.total_output_tokens = row.get(2)?;
+                        stats.total_saved_tokens = row.get(3)?;
+                        stats.avg_savings_pct = row.get(4)?;
+                        Ok(())
+                    })
+                    .is_err()
+                {}
             }
         }
         Ok(stats)

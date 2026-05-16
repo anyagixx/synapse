@@ -25,6 +25,12 @@ pub struct ContractReport {
 
 pub struct ContractValidator;
 
+impl Default for ContractValidator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ContractValidator {
     pub fn new() -> Self {
         Self
@@ -58,7 +64,10 @@ impl ContractValidator {
         for line in &lines {
             let trimmed = line.trim();
             if trimmed.starts_with("//") || trimmed.starts_with("#") {
-                let val = trimmed.trim_start_matches('/').trim_start_matches('#').trim();
+                let val = trimmed
+                    .trim_start_matches('/')
+                    .trim_start_matches('#')
+                    .trim();
                 Self::parse_field(&mut mc, val);
             }
             // Also match /* ... */ style
@@ -75,28 +84,31 @@ impl ContractValidator {
         mc
     }
 
-    fn find_contract_block(content: &str) -> Option<&str> {
-        let markers = ["// MODULE_CONTRACT\n", "// MODULE_CONTRACT\r",
-                        "/* MODULE_CONTRACT", "# MODULE_CONTRACT",
-                        "// MODULE_CONTRACT\r\n"];
-        for marker in &markers {
-            if let Some(start) = content.find(marker) {
-                // Check it's on its own (the line starts with the comment, not the text before it)
-                let line_start = content[..start].rfind('\n')
-                    .map(|i| i + 1)
-                    .unwrap_or(0);
-                // Check it's not part of another word
-                if start > 0 {
-                    let prev = content.as_bytes()[start - 1];
-                    if prev != b'\n' && prev != b'\r' && prev != b' ' { continue; }
-                }
-                let line_end = content[start..].find('\n')
-                    .map(|i| start + i)
-                    .unwrap_or(content.len());
-                return Some(&content[line_start..line_end]);
+    fn find_contract_block(content: &str) -> Option<String> {
+        // Find MODULE_CONTRACT marker and extract the entire comment block
+        let start_marker = content.find("// MODULE_CONTRACT")?;
+
+        // Find the start of the line containing the marker
+        let block_start = content[..start_marker]
+            .rfind('\n')
+            .map(|i| i + 1)
+            .unwrap_or(0);
+
+        // Extract all consecutive comment lines (// or #) after the marker
+        let mut block_end = start_marker;
+        let after_marker = &content[start_marker..];
+        for line in after_marker.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("//") || trimmed.starts_with('#') || trimmed.starts_with('*') {
+                block_end += line.len() + 1; // +1 for newline
+            } else if trimmed.is_empty() {
+                block_end += line.len() + 1;
+            } else {
+                break;
             }
         }
-        None
+
+        Some(content[block_start..block_end.min(content.len())].to_string())
     }
 
     fn parse_field(mc: &mut ModuleContract, val: &str) {
@@ -105,9 +117,17 @@ impl ContractValidator {
         } else if let Some(s) = val.strip_prefix("SCOPE:") {
             mc.scope = Some(s.trim().to_string());
         } else if let Some(d) = val.strip_prefix("DEPENDS:") {
-            mc.depends = d.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
+            mc.depends = d
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
         } else if let Some(l) = val.strip_prefix("LINKS:") {
-            mc.links = l.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
+            mc.links = l
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
         } else if let Some(id) = val.strip_prefix("MODULE_ID:") {
             mc.module_id = Some(id.trim().to_string());
         }
@@ -118,9 +138,13 @@ impl ContractValidator {
         let walker = crate::indexer::walker::Walker::new(root);
         let files = walker.walk();
 
-        let source_extensions = ["rs", "py", "ts", "tsx", "js", "jsx", "go", "rb", "java", "php", "cpp", "hpp", "c", "h", "css", "scss", "lua", "sh", "bash", "zsh", "svelte"];
+        let source_extensions = [
+            "rs", "py", "ts", "tsx", "js", "jsx", "go", "rb", "java", "php", "cpp", "hpp", "c",
+            "h", "css", "scss", "lua", "sh", "bash", "zsh", "svelte",
+        ];
         for file in &files {
-            let ext = std::path::Path::new(&file.path).extension()
+            let ext = std::path::Path::new(&file.path)
+                .extension()
                 .and_then(|e| e.to_str())
                 .unwrap_or("");
             if !source_extensions.contains(&ext) {

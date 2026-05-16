@@ -17,7 +17,9 @@ Run these via bash tool:
 | `syn proxy -- <cmd>` | Run any shell command through token-saving proxy. |
 | `syn compress <file>` | Compress files for AI context (creates .original.md backup). |
 | `syn gain` | How many tokens Synapse saved. |
-| `syn graphrag <op>` | Knowledge graph: `overview`, `search <query>`. |
+| `syn doctor` | Diagnose setup issues — checks all components |
+| `syn hooks status` | Show hook installation status |
+| `syn hooks install <agent>` | Install hooks for an AI agent |
 
 ## How to Use
 

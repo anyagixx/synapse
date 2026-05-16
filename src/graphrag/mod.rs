@@ -1,13 +1,19 @@
-pub mod types;
 pub mod builder;
+pub mod types;
 
-use std::path::Path;
 use builder::GraphBuilder;
+use std::path::Path;
 
 pub use types::*;
 
 pub struct GraphRag {
     graph: Option<CodeGraph>,
+}
+
+impl Default for GraphRag {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl GraphRag {
@@ -19,7 +25,11 @@ impl GraphRag {
         let graph = GraphBuilder::build(root)?;
         let nodes = graph.nodes.len();
         let rels = graph.relationships.len();
-        tracing::info!("GraphRAG: built graph with {} nodes and {} relationships", nodes, rels);
+        tracing::info!(
+            "GraphRAG: built graph with {} nodes and {} relationships",
+            nodes,
+            rels
+        );
         self.graph = Some(graph);
         Ok(())
     }
@@ -29,7 +39,8 @@ impl GraphRag {
     }
 
     pub fn search_nodes(&self, query: &str) -> Vec<&CodeNode> {
-        self.graph.as_ref()
+        self.graph
+            .as_ref()
             .map(|g| g.search_nodes(query))
             .unwrap_or_default()
     }
@@ -39,13 +50,15 @@ impl GraphRag {
     }
 
     pub fn get_relationships(&self, node_id: &str) -> Vec<&CodeRelationship> {
-        self.graph.as_ref()
+        self.graph
+            .as_ref()
             .map(|g| g.get_relationships(node_id))
             .unwrap_or_default()
     }
 
     pub fn find_path(&self, from: &str, to: &str) -> Vec<String> {
-        self.graph.as_ref()
+        self.graph
+            .as_ref()
             .map(|g| g.find_path(from, to))
             .unwrap_or_default()
     }

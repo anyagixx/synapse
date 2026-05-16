@@ -1,5 +1,5 @@
-use std::path::Path;
 use ignore::WalkBuilder;
+use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct IndexFile {
@@ -43,11 +43,15 @@ impl Walker {
                         continue;
                     }
                     if let Some(lang) = detect_language(path) {
-                        let rel = path.strip_prefix(&self.root)
+                        let rel = path
+                            .strip_prefix(&self.root)
                             .unwrap_or(path)
                             .to_string_lossy()
                             .to_string();
-                        files.push(IndexFile { path: rel, language: lang });
+                        files.push(IndexFile {
+                            path: rel,
+                            language: lang,
+                        });
                         self.total.fetch_add(1, Ordering::Relaxed);
                     }
                 }
@@ -77,12 +81,10 @@ fn detect_language(path: &Path) -> Option<String> {
         "lua" => Some("lua".into()),
         "md" => Some("markdown".into()),
         "svelte" => Some("svelte".into()),
-        _ => {
-            match name {
-                "Dockerfile" | "dockerfile" => Some("dockerfile".into()),
-                "Makefile" | "makefile" => Some("makefile".into()),
-                _ => None,
-            }
-        }
+        _ => match name {
+            "Dockerfile" | "dockerfile" => Some("dockerfile".into()),
+            "Makefile" | "makefile" => Some("makefile".into()),
+            _ => None,
+        },
     }
 }

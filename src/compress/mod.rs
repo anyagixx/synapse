@@ -6,7 +6,9 @@ pub struct Compressor {
 
 impl Compressor {
     pub fn new(config: &Config) -> Self {
-        Self { config: config.clone() }
+        Self {
+            config: config.clone(),
+        }
     }
 
     /// Compress AI output text (caveman mode)
@@ -23,14 +25,33 @@ impl Compressor {
     fn compress_lite(&self, input: &str) -> String {
         let mut result = input.to_string();
         let fillers = [
-            "I think ", "I believe ", "In my opinion ", "It's worth noting that ",
-            "It should be noted that ", "As you can see, ", "Obviously, ",
-            "Essentially, ", "Basically, ", "Interestingly, ", "Importantly, ",
-            "Additionally, ", "Furthermore, ", "Moreover, ", "However, ",
-            "Nevertheless, ", "Nonetheless, ", "Therefore, ", "Thus, ",
-            "Consequently, ", "In addition, ", "In other words, ",
-            "That being said, ", "Having said that, ", "At the end of the day, ",
-            "In conclusion, ", "To summarize, ",
+            "I think ",
+            "I believe ",
+            "In my opinion ",
+            "It's worth noting that ",
+            "It should be noted that ",
+            "As you can see, ",
+            "Obviously, ",
+            "Essentially, ",
+            "Basically, ",
+            "Interestingly, ",
+            "Importantly, ",
+            "Additionally, ",
+            "Furthermore, ",
+            "Moreover, ",
+            "However, ",
+            "Nevertheless, ",
+            "Nonetheless, ",
+            "Therefore, ",
+            "Thus, ",
+            "Consequently, ",
+            "In addition, ",
+            "In other words, ",
+            "That being said, ",
+            "Having said that, ",
+            "At the end of the day, ",
+            "In conclusion, ",
+            "To summarize, ",
         ];
         for filler in &fillers {
             result = result.replace(filler, "");
@@ -44,9 +65,17 @@ impl Compressor {
 
         // Remove pleasantries
         let pleasantries = [
-            "you're welcome", "you are welcome", "no problem", "happy to help",
-            "glad to help", "let me know", "feel free to", "don't hesitate",
-            "please ", " thanks", "thank you",
+            "you're welcome",
+            "you are welcome",
+            "no problem",
+            "happy to help",
+            "glad to help",
+            "let me know",
+            "feel free to",
+            "don't hesitate",
+            "please ",
+            " thanks",
+            "thank you",
         ];
         for p in &pleasantries {
             result = result.replace(p, "");
@@ -78,13 +107,26 @@ impl Compressor {
         // Shorten common words
         let mut result = result;
         let shorts = [
-            ("because", "b/c"), ("with", "w/"), ("without", "w/o"),
-            ("about", "re"), ("regarding", "re"), ("something", "sth"),
-            ("someone", "sb"), ("information", "info"), ("application", "app"),
-            ("function", "fn"), ("parameter", "param"), ("variable", "var"),
-            ("implementation", "impl"), ("configuration", "config"),
-            ("documentation", "docs"), ("previous", "prev"), ("current", "cur"),
-            ("between", "btwn"), ("message", "msg"), ("number", "num"),
+            ("because", "b/c"),
+            ("with", "w/"),
+            ("without", "w/o"),
+            ("about", "re"),
+            ("regarding", "re"),
+            ("something", "sth"),
+            ("someone", "sb"),
+            ("information", "info"),
+            ("application", "app"),
+            ("function", "fn"),
+            ("parameter", "param"),
+            ("variable", "var"),
+            ("implementation", "impl"),
+            ("configuration", "config"),
+            ("documentation", "docs"),
+            ("previous", "prev"),
+            ("current", "cur"),
+            ("between", "btwn"),
+            ("message", "msg"),
+            ("number", "num"),
         ];
         for (from, to) in &shorts {
             result = result.replace(from, to);
@@ -112,7 +154,11 @@ impl Compressor {
             path.display(),
             content.len(),
             compressed.len(),
-            if content.is_empty() { 0 } else { 100 - compressed.len() * 100 / content.len() },
+            if content.is_empty() {
+                0
+            } else {
+                100 - compressed.len() * 100 / content.len()
+            },
         );
         Ok(())
     }

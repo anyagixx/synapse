@@ -1,18 +1,12 @@
 {
   "name": "synapse",
-  "version": "0.1.0",
-  "description": "Synapse — Unified AI Agent Engineering Platform",
+  "version": "0.2.0",
+  "description": "Synapse — AI Agent Engineering Platform: proxy, compression, code intelligence, GRACE methodology",
   "author": "Synapse Contributors",
   "license": "Apache-2.0",
   "main": "plugin.ts",
-  "capabilities": {
-    "before_tool_call": true,
-    "after_tool_call": true,
-    "project_open": true
-  },
   "config": {
     "proxy_enabled": true,
-    "compress_output": "full",
-    "mcp_port": 3100
+    "compress_output": "full"
   }
 }

@@ -1,6 +1,6 @@
-use std::path::Path;
 use crate::grace::contract::ContractValidator;
 use crate::grace::semantic::SemanticExtractor;
+use std::path::Path;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct VerificationResult {
@@ -17,6 +17,12 @@ pub struct CheckResult {
 }
 
 pub struct Verifier;
+
+impl Default for Verifier {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl Verifier {
     pub fn new() -> Self {
@@ -43,11 +49,16 @@ impl Verifier {
         checks.push(CheckResult {
             name: "contract-exists".into(),
             passed: report.with_contract > 0,
-            details: format!("{} / {} files have MODULE_CONTRACT", report.with_contract, report.total_files),
+            details: format!(
+                "{} / {} files have MODULE_CONTRACT",
+                report.with_contract, report.total_files
+            ),
         });
 
         if report.with_contract > 0 {
-            let invalid: Vec<String> = report.contracts.iter()
+            let invalid: Vec<String> = report
+                .contracts
+                .iter()
                 .filter(|c| c.has_contract && !c.valid)
                 .map(|c| c.file_path.clone())
                 .collect();
@@ -85,8 +96,13 @@ impl Verifier {
         }
 
         // Check 500-line rule on XML artifacts
-        let templates = ["requirements.xml", "technology.xml", "development-plan.xml",
-                          "verification-plan.xml", "knowledge-graph.xml"];
+        let templates = [
+            "requirements.xml",
+            "technology.xml",
+            "development-plan.xml",
+            "verification-plan.xml",
+            "knowledge-graph.xml",
+        ];
         let mut passing = true;
         let mut details = Vec::new();
         for tpl in &templates {
@@ -129,7 +145,11 @@ impl Verifier {
                 checks.push(CheckResult {
                     name: "knowledge-graph".into(),
                     passed: has_modules,
-                    details: if has_modules { "Knowledge graph found".into() } else { "No modules in knowledge graph".into() },
+                    details: if has_modules {
+                        "Knowledge graph found".into()
+                    } else {
+                        "No modules in knowledge graph".into()
+                    },
                 });
             } else {
                 checks.push(CheckResult {
@@ -155,7 +175,11 @@ impl Verifier {
             checks.push(CheckResult {
                 name: "development-plan".into(),
                 passed: has_modules,
-                details: if has_modules { "Development plan has module definitions".into() } else { "No module definitions found".into() },
+                details: if has_modules {
+                    "Development plan has module definitions".into()
+                } else {
+                    "No module definitions found".into()
+                },
             });
         }
 
@@ -180,8 +204,14 @@ impl Verifier {
             if let Ok(content) = std::fs::read_to_string(&full_path) {
                 for (i, line) in content.lines().enumerate() {
                     let l = line.trim().to_lowercase();
-                    if (l.starts_with("// todo") || l.starts_with("# todo") || l.starts_with("/* todo") || l.contains("TODO:"))
-                        || (l.starts_with("// fixme") || l.starts_with("# fixme") || l.starts_with("/* fixme") || l.contains("FIXME:"))
+                    if (l.starts_with("// todo")
+                        || l.starts_with("# todo")
+                        || l.starts_with("/* todo")
+                        || l.contains("TODO:"))
+                        || (l.starts_with("// fixme")
+                            || l.starts_with("# fixme")
+                            || l.starts_with("/* fixme")
+                            || l.contains("FIXME:"))
                     {
                         todos.push(format!("{}:{}", file.path, i + 1));
                     }
@@ -191,8 +221,15 @@ impl Verifier {
         checks.push(CheckResult {
             name: "no-todos".into(),
             passed: todos.is_empty(),
-            details: if todos.is_empty() { "No TODO/FIXME found".into() }
-                     else { format!("{} TODO/FIXME found:\n  {}", todos.len(), todos.join("\n  ")) },
+            details: if todos.is_empty() {
+                "No TODO/FIXME found".into()
+            } else {
+                format!(
+                    "{} TODO/FIXME found:\n  {}",
+                    todos.len(),
+                    todos.join("\n  ")
+                )
+            },
         });
 
         // Check file size limit (500 lines per source file recommended)
@@ -209,8 +246,11 @@ impl Verifier {
         checks.push(CheckResult {
             name: "file-size-limit".into(),
             passed: large_files.is_empty(),
-            details: if large_files.is_empty() { "All files under 500 lines".into() }
-                     else { format!("Large files:\n  {}", large_files.join("\n  ")) },
+            details: if large_files.is_empty() {
+                "All files under 500 lines".into()
+            } else {
+                format!("Large files:\n  {}", large_files.join("\n  "))
+            },
         });
 
         let passed = checks.iter().all(|c| c.passed);

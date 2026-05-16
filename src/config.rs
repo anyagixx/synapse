@@ -51,7 +51,9 @@ pub struct TrackingConfig {
     pub history_days: u32,
 }
 
-fn default_tracking_enabled() -> bool { true }
+fn default_tracking_enabled() -> bool {
+    true
+}
 
 impl TrackingConfig {
     pub fn enabled(&self) -> bool {

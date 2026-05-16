@@ -1,4 +1,4 @@
-use tree_sitter::{Parser, Language};
+use tree_sitter::{Language, Parser};
 
 pub struct CodeBlock {
     pub name: String,
@@ -9,6 +9,12 @@ pub struct CodeBlock {
 }
 
 pub struct ParserEngine;
+
+impl Default for ParserEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ParserEngine {
     pub fn new() -> Self {
@@ -62,16 +68,25 @@ impl ParserEngine {
             let node = cursor.node();
             let kind = node.kind();
 
-            let is_def = matches!(kind,
-                "function_item" | "function_definition" | "method_definition"
-                | "class_definition" | "struct_item" | "trait_item"
-                | "impl_item" | "enum_item" | "type_item"
-                | "function" | "method" | "class_declaration"
+            let is_def = matches!(
+                kind,
+                "function_item"
+                    | "function_definition"
+                    | "method_definition"
+                    | "class_definition"
+                    | "struct_item"
+                    | "trait_item"
+                    | "impl_item"
+                    | "enum_item"
+                    | "type_item"
+                    | "function"
+                    | "method"
+                    | "class_declaration"
             );
 
             if is_def {
-                let name = Self::node_name(node, code)
-                    .unwrap_or_else(|| format!("unnamed_{}", kind));
+                let name =
+                    Self::node_name(node, code).unwrap_or_else(|| format!("unnamed_{}", kind));
 
                 let full_name = if parent_name.is_empty() {
                     name
@@ -110,7 +125,10 @@ impl ParserEngine {
 
     fn node_name(node: tree_sitter::Node, code: &str) -> Option<String> {
         if let Some(name_node) = node.child_by_field_name("name") {
-            return name_node.utf8_text(code.as_bytes()).ok().map(|s| s.to_string());
+            return name_node
+                .utf8_text(code.as_bytes())
+                .ok()
+                .map(|s| s.to_string());
         }
         for i in 0..node.child_count() {
             let child = node.child(i)?;
@@ -124,31 +142,163 @@ impl ParserEngine {
 
 fn fallback_parse(code: &str) -> Vec<CodeBlock> {
     let mut blocks = Vec::new();
-    let keywords: &[&str] = &[
-        "fn ", "pub fn ", "pub async fn ", "async fn ",
-        "def ", "class ", "struct ", "enum ", "trait ",
-        "impl ", "function ", "export function ",
-        "export async function ", "export class ",
-        "func ", "public class ",
+    let lines: Vec<&str> = code.lines().collect();
+
+    let patterns: &[(&str, &str)] = &[
+        // Generic (cross-language)
+        ("fn ", "function"),
+        ("pub fn ", "function"),
+        ("pub async fn ", "async_function"),
+        ("def ", "function"),
+        ("class ", "class"),
+        ("struct ", "struct"),
+        ("enum ", "enum"),
+        ("trait ", "trait"),
+        ("impl ", "impl_block"),
+        ("function ", "function"),
+        ("export function ", "export_function"),
+        ("export class ", "export_class"),
+        ("func ", "function"),
+        ("public class ", "class"),
+        ("interface ", "interface"),
+        ("module ", "module"),
+        ("import ", "import_block"),
+        // PHP
+        ("public function ", "public_method"),
+        ("protected function ", "protected_method"),
+        ("private function ", "private_method"),
+        ("abstract class ", "abstract_class"),
+        // C/C++
+        ("void ", "c_function"),
+        ("int ", "c_function"),
+        ("bool ", "c_function"),
+        ("auto ", "c_function"),
+        ("size_t ", "c_function"),
+        ("string ", "c_function"),
+        // Java
+        ("public static void ", "java_static_method"),
+        ("private void ", "private_method"),
+        ("protected void ", "protected_method"),
+        // Ruby
+        ("def self.", "class_method"),
+        ("attr_accessor ", "attribute"),
+        // Bash
+        ("function ", "bash_function"),
+        // Lua
+        ("local function ", "local_function"),
+        // CSS/SCSS
+        (".", "css_selector"),
+        ("#", "css_id"),
+    ];
+
+    let mut i = 0;
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        let mut matched = false;
+
+        for &(prefix, kind) in patterns {
+            if trimmed.starts_with(prefix) {
+                let name = if kind == "css_selector" || kind == "css_id" {
+                    trimmed
+                        .trim_start_matches(prefix)
+                        .split(&['{', ' ', ',', ':'] as &[_])
+                        .next()
+                        .unwrap_or("unknown")
+                        .to_string()
+                } else {
+                    trimmed
+                        .split(['(', '{', ':'])
+                        .next()
+                        .unwrap_or(trimmed)
+                        .split_whitespace()
+                        .last()
+                        .unwrap_or("unknown")
+                        .to_string()
+                };
+
+                // Find end of this block: next top-level pattern or EOF
+                let end = lines[i..]
+                    .iter()
+                    .enumerate()
+                    .skip(1)
+                    .find(|(_, l)| {
+                        let t = l.trim();
+                        patterns
+                            .iter()
+                            .any(|(p, _)| t.starts_with(p) && p != &"." && p != &"#")
+                    })
+                    .map(|(idx, _)| i + idx)
+                    .unwrap_or(lines.len());
+
+                let content = lines[i..end].join("\n");
+                blocks.push(CodeBlock {
+                    name,
+                    kind: kind.to_string(),
+                    start_line: i + 1,
+                    end_line: end,
+                    content,
+                });
+                i = end;
+                matched = true;
+                break;
+            }
+        }
+
+        if !matched {
+            i += 1;
+        }
+    }
+
+    if blocks.is_empty() {
+        return basic_fallback(code);
+    }
+    blocks
+}
+
+fn basic_fallback(code: &str) -> Vec<CodeBlock> {
+    let mut blocks = Vec::new();
+    let patterns: &[(&str, &str)] = &[
+        ("fn ", "function"),
+        ("pub fn ", "function"),
+        ("def ", "function"),
+        ("class ", "class"),
+        ("struct ", "struct"),
+        ("enum ", "enum"),
+        ("trait ", "trait"),
+        ("impl ", "impl_block"),
+        ("function ", "function"),
+        ("export function ", "function"),
+        ("export class ", "class"),
+        ("func ", "function"),
+        ("public class ", "class"),
     ];
     for (i, line) in code.lines().enumerate() {
         let trimmed = line.trim();
-        if !keywords.iter().any(|k| trimmed.starts_with(k)) {
+        if !patterns.iter().any(|(k, _)| trimmed.starts_with(k)) {
             continue;
         }
-        let name = trimmed.split(|c: char| c == '(' || c == '{' || c == ':')
+        let name = trimmed
+            .split(['(', '{', ':'])
             .next()
             .unwrap_or(trimmed)
-            .trim()
             .split_whitespace()
             .last()
             .unwrap_or("unknown")
             .to_string();
-        let end = code.lines().skip(i).enumerate().skip(1)
-            .find(|(_, l)| keywords.iter().any(|k| l.trim().starts_with(k)))
+        let end = code
+            .lines()
+            .skip(i)
+            .enumerate()
+            .skip(1)
+            .find(|(_, l)| patterns.iter().any(|(k, _)| l.trim().starts_with(k)))
             .map(|(idx, _)| i + idx)
             .unwrap_or(code.lines().count());
-        let content = code.lines().skip(i).take(end - i).collect::<Vec<_>>().join("\n");
+        let content = code
+            .lines()
+            .skip(i)
+            .take(end - i)
+            .collect::<Vec<_>>()
+            .join("\n");
         blocks.push(CodeBlock {
             name,
             kind: "declaration".into(),
@@ -158,4 +308,55 @@ fn fallback_parse(code: &str) -> Vec<CodeBlock> {
         });
     }
     blocks
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_rust_fn() {
+        let engine = ParserEngine::new();
+        let code =
+            "fn hello() {\n    println!(\"hi\");\n}\n\nfn world() {\n    println!(\"there\");\n}";
+        let blocks = engine.parse(code, "rust");
+        assert!(!blocks.is_empty());
+        assert!(blocks.iter().any(|b| b.name.contains("hello")));
+        assert!(blocks.iter().any(|b| b.name.contains("world")));
+    }
+
+    #[test]
+    fn test_parse_python_def() {
+        let engine = ParserEngine::new();
+        let code = "def greet(name):\n    return f\"Hello {name}\"";
+        let blocks = engine.parse(code, "python");
+        assert!(!blocks.is_empty());
+        assert!(blocks[0].name.contains("greet"));
+    }
+
+    #[test]
+    fn test_parse_js_function() {
+        let engine = ParserEngine::new();
+        let code = "function hello() {\n  console.log('hi');\n}";
+        let blocks = engine.parse(code, "javascript");
+        assert!(!blocks.is_empty());
+        assert!(blocks.iter().any(|b| b.name.contains("hello")));
+    }
+
+    #[test]
+    fn test_fallback_for_unsupported_language() {
+        let engine = ParserEngine::new();
+        let code =
+            "function greet() {\n  return 'hello';\n}\n\nclass User {\n  constructor(name) {}\n}";
+        let blocks = engine.parse(code, "php"); // PHP falls back
+        assert!(!blocks.is_empty());
+        assert!(blocks.iter().any(|b| b.name == "greet"));
+    }
+
+    #[test]
+    fn test_fallback_empty_code() {
+        let engine = ParserEngine::new();
+        let blocks = engine.parse("", "rust");
+        assert!(blocks.is_empty());
+    }
 }

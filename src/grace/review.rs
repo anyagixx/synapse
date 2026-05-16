@@ -1,6 +1,6 @@
-use std::path::Path;
 use crate::grace::contract::ContractValidator;
 use crate::grace::semantic::SemanticExtractor;
+use std::path::Path;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ReviewReport {
@@ -18,6 +18,12 @@ pub struct ReviewSection {
 }
 
 pub struct Reviewer;
+
+impl Default for Reviewer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl Reviewer {
     pub fn new() -> Self {
@@ -42,7 +48,10 @@ impl Reviewer {
             name: "semantic-markup".into(),
             passed: unclosed.is_empty(),
             details: format!("{} blocks, {} unclosed", sem.total_blocks, unclosed.len()),
-            issues: unclosed.iter().map(|b| format!("Unclosed: {} at {}", b.name, b.file_path)).collect(),
+            issues: unclosed
+                .iter()
+                .map(|b| format!("Unclosed: {} at {}", b.name, b.file_path))
+                .collect(),
         });
 
         // 2. Contract compliance
@@ -51,7 +60,9 @@ impl Reviewer {
             name: "contract-compliance".into(),
             passed: report.invalid == 0,
             details: format!("{}/{} valid contracts", report.valid, report.with_contract),
-            issues: report.contracts.iter()
+            issues: report
+                .contracts
+                .iter()
                 .filter(|c| !c.valid && c.has_contract)
                 .map(|c| format!("Invalid contract: {}", c.file_path))
                 .collect(),
@@ -66,8 +77,7 @@ impl Reviewer {
     }
 
     fn full_integrity(root: &Path) -> anyhow::Result<ReviewReport> {
-        let mut sections = Self::scoped_gate(root)?
-            .sections;
+        let mut sections = Self::scoped_gate(root)?.sections;
 
         // 3. Verification integrity
         let vp_path = root.join("docs").join("verification-plan.xml");
@@ -75,8 +85,16 @@ impl Reviewer {
         sections.push(ReviewSection {
             name: "verification-plan".into(),
             passed: has_plan,
-            details: if has_plan { "Verification plan exists".into() } else { "No verification plan".into() },
-            issues: if has_plan { vec![] } else { vec!["Missing docs/verification-plan.xml".into()] },
+            details: if has_plan {
+                "Verification plan exists".into()
+            } else {
+                "No verification plan".into()
+            },
+            issues: if has_plan {
+                vec![]
+            } else {
+                vec!["Missing docs/verification-plan.xml".into()]
+            },
         });
 
         // 4. Graph consistency
@@ -85,8 +103,16 @@ impl Reviewer {
         sections.push(ReviewSection {
             name: "knowledge-graph".into(),
             passed: has_graph,
-            details: if has_graph { "Knowledge graph exists".into() } else { "No knowledge graph".into() },
-            issues: if has_graph { vec![] } else { vec!["Missing docs/knowledge-graph.xml".into()] },
+            details: if has_graph {
+                "Knowledge graph exists".into()
+            } else {
+                "No knowledge graph".into()
+            },
+            issues: if has_graph {
+                vec![]
+            } else {
+                vec!["Missing docs/knowledge-graph.xml".into()]
+            },
         });
 
         // 5. Naming conventions (check for common anti-patterns)
@@ -101,7 +127,11 @@ impl Reviewer {
         sections.push(ReviewSection {
             name: "naming-conventions".into(),
             passed: name_issues.is_empty(),
-            details: format!("{} files checked, {} issues", files.len(), name_issues.len()),
+            details: format!(
+                "{} files checked, {} issues",
+                files.len(),
+                name_issues.len()
+            ),
             issues: name_issues,
         });
 
@@ -116,10 +146,9 @@ impl Reviewer {
                         && !l.trim_start().starts_with("//")
                         && !l.trim_start().starts_with('#')
                         && !l.trim_start().starts_with("/*")
+                        && (line.contains('=') || line.contains(':'))
                     {
-                        if line.contains('=') || line.contains(':') {
-                            secret_issues.push(format!("{}:{} — possible secret", f.path, i+1));
-                        }
+                        secret_issues.push(format!("{}:{} — possible secret", f.path, i + 1));
                     }
                 }
             }

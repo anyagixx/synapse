@@ -1,49 +1,52 @@
-import { definePlugin, HookContext } from "opencode/sdk";
+import type { Plugin } from "@opencode-ai/plugin"
 
-export default definePlugin({
-  name: "synapse",
-  version: "0.1.0",
+const PROXY_COMMANDS = [
+  "git ", "cargo ", "npm ", "npx ", "pnpm ", "yarn ",
+  "ls", "cat ", "find ", "grep ", "tree ", "docker ",
+  "make ", "go build", "go test", "pwd", "which ", "du ", "wc ",
+]
 
-  hooks: {
-    async beforeToolCall(ctx: HookContext) {
-      const cmd = ctx.toolCall?.command;
-      if (!cmd || !ctx.config.proxy_enabled) return;
+function shouldProxy(cmd: string): boolean {
+  return PROXY_COMMANDS.some((p) => cmd.startsWith(p) || cmd.includes(` ${p.trim()}`))
+}
 
-      if (["git", "cargo", "npm", "npx", "pnpm", "ls", "cat", "find"].some(
-        (p) => cmd.startsWith(p),
-      )) {
-        const proxyCmd = `syn proxy -- ${cmd}`;
-        const { stdout } = await ctx.exec(proxyCmd, { timeout: 30_000 });
-        ctx.toolCall.result = stdout;
-      }
+export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
+  await client.app.log({
+    body: {
+      service: "synapse",
+      level: "info",
+      message: "Synapse loaded — proxy compression GRACE active",
+      extra: { directory },
+    },
+  })
+
+  return {
+    "tool.execute.before": async (input, output) => {
+      if (input.tool !== "bash") return
+      const cmd: string | undefined = output.args?.command
+      if (!cmd || !shouldProxy(cmd)) return
+      output.args.command = `syn proxy -- ${cmd}`
     },
 
-    async afterToolCall(ctx: HookContext) {
-      const output = ctx.toolCall?.result;
-      if (!output || typeof output !== "string") return;
+    "experimental.chat.system.transform": async (_input, output) => {
+      output.system.push(`## Synapse Platform
 
-      // Caveman compression of AI responses
-      ctx.toolCall.result = await ctx.exec(
-        `syn compress --level ${ctx.config.compress_output || "full"}`,
-        { input: output },
-      );
+Available CLI tools (use via bash):
+- syn index — index codebase
+- syn search <q> — semantic search  
+- syn view <file> — view signatures
+- syn verify — 3-level verification
+- syn review — integrity review
+- syn fix <bug> — debug with knowledge graph
+- syn status — project health
+- syn proxy -- <cmd> — token-saving proxy
+- syn compress <file> — compress for context
+- syn gain — token savings report
+- syn graphrag overview — knowledge graph overview
+
+Shell commands (git, cargo, npm, etc.) are auto-proxied for token savings.`)
     },
+  }
+}
 
-    async onProjectOpen(ctx: HookContext) {
-      const projectDir = ctx.project?.path;
-      if (!projectDir) return;
-
-      // Start MCP server in background
-      ctx.exec("syn mcp", {
-        background: true,
-        env: { PROJECT_DIR: projectDir },
-      });
-
-      // Check if indexing is needed
-      const { stdout } = await ctx.exec("syn status --quick", { timeout: 5_000 });
-      if (stdout.includes("not indexed")) {
-        ctx.exec("syn index", { background: true });
-      }
-    },
-  },
-});
+export const server = SynapsePlugin

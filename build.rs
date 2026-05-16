@@ -8,7 +8,7 @@ fn main() {
         for entry in std::fs::read_dir(filters_dir).unwrap() {
             let entry = entry.unwrap();
             let path = entry.path();
-            if path.extension().map_or(false, |e| e == "toml") {
+            if path.extension().is_some_and(|e| e == "toml") {
                 let content = std::fs::read_to_string(&path).unwrap();
                 content.parse::<toml::Table>().unwrap_or_else(|e| {
                     panic!("Invalid TOML in filter {:?}: {}", path, e);

@@ -25,6 +25,12 @@ pub struct SemanticReport {
 
 pub struct SemanticExtractor;
 
+impl Default for SemanticExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SemanticExtractor {
     pub fn new() -> Self {
         Self
@@ -42,20 +48,20 @@ impl SemanticExtractor {
             let line_num = i + 1;
 
             // START_BLOCK_NAME
-            if let Some(name) = trimmed.strip_prefix("// START_")
+            if let Some(name) = trimmed
+                .strip_prefix("// START_")
                 .or_else(|| trimmed.strip_prefix("# START_"))
                 .or_else(|| trimmed.strip_prefix("/* START_"))
                 .or_else(|| trimmed.strip_prefix("* START_"))
             {
-                let name = name.trim()
-                    .trim_end_matches("*/").trim()
-                    .to_string();
+                let name = name.trim().trim_end_matches("*/").trim().to_string();
                 if !name.is_empty() {
                     stack.push((name, line_num));
                 }
             }
             // START_NAME without BLOCK_ prefix
-            else if let Some(name) = trimmed.strip_prefix("// START_")
+            else if let Some(name) = trimmed
+                .strip_prefix("// START_")
                 .or_else(|| trimmed.strip_prefix("# START_"))
             {
                 let name = name.trim().to_string();
