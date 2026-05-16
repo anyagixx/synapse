@@ -31,6 +31,7 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Doctor(cmd) => cmd.run(config).await,
             syn::cli::Command::Refresh(cmd) => cmd.run(config).await,
             syn::cli::Command::History(cmd) => cmd.run(config).await,
+            syn::cli::Command::Serve(cmd) => cmd.run(config).await,
         }
     })
 }

@@ -100,6 +100,37 @@ impl Storage {
         scored.truncate(max_results);
         scored.into_iter().map(|(s, b)| (b, s)).collect()
     }
+
+    pub fn vector_search(&self, query: &str, max_results: usize) -> Vec<(StoredBlock, f64)> {
+        let query_vec = ngram_vectorize(query);
+        if query_vec.is_empty() {
+            return Vec::new();
+        }
+
+        let mut scored: Vec<(f64, StoredBlock)> = self
+            .blocks
+            .iter()
+            .filter_map(|b| {
+                let content_vec = ngram_vectorize(&b.content);
+                let name_vec = ngram_vectorize(&b.name);
+                if content_vec.is_empty() && name_vec.is_empty() {
+                    return None;
+                }
+                let content_sim = cosine_similarity(&query_vec, &content_vec);
+                let name_sim = cosine_similarity(&query_vec, &name_vec);
+                let score = content_sim * 0.7 + name_sim * 0.3;
+                if score > 0.02 {
+                    Some((score, b.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+        scored.truncate(max_results);
+        scored.into_iter().map(|(s, b)| (b, s)).collect()
+    }
 }
 
 fn score_block(block: &StoredBlock, query_lower: &str, query_words: &[&str]) -> f64 {
@@ -222,6 +253,39 @@ fn simple_hash(path: &Path) -> String {
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     path.to_string_lossy().hash(&mut hasher);
     format!("{:x}", hasher.finish())
+}
+
+fn ngram_vectorize(text: &str) -> std::collections::HashMap<u64, f64> {
+    let chars: Vec<char> = text.to_lowercase().chars().collect();
+    if chars.len() < 3 {
+        return std::collections::HashMap::new();
+    }
+    let mut vec = std::collections::HashMap::new();
+    for i in 0..chars.len().saturating_sub(2) {
+        let hash = ((chars[i] as u64) << 16) | ((chars[i + 1] as u64) << 8) | (chars[i + 2] as u64);
+        *vec.entry(hash).or_insert(0.0) += 1.0;
+    }
+    // Normalize
+    let norm: f64 = vec.values().map(|v| v * v).sum::<f64>().sqrt();
+    if norm > 0.0 {
+        for v in vec.values_mut() {
+            *v /= norm;
+        }
+    }
+    vec
+}
+
+fn cosine_similarity(
+    a: &std::collections::HashMap<u64, f64>,
+    b: &std::collections::HashMap<u64, f64>,
+) -> f64 {
+    let mut dot = 0.0;
+    for (k, va) in a {
+        if let Some(vb) = b.get(k) {
+            dot += va * vb;
+        }
+    }
+    dot
 }
 
 #[cfg(test)]

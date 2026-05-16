@@ -121,6 +121,58 @@ impl Indexer {
             .collect())
     }
 
+    pub async fn hybrid_search(
+        &self,
+        query: &str,
+        max_results: usize,
+    ) -> anyhow::Result<Vec<SearchResult>> {
+        let root = std::env::current_dir()?;
+        let mut guard = self.storage.lock().unwrap();
+        if guard.is_none() {
+            *guard = Some(crate::indexer::storage::Storage::new(&root));
+        }
+        let storage = guard.as_ref().unwrap();
+
+        // Get BM25 results
+        let bm25 = storage.search_with_scores(query, max_results * 2);
+        // Get vector results
+        let vector = storage.vector_search(query, max_results * 2);
+
+        // Combine and deduplicate
+        let mut combined: std::collections::HashMap<
+            String,
+            (f64, &crate::indexer::storage::StoredBlock),
+        > = std::collections::HashMap::new();
+        for (b, score) in &bm25 {
+            combined.entry(b.id.clone()).or_insert((*score, b));
+            if let Some(e) = combined.get_mut(&b.id) {
+                e.0 = e.0.max(*score);
+            }
+        }
+        for (b, score) in &vector {
+            let entry = combined.entry(b.id.clone()).or_insert((*score, b));
+            entry.0 += score * 0.5; // Add vector signal to existing
+        }
+
+        let mut results: Vec<_> = combined.into_values().collect();
+        results.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+        results.truncate(max_results);
+
+        Ok(results
+            .into_iter()
+            .map(|(score, b)| SearchResult {
+                path: b.path.clone(),
+                language: b.language.clone(),
+                name: b.name.clone(),
+                kind: b.kind.clone(),
+                start_line: b.start_line as u32,
+                end_line: b.end_line as u32,
+                content: b.content.clone(),
+                score,
+            })
+            .collect())
+    }
+
     pub async fn view_signatures(&self, path_str: &str) -> anyhow::Result<Vec<String>> {
         let full_path = std::env::current_dir()?.join(path_str);
         let code = tokio::fs::read_to_string(&full_path).await?;

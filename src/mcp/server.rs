@@ -17,7 +17,7 @@ impl McpServer {
         let root = std::env::current_dir().unwrap_or_default();
         let _handler = SynapseHandler::new();
 
-        // Auto-discover: if current dir is not a project root but parent has .opencode/ 
+        // Auto-discover: if current dir is not a project root but parent has .opencode/
         // or multiple subdirs with source code, use multi-root mode
         let multi_root = if !root.join(".opencode").exists()
             && !root.join("opencode.jsonc").exists()

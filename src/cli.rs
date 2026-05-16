@@ -39,6 +39,7 @@ pub enum Command {
     Refresh(RefreshCmd),
     #[command(name = "history")]
     History(HistoryCmd),
+    Serve(ServeCmd),
 }
 
 macro_rules! cmd_struct {
@@ -200,6 +201,13 @@ pub struct HistoryCmd {
     pub query: Vec<String>,
     #[arg(long, default_value_t = 20)]
     pub max_results: u32,
+}
+
+#[derive(clap::Args)]
+#[command(about = "Start web dashboard")]
+pub struct ServeCmd {
+    #[arg(long, default_value = "127.0.0.1:3100")]
+    pub bind: String,
 }
 
 use crate::config::Config;
@@ -1130,6 +1138,12 @@ impl RefreshCmd {
         }
 
         Ok(())
+    }
+}
+
+impl ServeCmd {
+    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
+        crate::dashboard::start_dashboard(&self.bind).await
     }
 }
 
