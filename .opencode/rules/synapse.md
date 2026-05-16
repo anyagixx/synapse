@@ -1,31 +1,38 @@
 # Synapse — AI Agent Engineering Tools
 
-You have access to Synapse, a local CLI tool for code intelligence, token optimization, and GRACE methodology.
+You have access to Synapse MCP tools for code intelligence, quality checks, and token optimization.
 
-## Available Commands
+## MCP Tools (call via tool_use)
 
-Run these via bash tool:
+| Tool | Description |
+|------|-------------|
+| `semantic_search` | Search codebase by meaning. Pass `query` string and optional `max_results` (default 10). |
+| `view_signatures` | View function/class signatures in a file. Pass `path`. |
+| `graphrag_query` | Explore code knowledge graph. Operations: `overview`, `search`, `get-node`, `get-relationships`, `find-path`. |
+| `verify_project` | Run GRACE verification. Levels: `module-local`, `wave`, `phase`, `all`. |
+| `review_code` | Integrity review — contracts, naming, secrets. Modes: `scoped`, `full`. |
+| `project_status` | Full project health report (contracts, verification, token economy). |
+| `token_savings` | Token savings analytics — commands tracked, tokens saved, estimated cost. |
+| `compress_text` | Compress text for AI context. Pass `text` and optional `level` (lite/full/ultra). |
 
-| Command | Description |
-|---------|-------------|
-| `syn search <query>` | Semantic code search. Use to find relevant code by meaning. |
-| `syn view <file>` | View function/class signatures in a file. |
-| `syn explain <query>` | Explain code using indexed context. |
-| `syn status` | Project health report — contracts, tests, tokens saved. |
-| `syn verify` | 3-level verification: contracts, semantic markup, 500-line rule. |
-| `syn review` | GRACE integrity review — checks markup, contracts, secrets. |
-| `syn proxy -- <cmd>` | Run any shell command through token-saving proxy. |
-| `syn compress <file>` | Compress files for AI context (creates .original.md backup). |
-| `syn gain` | How many tokens Synapse saved. |
+## CLI Commands (run via bash for setup/diagnostics only)
+
+| Command | Purpose |
+|---------|---------|
+| `syn init --interactive` | One-time project setup (MCP, plugin, rules, templates) |
+| `syn index` | Re-index the codebase |
 | `syn doctor` | Diagnose setup issues — checks all components |
-| `syn hooks status` | Show hook installation status |
-| `syn hooks install <agent>` | Install hooks for an AI agent |
+| `syn status` | Full project health report in terminal |
+| `syn proxy -- <cmd>` | Run shell command through token-saving proxy |
+| `syn gain` | View token savings statistics |
+| `syn config` | Manage configuration |
 
-## How to Use
+## Workflow
 
-1. Search code before writing: `syn search "login logic"`
-2. Run commands through proxy: `syn proxy -- cargo test`
-3. Before major changes, run verify: `syn verify`
-4. When debugging, use: `syn fix "bug description"`
-5. For code quality, run: `syn review`
-6. After every few changes, check: `syn status`
+1. Call `semantic_search` before writing code to find relevant existing code
+2. Use `view_signatures` to understand file structure
+3. After major changes, call `verify_project` to check contracts and structure
+4. Before commits, call `review_code` for code review
+5. Call `project_status` to see overall health
+6. Use `compress_text` to compress verbose text before sending to context
+7. Shell commands through plugin are automatically proxied for token savings

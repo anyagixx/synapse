@@ -15,7 +15,7 @@ export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
     body: {
       service: "synapse",
       level: "info",
-      message: "Synapse loaded — proxy compression GRACE active",
+      message: "Synapse v0.2 loaded — MCP tools + auto-proxy active",
       extra: { directory },
     },
   })
@@ -29,22 +29,9 @@ export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
     },
 
     "experimental.chat.system.transform": async (_input, output) => {
-      output.system.push(`## Synapse Platform
-
-Available CLI tools (use via bash):
-- syn index — index codebase
-- syn search <q> — semantic search  
-- syn view <file> — view signatures
-- syn verify — 3-level verification
-- syn review — integrity review
-- syn fix <bug> — debug with knowledge graph
-- syn status — project health
-- syn proxy -- <cmd> — token-saving proxy
-- syn compress <file> — compress for context
-- syn gain — token savings report
-- syn graphrag overview — knowledge graph overview
-
-Shell commands (git, cargo, npm, etc.) are auto-proxied for token savings.`)
+      output.system.push(`## Synapse (code intelligence platform)
+Available MCP tools: semantic_search, view_signatures, graphrag_query, verify_project, review_code, project_status, token_savings, compress_text
+Shell commands are auto-proxied for token savings.`)
     },
   }
 }

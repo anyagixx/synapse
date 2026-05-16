@@ -1,205 +1,120 @@
 # Synapse
 
-> **Unified AI Agent Engineering Platform**
-> Code intelligence + Token proxy + Communication compression + GRACE methodology
-> *Для разработчиков и тех, кто никогда не писал код.*
+> **AI Agent Engineering Platform — works transparently through OpenCode CLI**
+> Code intelligence + Token proxy + Compression + GRACE methodology
+> *8 MCP tools for LLMs. Zero cognitive overhead for humans.*
 
 ---
 
-## Non-Developer Quickstart (ты никогда не писал код — это для тебя)
+## Как это работает
 
-Synapse + OpenCode превращают твою идею в готовое приложение. Ты просто говоришь, что хочешь — AI пишет код, тестирует, чинит ошибки.
-
-### 1. Установи
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
-syn --version
+```
+Ты → OpenCode CLI → LLM (принимает решения)
+                        │
+          ┌─────────────┼─────────────┐
+          ▼             ▼             ▼
+     MCP Tools       Plugin         Rules
+   (8 инструментов)  (прозрачный    (инструкции
+                     proxy)         для LLM)
+          │
+          ▼
+      Synapse (фоновый движок)
 ```
 
-### 2. Создай проект — Synapse сам настроит OpenCode
+Ты просто общаешься с AI через `opencode`. Synapse невидимо:
+- Даёт LLM 8 MCP-инструментов для поиска и проверки кода
+- Автоматически фильтрует вывод shell-команд (экономия 60-90% токенов)
+- Сжимает ответы (экономия 65-75% токенов)
+
+**Тебе не нужно знать команды Synapse. LLM сама решает когда их вызывать.**
+
+---
+
+## Установка
 
 ```bash
-mkdir my-pet-project
-cd my-pet-project
-syn init
+# Установи Rust если нет
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Установи OpenCode
+curl -fsSL https://opencode.ai/install.sh | sh
+
+# Установи Synapse
+git clone https://github.com/anyagixx/synapse.git
+cd synapse && make install
 ```
 
-`syn init` создаёт проект и автоматически прописывает MCP конфиг в `.opencode/mcp.json`.
-OpenCode сам запустит `syn mcp` при старте — ничего дополнительно настраивать не нужно.
+---
 
-### 3. Запусти AI и начни разработку
+## Быстрый старт
 
 ```bash
+# 1. Создай проект
+mkdir my-project && cd my-project
+
+# 2. Одноразовая настройка
+syn init --interactive
+
+# 3. Запусти AI
 opencode
+
+# Всё! Теперь просто говори AI что делать.
+# LLM сама вызывает MCP инструменты Synapse.
 ```
-
-Внутри OpenCode AI-агент уже видит все инструменты Synapse:
-`semantic_search`, `view_signatures`, `graphrag_query`.
-
-### 4. Просто говори AI что хочешь — просто говори AI что хочешь
-
-Внутри OpenCode:
-
-```
-Ты: "Я хочу сделать приложение для заметок.
-     Нужно: создавать, редактировать, удалять, искать по тексту."
-
-AI: "Я спроектирую архитектуру... Модули: M-NOTES, M-SEARCH, M-STORAGE.
-     Начинаем?"
-
-Ты: "Да"
-```
-
-AI сам:
-- Спроектирует архитектуру (`syn plan`)
-- Напишет код с контрактами (`syn execute`)
-- Протестирует (`syn verify`)
-- Исправит ошибки (`syn fix` если что-то пошло не так)
-
-### 4. Следи за прогрессом
-
-```bash
-syn status    # Сколько модулей готово, тесты, здоровье
-syn gain      # Сколько токенов сэкономлено
-syn explain   # "как работает поиск?" — AI объяснит
-```
-
-### Что ты НИКОГДА не делаешь
-
-| ❌ Никогда | ✅ Вместо этого |
-|-----------|----------------|
-| Писать код | Опиши что хочешь |
-| Читать документацию | Спроси AI |
-| Дебажить ошибки | Скажи "почини: заметки не сохраняются" |
-| Запускать тесты | `syn verify` сделает сам |
-| Настраивать сборку | `syn init` настроит всё |
-| Отслеживать прогресс | `syn status` покажет |
 
 ---
 
-## Для разработчиков
+## 8 MCP Tools (LLM вызывает сама)
 
-Synapse объединяет четыре мощных инструмента в один CLI-бинарник:
+| Инструмент | Что делает |
+|-----------|-----------|
+| `semantic_search` | Поиск по коду с BM25-релевантностью (14 языков) |
+| `view_signatures` | Сигнатуры функций и классов в файле |
+| `graphrag_query` | Граф знаний — узлы, связи, пути между модулями |
+| `verify_project` | 3 уровня проверки (контракты, структура, TODO) |
+| `review_code` | Ревью — контракты, нейминг, секреты |
+| `project_status` | Полный health-отчёт проекта |
+| `token_savings` | Статистика экономии токенов |
+| `compress_text` | Сжатие текста для AI-контекста (3 уровня) |
 
-- **Octocode** — AST-индексация, семантический поиск, GraphRAG, MCP сервер
-- **RTK** — прокси-фильтрация вывода shell-команд (экономия 60-90% токенов)
-- **Caveman** — сжатие ответов AI и input-файлов (экономия 65-75% токенов)
-- **GRACE** — строгая методология: контракты, верификация, knowledge graph
+---
 
-### Установка
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
-
-# Или через Cargo:
-cargo install --git https://github.com/anyagixx/synapse
-```
-
-### Быстрый старт
-
-```bash
-syn init              # Создать проект
-syn index             # Проиндексировать код
-syn mcp               # Запустить MCP для OpenCode
-syn proxy -- cargo check  # Запустить через экономитель токенов
-syn compress README.md    # Сжать файл для AI
-syn gain              # Статистика экономии
-```
-
-### Архитектура
-
-```
-┌──────────────────────────────────────────────────┐
-│ GRACE Methodology (contracts, verification, graph)│
-├──────────────────────────────────────────────────┤
-│ Caveman (AI output/input compression)             │
-├──────────────────────────────────────────────────┤
-│ RTK Proxy (shell command filtering)               │
-├──────────────────────────────────────────────────┤
-│ Octocode (AST indexing, GraphRAG, search, MCP)    │
-├──────────────────────────────────────────────────┤
-│ Rust Core (single binary — 13MB, 0 зависимостей)  │
-└──────────────────────────────────────────────────┘
-```
-
-### 21 CLI команд
+## CLI команды (для диагностики)
 
 | Команда | Назначение |
 |---------|-----------|
-| `init` | Создать проект |
-| `index` | Индексировать кодбазу |
-| `search` | Семантический поиск |
-| `view` | Сигнатуры функций |
-| `plan` | Спроектировать архитектуру |
-| `execute` | Написать код по плану |
-| `verify` | 3 уровня проверок |
-| `review` | GRACE integrity review |
-| `fix` | Поиск и исправление багов |
-| `status` | Health report |
-| `explain` | Q&A по коду |
-| `proxy` | Запуск команды через экономитель |
-| `gain` | Статистика экономии токенов |
-| `compress` | Сжатие файлов |
-| `graphrag` | Запросы к графу знаний |
-| `mcp` | MCP сервер |
-| `config` | Настройки |
-| `logs` | Логи MCP |
-| `telemetry` | Телеметрия |
-| `completion` | Автодополнение |
+| `syn init --interactive` | Одноразовая настройка проекта |
+| `syn index` | Переиндексация кодовой базы |
+| `syn doctor` | Диагностика всех компонентов |
+| `syn status` | Health-отчёт в терминале |
+| `syn proxy -- <cmd>` | Запуск команды через фильтр |
+| `syn gain` | Статистика экономии |
+| `syn config` | Управление конфигурацией |
 
-### 4 MCP Tools (для AI-агентов)
+---
 
-- `semantic_search` — поиск по коду
-- `view_signatures` — сигнатуры функций
-- `graphrag_query` — граф знаний (search, get-node, find-path, overview)
-- `lsp_*` — LSP инструменты (go-to-def, hover, references)
+## Что под капотом
 
-### Документация
+| Компонент | Описание |
+|-----------|----------|
+| **Octocode** | AST-индексация (tree-sitter: 5 языков) + fallback (14 языков), BM25 поиск с токенизацией |
+| **RTK Proxy** | 30+ TOML-фильтров shell-команд с 6-стадийным пайплайном |
+| **Caveman** | 3 уровня сжатия текста (lite/full/ultra) |
+| **GRACE** | Методология: контракты, 3 уровня верификации, граф знаний (15 типов отношений) |
 
-Каждый файл ≤500 строк — AI читает за один контекст.
+---
 
-| Файл | О чём |
-|------|-------|
-| `docs/QUICKSTART.md` | Для non-developer |
-| `docs/COMMANDS.md` | Все команды |
-| `docs/WORKFLOW.md` | GRACE workflow |
-| `docs/FAQ.md` | Вопросы и ответы |
-
-### GRACE Skills (6 скиллов)
-
-`skills/plan`, `execute`, `verify`, `review`, `fix`, `status`
-
-### Репозиторий
-
-```bash
-git clone https://github.com/anyagixx/synapse.git
-cd synapse
-cargo build --release
-./target/release/synapse --help
-```
-
-### Интеграция с OpenCode
-
-```bash
-opencode plugins add ./opencode-plugin
-# Или после публикации:
-opencode plugins add synapse
-```
-
-### Метрики
+## Метрики
 
 | Метрика | Значение |
 |---------|----------|
-| Binary | 13MB release |
-| Зависимости | 0 (Rust only) |
-| CLI команд | 21 |
-| MCP tools | 4 |
-| GRACE skills | 6 |
-| Warnings | 0 |
-| Фильтров proxy | 30+ |
-| Языков индексации | 5 (tree-sitter) + fallback |
-| Типов GraphRAG | 15 |
+| Бинарник | ~13 MB release |
+| Зависимости | 0 (всё включено) |
+| MCP инструментов | 8 |
+| CLI команд | 15 |
+| Языков индексации | 5 (AST) + 9 (fallback) = 14 |
+| Тестов | 20 |
+| Clippy warnings | 0 |
 
 ## License
 

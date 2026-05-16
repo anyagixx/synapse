@@ -145,24 +145,69 @@ impl SynapseHandler {
                                         "type": "string",
                                         "description": "Operation: search | get-node | get-relationships | find-path | overview"
                                     },
-                                    "query": {
-                                        "type": "string",
-                                        "description": "Search query (for search operation)"
-                                    },
-                                    "node_id": {
-                                        "type": "string",
-                                        "description": "Node ID (for get-node, get-relationships operations)"
-                                    },
-                                    "from": {
-                                        "type": "string",
-                                        "description": "Source node ID (for find-path)"
-                                    },
-                                    "to": {
-                                        "type": "string",
-                                        "description": "Target node ID (for find-path)"
-                                    }
+                                    "query": { "type": "string", "description": "Search query" },
+                                    "node_id": { "type": "string", "description": "Node ID" },
+                                    "from": { "type": "string", "description": "Source node ID" },
+                                    "to": { "type": "string", "description": "Target node ID" }
                                 },
                                 "required": ["operation"]
+                            }
+                        },
+                        {
+                            "name": "verify_project",
+                            "description": "Run GRACE verification checks (module-local, wave, phase). Returns pass/fail status with details.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "level": {
+                                        "type": "string",
+                                        "description": "Verification level: module-local | wave | phase | all"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "review_code",
+                            "description": "Run GRACE integrity review — checks semantic markup, contracts, naming, secrets. Returns issues list.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "mode": {
+                                        "type": "string",
+                                        "description": "Review mode: scoped | full"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "project_status",
+                            "description": "Full project health report — contracts, semantic markup, verification, token economy, system info.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        {
+                            "name": "token_savings",
+                            "description": "View token savings analytics — total commands, tokens saved, average savings %, estimated cost saved.",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        {
+                            "name": "compress_text",
+                            "description": "Compress text for AI context efficiency. Levels: lite (remove filler), full (also pleasantries), ultra (telegraphic).",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {
+                                    "text": { "type": "string", "description": "Text to compress" },
+                                    "level": {
+                                        "type": "string",
+                                        "description": "Compression level: lite | full | ultra"
+                                    }
+                                },
+                                "required": ["text"]
                             }
                         }
                     ]
@@ -180,6 +225,11 @@ impl SynapseHandler {
                     "semantic_search" => self.handle_search(id, args).await,
                     "view_signatures" => self.handle_view_signatures(id, args).await,
                     "graphrag_query" => self.handle_graphrag(id, args),
+                    "verify_project" => self.handle_verify(id, args).await,
+                    "review_code" => self.handle_review(id, args).await,
+                    "project_status" => self.handle_status(id, args).await,
+                    "token_savings" => self.handle_gain(id, args).await,
+                    "compress_text" => self.handle_compress(id, args).await,
                     _ => self.error(id, -32601, format!("Unknown tool: {}", name)),
                 }
             }
@@ -411,6 +461,188 @@ impl SynapseHandler {
             }
             Err(e) => self.error(id, -32603, format!("Error: {}", e)),
         }
+    }
+
+    async fn handle_verify(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let root = match std::env::current_dir() {
+            Ok(r) => r,
+            Err(e) => return self.error(id, -32603, format!("cwd error: {}", e)),
+        };
+        let level = args["level"].as_str().unwrap_or("all");
+        match crate::grace::GraceEngine::verify_project(&root).await {
+            Ok(results) => {
+                let filtered: Vec<_> = if level == "all" {
+                    results
+                } else {
+                    results.into_iter().filter(|r| r.level == level).collect()
+                };
+                let text = if filtered.is_empty() {
+                    "No verification results".to_string()
+                } else {
+                    let mut out = String::new();
+                    for r in &filtered {
+                        let status = if r.passed { "PASS" } else { "FAIL" };
+                        out.push_str(&format!("\n[{}] {}\n", status, r.level));
+                        for c in &r.checks {
+                            let mark = if c.passed { "✓" } else { "✗" };
+                            out.push_str(&format!("  {} {} — {}\n", mark, c.name, c.details));
+                        }
+                    }
+                    out
+                };
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
+            }
+            Err(e) => self.error(id, -32603, format!("Verify error: {}", e)),
+        }
+    }
+
+    async fn handle_review(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let root = match std::env::current_dir() {
+            Ok(r) => r,
+            Err(e) => return self.error(id, -32603, format!("cwd error: {}", e)),
+        };
+        let mode = args["mode"].as_str().unwrap_or("scoped");
+        match crate::grace::review::Reviewer::review(&root, mode) {
+            Ok(report) => {
+                let mut text = format!("=== GRACE Review ({}) ===\n", report.mode);
+                for s in &report.sections {
+                    let status = if s.passed { "✓" } else { "✗" };
+                    text.push_str(&format!("{} {} — {}\n", status, s.name, s.details));
+                    for issue in &s.issues {
+                        text.push_str(&format!("  ⚠ {}\n", issue));
+                    }
+                }
+                if report.passed {
+                    text.push_str("\nAll checks passed.");
+                }
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
+            }
+            Err(e) => self.error(id, -32603, format!("Review error: {}", e)),
+        }
+    }
+
+    async fn handle_status(
+        &self,
+        id: Option<serde_json::Value>,
+        _args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let root = match std::env::current_dir() {
+            Ok(r) => r,
+            Err(e) => return self.error(id, -32603, format!("cwd error: {}", e)),
+        };
+        match crate::grace::status::StatusCollector::collect(&root).await {
+            Ok(report) => {
+                let text = serde_json::to_string_pretty(&report).unwrap_or_default();
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
+            }
+            Err(e) => self.error(id, -32603, format!("Status error: {}", e)),
+        }
+    }
+
+    async fn handle_gain(
+        &self,
+        id: Option<serde_json::Value>,
+        _args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let config = crate::config::Config::load().unwrap_or_default();
+        let tracker = crate::tracking::Tracker::new(&config);
+        match tracker.get_stats().await {
+            Ok(stats) => {
+                let mut text = String::new();
+                text.push_str(&format!("Commands tracked:  {}\n", stats.total_commands));
+                text.push_str(&format!(
+                    "Input tokens:      {}\n",
+                    stats.total_input_tokens
+                ));
+                text.push_str(&format!(
+                    "Output tokens:     {}\n",
+                    stats.total_output_tokens
+                ));
+                text.push_str(&format!(
+                    "Tokens saved:      {}\n",
+                    stats.total_saved_tokens
+                ));
+                text.push_str(&format!(
+                    "Avg savings:       {:.1}%\n",
+                    stats.avg_savings_pct
+                ));
+                if stats.total_commands > 0 {
+                    let est = stats.total_saved_tokens as f64 * 0.000003;
+                    text.push_str(&format!("Est. cost saved:   ${:.4}\n", est));
+                }
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                )
+            }
+            Err(e) => self.error(id, -32603, format!("Gain error: {}", e)),
+        }
+    }
+
+    async fn handle_compress(
+        &self,
+        id: Option<serde_json::Value>,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
+        let text = match args["text"].as_str() {
+            Some(t) if !t.is_empty() => t.to_string(),
+            _ => return self.error(id, -32602, "Missing 'text' parameter"),
+        };
+        let level = args["level"].as_str().unwrap_or("full");
+        let config = crate::config::Config::load().unwrap_or_default();
+        let mut cfg = config;
+        cfg.compress.output_level = level.to_string();
+        let compressor = crate::compress::Compressor::new(&cfg);
+        let result = compressor.compress_output(&text);
+        let saved = text.len().saturating_sub(result.len());
+        let pct = if text.is_empty() {
+            0
+        } else {
+            saved * 100 / text.len()
+        };
+        let info = format!(
+            "({} → {} chars, {}% saved)\n\n{}",
+            text.len(),
+            result.len(),
+            pct,
+            result
+        );
+        self.result(
+            id,
+            serde_json::json!({
+                "content": [{"type": "text", "text": info}],
+                "isError": false
+            }),
+        )
     }
 
     fn result(

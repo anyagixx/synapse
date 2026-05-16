@@ -1,12 +1,11 @@
 {
   "name": "synapse",
   "version": "0.2.0",
-  "description": "Synapse — AI Agent Engineering Platform: proxy, compression, code intelligence, GRACE methodology",
+  "description": "Synapse — AI Agent Engineering Platform: MCP tools for code intelligence, proxy, compression, GRACE methodology",
   "author": "Synapse Contributors",
   "license": "Apache-2.0",
   "main": "plugin.ts",
   "config": {
-    "proxy_enabled": true,
-    "compress_output": "full"
+    "proxy_enabled": true
   }
 }
