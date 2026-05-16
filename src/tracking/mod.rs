@@ -19,6 +19,23 @@ impl Tracker {
         Ok(data_dir.join("tracking.db"))
     }
 
+    #[allow(dead_code)]
+    fn project_db_path() -> anyhow::Result<PathBuf> {
+        let project_hash = std::env::current_dir()
+            .ok()
+            .map(|p| {
+                use std::hash::{Hash, Hasher};
+                let mut h = std::collections::hash_map::DefaultHasher::new();
+                p.to_string_lossy().hash(&mut h);
+                format!("{:x}", h.finish())
+            })
+            .unwrap_or_default();
+        let data_dir = dirs::data_dir()
+            .ok_or_else(|| anyhow::anyhow!("Cannot find data directory"))?
+            .join("synapse");
+        Ok(data_dir.join(format!("tracking-{}.db", project_hash)))
+    }
+
     pub async fn record(
         &self,
         cmd: &str,
@@ -69,6 +86,10 @@ impl Tracker {
 
     pub async fn get_stats(&self) -> anyhow::Result<TrackingStats> {
         let db_path = Self::db_path()?;
+        let project = std::env::current_dir()
+            .ok()
+            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+            .unwrap_or_default();
         let mut stats = TrackingStats::default();
 
         if let Ok(conn) = rusqlite::Connection::open(&db_path) {
@@ -86,13 +107,14 @@ impl Tracker {
             )
             .ok();
 
+            // Get per-project stats
             if let Ok(mut stmt) = conn.prepare(
                 "SELECT COUNT(*), COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0),
                         COALESCE(SUM(saved_tokens),0), COALESCE(AVG(savings_pct),0)
-                 FROM commands",
+                 FROM commands WHERE project_path = ?1",
             ) {
                 if stmt
-                    .query_row([], |row| {
+                    .query_row(rusqlite::params![project], |row| {
                         stats.total_commands = row.get(0)?;
                         stats.total_input_tokens = row.get(1)?;
                         stats.total_output_tokens = row.get(2)?;

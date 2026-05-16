@@ -183,7 +183,7 @@ impl Verifier {
             let path = root.join("docs").join(tpl);
             if let Ok(content) = std::fs::read_to_string(&path) {
                 let token_estimate = content.len() / 4;
-                let ok = token_estimate <= 2000; // ~500 tokens
+                let ok = token_estimate <= 2000;
                 if !ok {
                     passing = false;
                     details.push(format!(
@@ -200,6 +200,37 @@ impl Verifier {
                 "All artifacts within ~500 token limit".into()
             } else {
                 details.join("; ")
+            },
+        });
+
+        // Check trace assertions: log markers [Module][function][BLOCK_NAME] in source files
+        let trace_re = regex::Regex::new(r"\[(\w+)\]\[(\w+)\]\[(\w+)\]").unwrap();
+        let walker = crate::indexer::walker::Walker::new(root);
+        let files = walker.walk();
+        let mut trace_files = Vec::new();
+        let mut total_traces = 0usize;
+        for file in &files {
+            let full_path = root.join(&file.path);
+            if let Ok(content) = std::fs::read_to_string(&full_path) {
+                let count = trace_re.find_iter(&content).count();
+                if count > 0 {
+                    trace_files.push(format!("{} ({} traces)", file.path, count));
+                    total_traces += count;
+                }
+            }
+        }
+        checks.push(CheckResult {
+            name: "trace-assertions".into(),
+            passed: true, // Informational: traces are recommended, not required
+            details: if total_traces > 0 {
+                format!(
+                    "{} log trace markers found in {} files",
+                    total_traces,
+                    trace_files.len()
+                )
+            } else {
+                "No log trace markers found. Add [Module][function][BLOCK_NAME] for observability."
+                    .into()
             },
         });
 

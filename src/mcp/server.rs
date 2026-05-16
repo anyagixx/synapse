@@ -489,20 +489,36 @@ impl SynapseHandler {
                 } else {
                     results.into_iter().filter(|r| r.level == level).collect()
                 };
-                let text = if filtered.is_empty() {
-                    "No verification results".to_string()
-                } else {
-                    let mut out = String::new();
-                    for r in &filtered {
-                        let status = if r.passed { "PASS" } else { "FAIL" };
-                        out.push_str(&format!("\n[{}] {}\n", status, r.level));
-                        for c in &r.checks {
-                            let mark = if c.passed { "✓" } else { "✗" };
-                            out.push_str(&format!("  {} {} — {}\n", mark, c.name, c.details));
+                let mut text = String::new();
+                let mut failures = Vec::new();
+                for r in &filtered {
+                    let status = if r.passed { "PASS" } else { "FAIL" };
+                    text.push_str(&format!("\n[{}] {}\n", status, r.level));
+                    for c in &r.checks {
+                        let mark = if c.passed { "✓" } else { "✗" };
+                        text.push_str(&format!("  {} {} — {}\n", mark, c.name, c.details));
+                        if !c.passed {
+                            failures.push(FailurePacket {
+                                check: c.name.clone(),
+                                details: c.details.clone(),
+                                suggested: suggest_fix(&c.name),
+                            });
                         }
                     }
-                    out
-                };
+                }
+                // Append failure packets if any
+                if !failures.is_empty() {
+                    text.push_str("\n--- FAILURE PACKETS ---\n");
+                    for (i, fp) in failures.iter().enumerate() {
+                        text.push_str(&format!(
+                            "\n{}. {} FAILED\n   Observed: {}\n   Suggested: {}\n",
+                            i + 1,
+                            fp.check,
+                            fp.details,
+                            fp.suggested
+                        ));
+                    }
+                }
                 self.result(
                     id,
                     serde_json::json!({
@@ -710,5 +726,30 @@ impl SynapseHandler {
             resp["id"] = id_val.clone();
         }
         resp
+    }
+}
+
+struct FailurePacket {
+    check: String,
+    details: String,
+    suggested: String,
+}
+
+fn suggest_fix(check: &str) -> String {
+    match check {
+        "contract-exists" => "Add MODULE_CONTRACT headers to source files".into(),
+        "contract-valid" => "Add PURPOSE field to MODULE_CONTRACT".into(),
+        "module-map" => "Add START_MODULE_MAP / END_MODULE_MAP".into(),
+        "change-summary" => "Add START_CHANGE_SUMMARY / END_CHANGE_SUMMARY".into(),
+        "function-contracts" => {
+            "Add START_CONTRACT_name blocks with PURPOSE, INPUTS, OUTPUTS".into()
+        }
+        "semantic-blocks" => "Close all START_/END_ pairs".into(),
+        "unique-block-names" => "Rename duplicate blocks to be unique per file".into(),
+        "500-token-rule" => "Split large files into smaller units".into(),
+        "no-todos" => "Resolve TODO/FIXME or convert to tracked issues".into(),
+        "file-size-limit" => "Split files exceeding 500 lines into modules".into(),
+        "trace-assertions" => "Add [Module][function][BLOCK_NAME] log markers".into(),
+        _ => "Review the check details and fix the reported issue".into(),
     }
 }
