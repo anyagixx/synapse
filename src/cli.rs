@@ -54,11 +54,8 @@ macro_rules! cmd_struct {
 }
 
 #[derive(clap::Args)]
-#[command(about = "Bootstrap a new Synapse project")]
-pub struct InitCmd {
-    #[arg(long)]
-    pub interactive: bool,
-}
+#[command(about = "Install Synapse hooks into current project (MCP, plugin, rules)")]
+pub struct InitCmd;
 #[derive(clap::Args)]
 #[command(about = "Index codebase for semantic search")]
 pub struct IndexCmd {
@@ -203,96 +200,13 @@ macro_rules! cmd_run {
 cmd_run!(LogsCmd, TelemetryCmd);
 
 impl InitCmd {
-    pub async fn run(&self, config: Config) -> anyhow::Result<()> {
+    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
 
-        // Check if already a Synapse project
-        if root.join("synapsec.toml").exists() {
-            println!("Already a Synapse project at {}", root.display());
-            return Ok(());
-        }
-
-        let project_name = if self.interactive {
-            println!();
-            println!("=== Synapse Project Setup ===");
-            println!();
-            let name = ask(
-                "Project name",
-                root.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("my-project"),
-            );
-            println!();
-            println!("What do you want to build? (describe in 1 sentence)");
-            let description = ask_input("> ");
-            println!();
-            let language = ask_options(
-                "Main language",
-                &["Rust", "Python", "TypeScript", "JavaScript", "Go", "Other"],
-            );
-            println!();
-
-            // Create initial requirements.xml from description
-            let docs_dir = root.join("docs");
-            std::fs::create_dir_all(&docs_dir)?;
-            let req_content = format!(
-                r#"<?xml version="1.0" encoding="UTF-8"?>
-<REQUIREMENTS>
-  <META>
-    <PROJECT>{name}</PROJECT>
-    <DESCRIPTION>{description}</DESCRIPTION>
-    <LANGUAGE>{language}</LANGUAGE>
-    <GENERATED_BY>syn init --interactive</GENERATED_BY>
-  </META>
-
-  <REQUIREMENT>
-    <NAME>Core Module</NAME>
-    <PURPOSE>{description}</PURPOSE>
-    <DEPENDS></DEPENDS>
-    <LINK>docs/technology.xml</LINK>
-  </REQUIREMENT>
-</REQUIREMENTS>
-"#,
-                name = name,
-                description = description,
-                language = language
-            );
-            if !docs_dir.join("requirements.xml").exists() {
-                std::fs::write(docs_dir.join("requirements.xml"), &req_content)?;
-            }
-            name
-        } else {
-            root.file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("my-project")
-                .to_string()
-        };
-
-        // Create project config
-        let config_path = Config::path()?;
-        if let Some(parent) = config_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let mut project_config = config;
-        project_config.project.name = project_name.clone();
-        let config_toml = toml::to_string_pretty(&project_config)?;
-        std::fs::write(&config_path, &config_toml)?;
-        println!("Created configuration at {}", config_path.display());
-
-        // Create .opencode directory structure
         let opencode_dir = root.join(".opencode");
         std::fs::create_dir_all(&opencode_dir)?;
 
-        // Create OpenCode rules
-        let rules_dir = opencode_dir.join("rules");
-        std::fs::create_dir_all(&rules_dir)?;
-        let rules_content = include_str!("../.opencode/rules/synapse.md");
-        let rules_path = rules_dir.join("synapse.md");
-        if !rules_path.exists() {
-            std::fs::write(&rules_path, rules_content)?;
-        }
-
-        // Create OpenCode MCP config for auto-starting syn mcp
+        // MCP auto-start config
         let oc_config_path = opencode_dir.join("opencode.jsonc");
         let mcp_config = serde_json::json!({
             "mcpServers": {
@@ -307,355 +221,54 @@ impl InitCmd {
             std::fs::write(&oc_config_path, &serde_json::to_string_pretty(&mcp_config)?)?;
         }
 
-        // Create OpenCode plugin for synapse
+        // Plugin
         let plugins_dir = opencode_dir.join("plugins");
         std::fs::create_dir_all(&plugins_dir)?;
         let plugin_path = plugins_dir.join("synapse.ts");
         if !plugin_path.exists() {
-            let plugin_content = include_str!("../.opencode/plugins/synapse.ts");
-            std::fs::write(&plugin_path, plugin_content)?;
-        }
-
-        // Create docs and GRACE templates
-        let docs_dir = root.join("docs");
-        std::fs::create_dir_all(&docs_dir)?;
-
-        let templates = [
-            (
-                "docs/requirements.xml",
-                include_str!("../templates/requirements.xml"),
-            ),
-            (
-                "docs/technology.xml",
-                include_str!("../templates/technology.xml"),
-            ),
-            (
-                "docs/development-plan.xml",
-                include_str!("../templates/development-plan.xml"),
-            ),
-            (
-                "docs/verification-plan.xml",
-                include_str!("../templates/verification-plan.xml"),
-            ),
-            (
-                "docs/knowledge-graph.xml",
-                include_str!("../templates/knowledge-graph.xml"),
-            ),
-        ];
-        for (path, content) in &templates {
-            let full = root.join(path);
-            if !full.exists() {
-                std::fs::write(&full, content)?;
-            }
-        }
-
-        // Create .opencode/package.json for plugin dependencies
-        let pkg_json_path = opencode_dir.join("package.json");
-        if !pkg_json_path.exists() {
             std::fs::write(
-                &pkg_json_path,
+                &plugin_path,
+                include_str!("../.opencode/plugins/synapse.ts"),
+            )?;
+        }
+
+        // Rules
+        let rules_dir = opencode_dir.join("rules");
+        std::fs::create_dir_all(&rules_dir)?;
+        let rules_path = rules_dir.join("synapse.md");
+        if !rules_path.exists() {
+            std::fs::write(&rules_path, include_str!("../.opencode/rules/synapse.md"))?;
+        }
+
+        // Package.json
+        let pkg_path = opencode_dir.join("package.json");
+        if !pkg_path.exists() {
+            std::fs::write(
+                &pkg_path,
                 r#"{"dependencies":{"@opencode-ai/plugin":"^1.15"}}"#,
             )?;
         }
 
-        // Check for source files and auto-index
+        // Index existing sources
         let walker = crate::indexer::walker::Walker::new(&root);
         let files = walker.walk();
         if !files.is_empty() {
-            let indexer = crate::indexer::Indexer::new(&project_config);
-            println!("Found {} source files. Indexing...", files.len());
+            let indexer = crate::indexer::Indexer::new(&_config);
             indexer.index_directory(&root).await?;
-            println!("Index complete.");
-        } else {
-            println!("No source files yet. Run `syn index` after adding code.");
         }
 
+        println!("Synapse hooks installed at {}", root.display());
         println!();
-        println!(
-            "Synapse project '{}' ready at {}",
-            project_config.project.name,
-            root.display()
-        );
-        println!("   .opencode/rules/synapse.md   — AI command reference");
-        println!("   .opencode/opencode.jsonc     — MCP auto-start config");
-        println!("   .opencode/plugins/synapse.ts — Active plugin");
-        println!("   docs/                         — GRACE templates");
+        println!("What was created:");
+        println!("  .opencode/opencode.jsonc     — MCP auto-start (8 tools for LLM)");
+        println!("  .opencode/plugins/synapse.ts — auto-proxy + context");
+        println!("  .opencode/rules/synapse.md   — tool reference for LLM");
         println!();
-        if self.interactive {
-            println!("Your requirements are in docs/requirements.xml");
-            println!("Run: syn plan     (AI designs the architecture)");
-            println!("Then: syn execute (creates source file skeletons)");
-            println!("Then: opencode    (AI writes the code)");
-        } else {
-            println!("Run: opencode    (syn mcp starts automatically)");
-        }
+        println!("Done. Now run: opencode");
+        println!("The LLM will ask what you want to build and create everything.");
         Ok(())
     }
 }
-
-fn ask(prompt: &str, default: &str) -> String {
-    use std::io::{self, Write};
-    print!("{} [{}]: ", prompt, default);
-    io::stdout().flush().ok();
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).ok();
-    let input = input.trim();
-    if input.is_empty() {
-        default.to_string()
-    } else {
-        input.to_string()
-    }
-}
-
-fn ask_input(prompt: &str) -> String {
-    use std::io::{self, Write};
-    print!("{}", prompt);
-    io::stdout().flush().ok();
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).ok();
-    input.trim().to_string()
-}
-
-fn ask_options(prompt: &str, options: &[&str]) -> String {
-    println!("{}:", prompt);
-    for (i, opt) in options.iter().enumerate() {
-        println!("  {}. {}", i + 1, opt);
-    }
-    let default = options[0];
-    let answer = ask("Choose", &format!("1 ({})", default));
-    if let Ok(n) = answer.trim().parse::<usize>() {
-        if n > 0 && n <= options.len() {
-            return options[n - 1].to_string();
-        }
-    }
-    default.to_string()
-}
-
-impl PlanCmd {
-    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
-        let root = std::env::current_dir()?;
-        let docs = root.join("docs");
-        std::fs::create_dir_all(&docs)?;
-
-        let req_path = docs.join("requirements.xml");
-        let plan_path = docs.join("development-plan.xml");
-
-        if !req_path.exists() {
-            println!("{} not found. Creating template...", req_path.display());
-            std::fs::write(&req_path, include_str!("../templates/requirements.xml"))?;
-            println!(
-                "Edit {} with your requirements, then run `syn plan` again.",
-                req_path.display()
-            );
-            return Ok(());
-        }
-
-        let req_content = std::fs::read_to_string(&req_path)?;
-        let modules = extract_requirements(&req_content);
-        if modules.is_empty() {
-            anyhow::bail!(
-                "No <REQUIREMENT> entries found in {}. Add requirements first.",
-                req_path.display()
-            );
-        }
-
-        let mut plan = String::new();
-        plan.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        plan.push_str("<DEVELOPMENT_PLAN>\n");
-        plan.push_str("  <META>\n");
-        plan.push_str("    <GENERATED_BY>syn plan</GENERATED_BY>\n");
-        plan.push_str(&format!(
-            "    <TIMESTAMP>{}</TIMESTAMP>\n",
-            chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
-        ));
-        plan.push_str("  </META>\n\n");
-        plan.push_str("  <PHASES>\n");
-        plan.push_str("    <PHASE id=\"1\" name=\"Foundation\">\n");
-        plan.push_str(
-            "      <DESCRIPTION>Core data structures and module contracts</DESCRIPTION>\n",
-        );
-        plan.push_str("      <MODULES>\n");
-
-        for (i, m) in modules.iter().enumerate() {
-            let module_id = format!("M-{}", m.name.to_uppercase().replace(' ', "_"));
-            plan.push_str(&format!("        <M-{}>\n", i + 1));
-            plan.push_str(&format!("          <ID>{}</ID>\n", module_id));
-            plan.push_str(&format!("          <NAME>{}</NAME>\n", m.name));
-            plan.push_str(&format!("          <PURPOSE>{}</PURPOSE>\n", m.purpose));
-            plan.push_str("          <FILES>\n");
-            let filename = m.name.to_lowercase().replace(' ', "_");
-            plan.push_str(&format!("            <FILE>src/{}.rs</FILE>\n", filename));
-            plan.push_str("          </FILES>\n");
-            plan.push_str(&format!("        </M-{}>\n", i + 1));
-        }
-
-        plan.push_str("      </MODULES>\n");
-        plan.push_str("    </PHASE>\n");
-        plan.push_str("  </PHASES>\n\n");
-        plan.push_str("  <DEPENDENCIES>\n");
-        for m in &modules {
-            for dep in &m.depends {
-                plan.push_str(&format!("    <DEP from=\"{}\" to=\"{}\" />\n", m.name, dep));
-            }
-        }
-        plan.push_str("  </DEPENDENCIES>\n");
-        plan.push_str("</DEVELOPMENT_PLAN>\n");
-
-        std::fs::write(&plan_path, &plan)?;
-        println!("Development plan: {}", plan_path.display());
-        println!();
-        for (i, m) in modules.iter().enumerate() {
-            println!("  {}. {} — {}", i + 1, m.name, m.purpose);
-        }
-        println!("\nNext: syn execute    (creates source file skeletons)");
-
-        Ok(())
-    }
-}
-
-struct ReqModule {
-    name: String,
-    purpose: String,
-    depends: Vec<String>,
-}
-
-fn extract_requirements(xml: &str) -> Vec<ReqModule> {
-    let mut modules = Vec::new();
-    let re = regex::Regex::new(r"(?s)<REQUIREMENT>(.*?)</REQUIREMENT>").unwrap();
-    let name_re = regex::Regex::new(r"<NAME>(.*?)</NAME>").unwrap();
-    let purpose_re = regex::Regex::new(r"<PURPOSE>(.*?)</PURPOSE>").unwrap();
-    let depends_re = regex::Regex::new(r"<DEPENDS>(.*?)</DEPENDS>").unwrap();
-    for cap in re.captures_iter(xml) {
-        let block = &cap[1];
-        let name = name_re
-            .captures(block)
-            .map(|c| c[1].trim().to_string())
-            .unwrap_or_else(|| "Unnamed".into());
-        let purpose = purpose_re
-            .captures(block)
-            .map(|c| c[1].trim().to_string())
-            .unwrap_or_else(|| "TBD".into());
-        let deps: Vec<String> = depends_re
-            .captures_iter(block)
-            .flat_map(|c| {
-                c[1].split(',')
-                    .map(|s| s.trim().to_string())
-                    .collect::<Vec<_>>()
-            })
-            .collect();
-        modules.push(ReqModule {
-            name,
-            purpose,
-            depends: deps,
-        });
-    }
-    modules
-}
-
-impl ExecuteCmd {
-    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
-        let root = std::env::current_dir()?;
-        let plan_path = root.join("docs").join("development-plan.xml");
-
-        if !plan_path.exists() {
-            anyhow::bail!("No development plan found. Run `syn plan` first.");
-        }
-
-        let plan = std::fs::read_to_string(&plan_path)?;
-        let module_re = regex::Regex::new(r"(?s)<M-\d+>(.*?)</M-\d+>").unwrap();
-        let _id_re = regex::Regex::new(r"<ID>(.*?)</ID>").unwrap();
-        let name_re = regex::Regex::new(r"<NAME>(.*?)</NAME>").unwrap();
-        let purpose_re = regex::Regex::new(r"<PURPOSE>(.*?)</PURPOSE>").unwrap();
-        let file_re = regex::Regex::new(r"<FILE>(.*?)</FILE>").unwrap();
-
-        let mut created = Vec::new();
-        for cap in module_re.captures_iter(&plan) {
-            let block = &cap[1];
-            let module_name = name_re
-                .captures(block)
-                .map(|c| c[1].to_string())
-                .unwrap_or_default();
-            let purpose = purpose_re
-                .captures(block)
-                .map(|c| c[1].to_string())
-                .unwrap_or_default();
-
-            for fcap in file_re.captures_iter(block) {
-                let file_path = root.join(&fcap[1]);
-                if file_path.exists() {
-                    println!("  {} — already exists, skipping", file_path.display());
-                    continue;
-                }
-                if let Some(parent) = file_path.parent() {
-                    std::fs::create_dir_all(parent)?;
-                }
-
-                let ext = file_path
-                    .extension()
-                    .and_then(|e| e.to_str())
-                    .unwrap_or("rs");
-                let comment = match ext {
-                    "py" => "#",
-                    _ => "//",
-                };
-                let module_id = module_name.to_uppercase().replace(' ', "_");
-
-                let mut content = String::new();
-                content.push_str(&format!("{} MODULE_CONTRACT\n", comment));
-                content.push_str(&format!("{} MODULE_ID: {}\n", comment, module_id));
-                content.push_str(&format!("{} PURPOSE: {}\n", comment, purpose));
-                content.push_str(&format!("{} SCOPE: {}\n", comment, module_name));
-                content.push_str(&format!("{} DEPENDS:\n", comment));
-                content.push_str(&format!("{} LINKS:\n", comment));
-                content.push_str(&format!("{}\n", comment));
-                content.push_str(&format!("{}\n", comment));
-
-                match ext {
-                    "rs" => {
-                        content.push_str(&format!(
-                            "pub mod {}_mod {{\n",
-                            module_name.to_lowercase().replace(' ', "_")
-                        ));
-                        content.push_str("    // START_public_api\n");
-                        content.push_str("    // END_public_api\n");
-                        content.push_str("}\n");
-                    }
-                    "py" => {
-                        content.push_str(&format!("# Module: {}\n", module_name));
-                        content.push_str("# START_public_api\n");
-                        content.push_str("# END_public_api\n");
-                    }
-                    "ts" | "tsx" | "js" | "jsx" => {
-                        content.push_str(&format!("// Module: {}\n", module_name));
-                        content.push_str("// START_public_api\n");
-                        content.push_str("// END_public_api\n");
-                    }
-                    _ => {
-                        content.push_str(&format!("// Module: {} ({})\n", module_name, ext));
-                    }
-                }
-
-                std::fs::write(&file_path, &content)?;
-                created.push(fcap[1].to_string());
-            }
-        }
-
-        if created.is_empty() {
-            println!("All files already exist. Nothing to create.");
-        } else {
-            println!("Created {} source files:", created.len());
-            for f in &created {
-                println!("  {}", f);
-            }
-            println!("\nEach file has a MODULE_CONTRACT header.");
-            println!("Next: opencode   (AI fills in the implementation)");
-        }
-
-        Ok(())
-    }
-}
-
-// Commands with args that have placeholder implementations
 impl SearchCmd {
     pub async fn run(&self, config: Config) -> anyhow::Result<()> {
         let query = self.query.join(" ");
