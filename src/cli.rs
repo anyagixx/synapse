@@ -256,6 +256,111 @@ impl InitCmd {
             )?;
         }
 
+        // Phase 0: GRACE architecture templates in docs/
+        let docs_dir = root.join("docs");
+        std::fs::create_dir_all(&docs_dir)?;
+        let phase0_templates: &[(&str, &str)] = &[
+            (
+                "docs/requirements.xml",
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<REQUIREMENTS>
+  <META>
+    <PROJECT>my-project</PROJECT>
+    <DESCRIPTION>Describe what this project does in one sentence</DESCRIPTION>
+    <LANGUAGE>rust</LANGUAGE>
+  </META>
+  <REQUIREMENT>
+    <NAME>Core Feature</NAME>
+    <PURPOSE>Describe the core purpose</PURPOSE>
+    <DEPENDS></DEPENDS>
+  </REQUIREMENT>
+</REQUIREMENTS>
+"#,
+            ),
+            (
+                "docs/technology.xml",
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<TECHNOLOGY>
+  <STACK>
+    <LANGUAGE>rust</LANGUAGE>
+    <FRAMEWORK></FRAMEWORK>
+    <DATABASE></DATABASE>
+  </STACK>
+  <TOOLS>
+    <TOOL purpose="build">cargo</TOOL>
+    <TOOL purpose="testing">cargo test</TOOL>
+    <TOOL purpose="lint">cargo clippy</TOOL>
+  </TOOLS>
+</TECHNOLOGY>
+"#,
+            ),
+            (
+                "docs/development-plan.xml",
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<DEVELOPMENT_PLAN>
+  <META>
+    <GENERATED_BY>syn init</GENERATED_BY>
+  </META>
+  <PHASES>
+    <PHASE id="1" name="Foundation">
+      <DESCRIPTION>Core data structures and module contracts</DESCRIPTION>
+      <MODULES>
+        <M-1>
+          <ID>M-CORE</ID>
+          <NAME>Core Module</NAME>
+          <PURPOSE>Core application logic</PURPOSE>
+          <FILES><FILE>src/core.rs</FILE></FILES>
+        </M-1>
+      </MODULES>
+    </PHASE>
+  </PHASES>
+  <DEPENDENCIES></DEPENDENCIES>
+</DEVELOPMENT_PLAN>
+"#,
+            ),
+            (
+                "docs/verification-plan.xml",
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION_PLAN>
+  <GLOBAL_POLICY>
+    <DETERMINISTIC_FIRST>true</DETERMINISTIC_FIRST>
+  </GLOBAL_POLICY>
+  <MODULE_VERIFICATION id="V-M-CORE">
+    <MODULE_ID>M-CORE</MODULE_ID>
+    <UNIT_TESTS></UNIT_TESTS>
+    <LOG_MARKERS></LOG_MARKERS>
+  </MODULE_VERIFICATION>
+  <PHASE_GATES>
+    <PHASE id="1">
+      <GATE>module-local verify on all M-1 modules</GATE>
+    </PHASE>
+  </PHASE_GATES>
+</VERIFICATION_PLAN>
+"#,
+            ),
+            (
+                "docs/knowledge-graph.xml",
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<KNOWLEDGE_GRAPH>
+  <NODES>
+    <NODE id="M-CORE">
+      <NAME>Core Module</NAME>
+      <KIND>module</KIND>
+      <PATH>src/core.rs</PATH>
+    </NODE>
+  </NODES>
+  <RELATIONSHIPS></RELATIONSHIPS>
+</KNOWLEDGE_GRAPH>
+"#,
+            ),
+        ];
+        for (path, content) in phase0_templates {
+            let full = root.join(path);
+            if !full.exists() {
+                std::fs::write(&full, content)?;
+            }
+        }
+
         // Index existing sources
         let walker = crate::indexer::walker::Walker::new(&root);
         let files = walker.walk();
@@ -269,6 +374,7 @@ impl InitCmd {
         println!("What was created:");
         println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
         println!("  opencode.jsonc              — MCP auto-start (8 tools for LLM)");
+        println!("  docs/                        — Phase 0 architecture templates (5 XML files)");
         println!("  .opencode/plugins/synapse.ts — auto-proxy + GRACE system context");
         println!("  .opencode/rules/synapse.md   — tool reference for LLM");
         println!();
@@ -840,6 +946,14 @@ impl DoctorCmd {
         );
 
         // Check OpenCode integration
+        let oc_agents = root.join("AGENTS.md").exists();
+        check!(
+            "agents.md",
+            oc_agents,
+            "AGENTS.md (GRACE constitution)",
+            "missing — run `syn init`"
+        );
+
         let oc_rules = root.join(".opencode/rules/synapse.md").exists();
         check!(
             "opencode rules",
@@ -862,6 +976,19 @@ impl DoctorCmd {
             oc_mcp,
             "MCP config present",
             "missing — run `syn init`"
+        );
+
+        // Check Phase 0 docs
+        let phase0_done = root.join("docs/requirements.xml").exists()
+            && root.join("docs/technology.xml").exists()
+            && root.join("docs/development-plan.xml").exists()
+            && root.join("docs/verification-plan.xml").exists()
+            && root.join("docs/knowledge-graph.xml").exists();
+        check!(
+            "phase 0 docs",
+            phase0_done,
+            "All 5 GRACE docs present",
+            "missing — run `syn init` to create templates"
         );
 
         // Check tree-sitter grammars
