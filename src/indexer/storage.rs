@@ -55,10 +55,19 @@ impl Storage {
         std::fs::create_dir_all(&db_dir).unwrap_or_default();
         let db_path = db_dir.join("blocks.json");
         let blocks = if db_path.exists() {
-            std::fs::read_to_string(&db_path)
-                .ok()
-                .and_then(|s| serde_json::from_str(&s).ok())
-                .unwrap_or_default()
+            let content = std::fs::read_to_string(&db_path).ok().unwrap_or_default();
+            if content.trim().is_empty() {
+                Vec::new()
+            } else {
+                serde_json::from_str(&content).unwrap_or_else(|e| {
+                    tracing::warn!(
+                        "Corrupted index at {}, rebuilding. Error: {}",
+                        db_path.display(),
+                        e
+                    );
+                    Vec::new()
+                })
+            }
         } else {
             Vec::new()
         };
@@ -117,7 +126,10 @@ impl Storage {
     // START_storage_flush
     pub fn flush(&self) -> anyhow::Result<()> {
         let json = serde_json::to_string_pretty(&self.blocks)?;
-        std::fs::write(&self.db_path, &json)?;
+        // Atomic write: write to temp, then rename
+        let tmp_path = self.db_path.with_extension("json.tmp");
+        std::fs::write(&tmp_path, &json)?;
+        std::fs::rename(&tmp_path, &self.db_path)?;
         Ok(())
     }
     // END_storage_flush

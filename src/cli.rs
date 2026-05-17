@@ -6,11 +6,9 @@
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
-// SynCli — Top-level CLI struct (clap Parser)
-// Command — CLI command enum with all subcommands
-// InitCmd, IndexCmd, SearchCmd, ViewCmd, GrepCmd, VerifyCmd, ReviewCmd, FixCmd, ExplainCmd, StatusCmd — Command structs
-// GraphRagCmd, GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, DoctorCmd, RefreshCmd, HistoryCmd, ServeCmd — Command structs
-// HooksCmd, PlanCmd, ExecuteCmd, LogsCmd, TelemetryCmd, McpProxyCmd — Command structs
+// SynCli — Top-level CLI parser struct
+// Command — Enum of all supported CLI commands (18 variants)
+// init, index, search, view, verify, review, status, proxy, gain, compress, mcp, config, graphrag, hooks, doctor, refresh, history, serve — Command structs
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
@@ -89,19 +87,12 @@ pub struct IndexCmd {
     #[arg(long)]
     pub no_git: bool,
 }
-cmd_struct!(PlanCmd, "Generate architecture plan from requirements");
-cmd_struct!(ExecuteCmd, "Execute development plan",
-    module: Option<String>,
-);
 cmd_struct!(VerifyCmd, "Run verification suite",
     level: Option<String>,
     r#mod: Option<String>,
 );
 cmd_struct!(ReviewCmd, "GRACE integrity review",
     mode: Option<String>,
-);
-cmd_struct!(FixCmd, "Debug via knowledge graph",
-    description: Vec<String>,
 );
 #[derive(clap::Args)]
 #[command(about = "Project health report")]
@@ -119,10 +110,6 @@ pub struct GraphRagCmd {
     pub args: Vec<String>,
 }
 cmd_struct!(GainCmd, "View token savings analytics");
-cmd_struct!(LogsCmd, "View MCP server logs");
-cmd_struct!(TelemetryCmd, "Manage telemetry consent",
-    action: Option<String>,
-);
 #[derive(clap::Args)]
 #[command(about = "Manage Synapse hooks for AI agents")]
 pub struct HooksCmd {
@@ -190,13 +177,6 @@ pub struct McpCmd {
 }
 
 #[derive(clap::Args)]
-#[command(about = "Start multi-repo MCP proxy")]
-pub struct McpProxyCmd {
-    #[arg(long)]
-    pub config: Option<String>,
-}
-
-#[derive(clap::Args)]
 #[command(about = "Manage configuration")]
 pub struct ConfigCmd {
     #[arg(trailing_var_arg = true)]
@@ -230,19 +210,6 @@ pub struct ServeCmd {
 }
 
 use crate::config::Config;
-
-macro_rules! cmd_run {
-    ($($cmd:ty),+ $(,)?) => {
-        $(impl $cmd {
-            pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
-                anyhow::bail!("Command not yet implemented: {}",
-                    stringify!($cmd).trim_end_matches("Cmd"))
-            }
-        })+
-    };
-}
-
-cmd_run!(LogsCmd, TelemetryCmd);
 
 impl InitCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
@@ -623,46 +590,6 @@ impl ReviewCmd {
     }
 }
 
-impl FixCmd {
-    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
-        let root = std::env::current_dir()?;
-        let desc = self.description.join(" ");
-        if desc.is_empty() {
-            anyhow::bail!("Usage: syn fix <description of the bug>");
-        }
-        let result = crate::grace::fix::Debugger::diagnose(&desc, &root).await?;
-        println!("=== Diagnosis ===");
-        println!("Bug: {}", result.description);
-        println!("{}", result.diagnosis);
-        if !result.related_modules.is_empty() {
-            println!("\nRelated modules:");
-            for m in &result.related_modules {
-                println!("  • {}", m);
-            }
-        }
-        if !result.suggested_blocks.is_empty() {
-            println!("\nRelevant code:");
-            for b in &result.suggested_blocks {
-                println!("{}\n", b);
-            }
-        }
-        Ok(())
-    }
-}
-
-impl ExplainCmd {
-    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
-        let root = std::env::current_dir()?;
-        let query = self.query.join(" ");
-        if query.is_empty() {
-            anyhow::bail!("Usage: syn explain <query>");
-        }
-        let result = crate::grace::explain::Explainer::explain(&query, &root).await?;
-        println!("{}", result.answer);
-        Ok(())
-    }
-}
-
 impl StatusCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
@@ -765,12 +692,6 @@ impl McpCmd {
         } else {
             server.start_stdio().await
         }
-    }
-}
-
-impl McpProxyCmd {
-    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
-        anyhow::bail!("MCP proxy not yet implemented.")
     }
 }
 
@@ -892,7 +813,7 @@ async fn watch_and_reindex(root: std::path::PathBuf) -> anyhow::Result<()> {
                 }
                 last_index = tokio::time::Instant::now();
 
-                let config = crate::config::Config::load()?;
+                let config = crate::config::Config::load_or_default();
                 let indexer = crate::indexer::Indexer::new(&config);
                 indexer.index_directory(&root).await?;
 

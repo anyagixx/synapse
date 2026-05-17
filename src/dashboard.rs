@@ -102,7 +102,7 @@ async fn api_graph() -> Json<serde_json::Value> {
 }
 
 async fn api_tokens() -> Json<serde_json::Value> {
-    let config = crate::config::Config::load().unwrap_or_default();
+    let config = crate::config::Config::load_or_default();
     let tracker = crate::tracking::Tracker::new(&config);
     match tracker.get_stats().await {
         Ok(stats) => Json(serde_json::to_value(stats).unwrap_or_default()),

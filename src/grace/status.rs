@@ -90,7 +90,7 @@ impl StatusCollector {
         let verification = Verifier::verify_all(root).await?;
         let drift = Refresher::refresh(root).ok();
 
-        let config = Config::load().unwrap_or_default();
+        let config = Config::load_or_default();
         let tracker = Tracker::new(&config);
         let stats = tracker.get_stats().await?;
 

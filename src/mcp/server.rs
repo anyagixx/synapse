@@ -135,7 +135,7 @@ impl SynapseHandler {
     // OUTPUTS: { Self }
     // START_sh_new
     pub fn new() -> Self {
-        let config = Config::load().unwrap_or_default();
+        let config = Config::load_or_default();
         let indexer = Indexer::new(&config);
         let mut graphrag = GraphRag::new();
         // Try to find index from current directory

@@ -1,4 +1,13 @@
-# Synapse v2.0 — Implementation Plan
+# Synapse v2.0 — Historical Development Plan
+
+> **STATUS: SUPERSEDED by docs/remediation-file-plan.md**
+> This file is kept for historical reference. Active remediation is tracked in
+> `docs/remediation-file-plan.md` (10-phase file-by-file plan).
+
+---
+
+## Original v2.0 Plan (executed May 2026)
+
 
 ## Цель
 Довести Synapse до уровня когда AI-агент с его помощью справляется с разработкой быстрее и качественнее чем команда архитекторов + senior разработчиков.

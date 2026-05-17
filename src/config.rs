@@ -93,23 +93,35 @@ pub struct GraphRagConfig {
 }
 
 impl Config {
+    /// Read-only load: returns existing config, errors if missing
     pub fn load() -> anyhow::Result<Self> {
         let path = Self::path()?;
-
         if !path.exists() {
-            let config = Self::default();
-            if let Some(parent) = path.parent() {
-                std::fs::create_dir_all(parent)?;
-            }
-            let toml_str = toml::to_string_pretty(&config)?;
-            std::fs::write(&path, &toml_str)?;
-            tracing::info!("Created default config at {}", path.display());
-            return Ok(config);
+            anyhow::bail!(
+                "Config not found at {}. Run 'syn init' first.",
+                path.display()
+            );
         }
-
         let content = std::fs::read_to_string(&path)?;
-        let config: Config = toml::from_str(&content)
-            .map_err(|e| anyhow::anyhow!("Invalid config at {}: {}", path.display(), e))?;
+        toml::from_str(&content)
+            .map_err(|e| anyhow::anyhow!("Invalid config at {}: {}", path.display(), e))
+    }
+
+    /// Load existing config or return default (does NOT write to disk)
+    pub fn load_or_default() -> Self {
+        Self::load().unwrap_or_default()
+    }
+
+    /// Initialize/overwrite config file with defaults
+    pub fn init_default() -> anyhow::Result<Self> {
+        let path = Self::path()?;
+        let config = Self::default();
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let toml_str = toml::to_string_pretty(&config)?;
+        std::fs::write(&path, &toml_str)?;
+        tracing::info!("Created default config at {}", path.display());
         Ok(config)
     }
 
