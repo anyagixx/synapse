@@ -16,6 +16,7 @@
 // LAST_CHANGE: [v2.0.0 — GRACE markup added to all source files]
 // END_CHANGE_SUMMARY
 
+pub mod capabilities;
 pub mod cli;
 pub mod compress;
 pub mod config;
