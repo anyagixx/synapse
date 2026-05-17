@@ -4,6 +4,17 @@
 // SCOPE: Compare README tool count, README command count, verify check count
 // DEPENDS: M-CAPABILITIES
 
+// START_MODULE_MAP
+// test_mcp_tool_count_matches_capabilities — MCP tool count check
+// test_command_count_matches_capabilities — Command count check
+// test_verify_checks_consistent — Verify check consistency
+// test_no_ghost_commands — No ghost commands
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.3.0 — Initial docs parity tests]
+// END_CHANGE_SUMMARY
+
 use syn::capabilities;
 
 #[test]
