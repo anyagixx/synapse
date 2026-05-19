@@ -9,7 +9,7 @@
   <ACCEPTANCE>
     <CHECK>CI workflow uses Node 24-ready major versions for GitHub-maintained Node actions</CHECK>
     <CHECK>CI workflow installs Rust through rustup shell steps instead of a third-party Node/composite toolchain action</CHECK>
-    <CHECK>Release workflow uses Node 24-ready upload, download, checkout, and release actions</CHECK>
+    <CHECK>Release workflow uses Node 24-ready checkout, upload, and release actions while downloading workflow artifacts through GitHub CLI</CHECK>
     <CHECK>Linux/macOS release smoke matrix remains unchanged</CHECK>
     <CHECK>Full local MyGRACE and CI gates pass</CHECK>
     <CHECK>Hosted main CI completes without Node.js 20 deprecation annotations or third-party Node runtime deprecation log noise</CHECK>
