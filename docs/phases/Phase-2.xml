@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-2" status="active">
+  <NAME>Maintainability Hardening</NAME>
+  <GOAL>Reduce oversized modules, make maintainability gates honest, and keep MyGRACE shards synchronized</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRACE-INVENTORY" />
+    <MODULE_REF id="M-GRACE-INVENTORY-ARTIFACTS" />
+    <MODULE_REF id="M-GRACE-INVENTORY-TYPES" />
+    <MODULE_REF id="M-GRACE" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-CI" />
+  </MODULE_REFS>
+  <ACCEPTANCE>
+    <CHECK>Inventory facade under 500-line maintainability target</CHECK>
+    <CHECK>New inventory shards represented in graph and verification indexes</CHECK>
+    <CHECK>Verification output distinguishes hard file limit from Phase 2 target backlog</CHECK>
+    <CHECK>Full local CI gate passes</CHECK>
+  </ACCEPTANCE>
+</PHASE>

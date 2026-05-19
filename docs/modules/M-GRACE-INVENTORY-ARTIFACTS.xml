@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-INVENTORY-ARTIFACTS" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-INVENTORY-ARTIFACTS</NAME>
+  <PURPOSE>MyGRACE artifact IO — parses indexes, computes drift, and rewrites sharded XML artifacts</PURPOSE>
+  <SCOPE>graph/verification index parsing, shard listing, drift calculation, XML artifact synchronization</SCOPE>
+  <FILES>
+    <FILE>src/grace/inventory_artifacts.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-INVENTORY-TYPES,M-GRACE-LAYOUT</DEPENDS>
+  <LINKS>docs/graph-index.xml,docs/verification-index.xml,docs/modules/,docs/verification/</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-INVENTORY-ARTIFACTS</VERIFICATION_REF>
+</MODULE>

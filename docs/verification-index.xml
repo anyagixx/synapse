@@ -15,6 +15,8 @@
     <VERIFICATION id="V-M-GRACE-EXPLAIN" module="M-GRACE-EXPLAIN" path="docs/verification/V-M-GRACE-EXPLAIN.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-FIX" module="M-GRACE-FIX" path="docs/verification/V-M-GRACE-FIX.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-INVENTORY" module="M-GRACE-INVENTORY" path="docs/verification/V-M-GRACE-INVENTORY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-INVENTORY-ARTIFACTS" module="M-GRACE-INVENTORY-ARTIFACTS" path="docs/verification/V-M-GRACE-INVENTORY-ARTIFACTS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-INVENTORY-TYPES" module="M-GRACE-INVENTORY-TYPES" path="docs/verification/V-M-GRACE-INVENTORY-TYPES.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-LAYOUT" module="M-GRACE-LAYOUT" path="docs/verification/V-M-GRACE-LAYOUT.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-REFRESH" module="M-GRACE-REFRESH" path="docs/verification/V-M-GRACE-REFRESH.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-REVIEW" module="M-GRACE-REVIEW" path="docs/verification/V-M-GRACE-REVIEW.xml" priority="normal" status="active" />

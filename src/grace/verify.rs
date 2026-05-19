@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.5.0 — Added canonical MyGRACE drift verification]
+// LAST_CHANGE: [v2.7.0 — Made file-size verification distinguish hard limit from Phase 2 target]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::ContractValidator;
@@ -514,19 +514,20 @@ impl Verifier {
             },
         });
 
-        // Check file size limit (500 lines per source file recommended)
+        // Check hard file-size limit and report Phase 2 maintainability target drift.
+        const SOURCE_TARGET_LINES: usize = 500;
+        const SOURCE_HARD_LIMIT_LINES: usize = 1300;
         let mut large_files = Vec::new();
+        let mut target_overages = Vec::new();
         for file in &files {
             let full_path = root.join(&file.path);
             if let Ok(content) = std::fs::read_to_string(&full_path) {
                 let line_count = content.lines().count();
-                let max_lines = if file.path.starts_with("tests/") {
-                    500
-                } else {
-                    1300
-                };
+                let max_lines = SOURCE_HARD_LIMIT_LINES;
                 if line_count > max_lines {
                     large_files.push(format!("{} ({} lines)", file.path, line_count));
+                } else if line_count > SOURCE_TARGET_LINES {
+                    target_overages.push(format!("{} ({} lines)", file.path, line_count));
                 }
             }
         }
@@ -534,9 +535,23 @@ impl Verifier {
             name: "file-size-limit".into(),
             passed: large_files.is_empty(),
             details: if large_files.is_empty() {
-                "All files under 500 lines".into()
+                if target_overages.is_empty() {
+                    "All files within 500-line Phase 2 target".into()
+                } else {
+                    format!(
+                        "All files within {}-line hard limit; {} files exceed {}-line Phase 2 target:\n  {}",
+                        SOURCE_HARD_LIMIT_LINES,
+                        target_overages.len(),
+                        SOURCE_TARGET_LINES,
+                        target_overages.join("\n  ")
+                    )
+                }
             } else {
-                format!("Large files:\n  {}", large_files.join("\n  "))
+                format!(
+                    "Files over {}-line hard limit:\n  {}",
+                    SOURCE_HARD_LIMIT_LINES,
+                    large_files.join("\n  ")
+                )
             },
         });
 

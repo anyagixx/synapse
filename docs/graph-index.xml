@@ -15,6 +15,8 @@
     <MODULE id="M-GRACE-EXPLAIN" path="docs/modules/M-GRACE-EXPLAIN.xml" status="active" />
     <MODULE id="M-GRACE-FIX" path="docs/modules/M-GRACE-FIX.xml" status="active" />
     <MODULE id="M-GRACE-INVENTORY" path="docs/modules/M-GRACE-INVENTORY.xml" status="active" />
+    <MODULE id="M-GRACE-INVENTORY-ARTIFACTS" path="docs/modules/M-GRACE-INVENTORY-ARTIFACTS.xml" status="active" />
+    <MODULE id="M-GRACE-INVENTORY-TYPES" path="docs/modules/M-GRACE-INVENTORY-TYPES.xml" status="active" />
     <MODULE id="M-GRACE-LAYOUT" path="docs/modules/M-GRACE-LAYOUT.xml" status="active" />
     <MODULE id="M-GRACE-REFRESH" path="docs/modules/M-GRACE-REFRESH.xml" status="active" />
     <MODULE id="M-GRACE-REVIEW" path="docs/modules/M-GRACE-REVIEW.xml" status="active" />
@@ -82,6 +84,8 @@
     <REL source="M-GRACE" target="M-GRACE-BOOTSTRAP" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-INVENTORY" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-INVENTORY-ARTIFACTS" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-INVENTORY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-VERIFY" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-REVIEW" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-SEMANTIC" type="DEPENDS" />
@@ -93,7 +97,11 @@
     <REL source="M-GRACE-EXPLAIN" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-GRACE-FIX" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY" target="M-GRACE-CONTRACT" type="DEPENDS" />
+    <REL source="M-GRACE-INVENTORY" target="M-GRACE-INVENTORY-ARTIFACTS" type="DEPENDS" />
+    <REL source="M-GRACE-INVENTORY" target="M-GRACE-INVENTORY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY" target="M-GRACE-LAYOUT" type="DEPENDS" />
+    <REL source="M-GRACE-INVENTORY-ARTIFACTS" target="M-GRACE-INVENTORY-TYPES" type="DEPENDS" />
+    <REL source="M-GRACE-INVENTORY-ARTIFACTS" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-REFRESH" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-INVENTORY" type="DEPENDS" />

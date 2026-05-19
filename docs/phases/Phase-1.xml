@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-1" status="active">
+<PHASE id="Phase-1" status="done">
   <NAME>MyGRACE Truth Restoration</NAME>
   <GOAL>Keep code contracts, graph index, module shards, and verification shards synchronized</GOAL>
   <MODULE_REFS>
@@ -16,6 +16,8 @@
     <MODULE_REF id="M-GRACE-EXPLAIN" />
     <MODULE_REF id="M-GRACE-FIX" />
     <MODULE_REF id="M-GRACE-INVENTORY" />
+    <MODULE_REF id="M-GRACE-INVENTORY-ARTIFACTS" />
+    <MODULE_REF id="M-GRACE-INVENTORY-TYPES" />
     <MODULE_REF id="M-GRACE-LAYOUT" />
     <MODULE_REF id="M-GRACE-REFRESH" />
     <MODULE_REF id="M-GRACE-REVIEW" />

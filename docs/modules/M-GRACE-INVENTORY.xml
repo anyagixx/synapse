@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-INVENTORY" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-INVENTORY</NAME>
-  <PURPOSE>Canonical MyGRACE inventory — compares code contracts, shard indexes, and per-entity files</PURPOSE>
-  <SCOPE>ArtifactInventory, ArtifactDrift, MyGraceInventory collection, drift detection, and artifact sync</SCOPE>
+  <PURPOSE>Canonical MyGRACE inventory facade — compares code contracts, shard indexes, and per-entity files</PURPOSE>
+  <SCOPE>MyGraceInventory collection, drift detection, and artifact sync orchestration</SCOPE>
   <FILES>
     <FILE>src/grace/inventory.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-LAYOUT</DEPENDS>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-INVENTORY-ARTIFACTS,M-GRACE-INVENTORY-TYPES,M-GRACE-LAYOUT</DEPENDS>
   <LINKS>docs/graph-index.xml,docs/verification-index.xml,docs/modules/,docs/verification/</LINKS>
   <VERIFICATION_REF>V-M-GRACE-INVENTORY</VERIFICATION_REF>
 </MODULE>

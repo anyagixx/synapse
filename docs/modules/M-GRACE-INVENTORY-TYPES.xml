@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-INVENTORY-TYPES" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-INVENTORY-TYPES</NAME>
+  <PURPOSE>Canonical MyGRACE inventory data types shared by drift, refresh, review, and status flows</PURPOSE>
+  <SCOPE>CodeModule, GraphEntry, VerificationEntry, ArtifactInventory, ArtifactDrift models</SCOPE>
+  <FILES>
+    <FILE>src/grace/inventory_types.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>docs/modules/M-GRACE-INVENTORY.xml</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-INVENTORY-TYPES</VERIFICATION_REF>
+</MODULE>
