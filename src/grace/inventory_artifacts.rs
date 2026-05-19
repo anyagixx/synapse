@@ -2,23 +2,25 @@
 // MODULE_ID: M-GRACE-INVENTORY-ARTIFACTS
 // PURPOSE: MyGRACE artifact IO — parses indexes, computes drift, and rewrites sharded XML artifacts
 // SCOPE: graph/verification index parsing, shard listing, drift calculation, XML artifact synchronization
-// DEPENDS: M-GRACE-INVENTORY-TYPES, M-GRACE-LAYOUT
+// DEPENDS: M-GRACE-INVENTORY-TYPES, M-GRACE-LAYOUT, M-GRACE-INVENTORY-VERIFICATION
 // LINKS: docs/graph-index.xml, docs/verification-index.xml, docs/modules/, docs/verification/
 
 // START_MODULE_MAP
 // parse_graph_index — Reads graph index entries
 // drift_from_inventory — Compares code contracts against sharded artifacts
 // sync_inventory_artifacts — Rewrites canonical MyGRACE indexes and shards
+// sync_verification_artifacts — Delegates verification index and shard preservation
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Extracted artifact IO from M-GRACE-INVENTORY]
+// LAST_CHANGE: [v2.8.0 — Delegated verification artifact sync to preservation-aware writer]
 // END_CHANGE_SUMMARY
 
 use crate::grace::inventory_plan::{write_phase_index, write_phase_one};
 use crate::grace::inventory_types::{
     ArtifactDrift, ArtifactInventory, CodeModule, GraphEntry, VerificationEntry,
 };
+use crate::grace::inventory_verification::sync_verification_artifacts;
 use crate::grace::layout::DocsLayout;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -182,13 +184,12 @@ pub(crate) fn sync_inventory_artifacts(
     )?;
 
     write_graph_index(layout, modules)?;
-    write_verification_index(layout, modules)?;
+    sync_verification_artifacts(layout, modules)?;
     write_phase_index(layout)?;
     write_phase_one(layout, modules)?;
 
     for module in modules {
         write_module_shard(layout, module)?;
-        write_verification_shard(layout, module)?;
     }
 
     Ok(())
@@ -369,23 +370,6 @@ fn write_graph_index(layout: &DocsLayout, modules: &[CodeModule]) -> anyhow::Res
     Ok(())
 }
 
-fn write_verification_index(layout: &DocsLayout, modules: &[CodeModule]) -> anyhow::Result<()> {
-    let mut xml = String::from(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VERIFICATION_INDEX>\n  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY></META>\n  <VERIFICATIONS>\n",
-    );
-    for module in modules {
-        xml.push_str(&format!(
-            "    <VERIFICATION id=\"V-{}\" module=\"{}\" path=\"{}\" priority=\"normal\" status=\"active\" />\n",
-            module.id,
-            module.id,
-            verification_shard_path(&module.id)
-        ));
-    }
-    xml.push_str("  </VERIFICATIONS>\n</VERIFICATION_INDEX>\n");
-    std::fs::write(layout.verification_index_path(), xml)?;
-    Ok(())
-}
-
 fn write_module_shard(layout: &DocsLayout, module: &CodeModule) -> anyhow::Result<()> {
     let deps = if module.depends.is_empty() {
         String::new()
@@ -410,20 +394,6 @@ fn write_module_shard(layout: &DocsLayout, module: &CodeModule) -> anyhow::Resul
         module.id
     );
     std::fs::write(layout.modules_dir().join(format!("{}.xml", module.id)), xml)?;
-    Ok(())
-}
-
-fn write_verification_shard(layout: &DocsLayout, module: &CodeModule) -> anyhow::Result<()> {
-    let xml = format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<VERIFICATION id=\"V-{}\" module=\"{}\" priority=\"normal\" status=\"active\">\n  <UNIT_TESTS>\n    <COMMAND>cargo test --all-targets</COMMAND>\n  </UNIT_TESTS>\n  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>\n  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>\n  <PHASE_GATE>Phase-1</PHASE_GATE>\n</VERIFICATION>\n",
-        module.id, module.id
-    );
-    std::fs::write(
-        layout
-            .verification_dir()
-            .join(format!("V-{}.xml", module.id)),
-        xml,
-    )?;
     Ok(())
 }
 

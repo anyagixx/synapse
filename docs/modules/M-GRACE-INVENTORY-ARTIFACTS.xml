@@ -6,7 +6,7 @@
   <FILES>
     <FILE>src/grace/inventory_artifacts.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-INVENTORY-TYPES,M-GRACE-LAYOUT</DEPENDS>
+  <DEPENDS>M-GRACE-INVENTORY-TYPES,M-GRACE-LAYOUT,M-GRACE-INVENTORY-VERIFICATION</DEPENDS>
   <LINKS>docs/graph-index.xml,docs/verification-index.xml,docs/modules/,docs/verification/</LINKS>
   <VERIFICATION_REF>V-M-GRACE-INVENTORY-ARTIFACTS</VERIFICATION_REF>
 </MODULE>

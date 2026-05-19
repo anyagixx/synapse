@@ -1,17 +1,17 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-INVENTORY-PLAN
-// PURPOSE: MyGRACE plan artifact writer — preserves active phase metadata while refreshing generated shards
-// SCOPE: plan-index.xml generation and Phase-1 shard synchronization
+// PURPOSE: MyGRACE plan artifact writer — preserves active phase metadata and completed phase history while refreshing generated shards
+// SCOPE: plan-index.xml generation and Phase-1 shard synchronization/history preservation
 // DEPENDS: M-GRACE-INVENTORY-TYPES, M-GRACE-LAYOUT
 // LINKS: docs/plan-index.xml, docs/phases/
 
 // START_MODULE_MAP
 // write_phase_index — Writes plan-index.xml while preserving active phase files
-// write_phase_one — Rewrites Phase-1 module refs while preserving phase status
+// write_phase_one — Rewrites or preserves Phase-1 module refs while preserving phase status
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Extracted plan artifact writing and preserved Phase-2 active status]
+// LAST_CHANGE: [v2.9.0 — Preserve completed Phase-1 module refs when later phases are active]
 // END_CHANGE_SUMMARY
 
 use crate::grace::inventory_types::CodeModule;
@@ -50,7 +50,7 @@ pub(crate) fn write_phase_index(layout: &DocsLayout) -> anyhow::Result<()> {
 // END_write_phase_index
 
 // START_CONTRACT_write_phase_one
-// PURPOSE: Rewrite Phase-1 shard module refs while preserving its status when later phases are active
+// PURPOSE: Rewrite Phase-1 shard module refs unless completed Phase-1 history should be preserved
 // INPUTS: { layout: &DocsLayout }, { modules: &[CodeModule] }
 // OUTPUTS: { anyhow::Result<()> }
 // SIDE_EFFECTS: writes docs/phases/Phase-1.xml
@@ -58,12 +58,20 @@ pub(crate) fn write_phase_index(layout: &DocsLayout) -> anyhow::Result<()> {
 pub(crate) fn write_phase_one(layout: &DocsLayout, modules: &[CodeModule]) -> anyhow::Result<()> {
     let phase = "Phase-1";
     let status = phase_status(layout, phase).unwrap_or_else(|| "active".into());
+    let active = active_phase(layout, &phase_ids(layout));
+    let existing_refs = phase_module_refs(layout, phase);
+    let module_refs: Vec<String> =
+        if status == "done" && active != phase && !existing_refs.is_empty() {
+            existing_refs
+        } else {
+            modules.iter().map(|module| module.id.clone()).collect()
+        };
     let mut xml = format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PHASE id=\"{}\" status=\"{}\">\n  <NAME>MyGRACE Truth Restoration</NAME>\n  <GOAL>Keep code contracts, graph index, module shards, and verification shards synchronized</GOAL>\n  <MODULE_REFS>\n",
         phase, status
     );
-    for module in modules {
-        xml.push_str(&format!("    <MODULE_REF id=\"{}\" />\n", module.id));
+    for module_id in module_refs {
+        xml.push_str(&format!("    <MODULE_REF id=\"{}\" />\n", module_id));
     }
     xml.push_str("  </MODULE_REFS>\n</PHASE>\n");
     std::fs::write(layout.phases_dir().join("Phase-1.xml"), xml)?;
@@ -93,6 +101,22 @@ fn phase_ids(layout: &DocsLayout) -> Vec<String> {
     ids.sort();
     ids
 }
+
+// START_CONTRACT_phase_module_refs
+// PURPOSE: Parse module references from a phase shard while preserving their existing order
+// INPUTS: { layout: &DocsLayout }, { phase: &str — phase id }
+// OUTPUTS: { Vec<String> — module ids referenced by the phase shard }
+// START_phase_module_refs
+fn phase_module_refs(layout: &DocsLayout, phase: &str) -> Vec<String> {
+    let path = layout.phases_dir().join(format!("{}.xml", phase));
+    let content = std::fs::read_to_string(path).unwrap_or_default();
+    content
+        .lines()
+        .filter(|line| line.contains("<MODULE_REF ") && line.contains("id="))
+        .filter_map(|line| attr(line, "id"))
+        .collect()
+}
+// END_phase_module_refs
 
 fn active_phase(layout: &DocsLayout, phases: &[String]) -> String {
     let existing = std::fs::read_to_string(layout.plan_index_path())
@@ -136,4 +160,64 @@ fn attr(content: &str, name: &str) -> Option<String> {
     let start = content.find(&needle)? + needle.len();
     let end = content[start..].find('"')? + start;
     Some(content[start..end].to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_test_write_phase_one_preserves_done_history_when_phase_three_active
+    // PURPOSE: Verify refresh does not append new modules to completed Phase-1 while Phase-3 is active
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: writes temporary MyGRACE plan shards
+    // START_test_write_phase_one_preserves_done_history_when_phase_three_active
+    #[test]
+    fn test_write_phase_one_preserves_done_history_when_phase_three_active() {
+        let dir = tempfile::tempdir().unwrap();
+        let layout = DocsLayout::new(dir.path());
+        std::fs::create_dir_all(layout.phases_dir()).unwrap();
+        std::fs::write(
+            layout.plan_index_path(),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PLAN_INDEX>\n  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY><ACTIVE_PHASE>Phase-3</ACTIVE_PHASE></META>\n  <PHASES>\n    <PHASE id=\"Phase-1\" path=\"docs/phases/Phase-1.xml\" status=\"done\" />\n    <PHASE id=\"Phase-3\" path=\"docs/phases/Phase-3.xml\" status=\"active\" />\n  </PHASES>\n</PLAN_INDEX>\n",
+        )
+        .unwrap();
+        std::fs::write(
+            layout.phases_dir().join("Phase-1.xml"),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PHASE id=\"Phase-1\" status=\"done\">\n  <NAME>MyGRACE Truth Restoration</NAME>\n  <GOAL>Existing history</GOAL>\n  <MODULE_REFS>\n    <MODULE_REF id=\"M-OLD\" />\n  </MODULE_REFS>\n</PHASE>\n",
+        )
+        .unwrap();
+        std::fs::write(
+            layout.phases_dir().join("Phase-3.xml"),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PHASE id=\"Phase-3\" status=\"active\"></PHASE>\n",
+        )
+        .unwrap();
+
+        let modules = vec![
+            CodeModule {
+                id: "M-OLD".into(),
+                source_path: "src/old.rs".into(),
+                purpose: "Old module".into(),
+                scope: "Old scope".into(),
+                depends: Vec::new(),
+                links: Vec::new(),
+                contract_errors: Vec::new(),
+            },
+            CodeModule {
+                id: "M-NEW".into(),
+                source_path: "src/new.rs".into(),
+                purpose: "New module".into(),
+                scope: "New scope".into(),
+                depends: Vec::new(),
+                links: Vec::new(),
+                contract_errors: Vec::new(),
+            },
+        ];
+
+        write_phase_one(&layout, &modules).unwrap();
+
+        let phase_one = std::fs::read_to_string(layout.phases_dir().join("Phase-1.xml")).unwrap();
+        assert!(phase_one.contains("<MODULE_REF id=\"M-OLD\" />"));
+        assert!(!phase_one.contains("<MODULE_REF id=\"M-NEW\" />"));
+    }
+    // END_test_write_phase_one_preserves_done_history_when_phase_three_active
 }
