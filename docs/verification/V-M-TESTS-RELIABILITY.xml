@@ -9,7 +9,7 @@
     <MARKER>[Storage][load_blocks][PARSE]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Reliability tests cover corrupted index search, doctor user-visible diagnostics, and poisoned indexer storage locks.</ASSERTION>
+    <ASSERTION>Reliability tests cover corrupted index search, doctor user-visible diagnostics, poisoned indexer storage locks, and platform-portable data directory isolation.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

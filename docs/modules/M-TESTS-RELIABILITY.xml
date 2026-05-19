@@ -2,7 +2,7 @@
 <MODULE id="M-TESTS-RELIABILITY" type="UTILITY" status="active">
   <NAME>M-TESTS-RELIABILITY</NAME>
   <PURPOSE>Runtime reliability integration tests for degraded storage behavior</PURPOSE>
-  <SCOPE>corrupted index visibility through search errors and doctor diagnostics</SCOPE>
+  <SCOPE>platform-portable corrupted index visibility through search errors and doctor diagnostics</SCOPE>
   <FILES>
     <FILE>tests/reliability_test.rs</FILE>
   </FILES>
