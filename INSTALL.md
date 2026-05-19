@@ -1,38 +1,44 @@
 # Installation
 
-## Quick Install (macOS, Linux, Windows)
+Synapse currently ships prebuilt release archives for Linux and macOS. Windows packaging is deferred.
+
+## Quick Install
 
 ```bash
-curl -fsSL https://synapse.dev/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
 ```
 
-## Manual Install
+Without sudo:
 
-### Linux (x86_64 / aarch64)
 ```bash
-# Download release
-curl -fsSL https://github.com/synapse-ai/synapse/releases/latest/download/syn-x86_64-unknown-linux-musl.tar.gz | tar xz
-# Move to PATH
-sudo mv syn /usr/local/bin/
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
-### macOS (Intel / Apple Silicon)
+The installer downloads a matching release tarball when available, verifies `SHA256SUMS`, installs `syn`, and then runs `syn --version`. If a matching archive is unavailable, it falls back to a locked Cargo install from the selected Git tag.
+
+## Supported Prebuilt Archives
+
+| Platform | Release archive |
+|----------|-----------------|
+| Linux x86_64 | `syn-x86_64-unknown-linux-gnu.tar.gz` |
+| Linux aarch64 | `syn-aarch64-unknown-linux-gnu.tar.gz` |
+| macOS x86_64 | `syn-x86_64-apple-darwin.tar.gz` |
+| macOS arm64 | `syn-aarch64-apple-darwin.tar.gz` |
+
+## Source Install
+
+For development checkouts:
+
 ```bash
-curl -fsSL https://github.com/synapse-ai/synapse/releases/latest/download/syn-x86_64-apple-darwin.tar.gz | tar xz
-sudo mv syn /usr/local/bin/
+git clone https://github.com/anyagixx/synapse.git
+cd synapse
+make install
 ```
 
-### Windows
-Download `syn-x86_64-pc-windows-msvc.zip` from releases, extract, add to PATH.
+For a specific release tag:
 
-### Via Cargo
 ```bash
-cargo install --git https://github.com/synapse-ai/synapse
-```
-
-### Via Homebrew
-```bash
-brew install synapse-ai/tap/synapse
+cargo install --locked --git https://github.com/anyagixx/synapse --tag v2.3.5
 ```
 
 ## Verify
@@ -45,16 +51,8 @@ syn --help
 ## Next Steps
 
 ```bash
-# Bootstrap your project
 cd my-project
 syn init
-
-# Index codebase for AI search
 syn index
-
-# Start MCP server for OpenCode
-syn mcp
-
-# Check token savings
-syn gain
+opencode
 ```

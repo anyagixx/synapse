@@ -1,68 +1,66 @@
 # Synapse CLI Commands
 
-## Project Commands
+This page lists shipped CLI commands only.
+
+## Setup
 
 | Command | Description |
 |---------|-------------|
-| `syn init` | Bootstrap project |
-| `syn index` | Index codebase |
-| `syn status` | Project health report |
+| `syn init` | Install OpenCode MCP config, plugin, rules, and MyGRACE starter artifacts |
+| `syn doctor` | Run local setup diagnostics |
+| `syn hooks install` | Install Synapse hooks for supported agents |
+| `syn hooks status` | Show hook installation status |
 
-## GRACE Workflow Commands
-
-| Command | Description |
-|---------|-------------|
-| `syn plan` | Generate architecture plan from requirements |
-| `syn execute` | Execute development plan (write code) |
-| `syn verify` | Run verification suite (3 levels) |
-| `syn review` | GRACE integrity review |
-| `syn fix` | Debug via knowledge graph navigation |
-| `syn explain` | Explain code using indexed context |
-
-## Search Commands
+## Code Navigation
 
 | Command | Description |
 |---------|-------------|
-| `syn search <query>` | Semantic code search |
-| `syn view <files>` | View file signatures (functions, classes) |
-| `syn grep <pattern>` | AST structural search |
+| `syn index` | Index the current codebase |
+| `syn index --watch` | Re-index when files change |
+| `syn index --no-git` | Include files normally ignored by `.gitignore` |
+| `syn search <query>` | Search indexed code |
+| `syn view <path>` | Show indexed signatures for one or more files |
+| `syn graphrag` | Build and summarize the code graph |
+| `syn graphrag search <query>` | Search graph nodes |
+| `syn history <query>` | Search recent git history summaries |
 
-## Proxy Commands
-
-| Command | Description |
-|---------|-------------|
-| `syn proxy -- <cmd>` | Run command through token-saving proxy |
-| `syn gain` | View token savings analytics |
-
-## Compress Commands
+## MyGRACE Gates
 
 | Command | Description |
 |---------|-------------|
-| `syn compress <file>` | Compress file for AI context |
+| `syn verify` | Run MyGRACE verification |
+| `syn review` | Run MyGRACE integrity review |
+| `syn refresh` | Report canonical artifact drift |
+| `syn refresh --fix` | Rewrite canonical MyGRACE artifacts from source contracts |
+| `syn status` | Show project health |
+| `syn ci verify` | CI-friendly verification output |
+| `syn ci review` | CI-friendly review output |
+| `syn ci status` | CI-friendly status output |
 
-## MCP Commands
+## Runtime Utilities
 
 | Command | Description |
 |---------|-------------|
-| `syn mcp` | Start MCP server (stdio) |
-| `syn mcp --http` | Start MCP server (HTTP) |
-| `syn mcp-proxy` | Start multi-repo MCP proxy |
+| `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |
+| `syn gain` | Show token savings analytics |
+| `syn compress <path>` | Compress files for AI context |
+| `syn mcp` | Start the MCP server over stdio |
+| `syn config` | Print current configuration |
+| `syn config path` | Print the config file path |
+| `syn config edit` | Open the config file in `$EDITOR` |
+| `syn serve` | Start the local dashboard |
 
-## Utility Commands
+## Skills
 
 | Command | Description |
 |---------|-------------|
-| `syn config` | View/edit configuration |
-| `syn logs` | View MCP server logs |
-| `syn telemetry` | Manage telemetry consent |
-| `syn completion <shell>` | Generate shell completion |
+| `syn skills list` | List local MyGRACE workflow skills |
+| `syn skills show <name>` | Show one skill definition |
+| `syn skills run <name> key=value` | Run a local skill helper |
 
 ## Global Flags
 
-```
-syn --help       Show help
-syn --version    Show version
-syn --quiet      Suppress output
-syn --verbose    Verbose output
-syn --json       JSON output format
+```bash
+syn --help
+syn --version
 ```

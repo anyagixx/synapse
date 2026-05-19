@@ -57,11 +57,11 @@ AI:  "I'll add two new requirements. Approve? (yes/no)"
 ## 6. When Something Breaks
 
 ```bash
-syn fix "users can't log in after registration"
+syn skills run grace_fix issue="users can't log in after registration"
 ```
 
-AI finds the bug through the knowledge graph, reads the relevant code,
-fixes it, and verifies the fix.
+The helper returns a bounded fix path. In OpenCode, the AI can use the same `grace_fix`
+workflow together with indexed code, `syn verify`, and `syn review`.
 
 ## What You NEVER Need to Do
 
@@ -69,7 +69,7 @@ fixes it, and verifies the fix.
 |----------|-----------|
 | Write code | Describe what you want |
 | Read documentation | Ask the AI |
-| Debug errors | Run `syn fix` |
+| Debug errors | Use `grace_fix` through OpenCode or `syn skills run` |
 | Run tests | `syn verify` does it |
 | Review code | `syn review` does it |
 | Configure build tools | `syn init` sets everything |
@@ -82,7 +82,7 @@ No. You describe what you want in plain language.
 
 **What if AI makes a mistake?**
 Every module has contracts and tests. Mistakes are caught automatically.
-If something slips through, `syn fix` corrects it.
+If something slips through, use `grace_fix` through OpenCode or `syn skills run`.
 
 **Is my code safe?**
 Yes. All data stays on your computer. Synapse runs locally.

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-9" status="planned">
+  <NAME>Platform Expansion and Adoption Polish</NAME>
+  <GOAL>Extend distribution confidence beyond the current Linux/macOS release truth baseline</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <PLANNED_WORK>
+    <step-1 module="M-INSTALL" status="planned">Design Windows install packaging only after Linux/macOS release truth remains stable.</step-1>
+    <step-2 module="M-CI" status="planned">Add release-candidate dry-run automation for tag, notes, checksums, and installer smoke before publishing.</step-2>
+    <step-3 module="M-TESTS-PARITY" status="planned">Keep public docs synchronized with shipped commands and platform support as distribution expands.</step-3>
+  </PLANNED_WORK>
+  <ACCEPTANCE>
+    <CHECK>Linux/macOS release path remains green before adding Windows packaging</CHECK>
+    <CHECK>New platform claims are blocked by parity tests until release artifacts and installer mapping exist</CHECK>
+  </ACCEPTANCE>
+</PHASE>

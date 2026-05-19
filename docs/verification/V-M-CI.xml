@@ -4,20 +4,24 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>python3 scripts/ci_runtime_guard.py --self-test</COMMAND>
     <COMMAND>python3 scripts/ci_runtime_guard.py</COMMAND>
+    <COMMAND>cargo audit --deny warnings</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>bash scripts/ci.sh</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
     <MARKER>[CI][run_ci_gate][RUNTIME_GUARD]</MARKER>
+    <MARKER>[CI][run_ci_gate][RELEASE_VERSION]</MARKER>
     <MARKER>[CI][run_ci_gate][RELEASE_SMOKE]</MARKER>
     <MARKER>[CI][runtime_guard][SCAN]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>CI blocks production .unwrap(), .expect(), panic!, todo!, and unimplemented! markers outside test-only Rust blocks.</ASSERTION>
     <ASSERTION>CI validates the Linux/macOS release matrix tarball layout, checksum sidecars, and packaged binary execution before release.</ASSERTION>
+    <ASSERTION>Release workflow rejects tag/version mismatches and publishes generated release notes.</ASSERTION>
+    <ASSERTION>Hosted security CI runs cargo audit --deny warnings; notify 8.2.0 removes the previous transitive instant warning.</ASSERTION>
     <ASSERTION>Hosted platform-test gate is limited to Linux/macOS for Phase-5 while Windows packaging remains deferred.</ASSERTION>
     <ASSERTION>CI and release workflows pin Node 24-ready action majors for checkout, artifact upload, and GitHub release publishing; release artifact download uses GitHub CLI to avoid Node runtime deprecation noise.</ASSERTION>
     <ASSERTION>CI and release workflows install Rust through retrying rustup shell steps to avoid third-party Node runtime deprecation noise and absorb transient network lookup failures; hosted main CI run 26120689647 completed successfully without Node/deprecation log markers.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-6</PHASE_GATE>
+  <PHASE_GATE>Phase-8</PHASE_GATE>
 </VERIFICATION>

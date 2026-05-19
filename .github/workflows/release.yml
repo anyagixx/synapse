@@ -43,6 +43,11 @@ jobs:
           done
           rustup default stable
 
+      - name: Verify release tag matches Cargo version
+        run: bash scripts/release_version_guard.sh
+        env:
+          SYN_RELEASE_TAG: ${{ github.ref_name }}
+
       - name: Build, package, and smoke release artifact
         run: bash scripts/release_install_smoke.sh
         env:
@@ -93,5 +98,6 @@ jobs:
             dist/syn-*.tar.gz
             dist/SHA256SUMS
           draft: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -8,20 +8,22 @@
 // test_mcp_tool_count_matches_capabilities — MCP tool count check
 // test_command_count_matches_capabilities — Command count check
 // test_verify_checks_consistent — Verify check consistency
-// test_no_ghost_commands — No ghost commands
+// test_no_ghost_commands — No ghost commands or obsolete public URLs
 // test_install_default_version_matches_package — Installer default tag check
 // test_install_docs_use_supported_url — Install documentation URL check
+// test_release_tag_version_guard_is_enforced — Release tag/version guard check
 // test_release_artifact_matches_installer — Release artifact naming check
 // test_platform_claims_match_release_truth — Platform support truth check
 // test_installer_uses_safe_temp_dir_and_cleanup — Installer temp safety check
 // test_release_smoke_builds_package_and_runs_binary — Release smoke behavior check
 // test_release_checksum_integrity_is_enforced — Release checksum integrity check
+// test_release_policy_gates_are_explicit — Release notes and audit policy check
 // test_release_matrix_declares_linux_macos_targets — Linux/macOS release matrix check
 // test_installer_dry_run_maps_linux_macos_artifacts — Installer dry-run mapping check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 - Added Linux/macOS release matrix parity checks]
+// LAST_CHANGE: [v4.0.0 - Added Phase 8 public-doc, release tag, and audit policy truth gates]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -31,9 +33,13 @@ const CI_SCRIPT: &str = include_str!("../scripts/ci.sh");
 const RELEASE_SMOKE_SCRIPT: &str = include_str!("../scripts/release_install_smoke.sh");
 const CI_WORKFLOW: &str = include_str!("../.github/workflows/ci.yml");
 const RELEASE_WORKFLOW: &str = include_str!("../.github/workflows/release.yml");
+const RELEASE_VERSION_GUARD: &str = include_str!("../scripts/release_version_guard.sh");
 const README: &str = include_str!("../README.md");
+const INSTALL_DOC: &str = include_str!("../INSTALL.md");
+const COMMANDS_DOC: &str = include_str!("../docs/COMMANDS.md");
 const QUICKSTART: &str = include_str!("../docs/QUICKSTART.md");
 const FAQ: &str = include_str!("../docs/FAQ.md");
+const WORKFLOW_DOC: &str = include_str!("../docs/WORKFLOW.md");
 const INSTALL_COMMAND: &str =
     "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh";
 const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
@@ -42,15 +48,60 @@ const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
     "syn-x86_64-apple-darwin.tar.gz",
     "syn-aarch64-apple-darwin.tar.gz",
 ];
+// START_CONTRACT_public_docs
+// PURPOSE: Return public docs whose shipped-command and install claims must stay truthful
+// OUTPUTS: { [(&str, &str); 6] — doc display names and contents }
+fn public_docs() -> [(&'static str, &'static str); 6] {
+    [
+        ("README.md", README),
+        ("INSTALL.md", INSTALL_DOC),
+        ("docs/COMMANDS.md", COMMANDS_DOC),
+        ("docs/QUICKSTART.md", QUICKSTART),
+        ("docs/FAQ.md", FAQ),
+        ("docs/WORKFLOW.md", WORKFLOW_DOC),
+    ]
+}
+
+// START_CONTRACT_documented_syn_commands
+// PURPOSE: Extract command tokens documented after `syn` in code spans and shell snippets
+// INPUTS: { doc: &str — markdown document content }
+// OUTPUTS: { Vec<String> — command or global flag token following syn }
+fn documented_syn_commands(doc: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    for line in doc.lines() {
+        let trimmed = line.trim_start().trim_start_matches("$ ").trim_start();
+        if let Some(rest) = trimmed.strip_prefix("syn ") {
+            if let Some(token) = rest.split_whitespace().next() {
+                tokens.push(
+                    token
+                        .trim_matches(|c: char| "`|,.;:)".contains(c))
+                        .to_string(),
+                );
+            }
+        }
+    }
+    for (idx, segment) in doc.split('`').enumerate() {
+        if idx % 2 == 1 {
+            let trimmed = segment.trim();
+            if let Some(rest) = trimmed.strip_prefix("syn ") {
+                if let Some(token) = rest.split_whitespace().next() {
+                    tokens.push(
+                        token
+                            .trim_matches(|c: char| "`|,.;:)".contains(c))
+                            .to_string(),
+                    );
+                }
+            }
+        }
+    }
+    tokens
+}
 
 #[test]
 // START_CONTRACT_test_mcp_tool_count_matches_capabilities
 // PURPOSE: Verify MCP capability counts and uniqueness
-// SIDE_EFFECTS: reads README.md and asserts capability registry invariants
 fn test_mcp_tool_count_matches_capabilities() {
     let expected = capabilities::MCP_TOOLS.len();
-    let readme = std::fs::read_to_string("README.md").unwrap();
-    let tool_mentions = readme.matches("`").count() / 2;
     assert_eq!(expected, capabilities::TOTAL_MCP_TOOL_COUNT);
     assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 12);
     assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 15);
@@ -59,13 +110,11 @@ fn test_mcp_tool_count_matches_capabilities() {
     let names: Vec<&str> = capabilities::MCP_TOOLS.iter().map(|(n, _)| *n).collect();
     let unique: std::collections::HashSet<_> = names.iter().collect();
     assert_eq!(names.len(), unique.len(), "Duplicate MCP tool names found");
-    let _ = tool_mentions;
 }
 
 #[test]
 // START_CONTRACT_test_command_count_matches_capabilities
 // PURPOSE: Verify CLI command registry has enough unique commands
-// SIDE_EFFECTS: test assertion
 fn test_command_count_matches_capabilities() {
     assert!(
         capabilities::COMMANDS.len() >= 15,
@@ -83,7 +132,6 @@ fn test_command_count_matches_capabilities() {
 #[test]
 // START_CONTRACT_test_verify_checks_consistent
 // PURPOSE: Verify verification check registry exposes expected checks
-// SIDE_EFFECTS: test assertion
 fn test_verify_checks_consistent() {
     assert!(
         capabilities::VERIFY_CHECKS.len() >= 8,
@@ -93,20 +141,70 @@ fn test_verify_checks_consistent() {
 
 #[test]
 // START_CONTRACT_test_no_ghost_commands
-// PURPOSE: Verify documented command names and descriptions are non-empty
-// SIDE_EFFECTS: test assertion
+// PURPOSE: Verify public docs only mention shipped commands and supported install surfaces
 fn test_no_ghost_commands() {
-    // Ensure all documented commands have non-empty descriptions
+    let shipped: std::collections::HashSet<_> = capabilities::COMMANDS
+        .iter()
+        .map(|(name, _)| *name)
+        .collect();
+    let allowed_global_flags = ["--help", "--version", "-h", "-V"];
+    let forbidden = [
+        "syn plan",
+        "syn execute",
+        "syn fix",
+        "syn explain",
+        "syn grep",
+        "syn mcp --http",
+        "syn mcp-proxy",
+        "syn logs",
+        "syn telemetry",
+        "syn completion",
+        "syn --quiet",
+        "syn --verbose",
+        "syn --json",
+        "https://synapse.dev/install.sh",
+        "github.com/synapse-ai",
+        "syn-x86_64-pc-windows-msvc",
+        "unknown-linux-musl",
+        "brew install synapse-ai",
+    ];
+
     for (name, desc) in capabilities::COMMANDS {
         assert!(!desc.is_empty(), "Command '{}' has empty description", name);
         assert!(!name.is_empty(), "Empty command name");
+    }
+    for (doc_name, doc) in public_docs() {
+        for token in documented_syn_commands(doc) {
+            if token.starts_with('-') {
+                assert!(
+                    allowed_global_flags.contains(&token.as_str()),
+                    "{} documents unsupported global flag syn {}",
+                    doc_name,
+                    token
+                );
+            } else {
+                assert!(
+                    shipped.contains(token.as_str()),
+                    "{} documents unsupported command syn {}",
+                    doc_name,
+                    token
+                );
+            }
+        }
+        for snippet in forbidden {
+            assert!(
+                !doc.contains(snippet),
+                "{} must not document unsupported or obsolete surface: {}",
+                doc_name,
+                snippet
+            );
+        }
     }
 }
 
 #[test]
 // START_CONTRACT_test_install_default_version_matches_package
 // PURPOSE: Verify install.sh defaults to the current Cargo package tag
-// SIDE_EFFECTS: test assertion
 fn test_install_default_version_matches_package() {
     let expected_default = format!("VERSION=\"v{}\"", env!("CARGO_PKG_VERSION"));
     assert!(
@@ -116,19 +214,19 @@ fn test_install_default_version_matches_package() {
     );
     assert!(
         INSTALL_SCRIPT.contains(
-            "cargo install --git https://github.com/anyagixx/synapse --tag \"${VERSION}\""
+            "cargo install --locked --git https://github.com/anyagixx/synapse --tag \"${VERSION}\""
         ),
-        "install.sh must keep source fallback pinned to the selected release tag"
+        "install.sh must keep source fallback locked and pinned to the selected release tag"
     );
 }
 
 #[test]
 // START_CONTRACT_test_install_docs_use_supported_url
 // PURPOSE: Verify install docs use the repository-hosted installer URL
-// SIDE_EFFECTS: test assertion
 fn test_install_docs_use_supported_url() {
     for (name, doc) in [
         ("README.md", README),
+        ("INSTALL.md", INSTALL_DOC),
         ("docs/QUICKSTART.md", QUICKSTART),
         ("docs/FAQ.md", FAQ),
     ] {
@@ -146,9 +244,23 @@ fn test_install_docs_use_supported_url() {
 }
 
 #[test]
+// START_CONTRACT_test_release_tag_version_guard_is_enforced
+// PURPOSE: Verify release workflow rejects tags that differ from Cargo.toml package version
+fn test_release_tag_version_guard_is_enforced() {
+    assert!(
+        RELEASE_WORKFLOW.contains("bash scripts/release_version_guard.sh"),
+        "release workflow must run the release version guard"
+    );
+    assert!(
+        RELEASE_VERSION_GUARD.contains("expected_tag=\"v${cargo_version}\"")
+            && RELEASE_VERSION_GUARD.contains("SYN_RELEASE_TAG"),
+        "release version guard must compare selected tag to Cargo.toml version"
+    );
+}
+
+#[test]
 // START_CONTRACT_test_release_artifact_matches_installer
 // PURPOSE: Verify release workflow publishes the Linux artifact expected by install.sh
-// SIDE_EFFECTS: test assertion
 fn test_release_artifact_matches_installer() {
     assert!(
         INSTALL_SCRIPT.contains("TARBALL=\"syn-${ARCH}-${OS}.tar.gz\""),
@@ -179,7 +291,6 @@ fn test_release_artifact_matches_installer() {
 #[test]
 // START_CONTRACT_test_platform_claims_match_release_truth
 // PURPOSE: Verify FAQ platform support claims distinguish prebuilt artifacts from source fallback
-// SIDE_EFFECTS: test assertion
 fn test_platform_claims_match_release_truth() {
     assert!(
         FAQ.contains("Prebuilt release artifacts:"),
@@ -198,7 +309,7 @@ fn test_platform_claims_match_release_truth() {
         );
     }
     assert!(
-        FAQ.contains("Windows: planned later, not a Phase 5 priority."),
+        FAQ.contains("Windows packaging is planned later and is not part of the current Linux/macOS release matrix."),
         "FAQ must state Windows is intentionally deferred"
     );
 }
@@ -206,7 +317,6 @@ fn test_platform_claims_match_release_truth() {
 #[test]
 // START_CONTRACT_test_installer_uses_safe_temp_dir_and_cleanup
 // PURPOSE: Verify install.sh uses a private temporary directory and post-install smoke
-// SIDE_EFFECTS: test assertion
 fn test_installer_uses_safe_temp_dir_and_cleanup() {
     assert!(
         INSTALL_SCRIPT.contains("mktemp -d \"${TMPDIR:-/tmp}/synapse-install.XXXXXX\""),
@@ -233,7 +343,6 @@ fn test_installer_uses_safe_temp_dir_and_cleanup() {
 #[test]
 // START_CONTRACT_test_release_smoke_builds_package_and_runs_binary
 // PURPOSE: Verify CI release smoke builds, packages, extracts, and runs the release binary
-// SIDE_EFFECTS: test assertion
 fn test_release_smoke_builds_package_and_runs_binary() {
     assert!(
         RELEASE_SMOKE_SCRIPT
@@ -258,6 +367,12 @@ fn test_release_smoke_builds_package_and_runs_binary() {
         "release smoke must execute the packaged binary"
     );
     assert!(
+        RELEASE_SMOKE_SCRIPT.contains("expected_version=")
+            && RELEASE_SMOKE_SCRIPT.contains("version_output=")
+            && RELEASE_SMOKE_SCRIPT.contains("syn ${expected_version}"),
+        "release smoke must assert packaged syn --version matches Cargo.toml"
+    );
+    assert!(
         CI_SCRIPT.contains("bash scripts/release_install_smoke.sh")
             && CI_WORKFLOW.contains("bash scripts/release_install_smoke.sh"),
         "local and hosted CI must run the release/install smoke gate"
@@ -267,7 +382,6 @@ fn test_release_smoke_builds_package_and_runs_binary() {
 #[test]
 // START_CONTRACT_test_release_checksum_integrity_is_enforced
 // PURPOSE: Verify release workflow, installer, and smoke gate enforce SHA256 checksum integrity
-// SIDE_EFFECTS: test assertion
 fn test_release_checksum_integrity_is_enforced() {
     assert!(
         RELEASE_WORKFLOW.contains("sort -k2 > dist/SHA256SUMS")
@@ -299,9 +413,26 @@ fn test_release_checksum_integrity_is_enforced() {
 }
 
 #[test]
+// START_CONTRACT_test_release_policy_gates_are_explicit
+// PURPOSE: Verify GitHub releases get notes and CI treats cargo audit warnings as failures
+fn test_release_policy_gates_are_explicit() {
+    assert!(
+        RELEASE_WORKFLOW.contains("generate_release_notes: true"),
+        "release workflow must generate non-empty release notes"
+    );
+    assert!(
+        CI_WORKFLOW.contains("cargo audit --deny warnings"),
+        "hosted CI security job must deny cargo audit warnings explicitly"
+    );
+    assert!(
+        !CI_WORKFLOW.contains("cargo audit\n"),
+        "hosted CI must not use cargo audit without explicit warning policy"
+    );
+}
+
+#[test]
 // START_CONTRACT_test_release_matrix_declares_linux_macos_targets
 // PURPOSE: Verify release and CI workflows declare the Linux/macOS prebuilt artifact matrix
-// SIDE_EFFECTS: test assertion
 fn test_release_matrix_declares_linux_macos_targets() {
     for target in [
         "x86_64-unknown-linux-gnu",
@@ -336,7 +467,6 @@ fn test_release_matrix_declares_linux_macos_targets() {
 #[test]
 // START_CONTRACT_test_installer_dry_run_maps_linux_macos_artifacts
 // PURPOSE: Verify install.sh dry-run maps Linux/macOS uname values to expected artifact names
-// SIDE_EFFECTS: executes install.sh in dry-run mode
 fn test_installer_dry_run_maps_linux_macos_artifacts() {
     let cases = [
         ("Linux", "x86_64", "syn-x86_64-unknown-linux-gnu.tar.gz"),
@@ -354,10 +484,7 @@ fn test_installer_dry_run_maps_linux_macos_artifacts() {
             .expect("install.sh dry-run should execute");
         assert!(
             output.status.success(),
-            "install.sh dry-run failed for {}/{}: {}",
-            system,
-            machine,
-            String::from_utf8_lossy(&output.stderr)
+            "install.sh dry-run failed for {system}/{machine}"
         );
         let stdout = String::from_utf8_lossy(&output.stdout);
         assert!(

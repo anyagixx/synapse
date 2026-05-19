@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI-RELEASE-SMOKE
 # PURPOSE: Release/install smoke gate validates the packaged syn binary before release.
-# SCOPE: Linux/macOS release build, tarball packaging, SHA256 checksum verification, extraction, executable check, and version smoke.
+# SCOPE: Linux/macOS release build, tarball packaging, SHA256 checksum verification, extraction, executable check, and Cargo.toml version smoke.
 # DEPENDS: M-BUILD, M-INSTALL
 # LINKS: .github/workflows/ci.yml, .github/workflows/release.yml, install.sh
 
@@ -13,7 +13,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.2.0 - Added Linux/macOS target-aware release smoke]
+# LAST_CHANGE: [v1.3.0 - Added packaged syn --version assertion against Cargo.toml]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_install_smoke
@@ -52,6 +52,7 @@ mkdir -p "$output_dir"
 artifact_path="$output_dir/$artifact_name"
 checksum_file="$output_dir/${artifact_name}.sha256"
 binary_path="$repo_root/target/$release_target/release/syn"
+expected_version="$(awk -F '"' '/^version =/ {print $2; exit}' "$repo_root/Cargo.toml")"
 
 # START_CONTRACT_checksum_generate
 # PURPOSE: Generate a SHA256 checksum sidecar for a packaged release artifact
@@ -109,7 +110,12 @@ test -x "$unpack_dir/syn"
 
 echo "[CI][release_install_smoke][RUN] Checking packaged binary"
 if [[ "${SYN_RELEASE_SKIP_RUN:-0}" != "1" ]]; then
-    "$unpack_dir/syn" --version >/dev/null
+    version_output="$("$unpack_dir/syn" --version)"
+    expected_output="syn ${expected_version}"
+    if [[ "$version_output" != "$expected_output" ]]; then
+        echo "[CI][release_install_smoke][FAIL] Expected '${expected_output}', got '${version_output}'"
+        exit 1
+    fi
 fi
 echo "[CI][release_install_smoke][PASS] Release/install smoke passed"
 # END_run_release_install_smoke

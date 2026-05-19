@@ -1,82 +1,84 @@
-# GRACE Development Workflow
+# MyGRACE Development Workflow
 
 ## Overview
 
 ```
-IDEA → PLAN → EXECUTE → VERIFY → REVIEW → MERGE → STATUS
-                         ↑                     |
-                         └── FIX ←─────────────┘
+IDEA -> GRACE PLAN -> IMPLEMENT -> VERIFY -> REVIEW -> MERGE -> STATUS
+                                  ^                    |
+                                  +---- GRACE FIX -----+
 ```
 
-## Phase 1: Idea → Requirements
+Synapse exposes planning and fixing as MyGRACE MCP/skill workflows, while the shipped CLI provides local gates and project operations.
 
-You tell AI what you want. AI creates `requirements.xml` and `technology.xml`.
-You approve or request changes.
+## 1. Idea To Requirements
 
-## Phase 2: Plan → Architecture
+Tell the AI what you want to build in OpenCode. The AI uses `grace_init`, `grace_plan`, and `grace_verification` to create or update sharded artifacts under `docs/`.
 
-AI runs `syn plan`. Generated:
-- `development-plan.xml` — modules, dependencies, phases
-- `knowledge-graph.xml` — module map with CrossLinks
-- `MODULE_CONTRACT` in every file (PURPOSE, SCOPE, DEPENDS, LINKS)
+Primary artifacts:
+- `docs/graph-index.xml`
+- `docs/plan-index.xml`
+- `docs/verification-index.xml`
+- `docs/modules/`
+- `docs/phases/`
+- `docs/verification/`
 
-**Rule:** No code without MODULE_CONTRACT.
+## 2. Plan To Architecture
 
-## Phase 3: Execute → Implementation
+The AI reads the indexes first, then loads only the relevant phase or module shard. Each governed source file must carry `MODULE_CONTRACT`, `MODULE_MAP`, `CHANGE_SUMMARY`, function contracts, and semantic blocks.
 
-AI runs `syn execute`. Per-module loop:
-1. Read MODULE_CONTRACT
-2. Implement with semantic `START_BLOCK`/`END_BLOCK`
-3. Run module-local verification
-4. Pass → next module. Fail → fix and retry
+## 3. Implementation
 
-## Phase 4: Verify → Quality Gate
-
-AI runs `syn verify`. Three levels:
-
-| Level | Scope | Speed |
-|-------|-------|-------|
-| Module-local | Unit tests, contract compliance, block integrity | Fast |
-| Wave-level | Integration tests, cross-module contracts | Medium |
-| Phase-level | Full regression, security audit, perf benchmarks | Slow |
-
-**Gate:** Wave-level must pass before merge. Phase-level for releases.
-
-## Phase 5: Review → Integrity Check
-
-AI runs `syn review`. Checks:
-1. Semantic markup — all START/END pairs match
-2. Contract compliance — code matches contract
-3. Verification integrity — tests exist for all claims
-4. Graph consistency — knowledge graph matches code
-5. No secrets — no API keys, passwords committed
-
-## Phase 6: Status → Health Report
-
-AI runs `syn status`. Shows:
-- Modules with/without contracts
-- Test counts and pass rates
-- Knowledge graph health
-- Token savings from proxy + compression
-
-## The 500-Line Rule
-
-Every AI-facing artifact MUST be ≤500 lines:
-- XML plans (requirements, technology, dev-plan, verification, knowledge-graph)
-- MODULE_CONTRACT in source files
-- Any generated .md file
-
-If exceeded → automatically split. Enforced by `syn verify --strict`.
-
-## Strict Mode
+The AI uses `grace_execute` for bounded implementation guidance. Local project indexing and navigation use:
 
 ```bash
-syn config set strictness true
+syn index
+syn search "auth contract"
+syn view src/main.rs
 ```
 
-- Contract required: YES
-- Verification gate: Phase-level
-- Semantic markup: REQUIRED
-- Knowledge graph check: On every commit
-- Review before merge: REQUIRED
-- 500-line enforcement: STRICT (CI fails)
+## 4. Verification
+
+Run verification before declaring work done:
+
+```bash
+syn verify
+syn ci verify
+```
+
+Verification checks contracts, semantic block structure, shard integrity, trace assertions, and canonical MyGRACE drift.
+
+## 5. Review
+
+Run integrity review after verification:
+
+```bash
+syn review
+syn review --mode full
+syn ci review
+```
+
+Review checks contract consistency, semantic markup, verification integrity, and artifact health.
+
+## 6. Fix Flow
+
+For failures, use the MyGRACE fix workflow through OpenCode or locally:
+
+```bash
+syn skills run grace_fix issue="verification failed for M-AUTH"
+```
+
+Then patch the smallest affected module and re-run `syn verify` plus `syn review`.
+
+## 7. Status And Drift
+
+Use status and refresh to keep project truth current:
+
+```bash
+syn status
+syn refresh
+syn refresh --fix
+```
+
+## Artifact Size Rule
+
+AI-facing source and test files should stay within the repository's verification size target. When a file grows too large, split it by module responsibility and update the MyGRACE shards.

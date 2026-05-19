@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
 # PURPOSE: CI quality gate — runs Rust checks and MyGRACE truth gates in one reproducible entrypoint
-# SCOPE: Formatting, linting, runtime panic guard, tests, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
+# SCOPE: Formatting, linting, runtime panic guard, tests, release tag guard, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
 # DEPENDS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
 # LINKS: .github/workflows/ci.yml, docs/verification-index.xml
 
@@ -13,13 +13,13 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.2.0 - Added release/install smoke gate]
+# LAST_CHANGE: [v1.3.0 - Added release version guard invocation]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_ci_gate
 # PURPOSE: Execute the full quality gate expected by CI and maintainers
 # OUTPUTS: { exit code 0 — all checks passed }
-# SIDE_EFFECTS: invokes cargo, Python guard, release smoke, and syn verification commands; writes build artifacts under target/
+# SIDE_EFFECTS: invokes cargo, Python guard, release version guard, release smoke, and syn verification commands; writes build artifacts under target/
 # LINKS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
 # START_run_ci_gate
 set -euo pipefail
@@ -38,6 +38,9 @@ python3 scripts/ci_runtime_guard.py
 
 echo "[CI][run_ci_gate][TEST] Running all target tests"
 cargo test --all-targets
+
+echo "[CI][run_ci_gate][RELEASE_VERSION] Checking release tag policy"
+bash scripts/release_version_guard.sh
 
 echo "[CI][run_ci_gate][RELEASE_SMOKE] Running release/install smoke"
 bash scripts/release_install_smoke.sh

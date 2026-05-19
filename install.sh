@@ -21,7 +21,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.13.0 - Bumped default release tag to v2.3.5 for explicit-repo release artifact download validation]
+# LAST_CHANGE: [v2.14.0 - Hardened Cargo source fallback with locked dependency resolution]
 # END_CHANGE_SUMMARY
 
 set -eu
@@ -271,7 +271,7 @@ install_from_source() {
     }
     command -v git >/dev/null 2>&1 || { echo "git not installed; required for cargo install --git."; exit 1; }
 
-    cargo install --git https://github.com/anyagixx/synapse --tag "${VERSION}" --root "$TMP_DIR/cargo-root"
+    cargo install --locked --git https://github.com/anyagixx/synapse --tag "${VERSION}" --root "$TMP_DIR/cargo-root"
     install_binary "$TMP_DIR/cargo-root/bin/syn"
 }
 # END_install_from_source

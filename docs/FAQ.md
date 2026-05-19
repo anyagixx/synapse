@@ -30,7 +30,7 @@ Prebuilt release artifacts:
 - macOS arm64
 
 Source fallback via Cargo remains available on Linux/macOS when a matching prebuilt artifact cannot be downloaded.
-Windows: planned later, not a Phase 5 priority.
+Windows packaging is planned later and is not part of the current Linux/macOS release matrix.
 
 ## GRACE
 
@@ -60,7 +60,7 @@ syn gain --graph
 No. Everything runs locally. Embedding/LLM calls only go to external APIs if you configure them (Voyage, OpenAI, etc.). No code is sent to Synapse servers.
 
 **What does telemetry collect?**
-Nothing by default (opt-in). When enabled: anonymous device hash, version, command counts, aggregate savings. No code, no file paths, no secrets.
+Synapse currently has no telemetry upload path. Token savings are tracked locally for `syn gain`.
 
 ## Troubleshooting
 
@@ -71,4 +71,4 @@ Add `~/.local/bin` to your PATH or restart your terminal.
 Run `syn index` first.
 
 **Proxy slows down commands**
-Proxy overhead is ~5-10ms per command. If you notice real slowdowns, report with `syn logs`.
+Proxy overhead is ~5-10ms per command. If you notice real slowdowns, run `syn doctor` and include the command output in an issue report.
