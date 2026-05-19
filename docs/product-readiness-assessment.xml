@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-19" status="current">
   <DATE>2026-05-19</DATE>
-  <PHASE_GATE>Phase-5 complete</PHASE_GATE>
-  <SUMMARY>Synapse is now a credible developer-tool beta with strong MyGRACE integrity, honest Linux/macOS install documentation, published prebuilt release artifacts, hosted release smoke coverage, and live installer checksum verification.</SUMMARY>
+  <PHASE_GATE>Phase-6 complete</PHASE_GATE>
+  <SUMMARY>Synapse is now a credible developer-tool beta with strong MyGRACE integrity, honest Linux/macOS install documentation, published prebuilt release artifacts, hosted release smoke coverage, live installer checksum verification, and Node 24-ready warning-free GitHub Actions gates.</SUMMARY>
   <SCORES>
-    <OVERALL_READINESS>8.5/10</OVERALL_READINESS>
+    <OVERALL_READINESS>8.8/10</OVERALL_READINESS>
     <MYGRACE_TRUTH>9/10</MYGRACE_TRUTH>
-    <RELEASE_INSTALL_TRUTH>9.5/10</RELEASE_INSTALL_TRUTH>
-    <GENERAL_USER_INSTALL_READINESS>8/10</GENERAL_USER_INSTALL_READINESS>
+    <RELEASE_INSTALL_TRUTH>9.7/10</RELEASE_INSTALL_TRUTH>
+    <GENERAL_USER_INSTALL_READINESS>8.2/10</GENERAL_USER_INSTALL_READINESS>
   </SCORES>
   <EVIDENCE>
     <MYGRACE_DRIFT>0 canonical drift across 70 code modules, graph shards, and verification shards</MYGRACE_DRIFT>
     <CI_GATE>Full scripts/ci.sh gate passes, including fmt, clippy, runtime guard, tests, release smoke, verify, review, refresh, and status</CI_GATE>
-    <RELEASE_SMOKE>GitHub release run 26116615816 built Linux x86_64, Linux aarch64, macOS x86_64, and macOS arm64 artifacts, aggregated SHA256SUMS, and published v2.3.2</RELEASE_SMOKE>
-    <INSTALLER_TRUTH>Public main installer installed v2.3.2 from the Linux x86_64 release artifact with SHA256 verification; installer maps Linux/macOS x86_64 and arm64 hosts to declared prebuilt artifacts and keeps cargo source fallback</INSTALLER_TRUTH>
+    <RELEASE_SMOKE>GitHub release run 26120421918 built Linux x86_64, Linux aarch64, macOS x86_64, and macOS arm64 artifacts, aggregated SHA256SUMS, and published v2.3.5 through Node 24-ready release actions and CLI artifact download</RELEASE_SMOKE>
+    <INSTALLER_TRUTH>Public main installer installed v2.3.5 from the Linux x86_64 release artifact with SHA256 verification; installer maps Linux/macOS x86_64 and arm64 hosts to declared prebuilt artifacts and keeps cargo source fallback</INSTALLER_TRUTH>
+    <ACTIONS_RUNTIME>Hosted main CI run 26120689647 and release run 26120421918 completed with no Node.js 20, DEP0040, DEP0005, or deprecation log markers</ACTIONS_RUNTIME>
   </EVIDENCE>
   <RESIDUAL_RISKS>
-    <RISK_ACTIONS_NODE20>GitHub Actions warns that Node.js 20 actions will need migration before the 2026 runner deprecation window</RISK_ACTIONS_NODE20>
     <RISK_WINDOWS_DEFERRED>Windows prebuilt install remains intentionally deferred beyond Phase-5</RISK_WINDOWS_DEFERRED>
     <RISK_NON_DEVELOPER_INSTALL>Non-Linux/macOS users still require source fallback or future platform artifacts</RISK_NON_DEVELOPER_INSTALL>
   </RESIDUAL_RISKS>
-  <NEXT_PHASE>Maintenance hardening: Actions Node 24 readiness, release notes polish, then deferred Windows packaging</NEXT_PHASE>
+  <NEXT_PHASE>Release polish: documented release notes, failed pre-release tag cleanup policy, then deferred Windows packaging</NEXT_PHASE>
 </PRODUCT_READINESS_ASSESSMENT>
