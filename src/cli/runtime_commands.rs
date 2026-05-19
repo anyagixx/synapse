@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
-// PURPOSE: CLI runtime, integration, and diagnostic command handlers
-// SCOPE: GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, ServeCmd
-// DEPENDS: M-CONFIG, M-TRACKING, M-PROXY, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD
+// PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health reporting
+// SCOPE: GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, index storage diagnostics, ServeCmd
+// DEPENDS: M-CONFIG, M-TRACKING, M-PROXY, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE
 // LINKS: docs/modules/M-CLI.xml
 
 // START_MODULE_MAP
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Extracted runtime CLI handlers from M-CLI]
+// LAST_CHANGE: [v2.9.0 — Report corrupted index storage in doctor diagnostics]
 // END_CHANGE_SUMMARY
 
 use super::{CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, ServeCmd};
@@ -222,11 +222,15 @@ impl DoctorCmd {
 
         let storage = crate::indexer::storage::Storage::new(&root);
         let indexed = !storage.is_empty();
+        let index_failure = storage
+            .load_error()
+            .map(|error| format!("index storage unreadable — run `syn index` ({})", error))
+            .unwrap_or_else(|| "not indexed — run `syn index`".to_string());
         check!(
             "index",
-            indexed,
+            indexed && storage.load_error().is_none(),
             &format!("{} blocks indexed", storage.count()),
-            "not indexed — run `syn index`"
+            &index_failure
         );
 
         let oc_agents = root.join("AGENTS.md").exists();

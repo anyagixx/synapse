@@ -1,17 +1,18 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-STORAGE
-// PURPOSE: JSON block storage facade with BM25 and vector search APIs
-// SCOPE: Storage struct, StoredBlock, JSON persistence, search API orchestration
+// PURPOSE: JSON block storage facade with load-health reporting, BM25, and vector search APIs
+// SCOPE: Storage struct, StoredBlock, JSON persistence, load-health reporting, search API orchestration
 // DEPENDS: M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES
 // LINKS: N/A
 
 // START_MODULE_MAP
 // StoredBlock — Re-exported serializable code block for JSON storage
-// Storage — JSON-backed block store with BM25 and vector search
+// Storage — JSON-backed block store with load-health, BM25, and vector search
+// load_blocks — Reads and validates stored JSON blocks
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.1 — Extracted StoredBlock type and search helpers]
+// LAST_CHANGE: [v2.9.0 — Added visible index corruption reporting]
 // END_CHANGE_SUMMARY
 
 use super::storage_search::{cosine_similarity, ngram_vectorize, score_block};
@@ -27,6 +28,7 @@ pub use super::storage_types::StoredBlock;
 pub struct Storage {
     db_path: PathBuf,
     blocks: Vec<StoredBlock>,
+    load_error: Option<String>,
 }
 // END_Storage
 
@@ -43,28 +45,40 @@ impl Storage {
             .join("synapse")
             .join("index")
             .join(hash);
-        std::fs::create_dir_all(&db_dir).unwrap_or_default();
         let db_path = db_dir.join("blocks.json");
-        let blocks = if db_path.exists() {
-            let content = std::fs::read_to_string(&db_path).ok().unwrap_or_default();
-            if content.trim().is_empty() {
-                Vec::new()
-            } else {
-                serde_json::from_str(&content).unwrap_or_else(|e| {
-                    tracing::warn!(
-                        "Corrupted index at {}, rebuilding. Error: {}",
-                        db_path.display(),
-                        e
-                    );
-                    Vec::new()
-                })
-            }
+
+        let mut load_error = None;
+        if let Err(e) = std::fs::create_dir_all(&db_dir) {
+            let message = format!("cannot create index directory {}: {}", db_dir.display(), e);
+            tracing::warn!("[Storage][new][INIT] {}", message);
+            load_error = Some(message);
+        }
+
+        let (blocks, read_error) = if load_error.is_none() {
+            load_blocks(&db_path)
         } else {
-            Vec::new()
+            (Vec::new(), None)
         };
-        Self { db_path, blocks }
+        if read_error.is_some() {
+            load_error = read_error;
+        }
+
+        Self {
+            db_path,
+            blocks,
+            load_error,
+        }
     }
     // END_storage_new
+
+    // START_CONTRACT_Storage::load_error
+    // PURPOSE: Return the storage load error when persisted JSON could not be read or parsed
+    // OUTPUTS: { Option<&str> }
+    // START_storage_load_error
+    pub fn load_error(&self) -> Option<&str> {
+        self.load_error.as_deref()
+    }
+    // END_storage_load_error
 
     // START_CONTRACT_Storage::count
     // PURPOSE: Return the number of stored blocks
@@ -210,6 +224,40 @@ impl Storage {
     // END_storage_vector_search
 }
 
+// START_CONTRACT_load_blocks
+// PURPOSE: Read persisted JSON blocks and return a visible load error for unreadable or corrupted storage
+// INPUTS: { db_path: &Path }
+// OUTPUTS: { (Vec<StoredBlock>, Option<String>) }
+// START_load_blocks
+fn load_blocks(db_path: &Path) -> (Vec<StoredBlock>, Option<String>) {
+    if !db_path.exists() {
+        return (Vec::new(), None);
+    }
+
+    let content = match std::fs::read_to_string(db_path) {
+        Ok(content) => content,
+        Err(e) => {
+            let message = format!("cannot read index {}: {}", db_path.display(), e);
+            tracing::warn!("[Storage][load_blocks][READ] {}", message);
+            return (Vec::new(), Some(message));
+        }
+    };
+
+    if content.trim().is_empty() {
+        return (Vec::new(), None);
+    }
+
+    match serde_json::from_str(&content) {
+        Ok(blocks) => (blocks, None),
+        Err(e) => {
+            let message = format!("corrupted index {}: {}", db_path.display(), e);
+            tracing::warn!("[Storage][load_blocks][PARSE] {}", message);
+            (Vec::new(), Some(message))
+        }
+    }
+}
+// END_load_blocks
+
 fn simple_hash(path: &Path) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
@@ -242,6 +290,32 @@ mod tests {
     fn tmp_storage() -> Storage {
         let dir = std::env::temp_dir().join(format!("syn-test-{}", uuid::Uuid::new_v4()));
         Storage::new(&dir)
+    }
+
+    #[test]
+    fn test_corrupted_index_reports_load_error() {
+        let dir = std::env::temp_dir().join(format!("syn-corrupt-{}", uuid::Uuid::new_v4()));
+        let hash = simple_hash(&dir);
+        let db_dir = dirs::data_dir()
+            .unwrap_or_else(|| PathBuf::from("/tmp"))
+            .join("synapse")
+            .join("index")
+            .join(hash);
+        let db_path = db_dir.join("blocks.json");
+        std::fs::create_dir_all(&db_dir).unwrap();
+        std::fs::write(&db_path, "{ invalid json").unwrap();
+
+        let storage = Storage::new(&dir);
+        assert_eq!(storage.count(), 0);
+        assert!(
+            storage
+                .load_error()
+                .is_some_and(|e| e.contains("corrupted index")),
+            "corruption should be visible: {:?}",
+            storage.load_error()
+        );
+
+        let _ = std::fs::remove_dir_all(db_dir);
     }
 
     #[test]

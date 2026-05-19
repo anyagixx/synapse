@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TESTS-RELIABILITY" type="UTILITY" status="active">
+  <NAME>M-TESTS-RELIABILITY</NAME>
+  <PURPOSE>Runtime reliability integration tests for degraded storage behavior</PURPOSE>
+  <SCOPE>corrupted index visibility through search errors and doctor diagnostics</SCOPE>
+  <FILES>
+    <FILE>tests/reliability_test.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-INDEXER,M-INDEXER-STORAGE,M-CLI-RUNTIME-COMMANDS</DEPENDS>
+  <LINKS>docs/phases/Phase-3.xml</LINKS>
+  <VERIFICATION_REF>V-M-TESTS-RELIABILITY</VERIFICATION_REF>
+</MODULE>

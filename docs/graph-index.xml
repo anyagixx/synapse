@@ -66,6 +66,7 @@
     <MODULE id="M-TESTS-MCP" path="docs/modules/M-TESTS-MCP.xml" status="active" />
     <MODULE id="M-TESTS-MCP-PROTOCOL" path="docs/modules/M-TESTS-MCP-PROTOCOL.xml" status="active" />
     <MODULE id="M-TESTS-PARITY" path="docs/modules/M-TESTS-PARITY.xml" status="active" />
+    <MODULE id="M-TESTS-RELIABILITY" path="docs/modules/M-TESTS-RELIABILITY.xml" status="active" />
     <MODULE id="M-TRACKING" path="docs/modules/M-TRACKING.xml" status="active" />
     <MODULE id="M-UTILS" path="docs/modules/M-UTILS.xml" status="active" />
   </MODULES>
@@ -99,6 +100,7 @@
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-MCP" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-HOOKS" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-DASHBOARD" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-BOOTSTRAP" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-LAYOUT" type="DEPENDS" />
@@ -233,6 +235,10 @@
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-SKILLS" type="DEPENDS" />
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-CAPABILITIES" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-CAPABILITIES" type="DEPENDS" />
+    <REL source="M-TESTS-RELIABILITY" target="M-CLI" type="DEPENDS" />
+    <REL source="M-TESTS-RELIABILITY" target="M-INDEXER" type="DEPENDS" />
+    <REL source="M-TESTS-RELIABILITY" target="M-INDEXER-STORAGE" type="DEPENDS" />
+    <REL source="M-TESTS-RELIABILITY" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
     <REL source="M-TRACKING" target="M-CONFIG" type="DEPENDS" />
   </RELATIONSHIPS>
 </GRAPH_INDEX>

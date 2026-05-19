@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-INDEXER-STORAGE" type="DATA_LAYER" status="active">
   <NAME>M-INDEXER-STORAGE</NAME>
-  <PURPOSE>JSON block storage facade with BM25 and vector search APIs</PURPOSE>
-  <SCOPE>Storage struct, StoredBlock, JSON persistence, search API orchestration</SCOPE>
+  <PURPOSE>JSON block storage facade with load-health reporting, BM25, and vector search APIs</PURPOSE>
+  <SCOPE>Storage struct, StoredBlock, JSON persistence, load-health reporting, search API orchestration</SCOPE>
   <FILES>
     <FILE>src/indexer/storage.rs</FILE>
   </FILES>

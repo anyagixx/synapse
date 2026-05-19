@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-INDEXER-STORAGE" module="M-INDEXER-STORAGE" priority="normal" status="active">
+<VERIFICATION id="V-M-TESTS-RELIABILITY" module="M-TESTS-RELIABILITY" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
-    <COMMAND>cargo test indexer::storage::tests::test_corrupted_index_reports_load_error --lib</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
     <MARKER>[Storage][load_blocks][PARSE]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Corrupted blocks.json is reported through Storage::load_error instead of being silently treated as an empty index.</ASSERTION>
+    <ASSERTION>Reliability integration tests cover corrupted index search and doctor user-visible diagnostics.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

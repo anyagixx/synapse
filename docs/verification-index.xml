@@ -66,6 +66,7 @@
     <VERIFICATION id="V-M-TESTS-MCP" module="M-TESTS-MCP" path="docs/verification/V-M-TESTS-MCP.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TESTS-MCP-PROTOCOL" module="M-TESTS-MCP-PROTOCOL" path="docs/verification/V-M-TESTS-MCP-PROTOCOL.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TESTS-PARITY" module="M-TESTS-PARITY" path="docs/verification/V-M-TESTS-PARITY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TESTS-RELIABILITY" module="M-TESTS-RELIABILITY" path="docs/verification/V-M-TESTS-RELIABILITY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TRACKING" module="M-TRACKING" path="docs/verification/V-M-TRACKING.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-UTILS" module="M-UTILS" path="docs/verification/V-M-UTILS.xml" priority="normal" status="active" />
   </VERIFICATIONS>

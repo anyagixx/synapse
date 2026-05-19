@@ -1,17 +1,18 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
-// PURPOSE: Code indexer — walks, parses, stores, and searches code blocks with BM25 and vector search
-// SCOPE: Indexer struct, SearchResult, index_directory, search, hybrid_search, view_signatures
+// PURPOSE: Code indexer — walks, parses, stores, and searches code blocks with storage health checks
+// SCOPE: Indexer struct, SearchResult, index_directory, search, hybrid_search, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS: N/A
 
 // START_MODULE_MAP
 // SearchResult — Search result with path, language, name, kind, lines, content, score
 // Indexer — Main indexer combining walker, parser, and storage
+// ensure_storage_ready — Converts storage load-health errors into actionable search errors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.1 — Added storage helper and type modules]
+// LAST_CHANGE: [v2.9.0 — Surface corrupted index storage during search]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
@@ -149,6 +150,7 @@ impl Indexer {
         }
         let guard = self.storage.read().unwrap();
         let storage = guard.as_ref().unwrap();
+        ensure_storage_ready(storage)?;
         let results = storage.search_with_scores(query, max_results);
         Ok(results
             .into_iter()
@@ -185,6 +187,7 @@ impl Indexer {
         }
         let guard = self.storage.read().unwrap();
         let storage = guard.as_ref().unwrap();
+        ensure_storage_ready(storage)?;
 
         // Get BM25 results
         let bm25 = storage.search_with_scores(query, max_results * 2);
@@ -273,6 +276,22 @@ impl Indexer {
     }
 }
 // END_indexer_view_signatures
+
+// START_CONTRACT_ensure_storage_ready
+// PURPOSE: Fail search operations with an actionable message when storage loaded from a corrupted index
+// INPUTS: { storage: &Storage }
+// OUTPUTS: { anyhow::Result<()> }
+// START_ensure_storage_ready
+fn ensure_storage_ready(storage: &Storage) -> anyhow::Result<()> {
+    if let Some(error) = storage.load_error() {
+        anyhow::bail!(
+            "index storage is unreadable: {}. Run `syn index` to rebuild.",
+            error
+        );
+    }
+    Ok(())
+}
+// END_ensure_storage_ready
 
 fn fallback_signatures(code: &str) -> Vec<String> {
     let mut sigs = Vec::new();
