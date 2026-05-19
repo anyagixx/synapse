@@ -2,8 +2,12 @@
 <VERIFICATION id="V-M-TRACKING" module="M-TRACKING" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_tracking_is_scoped_by_canonical_project_path</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Tracking stats are scoped by canonical project path, not directory basename.</ASSERTION>
+    <ASSERTION>SQLite open, schema, insert, and query errors are returned to callers.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

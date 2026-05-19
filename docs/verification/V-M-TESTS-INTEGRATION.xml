@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-TESTS-INTEGRATION" module="M-TESTS-INTEGRATION" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_tracking_is_scoped_by_canonical_project_path</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Integration tests cover clean config bootstrap and canonical tracking identity regressions.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

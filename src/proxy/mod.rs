@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY
-// PURPOSE: Proxy executor — intercepts shell commands, applies TOML filters, tracks token savings
-// SCOPE: Proxy struct, FilterEngine integration, CommandRunner integration, token tracking
+// PURPOSE: Proxy executor — intercepts shell commands, applies TOML filters, and reports token tracking degradation
+// SCOPE: Proxy struct, FilterEngine integration, CommandRunner integration, token tracking with degraded-mode logging
 // DEPENDS: M-CONFIG, M-TRACKING, M-PROXY-RUNNER, M-PROXY-FILTER, M-UTILS
 // LINKS: filters.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.8.0 — Report degraded tracking instead of silently swallowing record errors]
 // END_CHANGE_SUMMARY
 
 pub mod runner;
@@ -90,11 +90,13 @@ impl Proxy {
 
         let output_tokens = crate::utils::estimate_tokens(&output) as u32;
 
-        // Track savings
-        self.tracker
+        if let Err(e) = self
+            .tracker
             .record(&full_cmd, input_tokens, output_tokens)
             .await
-            .ok();
+        {
+            tracing::warn!("[Proxy][execute][TRACKING] token tracking degraded: {}", e);
+        }
 
         tracing::debug!(
             "Proxy: {} — {} tokens → {} tokens ({}% saved)",

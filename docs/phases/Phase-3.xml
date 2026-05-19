@@ -13,6 +13,7 @@
     <MODULE_REF id="M-INDEXER" />
     <MODULE_REF id="M-INDEXER-STORAGE" />
     <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-PROXY" />
     <MODULE_REF id="M-TESTS-INTEGRATION" />
     <MODULE_REF id="M-CI" />
   </MODULE_REFS>

@@ -2,7 +2,7 @@
 <MODULE id="M-TESTS-INTEGRATION" type="UTILITY" status="active">
   <NAME>M-TESTS-INTEGRATION</NAME>
   <PURPOSE>End-to-end integration tests for Synapse CLI commands</PURPOSE>
-  <SCOPE>init, clean config bootstrap, index, search, verify, status, proxy, gain, doctor, hooks, compress</SCOPE>
+  <SCOPE>init, clean config bootstrap, tracking identity, index, search, verify, status, proxy, gain, doctor, hooks, compress</SCOPE>
   <FILES>
     <FILE>tests/integration_test.rs</FILE>
   </FILES>

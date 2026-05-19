@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, index, search, verify, status, proxy, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, proxy, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-CONFIG
 
 use std::process::Command;
@@ -156,6 +156,55 @@ fn test_proxy_and_gain() {
         stdout
     );
 }
+
+// START_CONTRACT_test_tracking_is_scoped_by_canonical_project_path
+// PURPOSE: Verify tracking stats do not mix projects that share the same directory basename
+// SIDE_EFFECTS: creates isolated temp project and XDG data directories, runs syn proxy/gain
+// START_test_tracking_is_scoped_by_canonical_project_path
+#[test]
+fn test_tracking_is_scoped_by_canonical_project_path() {
+    let parent_one = tempfile::tempdir().unwrap();
+    let parent_two = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let project_one = parent_one.path().join("app");
+    let project_two = parent_two.path().join("app");
+    std::fs::create_dir(&project_one).unwrap();
+    std::fs::create_dir(&project_two).unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+
+    for project in [&project_one, &project_two] {
+        let out = Command::new(&syn)
+            .args(["proxy", "--", "echo", "tracked"])
+            .env("XDG_DATA_HOME", data_home.path())
+            .current_dir(project)
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "proxy failed: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    let out = Command::new(&syn)
+        .arg("gain")
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(&project_one)
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "gain failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("Commands tracked:    1"),
+        "tracking should be scoped by canonical path: {}",
+        stdout
+    );
+}
+// END_test_tracking_is_scoped_by_canonical_project_path
 
 #[test]
 fn test_doctor_and_hooks() {

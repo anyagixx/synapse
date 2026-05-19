@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-PROXY" type="INTEGRATION" status="active">
   <NAME>M-PROXY</NAME>
-  <PURPOSE>Proxy executor — intercepts shell commands, applies TOML filters, tracks token savings</PURPOSE>
-  <SCOPE>Proxy struct, FilterEngine integration, CommandRunner integration, token tracking</SCOPE>
+  <PURPOSE>Proxy executor — intercepts shell commands, applies TOML filters, and reports token tracking degradation</PURPOSE>
+  <SCOPE>Proxy struct, FilterEngine integration, CommandRunner integration, token tracking with degraded-mode logging</SCOPE>
   <FILES>
     <FILE>src/proxy/mod.rs</FILE>
   </FILES>
