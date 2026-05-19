@@ -1,35 +1,26 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-STORAGE
-// PURPOSE: JSON block storage with search — BM25 ranking and n-gram vector search
-// SCOPE: Storage struct, StoredBlock, JSON persistence, BM25 scoring, cosine similarity
-// DEPENDS: N/A
+// PURPOSE: JSON block storage facade with BM25 and vector search APIs
+// SCOPE: Storage struct, StoredBlock, JSON persistence, search API orchestration
+// DEPENDS: M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES
 // LINKS: N/A
 
 // START_MODULE_MAP
-// StoredBlock — Serializable code block for JSON storage
+// StoredBlock — Re-exported serializable code block for JSON storage
 // Storage — JSON-backed block store with BM25 and vector search
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.1 — Extracted StoredBlock type and search helpers]
 // END_CHANGE_SUMMARY
 
+use super::storage_search::{cosine_similarity, ngram_vectorize, score_block};
 use std::path::{Path, PathBuf};
 
 // START_public_api
 
 // START_StoredBlock
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
-pub struct StoredBlock {
-    pub id: String,
-    pub path: String,
-    pub language: String,
-    pub name: String,
-    pub kind: String,
-    pub content: String,
-    pub start_line: usize,
-    pub end_line: usize,
-}
+pub use super::storage_types::StoredBlock;
 // END_StoredBlock
 
 // START_Storage
@@ -219,121 +210,6 @@ impl Storage {
     // END_storage_vector_search
 }
 
-fn score_block(block: &StoredBlock, query_lower: &str, query_words: &[&str]) -> f64 {
-    let name_lower = block.name.to_lowercase();
-    let content_lower = block.content.to_lowercase();
-    let path_lower = block.path.to_lowercase();
-    let mut score = 0.0_f64;
-
-    // Exact name match (highest priority)
-    if name_lower == *query_lower {
-        return 50.0;
-    }
-
-    if name_lower.starts_with(query_lower) {
-        score += 25.0;
-    } else if name_lower.contains(query_lower) {
-        score += 18.0;
-    }
-
-    let name_tokens = tokenize(&name_lower);
-    let path_tokens = tokenize(&path_lower);
-    let content_tokens = tokenize(&content_lower);
-    let total_content_tokens = content_tokens.len() as f64;
-    if total_content_tokens < 1.0 {
-        return score;
-    }
-
-    let avg_block_len = 200.0_f64;
-
-    for word in query_words {
-        if word.is_empty() || word.len() < 2 {
-            continue;
-        }
-        let word_tokens = tokenize(word);
-        if word_tokens.is_empty() {
-            continue;
-        }
-
-        let name_matches = name_tokens
-            .iter()
-            .filter(|t| word_tokens.iter().any(|wt| t.contains(wt)))
-            .count();
-        if name_matches > 0 {
-            score += 6.0 * name_matches as f64;
-        }
-
-        let path_matches = path_tokens
-            .iter()
-            .filter(|t| word_tokens.iter().any(|wt| t.contains(wt)))
-            .count();
-        if path_matches > 0 {
-            score += 3.5 * path_matches as f64;
-        }
-
-        for wt in &word_tokens {
-            let tf = content_tokens.iter().filter(|t| t.contains(wt)).count() as f64;
-            if tf > 0.0 {
-                let dl_ratio = total_content_tokens / avg_block_len;
-                let k1 = 1.5;
-                let b = 0.75;
-                let bm25 = tf * (k1 + 1.0) / (tf + k1 * (1.0 - b + b * dl_ratio));
-                score += bm25 * 2.5;
-
-                let first_lines: Vec<&str> = content_lower.lines().take(5).collect();
-                if first_lines.iter().any(|l| l.contains(wt)) {
-                    score += 3.0;
-                }
-            }
-
-            if wt.len() >= 3 {
-                let ngram_matches = content_lower.matches(wt).count() as f64;
-                if ngram_matches > 0.0 {
-                    score += ngram_matches * 0.3;
-                }
-                for nt in &name_tokens {
-                    if nt.contains(wt) {
-                        score += 2.0;
-                    }
-                }
-            }
-        }
-    }
-
-    if content_lower.contains(query_lower) {
-        score += 4.0;
-    }
-    if total_content_tokens < 500.0 && score > 0.0 {
-        score *= 1.0 + (500.0 - total_content_tokens).max(0.0) / 1000.0;
-    }
-    score
-}
-
-fn tokenize(text: &str) -> Vec<String> {
-    let mut tokens = Vec::new();
-    let parts: Vec<&str> = text
-        .split(&[
-            ' ', '\t', '\n', '_', '-', '.', '/', '\\', ':', ',', ';', '(', ')', '[', ']', '{', '}',
-            '"', '\'', '!', '?', '=', '+', '*', '&', '|', '^', '~', '<', '>',
-        ] as &[_])
-        .collect();
-    for part in parts {
-        if part.is_empty() {
-            continue;
-        }
-        let mut start = 0;
-        for (i, c) in part.char_indices().skip(1) {
-            if c.is_uppercase() {
-                tokens.push(part[start..i].to_lowercase());
-                start = i;
-            }
-        }
-        tokens.push(part[start..].to_lowercase());
-    }
-    tokens.retain(|t| t.len() >= 2 || t.chars().all(|c| c.is_alphanumeric()));
-    tokens
-}
-
 fn simple_hash(path: &Path) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
@@ -344,39 +220,6 @@ fn simple_hash(path: &Path) -> String {
         .take(8)
         .map(|b| format!("{:02x}", b))
         .collect::<String>()
-}
-
-fn ngram_vectorize(text: &str) -> std::collections::HashMap<u64, f64> {
-    let chars: Vec<char> = text.to_lowercase().chars().collect();
-    if chars.len() < 3 {
-        return std::collections::HashMap::new();
-    }
-    let mut vec = std::collections::HashMap::new();
-    for i in 0..chars.len().saturating_sub(2) {
-        let hash = ((chars[i] as u64) << 16) | ((chars[i + 1] as u64) << 8) | (chars[i + 2] as u64);
-        *vec.entry(hash).or_insert(0.0) += 1.0;
-    }
-    // Normalize
-    let norm: f64 = vec.values().map(|v| v * v).sum::<f64>().sqrt();
-    if norm > 0.0 {
-        for v in vec.values_mut() {
-            *v /= norm;
-        }
-    }
-    vec
-}
-
-fn cosine_similarity(
-    a: &std::collections::HashMap<u64, f64>,
-    b: &std::collections::HashMap<u64, f64>,
-) -> f64 {
-    let mut dot = 0.0;
-    for (k, va) in a {
-        if let Some(vb) = b.get(k) {
-            dot += va * vb;
-        }
-    }
-    dot
 }
 
 #[cfg(test)]
@@ -509,26 +352,6 @@ mod tests {
             .collect();
         s.store_blocks(blocks).unwrap();
         assert_eq!(s.search("test", 3).len(), 3);
-    }
-
-    #[test]
-    fn test_tokenize_camel_case() {
-        let t = tokenize("MyFunctionTest");
-        assert!(t.iter().any(|x| x == "my"), "expected 'my' in {:?}", t);
-        assert!(
-            t.iter().any(|x| x == "function"),
-            "expected 'function' in {:?}",
-            t
-        );
-        assert!(t.iter().any(|x| x == "test"), "expected 'test' in {:?}", t);
-    }
-
-    #[test]
-    fn test_tokenize_snake_case() {
-        let t = tokenize("snake_case_var");
-        assert!(t.contains(&"snake".to_string()));
-        assert!(t.contains(&"case".to_string()));
-        assert!(t.contains(&"var".to_string()));
     }
 }
 // END_public_api

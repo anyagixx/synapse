@@ -2,7 +2,7 @@
 // MODULE_ID: M-INDEXER
 // PURPOSE: Code indexer — walks, parses, stores, and searches code blocks with BM25 and vector search
 // SCOPE: Indexer struct, SearchResult, index_directory, search, hybrid_search, view_signatures
-// DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-CONFIG
+// DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,11 +11,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.1 — Added storage helper and type modules]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
 pub mod storage;
+mod storage_search;
+mod storage_types;
 pub mod walker;
 
 use crate::config::Config;
