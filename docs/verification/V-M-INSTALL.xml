@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VERIFICATION id="V-M-INSTALL" module="M-INSTALL" priority="normal" status="active">
   <UNIT_TESTS>
+    <COMMAND>cargo test --test docs_parity</COMMAND>
     <COMMAND>cargo test --all-targets</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <PHASE_GATE>Phase-4</PHASE_GATE>
 </VERIFICATION>

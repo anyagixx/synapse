@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-4" status="active">
+  <NAME>Product Readiness and Release Truth</NAME>
+  <GOAL>Make documented installation, release artifacts, platform support, and local gates match product reality</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <ACCEPTANCE>
+    <CHECK>Phase-3 marked done and Phase-4 active in plan-index</CHECK>
+    <CHECK>Install documentation uses real repository URLs, current package version, and supported install paths</CHECK>
+    <CHECK>Release workflow artifact naming matches install.sh download behavior</CHECK>
+    <CHECK>Platform support claims distinguish prebuilt Linux artifacts from cargo source fallback</CHECK>
+    <CHECK>Local parity gate catches drift across Cargo.toml, install.sh, release workflow, README, Quickstart, and FAQ</CHECK>
+    <CHECK>Full local CI gate passes</CHECK>
+  </ACCEPTANCE>
+</PHASE>

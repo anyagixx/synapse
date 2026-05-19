@@ -80,7 +80,10 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # OpenCode
 curl -fsSL https://opencode.ai/install.sh | sh
 
-# Synapse
+# Synapse (prebuilt Linux release or Cargo source fallback)
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
+
+# Source install for development checkouts
 git clone https://github.com/anyagixx/synapse.git
 cd synapse && make install
 ```

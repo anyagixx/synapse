@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-3" status="active">
+<PHASE id="Phase-3" status="done">
   <NAME>Runtime Reliability Hardening</NAME>
   <GOAL>Make CLI, config, runtime integrations, and storage behavior predictable on clean machines and degraded subsystems</GOAL>
   <MODULE_REFS>

@@ -15,11 +15,13 @@ OpenCode, Claude Code, Cursor, Windsurf, Cline, Copilot, Gemini CLI, Codex, and 
 
 **How do I install?**
 ```bash
-curl -fsSL https://synapse.dev/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
 ```
 
 **What platforms are supported?**
-Linux (x86_64, aarch64), macOS (x86_64, aarch64), Windows (x86_64).
+Prebuilt release artifact: Linux x86_64.
+Source fallback via Cargo: Linux/macOS on x86_64 or aarch64.
+Windows: build/test support exists in CI; install from source with Cargo.
 
 ## GRACE
 

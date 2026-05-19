@@ -242,6 +242,8 @@
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-SKILLS" type="DEPENDS" />
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-CAPABILITIES" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-CAPABILITIES" type="DEPENDS" />
+    <REL source="M-TESTS-PARITY" target="M-INSTALL" type="DEPENDS" />
+    <REL source="M-TESTS-PARITY" target="M-CI" type="DEPENDS" />
     <REL source="M-TESTS-RELIABILITY" target="M-CLI" type="DEPENDS" />
     <REL source="M-TESTS-RELIABILITY" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-TESTS-RELIABILITY" target="M-INDEXER-STORAGE" type="DEPENDS" />

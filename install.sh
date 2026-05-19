@@ -11,7 +11,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.5.0 — Added MyGRACE contract]
+# LAST_CHANGE: [v2.6.0 — Aligned default release tag with Cargo package version]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_main
@@ -22,7 +22,7 @@
 # START_main
 set -e
 
-VERSION="${1:-v2.1.0}"
+VERSION="${1:-v2.3.1}"
 ARCH="x86_64"
 OS="unknown-linux-gnu"
 
