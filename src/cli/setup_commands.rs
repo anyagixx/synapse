@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-SETUP-COMMANDS
-// PURPOSE: CLI setup and indexing command handlers
-// SCOPE: InitCmd, IndexCmd, watch_and_reindex
+// PURPOSE: CLI setup and indexing command handlers with guarded index storage status reporting
+// SCOPE: InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts
 // DEPENDS: M-CONFIG, M-GRACE-BOOTSTRAP, M-GRACE-LAYOUT, M-INDEXER
 // LINKS: docs/modules/M-CLI.xml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Extracted setup and indexing CLI handlers from M-CLI]
+// LAST_CHANGE: [v3.0.0 — Replaced index storage unwraps with guarded count access]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
@@ -140,10 +140,7 @@ impl IndexCmd {
 
         indexer.index_directory(&root).await?;
 
-        let total = {
-            let guard = indexer.storage.read().unwrap();
-            guard.as_ref().map(|s| s.count()).unwrap_or(0)
-        };
+        let total = indexer.storage_count()?;
         println!("Index complete: {} code blocks", total);
 
         if self.watch {
@@ -227,9 +224,7 @@ async fn watch_and_reindex(root: std::path::PathBuf) -> anyhow::Result<()> {
                 let indexer = crate::indexer::Indexer::new(&config);
                 indexer.index_directory(&root).await?;
 
-                let guard = indexer.storage.read().unwrap();
-                let total = guard.as_ref().map(|s| s.count()).unwrap_or(0);
-                drop(guard);
+                let total = indexer.storage_count()?;
 
                 let changed: Vec<String> = source_files
                     .iter()

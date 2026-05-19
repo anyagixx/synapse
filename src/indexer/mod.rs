@@ -1,18 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
-// PURPOSE: Code indexer — walks, parses, stores, and searches code blocks with storage health checks
-// SCOPE: Indexer struct, SearchResult, index_directory, search, hybrid_search, storage health propagation, view_signatures
+// PURPOSE: Code indexer — walks, parses, stores, and searches code blocks with guarded storage health checks
+// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, search, hybrid_search, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS: N/A
 
 // START_MODULE_MAP
 // SearchResult — Search result with path, language, name, kind, lines, content, score
 // Indexer — Main indexer combining walker, parser, and storage
+// Indexer::storage_count — Returns loaded storage count through guarded lock access
 // ensure_storage_ready — Converts storage load-health errors into actionable search errors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Surface corrupted index storage during search]
+// LAST_CHANGE: [v3.0.0 — Converted indexer storage lock panics into actionable errors]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
@@ -61,14 +62,39 @@ impl Indexer {
     }
     // END_indexer_new
 
-    #[allow(clippy::needless_lifetimes)]
-    fn get_storage(&self, root: &Path) -> std::sync::RwLockWriteGuard<'_, Option<Storage>> {
-        let mut guard = self.storage.write().unwrap();
+    // START_CONTRACT_Indexer::get_storage
+    // PURPOSE: Return initialized storage under a guarded write lock without panicking on poisoned locks
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<RwLockWriteGuard<Option<Storage>>> }
+    // SIDE_EFFECTS: initializes storage when missing
+    // START_indexer_get_storage
+    fn get_storage(
+        &self,
+        root: &Path,
+    ) -> anyhow::Result<std::sync::RwLockWriteGuard<'_, Option<Storage>>> {
+        let mut guard = self
+            .storage
+            .write()
+            .map_err(|_| anyhow::anyhow!("indexer storage lock poisoned"))?;
         if guard.is_none() {
             *guard = Some(Storage::new(root));
         }
-        guard
+        Ok(guard)
     }
+    // END_indexer_get_storage
+
+    // START_CONTRACT_Indexer::storage_count
+    // PURPOSE: Return the loaded storage block count through guarded read access
+    // OUTPUTS: { anyhow::Result<usize> }
+    // START_indexer_storage_count
+    pub fn storage_count(&self) -> anyhow::Result<usize> {
+        let guard = self
+            .storage
+            .read()
+            .map_err(|_| anyhow::anyhow!("indexer storage lock poisoned"))?;
+        Ok(guard.as_ref().map(|storage| storage.count()).unwrap_or(0))
+    }
+    // END_indexer_storage_count
 
     // START_CONTRACT_Indexer::index_directory
     // PURPOSE: Walk, parse, and index all source files in a directory
@@ -84,8 +110,10 @@ impl Indexer {
 
         tracing::info!("Indexing {} files in {}", total, root.display());
 
-        let mut storage = self.get_storage(root);
-        let storage = storage.as_mut().unwrap();
+        let mut storage_guard = self.get_storage(root)?;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
 
         for (i, file) in files.iter().enumerate() {
             let full_path = root.join(&file.path);
@@ -142,14 +170,10 @@ impl Indexer {
         max_results: usize,
     ) -> anyhow::Result<Vec<SearchResult>> {
         let root = std::env::current_dir()?;
-        {
-            let mut guard = self.storage.write().unwrap();
-            if guard.is_none() {
-                *guard = Some(crate::indexer::storage::Storage::new(&root));
-            }
-        }
-        let guard = self.storage.read().unwrap();
-        let storage = guard.as_ref().unwrap();
+        let storage_guard = self.get_storage(&root)?;
+        let storage = storage_guard
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
         ensure_storage_ready(storage)?;
         let results = storage.search_with_scores(query, max_results);
         Ok(results
@@ -179,14 +203,10 @@ impl Indexer {
         max_results: usize,
     ) -> anyhow::Result<Vec<SearchResult>> {
         let root = std::env::current_dir()?;
-        {
-            let mut guard = self.storage.write().unwrap();
-            if guard.is_none() {
-                *guard = Some(crate::indexer::storage::Storage::new(&root));
-            }
-        }
-        let guard = self.storage.read().unwrap();
-        let storage = guard.as_ref().unwrap();
+        let storage_guard = self.get_storage(&root)?;
+        let storage = storage_guard
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
         ensure_storage_ready(storage)?;
 
         // Get BM25 results
@@ -305,5 +325,38 @@ fn fallback_signatures(code: &str) -> Vec<String> {
         }
     }
     sigs
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_test_search_reports_poisoned_storage_lock
+    // PURPOSE: Verify search returns an actionable error instead of panicking when the storage lock is poisoned
+    // START_test_search_reports_poisoned_storage_lock
+    #[tokio::test]
+    async fn test_search_reports_poisoned_storage_lock() {
+        let indexer = Indexer::new(&Config::default());
+        let previous_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
+        let poisoned = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let _guard = indexer.storage.write().unwrap();
+            panic!("poison indexer storage lock");
+        }))
+        .is_err();
+        std::panic::set_hook(previous_hook);
+        assert!(poisoned);
+
+        let err = match indexer.search("anything", 1).await {
+            Ok(_) => panic!("search should report poisoned storage lock"),
+            Err(e) => e.to_string(),
+        };
+        assert!(
+            err.contains("indexer storage lock poisoned"),
+            "unexpected error: {}",
+            err
+        );
+    }
+    // END_test_search_reports_poisoned_storage_lock
 }
 // END_public_api

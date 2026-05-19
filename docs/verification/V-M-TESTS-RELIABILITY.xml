@@ -3,12 +3,13 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_search_reports_poisoned_storage_lock --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
     <MARKER>[Storage][load_blocks][PARSE]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Reliability integration tests cover corrupted index search and doctor user-visible diagnostics.</ASSERTION>
+    <ASSERTION>Reliability tests cover corrupted index search, doctor user-visible diagnostics, and poisoned indexer storage locks.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

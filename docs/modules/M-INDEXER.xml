@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-INDEXER" type="CORE_LOGIC" status="active">
   <NAME>M-INDEXER</NAME>
-  <PURPOSE>Code indexer — walks, parses, stores, and searches code blocks with storage health checks</PURPOSE>
-  <SCOPE>Indexer struct, SearchResult, index_directory, search, hybrid_search, storage health propagation, view_signatures</SCOPE>
+  <PURPOSE>Code indexer — walks, parses, stores, and searches code blocks with guarded storage health checks</PURPOSE>
+  <SCOPE>Indexer struct, SearchResult, guarded storage locks, index_directory, search, hybrid_search, storage health propagation, view_signatures</SCOPE>
   <FILES>
     <FILE>src/indexer/mod.rs</FILE>
   </FILES>

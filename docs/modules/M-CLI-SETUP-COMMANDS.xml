@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-CLI-SETUP-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-SETUP-COMMANDS</NAME>
-  <PURPOSE>CLI setup and indexing command handlers</PURPOSE>
-  <SCOPE>InitCmd, IndexCmd, watch_and_reindex</SCOPE>
+  <PURPOSE>CLI setup and indexing command handlers with guarded index storage status reporting</PURPOSE>
+  <SCOPE>InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts</SCOPE>
   <FILES>
     <FILE>src/cli/setup_commands.rs</FILE>
   </FILES>
