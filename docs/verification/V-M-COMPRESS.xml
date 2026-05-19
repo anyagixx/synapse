@@ -2,8 +2,14 @@
 <VERIFICATION id="V-M-COMPRESS" module="M-COMPRESS" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test compress::tests::test_full_compression_collapses_spacing_without_panics --lib</COMMAND>
+    <COMMAND>cargo test compress::tests::test_ultra_compression_removes_articles_without_panics --lib</COMMAND>
   </UNIT_TESTS>
-  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[Compressor][replace_all_cached][REGEX]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Full and ultra compression regex paths use cached fallbacks and do not unwrap during output compression.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

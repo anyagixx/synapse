@@ -12,8 +12,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — ANSI stripping uses cached fallback instead of unwrap panic]
 // END_CHANGE_SUMMARY
+
+use std::sync::OnceLock;
+
+static ANSI_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
+const ANSI_PATTERN: &str = "\x1b\\[[0-9;]*m";
 
 // START_public_api
 
@@ -23,10 +28,10 @@
 // OUTPUTS: { String — cleaned string without ANSI }
 // START_strip_ansi
 pub fn strip_ansi(s: &str) -> String {
-    regex::Regex::new("\x1b\\[[0-9;]*m")
-        .unwrap()
-        .replace_all(s, "")
-        .to_string()
+    match ANSI_RE.get_or_init(|| regex::Regex::new(ANSI_PATTERN).map_err(|e| e.to_string())) {
+        Ok(re) => re.replace_all(s, "").to_string(),
+        Err(_) => s.to_string(),
+    }
 }
 // END_strip_ansi
 

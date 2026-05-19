@@ -14,10 +14,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — ANSI stripping uses cached fallback instead of unwrap panic]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
+use std::sync::OnceLock;
+
+static ANSI_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
+const ANSI_PATTERN: &str = "\x1b\\[[0-9;]*m";
 
 // START_public_api
 
@@ -284,8 +288,10 @@ impl FilterEngine {
     // END_fe_apply
 
     fn remove_ansi(s: &str) -> String {
-        let re = regex::Regex::new("\x1b\\[[0-9;]*m").unwrap();
-        re.replace_all(s, "").to_string()
+        match ANSI_RE.get_or_init(|| regex::Regex::new(ANSI_PATTERN).map_err(|e| e.to_string())) {
+            Ok(re) => re.replace_all(s, "").to_string(),
+            Err(_) => s.to_string(),
+        }
     }
 }
 
@@ -365,6 +371,18 @@ mod tests {
         let result = engine.apply(&filter, output);
         assert!(result.contains("FAIL"));
         assert!(result.contains("error"));
+    }
+
+    #[test]
+    fn test_apply_strip_ansi_without_panics() {
+        let engine = FilterEngine::new();
+        let filter = FilterDef {
+            strip_ansi: Some(true),
+            ..Default::default()
+        };
+        let result = engine.apply(&filter, "\x1b[31mred\x1b[0m");
+
+        assert_eq!(result, "red");
     }
 }
 // END_public_api

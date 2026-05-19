@@ -10,10 +10,15 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — Regex compression paths use cached fallbacks instead of unwrap panics]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
+use std::sync::OnceLock;
+
+static COLLAPSE_NEWLINES_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
+static COLLAPSE_SPACES_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
+static ARTICLES_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
 
 // START_public_api
 
@@ -111,12 +116,16 @@ impl Compressor {
         }
 
         // Collapse multiple newlines
-        let re = regex::Regex::new("\n{3,}").unwrap();
-        result = re.replace_all(&result, "\n\n").to_string();
+        result = replace_all_cached(
+            &COLLAPSE_NEWLINES_RE,
+            "\n{3,}",
+            &result,
+            "\n\n",
+            "compress_full",
+        );
 
         // Collapse multiple spaces
-        let re = regex::Regex::new(" {2,}").unwrap();
-        result = re.replace_all(&result, " ").to_string();
+        result = replace_all_cached(&COLLAPSE_SPACES_RE, " {2,}", &result, " ", "compress_full");
 
         result.trim().to_string()
     }
@@ -126,12 +135,17 @@ impl Compressor {
         let result = self.compress_full(input);
 
         // Remove articles
-        let re = regex::Regex::new("\\b(the|a|an|this|that|these|those)\\b").unwrap();
-        let result = re.replace_all(&result, "").to_string();
+        let result = replace_all_cached(
+            &ARTICLES_RE,
+            "\\b(the|a|an|this|that|these|those)\\b",
+            &result,
+            "",
+            "compress_ultra",
+        );
 
         // Collapse whitespace again
-        let re = regex::Regex::new(" {2,}").unwrap();
-        let result = re.replace_all(&result, " ").to_string();
+        let result =
+            replace_all_cached(&COLLAPSE_SPACES_RE, " {2,}", &result, " ", "compress_ultra");
 
         // Shorten common words
         let mut result = result;
@@ -213,5 +227,61 @@ impl Compressor {
         Ok(())
     }
     // END_restore_file
+}
+
+// START_CONTRACT_replace_all_cached
+// PURPOSE: Apply a built-in regex replacement without panicking if regex initialization fails
+// INPUTS: { cache: &OnceLock<Result<regex::Regex, String>> — regex cache }, { pattern: &str — static regex pattern }, { input: &str — source text }, { replacement: &str — replacement text }, { caller: &str — caller label for logs }
+// OUTPUTS: { String — transformed text, or original text when the built-in regex is invalid }
+// SIDE_EFFECTS: emits [Compressor][replace_all_cached][REGEX] warning on invalid built-in regex
+// START_replace_all_cached
+fn replace_all_cached(
+    cache: &'static OnceLock<Result<regex::Regex, String>>,
+    pattern: &'static str,
+    input: &str,
+    replacement: &str,
+    caller: &str,
+) -> String {
+    match cache.get_or_init(|| regex::Regex::new(pattern).map_err(|error| error.to_string())) {
+        Ok(re) => re.replace_all(input, replacement).to_string(),
+        Err(error) => {
+            tracing::warn!(
+                "[Compressor][replace_all_cached][REGEX] {} skipped invalid built-in regex {:?}: {}",
+                caller,
+                pattern,
+                error
+            );
+            input.to_string()
+        }
+    }
+}
+// END_replace_all_cached
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_full_compression_collapses_spacing_without_panics() {
+        let mut config = Config::default();
+        config.compress.output_level = "full".into();
+        let compressor = Compressor::new(&config);
+
+        let compressed =
+            compressor.compress_output("I think hello   world\n\n\n\nplease keep this useful");
+
+        assert_eq!(compressed, "hello world\n\nkeep this useful");
+    }
+
+    #[test]
+    fn test_ultra_compression_removes_articles_without_panics() {
+        let mut config = Config::default();
+        config.compress.output_level = "ultra".into();
+        let compressor = Compressor::new(&config);
+
+        let compressed = compressor.compress_output("the application with this configuration");
+
+        assert_eq!(compressed, "app w/ config");
+    }
 }
 // END_public_api

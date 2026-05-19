@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Extracted phase checks and result types into split modules]
+// LAST_CHANGE: [v2.9.0 — Built-in verification regexes return explicit errors instead of unwrap panics]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::ContractValidator;
@@ -260,7 +260,12 @@ impl Verifier {
         });
 
         // Check trace assertions: log markers [Module][function][BLOCK_NAME] in source files
-        let trace_re = regex::Regex::new(r"\[(\w+)\]\[(\w+)\]\[(\w+)\]").unwrap();
+        let trace_re = regex::Regex::new(r"\[(\w+)\]\[(\w+)\]\[(\w+)\]").map_err(|error| {
+            anyhow::anyhow!(
+                "[Verifier][verify_module_local][REGEX] invalid trace marker regex: {}",
+                error
+            )
+        })?;
         let walker = crate::indexer::walker::Walker::new(root);
         let files = walker.walk();
         let mut trace_files = Vec::new();
@@ -357,7 +362,12 @@ impl Verifier {
                 std::fs::read_to_string(layout.graph_index_path()).unwrap_or_default();
             let mut shard_refs_ok = true;
             let mut ref_issues = Vec::new();
-            let module_re = regex::Regex::new(r#"path=\"([^\"]+)\""#).unwrap();
+            let module_re = regex::Regex::new(r#"path=\"([^\"]+)\""#).map_err(|error| {
+                anyhow::anyhow!(
+                    "[Verifier][verify_wave][REGEX] invalid module shard regex: {}",
+                    error
+                )
+            })?;
             for cap in module_re.captures_iter(&graph_content) {
                 let shard_path = root.join(&cap[1]);
                 if !shard_path.exists() {

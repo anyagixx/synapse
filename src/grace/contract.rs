@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.6.0 — MODULE_CONTRACT parsing stops before map/change/function metadata]
+// LAST_CHANGE: [v2.7.0 — Function contract marker parsing no longer depends on runtime regex unwrap]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
@@ -275,16 +275,14 @@ fn is_metadata_boundary(trimmed: &str) -> bool {
 // END_is_metadata_boundary
 
 fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<FunctionContract>) {
-    let pattern = format!(r"{} START_CONTRACT_([A-Za-z0-9_:]+)", regex::escape(prefix));
-    let re = regex::Regex::new(&pattern).unwrap();
     let alt_prefix = if prefix == "//" { "#" } else { "//" };
+    let marker = format!("{prefix} START_CONTRACT_");
     let lines: Vec<&str> = content.lines().collect();
 
     for (idx, line) in lines.iter().enumerate() {
-        let Some(cap) = re.captures(line) else {
+        let Some(name) = extract_contract_marker_name(line, &marker) else {
             continue;
         };
-        let name = cap[1].to_string();
         if contracts.iter().any(|c| c.name == name) {
             continue;
         }
@@ -345,6 +343,25 @@ fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<Func
         contracts.push(fc);
     }
 }
+
+// START_CONTRACT_extract_contract_marker_name
+// PURPOSE: Extract a function contract name from a START_CONTRACT marker without regex construction
+// INPUTS: { line: &str — source line }, { marker: &str — comment prefix plus START_CONTRACT_ marker }
+// OUTPUTS: { Option<String> — parsed marker name when present and valid }
+// START_extract_contract_marker_name
+fn extract_contract_marker_name(line: &str, marker: &str) -> Option<String> {
+    let rest = line.trim_start().strip_prefix(marker)?;
+    let name: String = rest
+        .chars()
+        .take_while(|ch| ch.is_ascii_alphanumeric() || *ch == '_' || *ch == ':')
+        .collect();
+    if name.is_empty() {
+        None
+    } else {
+        Some(name)
+    }
+}
+// END_extract_contract_marker_name
 
 #[cfg(test)]
 mod tests {
@@ -412,6 +429,15 @@ mod tests {
             mc.function_contracts[0].purpose.as_deref(),
             Some("Function purpose must not replace module purpose")
         );
+    }
+
+    #[test]
+    fn test_extract_function_contract_name_stops_at_marker_suffix() {
+        let code = "// MODULE_CONTRACT\n// MODULE_ID: M-TEST\n// PURPOSE: Test module\n\n// START_MODULE_MAP\n// alpha — does work\n// END_MODULE_MAP\n\n// START_CHANGE_SUMMARY\n// LAST_CHANGE: [v1.0.0 — Initial]\n// END_CHANGE_SUMMARY\n\n// START_CONTRACT_alpha trailing words\n// PURPOSE: Alpha work\n// START_alpha\nfn alpha() {}\n// END_alpha";
+        let mc = ContractValidator::scan_file(Path::new("src/test.rs"), code);
+
+        assert_eq!(mc.function_contracts.len(), 1);
+        assert_eq!(mc.function_contracts[0].name, "alpha");
     }
 }
 // END_public_api

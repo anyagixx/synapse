@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.5.0 — Full review now fails on canonical MyGRACE drift]
+// LAST_CHANGE: [v2.6.0 — Shard reference regex returns explicit errors instead of unwrap panics]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::ContractValidator;
@@ -234,7 +234,12 @@ impl Reviewer {
         }
         if has_graph {
             let content = std::fs::read_to_string(layout.graph_index_path()).unwrap_or_default();
-            let module_re = regex::Regex::new(r#"path=\"([^\"]+)\""#).unwrap();
+            let module_re = regex::Regex::new(r#"path=\"([^\"]+)\""#).map_err(|error| {
+                anyhow::anyhow!(
+                    "[Reviewer][full_integrity][REGEX] invalid module shard regex: {}",
+                    error
+                )
+            })?;
             for cap in module_re.captures_iter(&content) {
                 let shard = root.join(&cap[1]);
                 if !shard.exists() {

@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — Orphan END markers no longer rely on stack unwrap behavior]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
@@ -100,8 +100,10 @@ impl SemanticExtractor {
                 || trimmed.starts_with("* END_"))
                 && !trimmed.contains("END_CONTRACT_");
 
-            if is_end && !stack.is_empty() {
-                let (name, start_line) = stack.pop().unwrap();
+            if is_end {
+                let Some((name, start_line)) = stack.pop() else {
+                    continue;
+                };
                 // Extract content between start and end
                 let content_slice = if start_line < line_num {
                     lines[start_line..line_num].join("\n")
@@ -182,5 +184,20 @@ impl SemanticExtractor {
         Ok(report)
     }
     // END_se_scan_project
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_blocks_ignores_orphan_end_marker() {
+        let blocks = SemanticExtractor::extract_blocks(
+            Path::new("src/orphan.rs"),
+            "// END_missing\nfn main() {}\n",
+        );
+
+        assert!(blocks.is_empty());
+    }
 }
 // END_public_api
