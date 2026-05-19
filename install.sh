@@ -21,12 +21,12 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.10.0 - Bumped default release tag to v2.3.2]
+# LAST_CHANGE: [v2.11.0 - Bumped default release tag to v2.3.3 for Node 24-ready release workflow validation]
 # END_CHANGE_SUMMARY
 
 set -eu
 
-VERSION="v2.3.2"
+VERSION="v2.3.3"
 MODE="install"
 ARCH="x86_64"
 OS="unknown-linux-gnu"

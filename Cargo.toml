@@ -1,6 +1,6 @@
 [package]
 name = "syn"
-version = "2.3.2"
+version = "2.3.3"
 edition = "2021"
 description = "Unified AI Agent Engineering Platform"
 authors = ["Synapse Contributors"]
