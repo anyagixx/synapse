@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-5" status="active">
+  <NAME>Platform Release Expansion</NAME>
+  <GOAL>Expand prebuilt release coverage beyond Linux x86_64 while preserving installer, checksum, and documentation truth</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <ACCEPTANCE>
+    <CHECK>Phase-4 marked done and Phase-5 active in plan-index</CHECK>
+    <CHECK>Release workflow publishes a declared artifact matrix with SHA256SUMS for every prebuilt target</CHECK>
+    <CHECK>Installer selects platform-specific artifacts and verifies checksums before extraction</CHECK>
+    <CHECK>Docs platform claims match the release matrix and source fallback reality</CHECK>
+    <CHECK>Local and hosted smoke gates validate artifact layout for each practical CI target</CHECK>
+    <CHECK>Full local CI gate passes</CHECK>
+  </ACCEPTANCE>
+</PHASE>
