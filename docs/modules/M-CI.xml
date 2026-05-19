@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-CI" type="CORE_LOGIC" status="active">
   <NAME>M-CI</NAME>
-  <PURPOSE>CI quality gate — runs Rust checks, release truth gates, security audit, and MyGRACE truth gates in reproducible entrypoints</PURPOSE>
-  <SCOPE>Formatting, linting, runtime panic guard, tests, Linux/macOS hosted platform tests, release tag guard, Linux/macOS release/install smoke matrix, strict cargo audit warning policy, Node 24-ready workflow actions, shell-based Rust toolchain setup, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
+  <PURPOSE>CI quality gate — runs Rust checks, release truth gates, security audit, release-candidate dry-runs, and MyGRACE truth gates in reproducible entrypoints</PURPOSE>
+  <SCOPE>Formatting, linting, runtime panic guard, tests, Linux/macOS hosted platform tests, release tag guard, release-candidate dry-run policy, Linux/macOS release/install smoke matrix, strict cargo audit warning policy, Node 24-ready workflow actions, shell-based Rust toolchain setup, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
   <FILES>
     <FILE>scripts/ci.sh</FILE>
+    <FILE>scripts/release_candidate_dry_run.sh</FILE>
     <FILE>.github/workflows/ci.yml</FILE>
+    <FILE>.github/workflows/release-candidate.yml</FILE>
     <FILE>.github/workflows/release.yml</FILE>
   </FILES>
-  <DEPENDS>M-CI-RUNTIME-GUARD,M-CI-RELEASE-SMOKE,M-GRACE-VERIFY,M-GRACE-REVIEW,M-GRACE-REFRESH,M-GRACE-STATUS</DEPENDS>
-  <LINKS>.github/workflows/ci.yml,.github/workflows/release.yml,docs/verification-index.xml</LINKS>
+  <DEPENDS>M-CI-RUNTIME-GUARD,M-CI-RELEASE-SMOKE,M-GRACE-VERIFY,M-GRACE-REVIEW,M-GRACE-REFRESH,M-GRACE-STATUS,M-INSTALL,M-TESTS-PARITY</DEPENDS>
+  <LINKS>.github/workflows/ci.yml,.github/workflows/release-candidate.yml,.github/workflows/release.yml,docs/verification-index.xml</LINKS>
   <VERIFICATION_REF>V-M-CI</VERIFICATION_REF>
 </MODULE>

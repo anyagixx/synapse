@@ -10,8 +10,32 @@ permissions:
   actions: read
 
 jobs:
+  candidate-policy:
+    name: Release candidate policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        run: |
+          for attempt in 1 2 3; do
+            rustup toolchain install stable --profile minimal && break
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+          rustup default stable
+
+      - name: Run release candidate dry-run gate
+        run: bash scripts/release_candidate_dry_run.sh
+        env:
+          SYN_RELEASE_TAG: ${{ github.ref_name }}
+          SYN_RC_SKIP_SMOKE: "1"
+
   build:
     name: Build ${{ matrix.target }}
+    needs: candidate-policy
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false

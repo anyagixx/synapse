@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-10" status="planned">
+  <NAME>Adoption Feedback and Support Readiness</NAME>
+  <GOAL>Improve Linux/macOS user onboarding and support diagnostics after release-candidate automation is stable</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <PLANNED_WORK>
+    <step-1 module="M-INSTALL" status="planned">Improve Linux/macOS installer failure guidance and support diagnostics without adding Windows install claims.</step-1>
+    <step-2 module="M-CI" status="planned">Expose release-candidate dry-run evidence in maintainers' workflow outputs for easier release review.</step-2>
+    <step-3 module="M-TESTS-PARITY" status="planned">Extend parity gates as user-facing onboarding and support docs expand.</step-3>
+  </PLANNED_WORK>
+  <ACCEPTANCE>
+    <CHECK>Linux/macOS installation failures produce actionable diagnostics for users</CHECK>
+    <CHECK>Release-candidate workflow output is easy for maintainers to audit before publishing</CHECK>
+    <CHECK>New onboarding/support docs remain synchronized with shipped commands and platform support</CHECK>
+  </ACCEPTANCE>
+</PHASE>

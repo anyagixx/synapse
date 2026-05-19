@@ -85,6 +85,8 @@
     <REL source="M-CI" target="M-GRACE-REVIEW" type="DEPENDS" />
     <REL source="M-CI" target="M-GRACE-REFRESH" type="DEPENDS" />
     <REL source="M-CI" target="M-GRACE-STATUS" type="DEPENDS" />
+    <REL source="M-CI" target="M-INSTALL" type="DEPENDS" />
+    <REL source="M-CI" target="M-TESTS-PARITY" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-BUILD" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-INSTALL" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-SETUP-COMMANDS" type="DEPENDS" />

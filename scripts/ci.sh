@@ -2,24 +2,25 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
 # PURPOSE: CI quality gate — runs Rust checks and MyGRACE truth gates in one reproducible entrypoint
-# SCOPE: Formatting, linting, runtime panic guard, tests, release tag guard, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
+# SCOPE: Formatting, linting, runtime panic guard, tests, release tag guard, release-candidate dry-run, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
 # DEPENDS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
 # LINKS: .github/workflows/ci.yml, docs/verification-index.xml
 
 # START_MODULE_MAP
 # run_ci_gate — Executes all local and hosted CI gates
 # ci_runtime_guard.py — Blocks production panic markers outside tests
+# release_candidate_dry_run.sh — Validates release-candidate metadata and installer truth before publishing
 # release_install_smoke.sh — Builds and validates the packaged release artifact
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.3.0 - Added release version guard invocation]
+# LAST_CHANGE: [v1.4.0 - Added release candidate dry-run policy gate]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_ci_gate
 # PURPOSE: Execute the full quality gate expected by CI and maintainers
 # OUTPUTS: { exit code 0 — all checks passed }
-# SIDE_EFFECTS: invokes cargo, Python guard, release version guard, release smoke, and syn verification commands; writes build artifacts under target/
+# SIDE_EFFECTS: invokes cargo, Python guard, release version guard, release candidate dry-run, release smoke, and syn verification commands; writes build artifacts under target/
 # LINKS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
 # START_run_ci_gate
 set -euo pipefail
@@ -41,6 +42,9 @@ cargo test --all-targets
 
 echo "[CI][run_ci_gate][RELEASE_VERSION] Checking release tag policy"
 bash scripts/release_version_guard.sh
+
+echo "[CI][run_ci_gate][RELEASE_CANDIDATE] Checking release candidate policy"
+SYN_RC_SKIP_SMOKE=1 bash scripts/release_candidate_dry_run.sh
 
 echo "[CI][run_ci_gate][RELEASE_SMOKE] Running release/install smoke"
 bash scripts/release_install_smoke.sh

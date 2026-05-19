@@ -1,0 +1,76 @@
+name: Release Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: Release candidate tag, for example v2.3.5
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    name: Validate release candidate policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        run: |
+          for attempt in 1 2 3; do
+            rustup toolchain install stable --profile minimal && break
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+          rustup default stable
+
+      - name: Run release candidate dry-run gate
+        run: bash scripts/release_candidate_dry_run.sh
+        env:
+          SYN_RELEASE_TAG: ${{ inputs.version_tag }}
+          SYN_RC_SKIP_SMOKE: "1"
+
+  installer-smoke:
+    name: Smoke ${{ matrix.target }}
+    needs: dry-run
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            artifact: syn-x86_64-unknown-linux-gnu.tar.gz
+            runner: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            artifact: syn-aarch64-unknown-linux-gnu.tar.gz
+            runner: ubuntu-24.04-arm
+          - target: x86_64-apple-darwin
+            artifact: syn-x86_64-apple-darwin.tar.gz
+            runner: macos-15-intel
+          - target: aarch64-apple-darwin
+            artifact: syn-aarch64-apple-darwin.tar.gz
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        run: |
+          for attempt in 1 2 3; do
+            rustup toolchain install stable --profile minimal && break
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+          rustup default stable
+
+      - name: Build and smoke release artifact
+        run: bash scripts/release_install_smoke.sh
+        env:
+          SYN_RELEASE_TARGET: ${{ matrix.target }}
+          SYN_RELEASE_ARTIFACT: ${{ matrix.artifact }}

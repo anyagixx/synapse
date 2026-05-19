@@ -2,12 +2,14 @@
 <VERIFICATION id="V-M-TESTS-PARITY" module="M-TESTS-PARITY" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --test docs_parity</COMMAND>
+    <COMMAND>cargo test --test release_candidate</COMMAND>
     <COMMAND>cargo test --all-targets</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Docs parity tests block ghost CLI commands, unsupported installer URLs, obsolete synapse-ai release paths, and unsupported Windows install claims across README, INSTALL, COMMANDS, FAQ, QUICKSTART, and WORKFLOW.</ASSERTION>
     <ASSERTION>Docs parity tests require installer dry-run mapping, release workflow artifacts, checksum aggregation, tag/version guard, generated release notes, strict cargo audit warnings, and release smoke artifact naming to describe the same Linux/macOS release matrix.</ASSERTION>
+    <ASSERTION>Release candidate parity tests require manual dry-run workflow permissions to stay read-only, validate release tag/notes/checksums/installer mapping, and block publishing actions before the actual release workflow runs.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-8</PHASE_GATE>
+  <PHASE_GATE>Phase-9</PHASE_GATE>
 </VERIFICATION>

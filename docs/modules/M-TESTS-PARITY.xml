@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-TESTS-PARITY" type="UTILITY" status="active">
   <NAME>M-TESTS-PARITY</NAME>
-  <PURPOSE>Ensure public docs, install scripts, release workflow, and code claims match product capabilities</PURPOSE>
-  <SCOPE>Compare CLI command truth, public install URLs, Linux/macOS release artifact matrix, checksum integrity, release tag/version policy, generated release notes, strict cargo audit policy, platform support claims, and release smoke coverage</SCOPE>
+  <PURPOSE>Ensure public docs, install scripts, release workflows, and code claims match product capabilities</PURPOSE>
+  <SCOPE>Compare CLI command truth, public install URLs, Linux/macOS release artifact matrix, checksum integrity, release tag/version policy, release-candidate dry-run policy, generated release notes, strict cargo audit policy, platform support claims, and release smoke coverage</SCOPE>
   <FILES>
     <FILE>tests/docs_parity.rs</FILE>
+    <FILE>tests/release_candidate.rs</FILE>
   </FILES>
   <DEPENDS>M-CAPABILITIES,M-INSTALL,M-CI,M-CI-RELEASE-SMOKE</DEPENDS>
   <LINKS></LINKS>
