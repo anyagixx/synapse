@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-MAIN" module="M-MAIN" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol test_stdio_keeps_logs_off_stdout_and_notifications_silent</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Tracing writes to stderr so MCP stdio stdout remains a clean JSON-RPC channel.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-7</PHASE_GATE>
 </VERIFICATION>

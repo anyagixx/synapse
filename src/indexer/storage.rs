@@ -1,18 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-STORAGE
-// PURPOSE: JSON block storage facade with load-health reporting, BM25, and vector search APIs
-// SCOPE: Storage struct, StoredBlock, JSON persistence, load-health reporting, search API orchestration
+// PURPOSE: JSON block storage facade with load-health reporting, snapshot persistence, BM25, and vector search APIs
+// SCOPE: Storage struct, StoredBlock, JSON persistence, full snapshot replacement, load-health reporting, search API orchestration
 // DEPENDS: M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES
 // LINKS: N/A
 
 // START_MODULE_MAP
 // StoredBlock — Re-exported serializable code block for JSON storage
 // Storage — JSON-backed block store with load-health, BM25, and vector search
+// replace_all_blocks — Replaces the full index snapshot and removes stale file entries
 // load_blocks — Reads and validates stored JSON blocks
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Added visible index corruption reporting]
+// LAST_CHANGE: [v3.0.0 — Added full snapshot replacement to purge deleted files from the index]
 // END_CHANGE_SUMMARY
 
 use super::storage_search::{cosine_similarity, ngram_vectorize, score_block};
@@ -123,6 +124,18 @@ impl Storage {
         self.flush()
     }
     // END_storage_store_blocks
+
+    // START_CONTRACT_Storage::replace_all_blocks
+    // PURPOSE: Replace the complete stored block snapshot after a full project index
+    // INPUTS: { blocks: Vec<StoredBlock> }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: removes stale blocks for deleted files and flushes blocks.json
+    // START_storage_replace_all_blocks
+    pub fn replace_all_blocks(&mut self, blocks: Vec<StoredBlock>) -> anyhow::Result<()> {
+        self.blocks = blocks;
+        self.flush()
+    }
+    // END_storage_replace_all_blocks
 
     // START_CONTRACT_Storage::flush
     // PURPOSE: Write blocks to JSON file on disk
@@ -351,6 +364,29 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(s.count(), 2);
+    }
+
+    #[test]
+    fn test_replace_all_blocks_removes_stale_files() {
+        let mut s = tmp_storage();
+        s.store_blocks(vec![
+            make_block("a:1", "src/old.rs", "old", "fn", "fn old() {}"),
+            make_block("b:1", "src/keep.rs", "keep", "fn", "fn keep() {}"),
+        ])
+        .unwrap();
+
+        s.replace_all_blocks(vec![make_block(
+            "b:1",
+            "src/keep.rs",
+            "keep",
+            "fn",
+            "fn keep() {}",
+        )])
+        .unwrap();
+
+        assert_eq!(s.count(), 1);
+        assert!(s.search("old", 10).is_empty());
+        assert_eq!(s.search("keep", 10).len(), 1);
     }
 
     #[test]

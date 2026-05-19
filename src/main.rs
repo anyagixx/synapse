@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
 // PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
-// SCOPE: CLI argument parsing, tracing init, command dispatch
+// SCOPE: CLI argument parsing, stderr tracing init, command dispatch
 // DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Use explicit default config fallback for clean-machine CLI bootstrap]
+// LAST_CHANGE: [v2.9.0 — Route tracing output to stderr so MCP stdio stdout remains protocol-clean]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -27,6 +27,7 @@ fn main() -> anyhow::Result<()> {
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
+        .with_writer(std::io::stderr)
         .json()
         .init();
 

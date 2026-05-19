@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-INDEXER-WALKER" module="M-INDEXER-WALKER" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test reliability_test test_index_no_git_indexes_gitignored_files</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Walker respects .gitignore by default and disables gitignore filtering when requested by syn index --no-git.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-7</PHASE_GATE>
 </VERIFICATION>

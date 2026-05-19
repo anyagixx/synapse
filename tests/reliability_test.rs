@@ -1,21 +1,26 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-RELIABILITY
-// PURPOSE: Runtime reliability integration tests for degraded storage behavior
-// SCOPE: corrupted index visibility through search errors and doctor diagnostics
-// DEPENDS: M-CLI, M-INDEXER, M-INDEXER-STORAGE, M-CLI-RUNTIME-COMMANDS
-// LINKS: docs/phases/Phase-3.xml
+// PURPOSE: Runtime reliability integration tests for degraded storage, index lifecycle, bootstrap diagnostics, and config merge behavior
+// SCOPE: corrupted index visibility, stale index pruning, gitignore toggle, clean doctor defaults, OpenCode config merge
+// DEPENDS: M-CLI, M-INDEXER, M-INDEXER-STORAGE, M-CLI-RUNTIME-COMMANDS, M-HOOKS
+// LINKS: docs/phases/Phase-7.xml
 
 // START_MODULE_MAP
 // test_corrupted_index_is_reported — Verifies corrupted blocks.json is visible to users
+// test_index_rebuild_removes_deleted_files — Verifies deleted files disappear from search after re-index
+// test_index_no_git_indexes_gitignored_files — Verifies --no-git indexes gitignored files
+// test_clean_init_doctor_accepts_default_config — Verifies doctor accepts missing user config defaults
+// test_init_merges_existing_opencode_jsonc — Verifies syn init preserves existing OpenCode config siblings
 // syn_bin — Resolves the compiled syn binary path
 // run_syn — Runs syn in an isolated project and platform data home
+// run_syn_with_config — Runs syn with isolated project, data home, and config home
 // write_contract_source — Writes a minimal contract-bearing Rust source file
 // corrupt_first_blocks_json — Replaces generated index storage with invalid JSON
 // find_first_blocks_json — Finds generated block storage under the isolated data home
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 — Made corrupted index test portable across Linux/macOS]
+// LAST_CHANGE: [v1.2.0 — Added Phase 7 protocol-adjacent bootstrap and index lifecycle regressions]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -66,6 +71,188 @@ fn test_corrupted_index_is_reported() {
 }
 // END_test_corrupted_index_is_reported
 
+// START_CONTRACT_test_index_rebuild_removes_deleted_files
+// PURPOSE: Verify a full re-index removes stale search entries for files deleted from disk
+// SIDE_EFFECTS: creates isolated temp project and index storage
+// START_test_index_rebuild_removes_deleted_files
+#[test]
+fn test_index_rebuild_removes_deleted_files() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let src_dir = dir.path().join("src");
+    std::fs::create_dir(&src_dir).unwrap();
+    std::fs::write(
+        src_dir.join("lib.rs"),
+        "pub fn phase7_stale_marker() -> bool { true }\n",
+    )
+    .unwrap();
+
+    let out = run_syn(["index"], dir.path(), data_home.path());
+    assert!(
+        out.status.success(),
+        "initial index failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+
+    let out = run_syn(
+        ["search", "phase7_stale_marker"],
+        dir.path(),
+        data_home.path(),
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("phase7_stale_marker"), "search: {}", stdout);
+
+    std::fs::remove_file(src_dir.join("lib.rs")).unwrap();
+    let out = run_syn(["index"], dir.path(), data_home.path());
+    assert!(
+        out.status.success(),
+        "second index failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+
+    let out = run_syn(
+        ["search", "phase7_stale_marker"],
+        dir.path(),
+        data_home.path(),
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("No results"),
+        "deleted file must not remain searchable: {}",
+        stdout
+    );
+}
+// END_test_index_rebuild_removes_deleted_files
+
+// START_CONTRACT_test_index_no_git_indexes_gitignored_files
+// PURPOSE: Verify syn index --no-git disables .gitignore filtering for source discovery
+// SIDE_EFFECTS: creates isolated temp project and index storage
+// START_test_index_no_git_indexes_gitignored_files
+#[test]
+fn test_index_no_git_indexes_gitignored_files() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let src_dir = dir.path().join("src");
+    std::fs::create_dir(&src_dir).unwrap();
+    std::fs::create_dir(dir.path().join(".git")).unwrap();
+    std::fs::write(dir.path().join(".gitignore"), "src/ignored.rs\n").unwrap();
+    std::fs::write(
+        src_dir.join("ignored.rs"),
+        "pub fn phase7_no_git_marker() -> bool { true }\n",
+    )
+    .unwrap();
+
+    let out = run_syn(["index"], dir.path(), data_home.path());
+    assert!(
+        out.status.success(),
+        "default index failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let out = run_syn(
+        ["search", "phase7_no_git_marker"],
+        dir.path(),
+        data_home.path(),
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("No results"),
+        "default index should respect .gitignore: {}",
+        stdout
+    );
+
+    let out = run_syn(["index", "--no-git"], dir.path(), data_home.path());
+    assert!(
+        out.status.success(),
+        "index --no-git failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let out = run_syn(
+        ["search", "phase7_no_git_marker"],
+        dir.path(),
+        data_home.path(),
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("phase7_no_git_marker"),
+        "--no-git should index gitignored source files: {}",
+        stdout
+    );
+}
+// END_test_index_no_git_indexes_gitignored_files
+
+// START_CONTRACT_test_clean_init_doctor_accepts_default_config
+// PURPOSE: Verify syn init followed by syn doctor is clean when no user config file exists
+// SIDE_EFFECTS: creates isolated temp project, config, and data directories
+// START_test_clean_init_doctor_accepts_default_config
+#[test]
+fn test_clean_init_doctor_accepts_default_config() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let config_home = tempfile::tempdir().unwrap();
+
+    let out = run_syn_with_config(["init"], dir.path(), data_home.path(), config_home.path());
+    assert!(
+        out.status.success(),
+        "init failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+
+    let out = run_syn_with_config(["doctor"], dir.path(), data_home.path(), config_home.path());
+    assert!(
+        out.status.success(),
+        "doctor failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("PASS config"),
+        "doctor should pass default config state: {}",
+        stdout
+    );
+    assert!(
+        !stdout.contains("FAIL config"),
+        "doctor must not fail config after clean init: {}",
+        stdout
+    );
+}
+// END_test_clean_init_doctor_accepts_default_config
+
+// START_CONTRACT_test_init_merges_existing_opencode_jsonc
+// PURPOSE: Verify syn init adds mcp.synapse without dropping existing OpenCode config keys
+// SIDE_EFFECTS: creates isolated temp project with existing opencode.jsonc
+// START_test_init_merges_existing_opencode_jsonc
+#[test]
+fn test_init_merges_existing_opencode_jsonc() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let config_home = tempfile::tempdir().unwrap();
+    std::fs::write(
+        dir.path().join("opencode.jsonc"),
+        r#"{
+          // user-owned config
+          "mcp": {
+            "other": {"type": "local", "command": ["other"], "enabled": true,},
+          },
+          "theme": "dark",
+        }"#,
+    )
+    .unwrap();
+
+    let out = run_syn_with_config(["init"], dir.path(), data_home.path(), config_home.path());
+    assert!(
+        out.status.success(),
+        "init failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+
+    let merged = std::fs::read_to_string(dir.path().join("opencode.jsonc")).unwrap();
+    let value: serde_json::Value = serde_json::from_str(&merged).expect("merged config JSON");
+    assert!(value["mcp"]["other"].is_object());
+    assert_eq!(value["mcp"]["synapse"]["command"][0], "syn");
+    assert_eq!(value["theme"], "dark");
+}
+// END_test_init_merges_existing_opencode_jsonc
+
 // START_CONTRACT_syn_bin
 // PURPOSE: Resolve the compiled syn binary path used by integration tests
 // OUTPUTS: { PathBuf }
@@ -98,6 +285,31 @@ fn run_syn<const N: usize>(args: [&str; N], cwd: &Path, data_home: &Path) -> Out
         .unwrap()
 }
 // END_run_syn
+
+// START_CONTRACT_run_syn_with_config
+// PURPOSE: Run syn with isolated project root, platform data home, and platform config home
+// INPUTS: { args: impl IntoIterator<Item = &'static str> }, { cwd: &Path }, { data_home: &Path }, { config_home: &Path }
+// OUTPUTS: { Output }
+// SIDE_EFFECTS: executes the compiled syn binary
+// START_run_syn_with_config
+fn run_syn_with_config<const N: usize>(
+    args: [&str; N],
+    cwd: &Path,
+    data_home: &Path,
+    config_home: &Path,
+) -> Output {
+    Command::new(syn_bin())
+        .args(args)
+        .env("XDG_DATA_HOME", data_home)
+        .env("XDG_CONFIG_HOME", config_home)
+        .env("HOME", data_home)
+        .env("APPDATA", data_home)
+        .env("LOCALAPPDATA", data_home)
+        .current_dir(cwd)
+        .output()
+        .unwrap()
+}
+// END_run_syn_with_config
 
 // START_CONTRACT_write_contract_source
 // PURPOSE: Create a minimal source file that the indexer can parse

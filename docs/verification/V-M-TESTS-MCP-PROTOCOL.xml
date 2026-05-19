@@ -2,8 +2,12 @@
 <VERIFICATION id="V-M-TESTS-MCP-PROTOCOL" module="M-TESTS-MCP-PROTOCOL" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Handler-level notifications return no response.</ASSERTION>
+    <ASSERTION>Binary-level syn mcp stdout remains clean JSON-RPC when logs are emitted.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-7</PHASE_GATE>
 </VERIFICATION>

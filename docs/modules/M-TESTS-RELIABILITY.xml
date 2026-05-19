@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-TESTS-RELIABILITY" type="UTILITY" status="active">
   <NAME>M-TESTS-RELIABILITY</NAME>
-  <PURPOSE>Runtime reliability integration tests for degraded storage behavior</PURPOSE>
-  <SCOPE>platform-portable corrupted index visibility through search errors and doctor diagnostics</SCOPE>
+  <PURPOSE>Runtime reliability integration tests for degraded storage, index lifecycle, bootstrap diagnostics, and config merge behavior</PURPOSE>
+  <SCOPE>corrupted index visibility, stale index pruning, gitignore toggle, clean doctor defaults, OpenCode config merge</SCOPE>
   <FILES>
     <FILE>tests/reliability_test.rs</FILE>
   </FILES>
-  <DEPENDS>M-CLI,M-INDEXER,M-INDEXER-STORAGE,M-CLI-RUNTIME-COMMANDS</DEPENDS>
-  <LINKS>docs/phases/Phase-3.xml</LINKS>
+  <DEPENDS>M-CLI,M-INDEXER,M-INDEXER-STORAGE,M-CLI-RUNTIME-COMMANDS,M-HOOKS</DEPENDS>
+  <LINKS>docs/phases/Phase-7.xml</LINKS>
   <VERIFICATION_REF>V-M-TESTS-RELIABILITY</VERIFICATION_REF>
 </MODULE>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-8" status="planned">
+  <NAME>Product Truth and Release Discipline</NAME>
+  <GOAL>Align public documentation, release metadata, version guards, and supply-chain checks with shipped Linux/macOS behavior</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <PLANNED_WORK>
+    <step-1 module="M-TESTS-PARITY" status="planned">Block ghost CLI commands and unsupported install URLs across README, INSTALL, COMMANDS, FAQ, and QUICKSTART.</step-1>
+    <step-2 module="M-CI-RELEASE-SMOKE" status="planned">Add release tag versus Cargo.toml version guard and packaged syn --version assertion.</step-2>
+    <step-3 module="M-INSTALL" status="planned">Harden source fallback with cargo install --locked and update installer verification coverage.</step-3>
+    <step-4 module="M-CI" status="planned">Decide cargo audit warning policy, then update notify or gate warnings explicitly.</step-4>
+  </PLANNED_WORK>
+  <ACCEPTANCE>
+    <CHECK>No public docs mention unsupported commands, unsupported Windows install path, obsolete synapse-ai URLs, or synapse.dev/install.sh as a shell installer</CHECK>
+    <CHECK>Release workflow rejects tag/version mismatches</CHECK>
+    <CHECK>Release artifacts carry non-empty release notes or generated release notes</CHECK>
+    <CHECK>Security audit warning policy is explicit and enforced in CI</CHECK>
+  </ACCEPTANCE>
+</PHASE>

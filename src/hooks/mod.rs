@@ -1,22 +1,188 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-HOOKS
-// PURPOSE: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode
-// SCOPE: HookManager struct, install/uninstall/status for opencode agent, file generation
+// PURPOSE: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge
+// SCOPE: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, file generation
 // DEPENDS: M-CONFIG
 // LINKS: .opencode/
 
 // START_MODULE_MAP
 // HookManager — Manages Synapse hook files for AI agent integration
+// merge_synapse_mcp_config — Adds mcp.synapse to an existing OpenCode config without dropping sibling keys
+// strip_jsonc_comments — Removes JSONC comments before safe config parsing
+// strip_trailing_commas — Removes JSONC trailing commas before safe config parsing
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — Added JSONC-aware OpenCode MCP config merge]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
 use std::path::Path;
 
 // START_public_api
+
+// START_CONTRACT_merge_synapse_mcp_config
+// PURPOSE: Merge Synapse MCP configuration into an OpenCode JSON/JSONC config while preserving unrelated keys and MCP siblings
+// INPUTS: { existing: &str — current opencode.jsonc contents, possibly empty }
+// OUTPUTS: { anyhow::Result<String> — pretty JSON config with mcp.synapse configured }
+// START_merge_synapse_mcp_config
+pub fn merge_synapse_mcp_config(existing: &str) -> anyhow::Result<String> {
+    let mut current = if existing.trim().is_empty() {
+        serde_json::json!({
+            "$schema": "https://opencode.ai/config.json"
+        })
+    } else {
+        let without_comments = strip_jsonc_comments(existing);
+        let normalized = strip_trailing_commas(&without_comments);
+        serde_json::from_str::<serde_json::Value>(&normalized).map_err(|e| {
+            anyhow::anyhow!(
+                "cannot parse existing opencode.jsonc for safe merge: {}. Fix the config or remove it, then rerun syn init.",
+                e
+            )
+        })?
+    };
+
+    let root = current
+        .as_object_mut()
+        .ok_or_else(|| anyhow::anyhow!("opencode.jsonc root must be a JSON object"))?;
+    let mcp = root
+        .entry("mcp".to_string())
+        .or_insert_with(|| serde_json::json!({}));
+    if !mcp.is_object() {
+        *mcp = serde_json::json!({});
+    }
+    let mcp_obj = mcp
+        .as_object_mut()
+        .ok_or_else(|| anyhow::anyhow!("opencode.jsonc mcp must be a JSON object"))?;
+    mcp_obj.insert(
+        "synapse".to_string(),
+        serde_json::json!({
+            "type": "local",
+            "command": ["syn", "mcp"],
+            "enabled": true
+        }),
+    );
+
+    Ok(serde_json::to_string_pretty(&current)?)
+}
+// END_merge_synapse_mcp_config
+
+// START_CONTRACT_strip_jsonc_comments
+// PURPOSE: Remove // and /* */ comments outside JSON strings before parsing JSONC-like config
+// INPUTS: { input: &str }
+// OUTPUTS: { String }
+// START_strip_jsonc_comments
+fn strip_jsonc_comments(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    let mut chars = input.chars().peekable();
+    let mut in_string = false;
+    let mut escaped = false;
+
+    while let Some(ch) = chars.next() {
+        if in_string {
+            out.push(ch);
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                in_string = false;
+            }
+            continue;
+        }
+
+        if ch == '"' {
+            in_string = true;
+            out.push(ch);
+            continue;
+        }
+
+        if ch == '/' {
+            match chars.peek().copied() {
+                Some('/') => {
+                    chars.next();
+                    for next in chars.by_ref() {
+                        if next == '\n' {
+                            out.push('\n');
+                            break;
+                        }
+                    }
+                    continue;
+                }
+                Some('*') => {
+                    chars.next();
+                    let mut previous = '\0';
+                    for next in chars.by_ref() {
+                        if previous == '*' && next == '/' {
+                            break;
+                        }
+                        previous = next;
+                    }
+                    continue;
+                }
+                _ => {}
+            }
+        }
+
+        out.push(ch);
+    }
+
+    out
+}
+// END_strip_jsonc_comments
+
+// START_CONTRACT_strip_trailing_commas
+// PURPOSE: Remove trailing commas before object and array terminators outside JSON strings
+// INPUTS: { input: &str }
+// OUTPUTS: { String }
+// START_strip_trailing_commas
+fn strip_trailing_commas(input: &str) -> String {
+    let chars: Vec<char> = input.chars().collect();
+    let mut out = String::with_capacity(input.len());
+    let mut in_string = false;
+    let mut escaped = false;
+    let mut index = 0usize;
+
+    while index < chars.len() {
+        let ch = chars[index];
+        if in_string {
+            out.push(ch);
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                in_string = false;
+            }
+            index += 1;
+            continue;
+        }
+
+        if ch == '"' {
+            in_string = true;
+            out.push(ch);
+            index += 1;
+            continue;
+        }
+
+        if ch == ',' {
+            let mut lookahead = index + 1;
+            while lookahead < chars.len() && chars[lookahead].is_whitespace() {
+                lookahead += 1;
+            }
+            if lookahead < chars.len() && matches!(chars[lookahead], '}' | ']') {
+                index += 1;
+                continue;
+            }
+        }
+
+        out.push(ch);
+        index += 1;
+    }
+
+    out
+}
+// END_strip_trailing_commas
 
 // START_HookManager
 pub struct HookManager {
@@ -75,23 +241,11 @@ impl HookManager {
         println!("  .opencode/rules/synapse.md");
 
         // 2. MCP auto-start config
-        let mcp_config = serde_json::json!({
-            "$schema": "https://opencode.ai/config.json",
-            "mcp": {
-                "synapse": {
-                    "type": "local",
-                    "command": ["syn", "mcp"],
-                    "enabled": true
-                }
-            }
-        });
         let oc_config_path = root.join("opencode.jsonc");
         let existing = std::fs::read_to_string(&oc_config_path).unwrap_or_default();
-        let mut current: serde_json::Value =
-            serde_json::from_str(&existing).unwrap_or(serde_json::json!({}));
-        if current.get("mcp").is_none() {
-            current["mcp"] = mcp_config["mcp"].clone();
-            std::fs::write(&oc_config_path, &serde_json::to_string_pretty(&current)?)?;
+        let merged = merge_synapse_mcp_config(&existing)?;
+        if existing != merged {
+            std::fs::write(&oc_config_path, merged)?;
         }
         println!("  opencode.jsonc              (project root) → MCP auto-start");
 
@@ -249,3 +403,56 @@ echo "[synapse] Shell proxy hooks loaded"
     // END_hookmanager_status
 }
 // END_public_api
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_merge_synapse_mcp_config_preserves_existing_mcp_sibling() {
+        let existing = r#"{
+          "$schema": "https://opencode.ai/config.json",
+          "mcp": {
+            "other": {
+              "type": "local",
+              "command": ["other"],
+              "enabled": true
+            }
+          },
+          "theme": "dark"
+        }"#;
+
+        let merged = merge_synapse_mcp_config(existing);
+        assert!(merged.is_ok(), "merge should succeed: {:?}", merged.err());
+        let merged = merged.unwrap_or_default();
+        let value = serde_json::from_str::<serde_json::Value>(&merged);
+        assert!(value.is_ok(), "merged config should parse as JSON");
+        let value = value.unwrap_or_default();
+        assert!(value["mcp"]["other"].is_object());
+        assert_eq!(value["mcp"]["synapse"]["command"][0], "syn");
+        assert_eq!(value["theme"], "dark");
+    }
+
+    #[test]
+    fn test_merge_synapse_mcp_config_accepts_jsonc_comments_and_trailing_commas() {
+        let existing = r#"{
+          // user comment
+          "mcp": {
+            "other": {"type": "local", "command": ["other"], "enabled": true,},
+          },
+        }"#;
+
+        let merged = merge_synapse_mcp_config(existing);
+        assert!(
+            merged.is_ok(),
+            "JSONC merge should succeed: {:?}",
+            merged.err()
+        );
+        let merged = merged.unwrap_or_default();
+        let value = serde_json::from_str::<serde_json::Value>(&merged);
+        assert!(value.is_ok(), "merged config should parse as JSON");
+        let value = value.unwrap_or_default();
+        assert!(value["mcp"]["other"].is_object());
+        assert_eq!(value["mcp"]["synapse"]["enabled"], true);
+    }
+}

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
-// PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC routing, guarded index and GraphRAG preload
+// PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
+// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing, guarded index and GraphRAG preload
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS
 // LINKS: N/A
 
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Guarded MCP runtime preload error paths]
+// LAST_CHANGE: [v3.0.0 — Preserved clean MCP stdio by suppressing notification responses]
 // END_CHANGE_SUMMARY
 
 use super::{server_code_tools, server_grace_tools, server_response, server_tools};
@@ -78,15 +78,15 @@ impl McpServer {
             }
 
             tracing::debug!("MCP << {}", &line[..line.len().min(200)]);
-            let response = handler.handle_message(&line).await;
+            if let Some(response) = handler.handle_message(&line).await {
+                let msg = serde_json::to_string(&response)?;
+                tracing::debug!("MCP >> {}", &msg[..msg.len().min(200)]);
 
-            let msg = serde_json::to_string(&response)?;
-            tracing::debug!("MCP >> {}", &msg[..msg.len().min(200)]);
-
-            let mut out = msg.into_bytes();
-            out.push(b'\n');
-            stdout.write_all(&out).await?;
-            stdout.flush().await?;
+                let mut out = msg.into_bytes();
+                out.push(b'\n');
+                stdout.write_all(&out).await?;
+                stdout.flush().await?;
+            }
         }
         Ok(())
     }
@@ -193,18 +193,25 @@ impl SynapseHandler {
     // START_CONTRACT_SynapseHandler::handle_message
     // PURPOSE: Route one JSON-RPC message to MCP initialization, tool listing, or tool execution
     // INPUTS: { line: &str — JSON-RPC request line }
-    // OUTPUTS: { serde_json::Value — JSON-RPC response object }
+    // OUTPUTS: { Option<serde_json::Value> — JSON-RPC response object for requests, None for notifications }
     // START_sh_handle_message
-    pub async fn handle_message(&mut self, line: &str) -> serde_json::Value {
+    pub async fn handle_message(&mut self, line: &str) -> Option<serde_json::Value> {
         let msg: serde_json::Value = match serde_json::from_str(line) {
             Ok(v) => v,
-            Err(e) => return server_response::error(None, -32700, format!("Parse error: {}", e)),
+            Err(e) => {
+                return Some(server_response::error(
+                    None,
+                    -32700,
+                    format!("Parse error: {}", e),
+                ))
+            }
         };
 
         let id = msg.get("id").cloned();
         let method = msg.get("method").and_then(|m| m.as_str()).unwrap_or("");
+        let is_notification = id.is_none();
 
-        match method {
+        let response = match method {
             "initialize" => {
                 self.initialized = true;
                 server_response::result(
@@ -223,7 +230,7 @@ impl SynapseHandler {
             }
             "tools/list" => {
                 if !self.initialized {
-                    return server_response::error(id, -32000, "Not initialized");
+                    return Some(server_response::error(id, -32000, "Not initialized"));
                 }
                 server_response::result(
                     id,
@@ -234,7 +241,7 @@ impl SynapseHandler {
             }
             "tools/call" => {
                 if !self.initialized {
-                    return server_response::error(id, -32000, "Not initialized");
+                    return Some(server_response::error(id, -32000, "Not initialized"));
                 }
                 let params = &msg["params"];
                 let name = params["name"].as_str().unwrap_or("");
@@ -275,13 +282,19 @@ impl SynapseHandler {
                     _ => server_response::error(id, -32601, format!("Unknown tool: {}", name)),
                 }
             }
-            "notifications/initialized" => serde_json::json!({}),
+            "notifications/initialized" => return None,
             _ => {
                 if !self.initialized && method != "initialize" {
-                    return server_response::error(id, -32000, "Not initialized");
+                    return Some(server_response::error(id, -32000, "Not initialized"));
                 }
                 server_response::error(id, -32601, format!("Method not found: {}", method))
             }
+        };
+
+        if is_notification {
+            None
+        } else {
+            Some(response)
         }
     }
     // END_sh_handle_message

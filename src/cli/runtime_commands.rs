@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
-// PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health reporting
-// SCOPE: GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, index storage diagnostics, ServeCmd
+// PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health and clean-bootstrap reporting
+// SCOPE: GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, clean config fallback diagnostics, index storage diagnostics, ServeCmd
 // DEPENDS: M-CONFIG, M-TRACKING, M-PROXY, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE
 // LINKS: docs/modules/M-CLI.xml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Report corrupted index storage in doctor diagnostics]
+// LAST_CHANGE: [v3.0.0 — Treat missing user config as valid built-in defaults during clean-machine doctor checks]
 // END_CHANGE_SUMMARY
 
 use super::{CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, ServeCmd};
@@ -200,23 +200,29 @@ impl DoctorCmd {
             };
         }
 
-        match Config::load() {
-            Ok(c) => {
+        match Config::path() {
+            Ok(path) if path.exists() => match Config::load() {
+                Ok(c) => {
+                    check!("config", true, &format!("loaded ({})", path.display()), "");
+                    let _ = c;
+                }
+                Err(e) => {
+                    check!("config", false, "", &format!("cannot load: {}", e));
+                }
+            },
+            Ok(path) => {
                 check!(
                     "config",
                     true,
                     &format!(
-                        "loaded ({})",
-                        Config::path()
-                            .map(|p| p.display().to_string())
-                            .unwrap_or_default()
+                        "using built-in defaults (no user config at {})",
+                        path.display()
                     ),
                     ""
                 );
-                let _ = c;
             }
             Err(e) => {
-                check!("config", false, "", &format!("cannot load: {}", e));
+                check!("config", false, "", &format!("cannot resolve path: {}", e));
             }
         }
 

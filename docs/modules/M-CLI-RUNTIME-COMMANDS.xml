@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-CLI-RUNTIME-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-RUNTIME-COMMANDS</NAME>
-  <PURPOSE>CLI runtime, integration, and diagnostic command handlers with storage health reporting</PURPOSE>
-  <SCOPE>GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, index storage diagnostics, ServeCmd</SCOPE>
+  <PURPOSE>CLI runtime, integration, and diagnostic command handlers with storage health and clean-bootstrap reporting</PURPOSE>
+  <SCOPE>GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, clean config fallback diagnostics, index storage diagnostics, ServeCmd</SCOPE>
   <FILES>
     <FILE>src/cli/runtime_commands.rs</FILE>
   </FILES>

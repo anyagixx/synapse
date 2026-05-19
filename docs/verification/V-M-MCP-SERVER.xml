@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-MCP-SERVER" module="M-MCP-SERVER" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
@@ -10,6 +11,8 @@
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>MCP runtime preload converts lock and GraphRAG build failures into warnings instead of panics.</ASSERTION>
+    <ASSERTION>syn mcp stdout contains only JSON-RPC responses while tracing logs are emitted on stderr.</ASSERTION>
+    <ASSERTION>JSON-RPC notifications do not produce response objects.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-3</PHASE_GATE>
+  <PHASE_GATE>Phase-7</PHASE_GATE>
 </VERIFICATION>

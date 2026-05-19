@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-INDEXER-WALKER" type="CORE_LOGIC" status="active">
   <NAME>M-INDEXER-WALKER</NAME>
-  <PURPOSE>File system walker — discovers source files respecting .gitignore and .synignore</PURPOSE>
-  <SCOPE>Walker struct, file discovery with language detection, ignore rules</SCOPE>
+  <PURPOSE>File system walker — discovers source files with configurable .gitignore and .synignore handling</PURPOSE>
+  <SCOPE>Walker struct, file discovery with language detection, gitignore toggle, ignore rules</SCOPE>
   <FILES>
     <FILE>src/indexer/walker.rs</FILE>
   </FILES>

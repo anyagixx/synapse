@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
-// PURPOSE: Code indexer — walks, parses, stores, and searches code blocks with guarded storage health checks
-// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, search, hybrid_search, storage health propagation, view_signatures
+// PURPOSE: Code indexer — walks, parses, stores full snapshots, and searches code blocks with guarded storage health checks
+// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, search, hybrid_search, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS: N/A
 
@@ -9,11 +9,12 @@
 // SearchResult — Search result with path, language, name, kind, lines, content, score
 // Indexer — Main indexer combining walker, parser, and storage
 // Indexer::storage_count — Returns loaded storage count through guarded lock access
+// Indexer::index_directory_with_gitignore — Rebuilds index snapshot with configurable gitignore handling
 // ensure_storage_ready — Converts storage load-health errors into actionable search errors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Converted indexer storage lock panics into actionable errors]
+// LAST_CHANGE: [v3.1.0 — Rebuild full index snapshots so deleted files are purged from search]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
@@ -103,7 +104,22 @@ impl Indexer {
     // SIDE_EFFECTS: writes indexed blocks to storage
     // START_indexer_index_directory
     pub async fn index_directory(&self, root: &Path) -> anyhow::Result<()> {
-        let walker = walker::Walker::new(root);
+        self.index_directory_with_gitignore(root, true).await
+    }
+    // END_indexer_index_directory
+
+    // START_CONTRACT_Indexer::index_directory_with_gitignore
+    // PURPOSE: Walk, parse, and replace the full index snapshot for all source files in a directory
+    // INPUTS: { root: &Path — project root }, { respect_gitignore: bool — whether .gitignore rules apply }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: rewrites indexed blocks and purges entries for deleted files
+    // START_indexer_index_directory_with_gitignore
+    pub async fn index_directory_with_gitignore(
+        &self,
+        root: &Path,
+        respect_gitignore: bool,
+    ) -> anyhow::Result<()> {
+        let walker = walker::Walker::new_with_gitignore(root, respect_gitignore);
         let files = walker.walk();
         let total = files.len();
         let parser = parser::ParserEngine::new();
@@ -115,6 +131,7 @@ impl Indexer {
             .as_mut()
             .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
 
+        let mut all_stored: Vec<storage::StoredBlock> = Vec::new();
         for (i, file) in files.iter().enumerate() {
             let full_path = root.join(&file.path);
             let code = match std::fs::read_to_string(&full_path) {
@@ -143,13 +160,14 @@ impl Indexer {
                 })
                 .collect();
 
-            storage.store_blocks(stored)?;
+            all_stored.extend(stored);
 
             if (i + 1) % 50 == 0 || i == total - 1 {
                 tracing::info!("  indexed {}/{} files", i + 1, total);
             }
         }
 
+        storage.replace_all_blocks(all_stored)?;
         tracing::info!(
             "Index complete: {} blocks from {} files",
             storage.count(),
@@ -157,7 +175,7 @@ impl Indexer {
         );
         Ok(())
     }
-    // END_indexer_index_directory
+    // END_indexer_index_directory_with_gitignore
 
     // START_CONTRACT_Indexer::search
     // PURPOSE: BM25 search across indexed code blocks

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-SETUP-COMMANDS
-// PURPOSE: CLI setup and indexing command handlers with guarded index storage status reporting
-// SCOPE: InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts
-// DEPENDS: M-CONFIG, M-GRACE-BOOTSTRAP, M-GRACE-LAYOUT, M-INDEXER
+// PURPOSE: CLI setup and indexing command handlers with guarded index storage status reporting and safe OpenCode config merge
+// SCOPE: InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts, gitignore toggle, OpenCode MCP merge
+// DEPENDS: M-CONFIG, M-GRACE-BOOTSTRAP, M-GRACE-LAYOUT, M-INDEXER, M-HOOKS
 // LINKS: docs/modules/M-CLI.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Replaced index storage unwraps with guarded count access]
+// LAST_CHANGE: [v3.1.0 — Wired safe OpenCode MCP merge and real --no-git index behavior]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
@@ -44,18 +44,10 @@ impl InitCmd {
         std::fs::create_dir_all(&opencode_dir)?;
 
         let oc_config_path = root.join("opencode.jsonc");
-        let mcp_config = serde_json::json!({
-            "$schema": "https://opencode.ai/config.json",
-            "mcp": {
-                "synapse": {
-                    "type": "local",
-                    "command": ["syn", "mcp"],
-                    "enabled": true
-                }
-            }
-        });
-        if !oc_config_path.exists() {
-            std::fs::write(&oc_config_path, &serde_json::to_string_pretty(&mcp_config)?)?;
+        let existing_config = std::fs::read_to_string(&oc_config_path).unwrap_or_default();
+        let merged_config = crate::hooks::merge_synapse_mcp_config(&existing_config)?;
+        if existing_config != merged_config {
+            std::fs::write(&oc_config_path, merged_config)?;
         }
 
         let plugins_dir = opencode_dir.join("plugins");
@@ -138,7 +130,9 @@ impl IndexCmd {
             println!("Indexing without gitignore rules");
         }
 
-        indexer.index_directory(&root).await?;
+        indexer
+            .index_directory_with_gitignore(&root, !self.no_git)
+            .await?;
 
         let total = indexer.storage_count()?;
         println!("Index complete: {} code blocks", total);

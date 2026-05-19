@@ -1,17 +1,18 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-WALKER
-// PURPOSE: File system walker — discovers source files respecting .gitignore and .synignore
-// SCOPE: Walker struct, file discovery with language detection, ignore rules
+// PURPOSE: File system walker — discovers source files with configurable .gitignore and .synignore handling
+// SCOPE: Walker struct, file discovery with language detection, gitignore toggle, ignore rules
 // DEPENDS: N/A
 // LINKS: .gitignore, .synignore
 
 // START_MODULE_MAP
 // IndexFile — Discovered source file with path and language
-// Walker — File system walker with gitignore-aware traversal
+// Walker — File system walker with configurable gitignore-aware traversal
+// Walker::new_with_gitignore — Creates a walker with explicit gitignore behavior
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — Added explicit gitignore toggle for syn index --no-git]
 // END_CHANGE_SUMMARY
 
 use ignore::WalkBuilder;
@@ -30,6 +31,7 @@ pub struct IndexFile {
 // START_Walker
 pub struct Walker {
     root: std::path::PathBuf,
+    respect_gitignore: bool,
     total: AtomicUsize,
 }
 // END_Walker
@@ -42,10 +44,25 @@ impl Walker {
     pub fn new(root: &Path) -> Self {
         Self {
             root: root.to_path_buf(),
+            respect_gitignore: true,
             total: AtomicUsize::new(0),
         }
     }
     // END_walker_new
+
+    // START_CONTRACT_Walker::new_with_gitignore
+    // PURPOSE: Create a new Walker with explicit gitignore handling
+    // INPUTS: { root: &Path }, { respect_gitignore: bool }
+    // OUTPUTS: { Self }
+    // START_walker_new_with_gitignore
+    pub fn new_with_gitignore(root: &Path, respect_gitignore: bool) -> Self {
+        Self {
+            root: root.to_path_buf(),
+            respect_gitignore,
+            total: AtomicUsize::new(0),
+        }
+    }
+    // END_walker_new_with_gitignore
 
     // START_CONTRACT_Walker::total
     // PURPOSE: Return the total number of discovered files
@@ -64,9 +81,9 @@ impl Walker {
         let mut files = Vec::new();
         let walker = WalkBuilder::new(&self.root)
             .standard_filters(true)
-            .git_global(true)
-            .git_ignore(true)
-            .git_exclude(true)
+            .git_global(self.respect_gitignore)
+            .git_ignore(self.respect_gitignore)
+            .git_exclude(self.respect_gitignore)
             .add_custom_ignore_filename(".synignore")
             .follow_links(false)
             .build();
