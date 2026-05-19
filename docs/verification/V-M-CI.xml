@@ -17,7 +17,7 @@
     <ASSERTION>CI validates the Linux/macOS release matrix tarball layout, checksum sidecars, and packaged binary execution before release.</ASSERTION>
     <ASSERTION>Hosted platform-test gate is limited to Linux/macOS for Phase-5 while Windows packaging remains deferred.</ASSERTION>
     <ASSERTION>CI and release workflows pin Node 24-ready action majors for checkout, artifact upload, and GitHub release publishing; release artifact download uses GitHub CLI to avoid Node runtime deprecation noise.</ASSERTION>
-    <ASSERTION>CI and release workflows install Rust through rustup shell steps to avoid third-party Node runtime deprecation noise.</ASSERTION>
+    <ASSERTION>CI and release workflows install Rust through retrying rustup shell steps to avoid third-party Node runtime deprecation noise and absorb transient network lookup failures.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-6</PHASE_GATE>
 </VERIFICATION>

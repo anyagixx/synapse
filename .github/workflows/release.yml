@@ -34,7 +34,13 @@ jobs:
 
       - name: Install Rust
         run: |
-          rustup toolchain install stable --profile minimal
+          for attempt in 1 2 3; do
+            rustup toolchain install stable --profile minimal && break
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
           rustup default stable
 
       - name: Build, package, and smoke release artifact
