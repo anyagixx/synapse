@@ -21,12 +21,12 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.12.0 - Bumped default release tag to v2.3.4 for warning-free release workflow validation]
+# LAST_CHANGE: [v2.13.0 - Bumped default release tag to v2.3.5 for explicit-repo release artifact download validation]
 # END_CHANGE_SUMMARY
 
 set -eu
 
-VERSION="v2.3.4"
+VERSION="v2.3.5"
 MODE="install"
 ARCH="x86_64"
 OS="unknown-linux-gnu"

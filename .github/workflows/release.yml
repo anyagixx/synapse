@@ -59,7 +59,7 @@ jobs:
     needs: build
     steps:
       - name: Download workflow artifacts
-        run: gh run download "$GITHUB_RUN_ID" --dir release-assets
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir release-assets
         env:
           GH_TOKEN: ${{ github.token }}
 
