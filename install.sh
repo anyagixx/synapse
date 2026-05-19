@@ -21,12 +21,12 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.9.0 - Added Linux/macOS dry-run artifact mapping]
+# LAST_CHANGE: [v2.10.0 - Bumped default release tag to v2.3.2]
 # END_CHANGE_SUMMARY
 
 set -eu
 
-VERSION="v2.3.1"
+VERSION="v2.3.2"
 MODE="install"
 ARCH="x86_64"
 OS="unknown-linux-gnu"
