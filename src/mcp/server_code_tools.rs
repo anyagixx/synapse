@@ -1,26 +1,27 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
-// PURPOSE: MCP handlers for code search, GraphRAG queries, signature views, and LSP lookups
-// SCOPE: semantic_search, graphrag_query, view_signatures, lsp_hover, lsp_references handlers
+// PURPOSE: MCP handlers for code search, GraphRAG queries, signature views, and guarded LSP lookups
+// SCOPE: semantic_search, graphrag_query, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
 // DEPENDS: M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
 // handle_search — Runs indexed semantic search and formats MCP text content
 // handle_graphrag — Runs graph overview/search/node/path operations
+// read_graphrag — Reads GraphRAG state without panicking on poisoned locks
 // handle_view_signatures — Returns indexed signatures for a file
 // handle_lsp_hover — Returns LSP hover contents
 // handle_lsp_references — Returns LSP reference locations summary
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Extracted code-oriented MCP handlers from M-MCP-SERVER]
+// LAST_CHANGE: [v2.9.0 — Guarded GraphRAG lock errors in MCP code tools]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result};
 use crate::graphrag::GraphRag;
 use crate::indexer::Indexer;
-use std::sync::RwLock;
+use std::sync::{RwLock, RwLockReadGuard};
 
 // START_public_api
 
@@ -88,7 +89,10 @@ pub(crate) fn handle_graphrag(
     args: &serde_json::Value,
 ) -> serde_json::Value {
     let operation = args["operation"].as_str().unwrap_or("search");
-    let guard = graphrag.read().unwrap();
+    let guard = match read_graphrag(graphrag) {
+        Ok(guard) => guard,
+        Err(message) => return error(id, -32603, message),
+    };
     let graphrag = match guard.as_ref() {
         Some(g) => g,
         None => return error(id, -32603, "GraphRAG not built. Run `syn index` first."),
@@ -234,6 +238,20 @@ pub(crate) fn handle_graphrag(
 }
 // END_handle_graphrag
 
+// START_CONTRACT_read_graphrag
+// PURPOSE: Read GraphRAG state and convert poisoned-lock panics into JSON-RPC-safe errors
+// INPUTS: { graphrag: &RwLock<Option<GraphRag>> }
+// OUTPUTS: { Result<RwLockReadGuard<Option<GraphRag>>, String> }
+// START_read_graphrag
+fn read_graphrag(
+    graphrag: &RwLock<Option<GraphRag>>,
+) -> Result<RwLockReadGuard<'_, Option<GraphRag>>, String> {
+    graphrag
+        .read()
+        .map_err(|_| "GraphRAG lock unavailable; restart MCP server".to_string())
+}
+// END_read_graphrag
+
 // START_CONTRACT_handle_view_signatures
 // PURPOSE: Execute view_signatures and format signature lines for MCP response content
 // INPUTS: { indexer: &Indexer }, { id: Option<serde_json::Value> }, { args: &serde_json::Value }
@@ -325,5 +343,42 @@ pub(crate) async fn handle_lsp_references(
     }
 }
 // END_handle_lsp_references
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_test_handle_graphrag_reports_poisoned_lock
+    // PURPOSE: Verify poisoned GraphRAG locks are returned as MCP JSON-RPC errors instead of panics
+    // START_test_handle_graphrag_reports_poisoned_lock
+    #[test]
+    fn test_handle_graphrag_reports_poisoned_lock() {
+        let graphrag = RwLock::new(Some(GraphRag::new()));
+        let previous_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
+        let poisoned = std::panic::catch_unwind(|| {
+            let _guard = graphrag.write().unwrap();
+            panic!("poison GraphRAG lock");
+        })
+        .is_err();
+        std::panic::set_hook(previous_hook);
+        assert!(poisoned);
+
+        let resp = handle_graphrag(
+            &graphrag,
+            Some(serde_json::json!(1)),
+            &serde_json::json!({"operation": "overview"}),
+        );
+        assert_eq!(resp["error"]["code"], -32603);
+        assert!(
+            resp["error"]["message"]
+                .as_str()
+                .is_some_and(|message| message.contains("GraphRAG lock unavailable")),
+            "unexpected response: {}",
+            resp
+        );
+    }
+    // END_test_handle_graphrag_reports_poisoned_lock
+}
 
 // END_public_api

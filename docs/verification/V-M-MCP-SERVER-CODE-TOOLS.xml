@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-MCP-SERVER-CODE-TOOLS" module="M-MCP-SERVER-CODE-TOOLS" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>GraphRAG MCP calls return JSON-RPC error responses when the shared graph lock is poisoned.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

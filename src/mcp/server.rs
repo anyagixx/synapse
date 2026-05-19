@@ -1,17 +1,20 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
-// PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over stdio for AI agent consumption
-// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC routing
+// PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over stdio with guarded runtime initialization
+// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC routing, guarded index and GraphRAG preload
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS
 // LINKS: N/A
 
 // START_MODULE_MAP
 // McpServer — MCP server entry point (stdio and HTTP stubs)
+// discover_project_count — Counts probable child projects for multi-root mode
 // SynapseHandler — MCP message router and initialization state
+// preload_index_storage — Loads index storage without panicking on poisoned locks
+// build_graphrag — Builds GraphRAG while preserving actionable errors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Extracted MCP tool handlers, response helpers, and tool definitions]
+// LAST_CHANGE: [v2.9.0 — Guarded MCP runtime preload error paths]
 // END_CHANGE_SUMMARY
 
 use super::{server_code_tools, server_grace_tools, server_response, server_tools};
@@ -19,6 +22,7 @@ use crate::config::Config;
 use crate::graphrag::GraphRag;
 use crate::indexer::Indexer;
 use crate::skills::{SkillEngine, SkillRequest};
+use std::path::Path;
 use std::sync::RwLock;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
@@ -45,8 +49,8 @@ impl McpServer {
     // START_mcp_server_start_stdio
     pub async fn start_stdio(self) -> anyhow::Result<()> {
         tracing::info!("MCP server running on stdio");
-        let root = std::env::current_dir().unwrap_or_default();
-        let _handler = SynapseHandler::new();
+        let root = std::env::current_dir()
+            .map_err(|e| anyhow::anyhow!("MCP server cannot resolve current directory: {}", e))?;
 
         // Auto-discover: if current dir is not a project root but parent has .opencode/
         // or multiple subdirs with source code, use multi-root mode.
@@ -54,20 +58,7 @@ impl McpServer {
             && !root.join("opencode.jsonc").exists()
             && !root.join("opencode.json").exists()
         {
-            let parent_has_projects = std::fs::read_dir(&root)
-                .ok()
-                .map(|entries| {
-                    entries
-                        .filter_map(|e| e.ok())
-                        .filter(|e| {
-                            e.path().join(".opencode").exists()
-                                || e.path().join("src").exists()
-                                || e.path().join("Cargo.toml").exists()
-                                || e.path().join("package.json").exists()
-                        })
-                        .count()
-                })
-                .unwrap_or(0);
+            let parent_has_projects = discover_project_count(&root);
             parent_has_projects > 1
         } else {
             false
@@ -116,6 +107,45 @@ impl McpServer {
     // END_mcp_server_start_http
 }
 
+// START_CONTRACT_discover_project_count
+// PURPOSE: Count probable child projects for MCP multi-root mode without hiding directory scan errors
+// INPUTS: { root: &Path }
+// OUTPUTS: { usize }
+// START_discover_project_count
+fn discover_project_count(root: &Path) -> usize {
+    let entries = match std::fs::read_dir(root) {
+        Ok(entries) => entries,
+        Err(e) => {
+            tracing::warn!(
+                "[McpServer][start_stdio][DISCOVER] cannot scan {}: {}",
+                root.display(),
+                e
+            );
+            return 0;
+        }
+    };
+
+    entries
+        .filter_map(|entry| match entry {
+            Ok(entry) => Some(entry),
+            Err(e) => {
+                tracing::debug!(
+                    "[McpServer][start_stdio][DISCOVER] skipping unreadable entry: {}",
+                    e
+                );
+                None
+            }
+        })
+        .filter(|entry| {
+            entry.path().join(".opencode").exists()
+                || entry.path().join("src").exists()
+                || entry.path().join("Cargo.toml").exists()
+                || entry.path().join("package.json").exists()
+        })
+        .count()
+}
+// END_discover_project_count
+
 // START_SynapseHandler
 pub struct SynapseHandler {
     indexer: Indexer,
@@ -144,11 +174,12 @@ impl SynapseHandler {
 
         // Try to find index from current directory.
         if let Ok(cwd) = std::env::current_dir() {
-            let mut guard = indexer.storage.write().unwrap();
-            if guard.is_none() {
-                *guard = Some(crate::indexer::storage::Storage::new(&cwd));
+            if let Err(e) = preload_index_storage(&indexer, &cwd) {
+                tracing::warn!("[SynapseHandler][new][INDEX] {}", e);
             }
-            graphrag.build(&cwd).ok();
+            if let Err(e) = build_graphrag(&mut graphrag, &cwd) {
+                tracing::warn!("[SynapseHandler][new][GRAPHRAG] {}", e);
+            }
         }
         Self {
             indexer,
@@ -255,4 +286,35 @@ impl SynapseHandler {
     }
     // END_sh_handle_message
 }
+
+// START_CONTRACT_preload_index_storage
+// PURPOSE: Load index storage for MCP tools without panicking when the storage lock is poisoned
+// INPUTS: { indexer: &Indexer }, { root: &Path }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: initializes indexer.storage when empty
+// START_preload_index_storage
+fn preload_index_storage(indexer: &Indexer, root: &Path) -> anyhow::Result<()> {
+    let mut guard = indexer
+        .storage
+        .write()
+        .map_err(|_| anyhow::anyhow!("indexer storage lock poisoned"))?;
+    if guard.is_none() {
+        *guard = Some(crate::indexer::storage::Storage::new(root));
+    }
+    Ok(())
+}
+// END_preload_index_storage
+
+// START_CONTRACT_build_graphrag
+// PURPOSE: Build GraphRAG preload state with project path context in any returned error
+// INPUTS: { graphrag: &mut GraphRag }, { root: &Path }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: populates GraphRAG graph when build succeeds
+// START_build_graphrag
+fn build_graphrag(graphrag: &mut GraphRag, root: &Path) -> anyhow::Result<()> {
+    graphrag
+        .build(root)
+        .map_err(|e| anyhow::anyhow!("build GraphRAG for {}: {}", root.display(), e))
+}
+// END_build_graphrag
 // END_public_api

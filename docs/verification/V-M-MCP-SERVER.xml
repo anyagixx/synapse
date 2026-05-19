@@ -2,8 +2,14 @@
 <VERIFICATION id="V-M-MCP-SERVER" module="M-MCP-SERVER" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
   </UNIT_TESTS>
-  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[SynapseHandler][new][INDEX]</MARKER>
+    <MARKER>[SynapseHandler][new][GRAPHRAG]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>MCP runtime preload converts lock and GraphRAG build failures into warnings instead of panics.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

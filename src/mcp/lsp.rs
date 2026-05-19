@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-LSP
-// PURPOSE: LSP client bridge — sends textDocument/hover, go-to-definition, references to language servers
-// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, LSP protocol via stdio
+// PURPOSE: LSP client bridge — sends guarded textDocument/hover, go-to-definition, references to language servers
+// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, LSP protocol via stdio
 // DEPENDS: N/A
 // LINKS: N/A
 
@@ -10,10 +10,11 @@
 // LspDefinitionResult — Go-to-definition result
 // LspReferenceResult — References result
 // LspClient — LSP protocol client bridge
+// protocol_position — Converts user-facing positions to LSP positions without underflow
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.9.0 — Guarded LSP position and stdio pipe error paths]
 // END_CHANGE_SUMMARY
 
 use std::process::{Command, Stdio};
@@ -63,11 +64,12 @@ impl LspClient {
     pub fn hover(&self, file: &str, line: u32, column: u32) -> anyhow::Result<LspHoverResult> {
         let cmd = Self::detect_lsp_command(file)?;
         let uri = format!("file://{}", std::fs::canonicalize(file)?.display());
+        let (line, character) = Self::protocol_position(line, column);
         let request = serde_json::json!({
             "jsonrpc": "2.0", "id": 1, "method": "textDocument/hover",
             "params": {
                 "textDocument": { "uri": uri },
-                "position": { "line": line - 1, "character": column }
+                "position": { "line": line, "character": character }
             }
         });
         let response = Self::send_lsp_request(&cmd, &request)?;
@@ -95,11 +97,12 @@ impl LspClient {
     ) -> anyhow::Result<Vec<LspDefinitionResult>> {
         let cmd = Self::detect_lsp_command(file)?;
         let uri = format!("file://{}", std::fs::canonicalize(file)?.display());
+        let (line, character) = Self::protocol_position(line, column);
         let request = serde_json::json!({
             "jsonrpc": "2.0", "id": 2, "method": "textDocument/definition",
             "params": {
                 "textDocument": { "uri": uri },
-                "position": { "line": line - 1, "character": column }
+                "position": { "line": line, "character": character }
             }
         });
         let response = Self::send_lsp_request(&cmd, &request)?;
@@ -134,11 +137,12 @@ impl LspClient {
     ) -> anyhow::Result<Vec<LspReferenceResult>> {
         let cmd = Self::detect_lsp_command(file)?;
         let uri = format!("file://{}", std::fs::canonicalize(file)?.display());
+        let (line, character) = Self::protocol_position(line, column);
         let request = serde_json::json!({
             "jsonrpc": "2.0", "id": 3, "method": "textDocument/references",
             "params": {
                 "textDocument": { "uri": uri },
-                "position": { "line": line - 1, "character": column },
+                "position": { "line": line, "character": character },
                 "context": { "includeDeclaration": false }
             }
         });
@@ -177,12 +181,24 @@ impl LspClient {
         }
     }
 
+    // START_CONTRACT_LspClient::protocol_position
+    // PURPOSE: Convert one-based user line input into zero-based LSP position without underflow
+    // INPUTS: { line: u32 }, { column: u32 }
+    // OUTPUTS: { (u32, u32) }
+    // START_lsp_client_protocol_position
+    fn protocol_position(line: u32, column: u32) -> (u32, u32) {
+        (line.saturating_sub(1), column)
+    }
+    // END_lsp_client_protocol_position
+
     fn send_lsp_request(
         cmd: &[String],
         request: &serde_json::Value,
     ) -> anyhow::Result<serde_json::Value> {
-        let program = &cmd[0];
-        let args: Vec<&str> = cmd[1..].iter().map(|s| s.as_str()).collect();
+        let (program, args) = cmd
+            .split_first()
+            .ok_or_else(|| anyhow::anyhow!("empty LSP command"))?;
+        let args: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
 
         // Initialize LSP
         let init = serde_json::json!({
@@ -202,7 +218,10 @@ impl LspClient {
             .spawn()?;
 
         use std::io::Write;
-        let stdin = child.stdin.as_mut().unwrap();
+        let stdin = child
+            .stdin
+            .as_mut()
+            .ok_or_else(|| anyhow::anyhow!("LSP stdin pipe unavailable for {}", program))?;
         let init_str = format!("Content-Length: {}\r\n\r\n{}", init.to_string().len(), init);
         stdin.write_all(init_str.as_bytes())?;
 
@@ -236,5 +255,21 @@ impl LspClient {
             &stdout[..200.min(stdout.len())]
         )
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::LspClient;
+
+    // START_CONTRACT_test_protocol_position_zero_line_is_safe
+    // PURPOSE: Verify line zero cannot underflow before an LSP request is sent
+    // START_test_protocol_position_zero_line_is_safe
+    #[test]
+    fn test_protocol_position_zero_line_is_safe() {
+        assert_eq!(LspClient::protocol_position(0, 7), (0, 7));
+        assert_eq!(LspClient::protocol_position(1, 7), (0, 7));
+        assert_eq!(LspClient::protocol_position(9, 7), (8, 7));
+    }
+    // END_test_protocol_position_zero_line_is_safe
 }
 // END_public_api

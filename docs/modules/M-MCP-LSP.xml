@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-MCP-LSP" type="INTEGRATION" status="active">
   <NAME>M-MCP-LSP</NAME>
-  <PURPOSE>LSP client bridge — sends textDocument/hover, go-to-definition, references to language servers</PURPOSE>
-  <SCOPE>LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, LSP protocol via stdio</SCOPE>
+  <PURPOSE>LSP client bridge — sends guarded textDocument/hover, go-to-definition, references to language servers</PURPOSE>
+  <SCOPE>LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, LSP protocol via stdio</SCOPE>
   <FILES>
     <FILE>src/mcp/lsp.rs</FILE>
   </FILES>
