@@ -1,10 +1,60 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, index, search, verify, status, proxy, gain, doctor, hooks, compress
-// DEPENDS: M-CLI, M-INDEXER, M-GRACE
+// SCOPE: init, clean config bootstrap, index, search, verify, status, proxy, gain, doctor, hooks, compress
+// DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-CONFIG
 
 use std::process::Command;
+
+// START_CONTRACT_test_clean_config_bootstrap_commands_do_not_require_config_file
+// PURPOSE: Verify clean-machine bootstrap commands work without an existing synapsec.toml
+// SIDE_EFFECTS: creates isolated temp project and config directories
+// START_test_clean_config_bootstrap_commands_do_not_require_config_file
+#[test]
+fn test_clean_config_bootstrap_commands_do_not_require_config_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let config_home = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+    let config_file = config_home.path().join("synapse").join("synapsec.toml");
+
+    assert!(!config_file.exists());
+
+    let out = Command::new(&syn)
+        .args(["config", "path"])
+        .env("XDG_CONFIG_HOME", config_home.path())
+        .current_dir(&dir)
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "config path failed without config file: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("synapsec.toml"), "config path: {}", stdout);
+    assert!(
+        !config_file.exists(),
+        "config path must not create config file"
+    );
+
+    let out = Command::new(&syn)
+        .arg("init")
+        .env("XDG_CONFIG_HOME", config_home.path())
+        .current_dir(&dir)
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "init failed without config file: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(dir.path().join("opencode.jsonc").exists());
+    assert!(
+        !config_file.exists(),
+        "init must not create user config file"
+    );
+}
+// END_test_clean_config_bootstrap_commands_do_not_require_config_file
 
 #[test]
 fn test_init_and_index() {

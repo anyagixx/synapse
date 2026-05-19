@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-CONFIG" type="CORE_LOGIC" status="active">
   <NAME>M-CONFIG</NAME>
-  <PURPOSE>Config loading from TOML — loads synapsec.toml, creates default if missing</PURPOSE>
-  <SCOPE>Config struct definitions, TOML deserialization, default config generation, path resolution</SCOPE>
+  <PURPOSE>Config model and explicit load/default/init semantics for synapsec.toml</PURPOSE>
+  <SCOPE>Config struct definitions, read-only TOML load, default fallback, explicit default config generation, path resolution</SCOPE>
   <FILES>
     <FILE>src/config.rs</FILE>
   </FILES>

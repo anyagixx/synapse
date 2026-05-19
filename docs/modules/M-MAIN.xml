@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-MAIN" type="ENTRY_POINT" status="active">
   <NAME>M-MAIN</NAME>
-  <PURPOSE>Binary entry point — parses CLI, loads config, dispatches commands via tokio runtime</PURPOSE>
+  <PURPOSE>Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime</PURPOSE>
   <SCOPE>CLI argument parsing, tracing init, command dispatch</SCOPE>
   <FILES>
     <FILE>src/main.rs</FILE>
   </FILES>
-  <DEPENDS>M-LIB (cli,config)</DEPENDS>
+  <DEPENDS>M-LIB,M-CLI,M-CONFIG</DEPENDS>
   <LINKS>Cargo.toml</LINKS>
   <VERIFICATION_REF>V-M-MAIN</VERIFICATION_REF>
 </MODULE>

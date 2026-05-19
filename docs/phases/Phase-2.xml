@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-2" status="active">
+<PHASE id="Phase-2" status="done">
   <NAME>Maintainability Hardening</NAME>
   <GOAL>Reduce oversized modules, make maintainability gates honest, and keep MyGRACE shards synchronized</GOAL>
   <MODULE_REFS>
@@ -37,5 +37,6 @@
     <CHECK>Remediation plan sharded under 500-line maintainability target</CHECK>
     <CHECK>refresh --fix preserves Phase-2 as the active phase</CHECK>
     <CHECK>Full local CI gate passes</CHECK>
+    <CHECK>Phase 2 closed with all governed files under 500-line target</CHECK>
   </ACCEPTANCE>
 </PHASE>

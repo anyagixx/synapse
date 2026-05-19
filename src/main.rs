@@ -1,16 +1,16 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
-// PURPOSE: Binary entry point — parses CLI, loads config, dispatches commands via tokio runtime
+// PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
 // SCOPE: CLI argument parsing, tracing init, command dispatch
-// DEPENDS: M-LIB (cli, config)
+// DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
-// main — Entry point: init tracing, parse CLI, load config, dispatch command
+// main — Entry point: init tracing, parse CLI, resolve config, dispatch command
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.8.0 — Use explicit default config fallback for clean-machine CLI bootstrap]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -18,7 +18,7 @@ use syn::cli::SynCli;
 use syn::config::Config;
 
 // START_CONTRACT_main
-// PURPOSE: Initialize tracing subscriber, parse CLI arguments, load config, dispatch command via tokio
+// PURPOSE: Initialize tracing subscriber, parse CLI arguments, resolve config with default fallback, dispatch command via tokio
 // OUTPUTS: { anyhow::Result — ok on success, error on failure }
 // SIDE_EFFECTS: initializes tracing, executes selected CLI command
 // START_main
@@ -31,7 +31,7 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     let cli = SynCli::parse();
-    let config = Config::load()?;
+    let config = Config::load_or_default();
 
     tokio::runtime::Runtime::new()?.block_on(async {
         match cli.command {

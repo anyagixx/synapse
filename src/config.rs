@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CONFIG
-// PURPOSE: Config loading from TOML — loads synapsec.toml, creates default if missing
-// SCOPE: Config struct definitions, TOML deserialization, default config generation, path resolution
+// PURPOSE: Config model and explicit load/default/init semantics for synapsec.toml
+// SCOPE: Config struct definitions, read-only TOML load, default fallback, explicit default config generation, path resolution
 // DEPENDS: N/A
 // LINKS: synapsec.toml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.6.0 — Added function contracts for config APIs]
+// LAST_CHANGE: [v2.8.0 — Clarified read-only load, default fallback, and explicit init semantics]
 // END_CHANGE_SUMMARY
 
 use std::path::PathBuf;

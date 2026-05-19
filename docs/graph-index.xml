@@ -176,8 +176,9 @@
     <REL source="M-INDEXER-STORAGE-SEARCH" target="M-INDEXER-STORAGE-TYPES" type="DEPENDS" />
     <REL source="M-INSTALL" target="M-BUILD" type="DEPENDS" />
     <REL source="M-LIB" target="all sub-modules" type="DEPENDS" />
-    <REL source="M-MAIN" target="M-LIB (cli" type="DEPENDS" />
-    <REL source="M-MAIN" target="config)" type="DEPENDS" />
+    <REL source="M-MAIN" target="M-LIB" type="DEPENDS" />
+    <REL source="M-MAIN" target="M-CLI" type="DEPENDS" />
+    <REL source="M-MAIN" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-CODE-TOOLS" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-GRACE-TOOLS" type="DEPENDS" />
@@ -223,6 +224,7 @@
     <REL source="M-TESTS-INTEGRATION" target="M-CLI" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-GRACE" type="DEPENDS" />
+    <REL source="M-TESTS-INTEGRATION" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-CLI" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-MCP" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-SKILLS" type="DEPENDS" />

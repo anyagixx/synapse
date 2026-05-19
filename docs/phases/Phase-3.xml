@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-3" status="active">
+  <NAME>Runtime Reliability Hardening</NAME>
+  <GOAL>Make CLI, config, runtime integrations, and storage behavior predictable on clean machines and degraded subsystems</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MAIN" />
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-CLI-SETUP-COMMANDS" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-INDEXER-STORAGE" />
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-CI" />
+  </MODULE_REFS>
+  <ACCEPTANCE>
+    <CHECK>Phase-2 marked done and Phase-3 active in plan-index</CHECK>
+    <CHECK>Clean-machine CLI bootstrap commands do not require an existing synapsec.toml</CHECK>
+    <CHECK>Config load behavior is explicit: read-only load, default fallback, and explicit init/write path</CHECK>
+    <CHECK>Runtime command failures avoid avoidable unwrap panics and report actionable errors</CHECK>
+    <CHECK>Index storage corruption and tracking degradation are visible through tests or status signals</CHECK>
+    <CHECK>Full local CI gate passes</CHECK>
+  </ACCEPTANCE>
+</PHASE>
