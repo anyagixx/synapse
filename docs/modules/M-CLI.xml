@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-CLI" type="ENTRY_POINT" status="active">
   <NAME>M-CLI</NAME>
-  <PURPOSE>CLI command definitions and handlers — clap-powered CLI structs and run() impls for all commands</PURPOSE>
-  <SCOPE>SynCli, Command enum, all Cmd structs (Init, Index, Search, View, etc.), cmd_run! macro, all command handlers</SCOPE>
+  <PURPOSE>CLI schema facade — clap-powered top-level parser, command enum, and command argument structs</PURPOSE>
+  <SCOPE>SynCli, Command enum, command argument structs, CI action enum</SCOPE>
   <FILES>
     <FILE>src/cli.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG,M-INDEXER,M-GRACE,M-PROXY,M-COMPRESS,M-TRACKING,M-GRAPHRAG,M-HOOKS,M-DASHBOARD,M-MCP</DEPENDS>
+  <DEPENDS>M-CLI-SETUP-COMMANDS,M-CLI-CODE-COMMANDS,M-CLI-GRACE-COMMANDS,M-CLI-RUNTIME-COMMANDS</DEPENDS>
   <LINKS>Cargo.toml</LINKS>
   <VERIFICATION_REF>V-M-CLI</VERIFICATION_REF>
 </MODULE>

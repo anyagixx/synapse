@@ -6,6 +6,10 @@
     <MODULE id="M-CAPABILITIES" path="docs/modules/M-CAPABILITIES.xml" status="active" />
     <MODULE id="M-CI" path="docs/modules/M-CI.xml" status="active" />
     <MODULE id="M-CLI" path="docs/modules/M-CLI.xml" status="active" />
+    <MODULE id="M-CLI-CODE-COMMANDS" path="docs/modules/M-CLI-CODE-COMMANDS.xml" status="active" />
+    <MODULE id="M-CLI-GRACE-COMMANDS" path="docs/modules/M-CLI-GRACE-COMMANDS.xml" status="active" />
+    <MODULE id="M-CLI-RUNTIME-COMMANDS" path="docs/modules/M-CLI-RUNTIME-COMMANDS.xml" status="active" />
+    <MODULE id="M-CLI-SETUP-COMMANDS" path="docs/modules/M-CLI-SETUP-COMMANDS.xml" status="active" />
     <MODULE id="M-COMPRESS" path="docs/modules/M-COMPRESS.xml" status="active" />
     <MODULE id="M-CONFIG" path="docs/modules/M-CONFIG.xml" status="active" />
     <MODULE id="M-DASHBOARD" path="docs/modules/M-DASHBOARD.xml" status="active" />
@@ -75,16 +79,30 @@
     <REL source="M-CI" target="M-GRACE-REVIEW" type="DEPENDS" />
     <REL source="M-CI" target="M-GRACE-REFRESH" type="DEPENDS" />
     <REL source="M-CI" target="M-GRACE-STATUS" type="DEPENDS" />
-    <REL source="M-CLI" target="M-CONFIG" type="DEPENDS" />
-    <REL source="M-CLI" target="M-INDEXER" type="DEPENDS" />
-    <REL source="M-CLI" target="M-GRACE" type="DEPENDS" />
-    <REL source="M-CLI" target="M-PROXY" type="DEPENDS" />
-    <REL source="M-CLI" target="M-COMPRESS" type="DEPENDS" />
-    <REL source="M-CLI" target="M-TRACKING" type="DEPENDS" />
-    <REL source="M-CLI" target="M-GRAPHRAG" type="DEPENDS" />
-    <REL source="M-CLI" target="M-HOOKS" type="DEPENDS" />
-    <REL source="M-CLI" target="M-DASHBOARD" type="DEPENDS" />
-    <REL source="M-CLI" target="M-MCP" type="DEPENDS" />
+    <REL source="M-CLI" target="M-CLI-SETUP-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI" target="M-CLI-CODE-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI" target="M-CLI-GRACE-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI-CODE-COMMANDS" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-CLI-CODE-COMMANDS" target="M-INDEXER" type="DEPENDS" />
+    <REL source="M-CLI-CODE-COMMANDS" target="M-GRAPHRAG" type="DEPENDS" />
+    <REL source="M-CLI-GRACE-COMMANDS" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-CLI-GRACE-COMMANDS" target="M-GRACE" type="DEPENDS" />
+    <REL source="M-CLI-GRACE-COMMANDS" target="M-GRACE-REFRESH" type="DEPENDS" />
+    <REL source="M-CLI-GRACE-COMMANDS" target="M-GRACE-REVIEW" type="DEPENDS" />
+    <REL source="M-CLI-GRACE-COMMANDS" target="M-GRACE-STATUS" type="DEPENDS" />
+    <REL source="M-CLI-GRACE-COMMANDS" target="M-SKILLS" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-COMPRESS" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-MCP" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-HOOKS" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-DASHBOARD" type="DEPENDS" />
+    <REL source="M-CLI-SETUP-COMMANDS" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-BOOTSTRAP" type="DEPENDS" />
+    <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-LAYOUT" type="DEPENDS" />
+    <REL source="M-CLI-SETUP-COMMANDS" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-COMPRESS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-GRACE-STATUS" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-GRAPHRAG" type="DEPENDS" />

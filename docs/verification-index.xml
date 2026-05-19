@@ -6,6 +6,10 @@
     <VERIFICATION id="V-M-CAPABILITIES" module="M-CAPABILITIES" path="docs/verification/V-M-CAPABILITIES.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CI" module="M-CI" path="docs/verification/V-M-CI.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI" module="M-CLI" path="docs/verification/V-M-CLI.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CLI-CODE-COMMANDS" module="M-CLI-CODE-COMMANDS" path="docs/verification/V-M-CLI-CODE-COMMANDS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CLI-GRACE-COMMANDS" module="M-CLI-GRACE-COMMANDS" path="docs/verification/V-M-CLI-GRACE-COMMANDS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CLI-RUNTIME-COMMANDS" module="M-CLI-RUNTIME-COMMANDS" path="docs/verification/V-M-CLI-RUNTIME-COMMANDS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CLI-SETUP-COMMANDS" module="M-CLI-SETUP-COMMANDS" path="docs/verification/V-M-CLI-SETUP-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-COMPRESS" module="M-COMPRESS" path="docs/verification/V-M-COMPRESS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CONFIG" module="M-CONFIG" path="docs/verification/V-M-CONFIG.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-DASHBOARD" module="M-DASHBOARD" path="docs/verification/V-M-DASHBOARD.xml" priority="normal" status="active" />

@@ -19,6 +19,11 @@
     <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
     <MODULE_REF id="M-MCP-SERVER-RESPONSE" />
     <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-CODE-COMMANDS" />
+    <MODULE_REF id="M-CLI-GRACE-COMMANDS" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-CLI-SETUP-COMMANDS" />
     <MODULE_REF id="M-CI" />
   </MODULE_REFS>
   <ACCEPTANCE>
@@ -28,6 +33,7 @@
     <CHECK>Verification facade under 500-line maintainability target</CHECK>
     <CHECK>Indexer storage facade under 500-line maintainability target without graph cycles</CHECK>
     <CHECK>MCP server facade under 500-line maintainability target with tool handlers sharded</CHECK>
+    <CHECK>CLI schema facade and command handlers under 500-line maintainability target</CHECK>
     <CHECK>Remediation plan sharded under 500-line maintainability target</CHECK>
     <CHECK>refresh --fix preserves Phase-2 as the active phase</CHECK>
     <CHECK>Full local CI gate passes</CHECK>
