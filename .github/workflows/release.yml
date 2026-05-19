@@ -25,11 +25,14 @@ jobs:
           cp target/release/syn dist/
           cp README.md GUIDE.md LICENSE dist/ 2>/dev/null || true
           tar -czf syn-x86_64-unknown-linux-gnu.tar.gz -C dist .
+          sha256sum syn-x86_64-unknown-linux-gnu.tar.gz > SHA256SUMS
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: syn-x86_64-unknown-linux-gnu.tar.gz
+          files: |
+            syn-x86_64-unknown-linux-gnu.tar.gz
+            SHA256SUMS
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

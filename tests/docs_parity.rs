@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, install docs, release artifact claims, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, verify check count, install docs, release artifact claims, checksum integrity, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
 
 // START_MODULE_MAP
@@ -15,10 +15,11 @@
 // test_platform_claims_match_release_truth — Platform support truth check
 // test_installer_uses_safe_temp_dir_and_cleanup — Installer temp safety check
 // test_release_smoke_builds_package_and_runs_binary — Release smoke behavior check
+// test_release_checksum_integrity_is_enforced — Release checksum integrity check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 - Added release/install smoke and installer safety parity checks]
+// LAST_CHANGE: [v2.9.0 - Added release checksum integrity parity checks]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -152,13 +153,17 @@ fn test_release_artifact_matches_installer() {
         LINUX_RELEASE_ARTIFACT
     );
     assert!(
-        RELEASE_WORKFLOW.contains(&format!("files: {}", LINUX_RELEASE_ARTIFACT)),
+        RELEASE_WORKFLOW.contains(LINUX_RELEASE_ARTIFACT),
         "release workflow must upload {}",
         LINUX_RELEASE_ARTIFACT
     );
     assert!(
         RELEASE_WORKFLOW.contains("cargo build --release --locked"),
         "release workflow must use the locked dependency graph"
+    );
+    assert!(
+        RELEASE_WORKFLOW.contains("SHA256SUMS"),
+        "release workflow must publish release checksums"
     );
 }
 
@@ -237,5 +242,38 @@ fn test_release_smoke_builds_package_and_runs_binary() {
         CI_SCRIPT.contains("bash scripts/release_install_smoke.sh")
             && CI_WORKFLOW.contains("bash scripts/release_install_smoke.sh"),
         "local and hosted CI must run the release/install smoke gate"
+    );
+}
+
+#[test]
+// START_CONTRACT_test_release_checksum_integrity_is_enforced
+// PURPOSE: Verify release workflow, installer, and smoke gate enforce SHA256 checksum integrity
+// SIDE_EFFECTS: test assertion
+fn test_release_checksum_integrity_is_enforced() {
+    assert!(
+        RELEASE_WORKFLOW.contains("sha256sum syn-x86_64-unknown-linux-gnu.tar.gz > SHA256SUMS"),
+        "release workflow must generate SHA256SUMS for the uploaded artifact"
+    );
+    assert!(
+        RELEASE_WORKFLOW.contains("SHA256SUMS"),
+        "release workflow must upload SHA256SUMS"
+    );
+    assert!(
+        INSTALL_SCRIPT.contains("CHECKSUM_URL=") && INSTALL_SCRIPT.contains("SHA256SUMS"),
+        "install.sh must download the release checksum file"
+    );
+    assert!(
+        INSTALL_SCRIPT.contains("verify_release_checksum"),
+        "install.sh must verify release checksums before extraction"
+    );
+    assert!(
+        INSTALL_SCRIPT.contains("sha256sum \"$artifact_path\"")
+            && INSTALL_SCRIPT.contains("shasum -a 256 \"$artifact_path\""),
+        "install.sh must support Linux and macOS SHA256 verification tools"
+    );
+    assert!(
+        RELEASE_SMOKE_SCRIPT.contains("sha256sum \"$artifact_name\" > \"$checksum_file\"")
+            && RELEASE_SMOKE_SCRIPT.contains("sha256sum -c \"$checksum_file\""),
+        "release smoke must generate and verify SHA256SUMS"
     );
 }

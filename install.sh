@@ -2,12 +2,14 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-INSTALL
 # PURPOSE: Installer script — installs Synapse from GitHub release artifacts or cargo source fallback
-# SCOPE: Platform detection, safe release tarball download, local binary install, cargo fallback, and post-install smoke check
+# SCOPE: Platform detection, safe release tarball download, SHA256 verification, local binary install, cargo fallback, and post-install smoke check
 # DEPENDS: M-BUILD
 # LINKS: install.sh, .github/workflows/release.yml
 
 # START_MODULE_MAP
 # cleanup — Removes installer temporary directory
+# checksum_tool — Selects an available SHA256 verifier
+# verify_release_checksum — Verifies the release tarball against SHA256SUMS
 # install_binary — Copies a built or extracted syn binary to the target install directory
 # install_from_release — Downloads and installs a matching GitHub release artifact
 # install_from_source — Builds Synapse from the selected Git tag and installs the binary
@@ -16,7 +18,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.7.0 - Added safe temp directory, install dir override, and post-install smoke check]
+# LAST_CHANGE: [v2.8.0 - Added release SHA256 checksum verification]
 # END_CHANGE_SUMMARY
 
 set -eu
@@ -38,6 +40,62 @@ cleanup() {
     fi
 }
 # END_cleanup
+
+# START_CONTRACT_checksum_tool
+# PURPOSE: Select an available SHA256 verification command
+# OUTPUTS: { sha256sum|shasum - command name supporting SHA256 checks }
+# SIDE_EFFECTS: none
+# START_checksum_tool
+checksum_tool() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        echo "sha256sum"
+        return 0
+    fi
+    if command -v shasum >/dev/null 2>&1; then
+        echo "shasum"
+        return 0
+    fi
+    return 1
+}
+# END_checksum_tool
+
+# START_CONTRACT_verify_release_checksum
+# PURPOSE: Verify the downloaded release tarball against the release SHA256SUMS file
+# INPUTS: { $1: checksum_file - SHA256SUMS path }, { $2: artifact_path - downloaded tarball }, { $3: artifact_name - tarball filename }
+# OUTPUTS: { exit code 0 - checksum matches, nonzero - checksum unavailable, hard exit - checksum mismatch }
+# SIDE_EFFECTS: reads checksum and artifact files
+# START_verify_release_checksum
+verify_release_checksum() {
+    checksum_file="$1"
+    artifact_path="$2"
+    artifact_name="$3"
+    verifier="$(checksum_tool)" || {
+        echo "No SHA256 verifier found; trying source build."
+        return 1
+    }
+
+    checksum_line="$(grep "  ${artifact_name}$" "$checksum_file" || true)"
+    if [ -z "$checksum_line" ]; then
+        echo "Checksum for ${artifact_name} missing; trying source build."
+        return 1
+    fi
+
+    expected_hash="${checksum_line%% *}"
+    if [ "$verifier" = "sha256sum" ]; then
+        actual_line="$(sha256sum "$artifact_path")"
+    else
+        actual_line="$(shasum -a 256 "$artifact_path")"
+    fi
+    actual_hash="${actual_line%% *}"
+
+    if [ "$expected_hash" != "$actual_hash" ]; then
+        echo "Checksum mismatch for ${artifact_name}."
+        exit 1
+    fi
+
+    echo "Verified SHA256 checksum for ${artifact_name}."
+}
+# END_verify_release_checksum
 
 # START_CONTRACT_install_binary
 # PURPOSE: Copy a syn binary into the selected install directory
@@ -87,10 +145,17 @@ install_from_release() {
 
     TARBALL="syn-${ARCH}-${OS}.tar.gz"
     URL="https://github.com/anyagixx/synapse/releases/download/${VERSION}/${TARBALL}"
+    CHECKSUM_URL="https://github.com/anyagixx/synapse/releases/download/${VERSION}/SHA256SUMS"
+    checksum_file="$TMP_DIR/SHA256SUMS"
     release_dir="$TMP_DIR/release"
     mkdir -p "$release_dir"
 
     if curl -fsSL "$URL" -o "$TMP_DIR/$TARBALL" 2>/dev/null; then
+        if ! curl -fsSL "$CHECKSUM_URL" -o "$checksum_file" 2>/dev/null; then
+            echo "Release checksum file unavailable; trying source build."
+            return 1
+        fi
+        verify_release_checksum "$checksum_file" "$TMP_DIR/$TARBALL" "$TARBALL" || return 1
         tar -xzf "$TMP_DIR/$TARBALL" -C "$release_dir"
         if [ ! -x "$release_dir/syn" ]; then
             echo "Release artifact did not contain an executable syn binary."

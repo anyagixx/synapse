@@ -15,6 +15,7 @@
     <CHECK>Install documentation uses real repository URLs, current package version, and supported install paths</CHECK>
     <CHECK>Release workflow artifact naming matches install.sh download behavior</CHECK>
     <CHECK>Release/install smoke builds, packages, extracts, and runs the release binary locally</CHECK>
+    <CHECK>Release workflow publishes SHA256SUMS and installer verifies downloaded artifacts before extraction</CHECK>
     <CHECK>Platform support claims distinguish prebuilt Linux artifacts from cargo source fallback</CHECK>
     <CHECK>Local parity gate catches drift across Cargo.toml, install.sh, release workflow, README, Quickstart, and FAQ</CHECK>
     <CHECK>Full local CI gate passes</CHECK>

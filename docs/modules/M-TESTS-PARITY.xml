@@ -2,7 +2,7 @@
 <MODULE id="M-TESTS-PARITY" type="UTILITY" status="active">
   <NAME>M-TESTS-PARITY</NAME>
   <PURPOSE>Ensure README, docs, install scripts, release workflow, and code claims match product capabilities</PURPOSE>
-  <SCOPE>Compare README tool count, README command count, verify check count, install commands, release artifact names, platform support claims, and release smoke coverage</SCOPE>
+  <SCOPE>Compare README tool count, README command count, verify check count, install commands, release artifact names, checksum integrity, platform support claims, and release smoke coverage</SCOPE>
   <FILES>
     <FILE>tests/docs_parity.rs</FILE>
   </FILES>

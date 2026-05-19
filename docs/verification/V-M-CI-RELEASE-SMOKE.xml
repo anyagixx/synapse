@@ -7,10 +7,11 @@
   <REQUIRED_LOG_MARKERS>
     <MARKER>[CI][release_install_smoke][BUILD]</MARKER>
     <MARKER>[CI][release_install_smoke][PACKAGE]</MARKER>
+    <MARKER>[CI][release_install_smoke][CHECKSUM]</MARKER>
     <MARKER>[CI][release_install_smoke][RUN]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Release smoke builds with locked dependencies, packages the installer-facing tarball, extracts it, and executes syn --version.</ASSERTION>
+    <ASSERTION>Release smoke builds with locked dependencies, packages the installer-facing tarball, verifies SHA256SUMS, extracts it, and executes syn --version.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-4</PHASE_GATE>
 </VERIFICATION>
