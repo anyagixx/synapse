@@ -83,6 +83,9 @@ curl -fsSL https://opencode.ai/install.sh | sh
 # Synapse (prebuilt Linux release or Cargo source fallback)
 curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
 
+# Custom install directory without sudo
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+
 # Source install for development checkouts
 git clone https://github.com/anyagixx/synapse.git
 cd synapse && make install

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
-// PURPOSE: Ensure README, docs, and code claims match capabilities registry
-// SCOPE: Compare README tool count, README command count, verify check count, install docs, and release artifact claims
-// DEPENDS: M-CAPABILITIES, M-INSTALL, M-CI
+// PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
+// SCOPE: Compare README tool count, README command count, verify check count, install docs, release artifact claims, and release smoke coverage
+// DEPENDS: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
 
 // START_MODULE_MAP
 // test_mcp_tool_count_matches_capabilities — MCP tool count check
@@ -13,15 +13,20 @@
 // test_install_docs_use_supported_url — Install documentation URL check
 // test_release_artifact_matches_installer — Release artifact naming check
 // test_platform_claims_match_release_truth — Platform support truth check
+// test_installer_uses_safe_temp_dir_and_cleanup — Installer temp safety check
+// test_release_smoke_builds_package_and_runs_binary — Release smoke behavior check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Added install and release truth parity checks]
+// LAST_CHANGE: [v2.8.0 - Added release/install smoke and installer safety parity checks]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
 
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
+const CI_SCRIPT: &str = include_str!("../scripts/ci.sh");
+const RELEASE_SMOKE_SCRIPT: &str = include_str!("../scripts/release_install_smoke.sh");
+const CI_WORKFLOW: &str = include_str!("../.github/workflows/ci.yml");
 const RELEASE_WORKFLOW: &str = include_str!("../.github/workflows/release.yml");
 const README: &str = include_str!("../README.md");
 const QUICKSTART: &str = include_str!("../docs/QUICKSTART.md");
@@ -151,6 +156,10 @@ fn test_release_artifact_matches_installer() {
         "release workflow must upload {}",
         LINUX_RELEASE_ARTIFACT
     );
+    assert!(
+        RELEASE_WORKFLOW.contains("cargo build --release --locked"),
+        "release workflow must use the locked dependency graph"
+    );
 }
 
 #[test]
@@ -169,5 +178,64 @@ fn test_platform_claims_match_release_truth() {
     assert!(
         FAQ.contains("Windows: build/test support exists in CI; install from source with Cargo."),
         "FAQ must state Windows install reality"
+    );
+}
+
+#[test]
+// START_CONTRACT_test_installer_uses_safe_temp_dir_and_cleanup
+// PURPOSE: Verify install.sh uses a private temporary directory and post-install smoke
+// SIDE_EFFECTS: test assertion
+fn test_installer_uses_safe_temp_dir_and_cleanup() {
+    assert!(
+        INSTALL_SCRIPT.contains("mktemp -d \"${TMPDIR:-/tmp}/synapse-install.XXXXXX\""),
+        "install.sh must create a private temporary directory"
+    );
+    assert!(
+        INSTALL_SCRIPT.contains("trap cleanup EXIT HUP INT TERM"),
+        "install.sh must clean temporary files on exit"
+    );
+    assert!(
+        INSTALL_SCRIPT.contains("SYN_INSTALL_DIR"),
+        "install.sh must support explicit install directory override"
+    );
+    assert!(
+        INSTALL_SCRIPT.contains("\"$INSTALLED_BIN\" --version >/dev/null"),
+        "install.sh must smoke-check the installed binary"
+    );
+    assert!(
+        !INSTALL_SCRIPT.contains("/tmp/syn.tar.gz") && !INSTALL_SCRIPT.contains("/tmp/syn "),
+        "install.sh must not use fixed /tmp paths for release artifacts"
+    );
+}
+
+#[test]
+// START_CONTRACT_test_release_smoke_builds_package_and_runs_binary
+// PURPOSE: Verify CI release smoke builds, packages, extracts, and runs the release binary
+// SIDE_EFFECTS: test assertion
+fn test_release_smoke_builds_package_and_runs_binary() {
+    assert!(
+        RELEASE_SMOKE_SCRIPT.contains("cargo build --release --locked"),
+        "release smoke must build with locked dependencies"
+    );
+    assert!(
+        RELEASE_SMOKE_SCRIPT.contains(LINUX_RELEASE_ARTIFACT),
+        "release smoke must package the installer-facing artifact name"
+    );
+    assert!(
+        RELEASE_SMOKE_SCRIPT.contains("tar -czf \"$artifact_path\" -C \"$dist_dir\" ."),
+        "release smoke must create the release tarball"
+    );
+    assert!(
+        RELEASE_SMOKE_SCRIPT.contains("tar -xzf \"$artifact_path\" -C \"$unpack_dir\""),
+        "release smoke must extract the release tarball"
+    );
+    assert!(
+        RELEASE_SMOKE_SCRIPT.contains("\"$unpack_dir/syn\" --version"),
+        "release smoke must execute the packaged binary"
+    );
+    assert!(
+        CI_SCRIPT.contains("bash scripts/release_install_smoke.sh")
+            && CI_WORKFLOW.contains("bash scripts/release_install_smoke.sh"),
+        "local and hosted CI must run the release/install smoke gate"
     );
 }

@@ -17,6 +17,10 @@ OpenCode, Claude Code, Cursor, Windsurf, Cline, Copilot, Gemini CLI, Codex, and 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh
 ```
+Without sudo:
+```bash
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+```
 
 **What platforms are supported?**
 Prebuilt release artifact: Linux x86_64.

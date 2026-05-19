@@ -4,14 +4,17 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>python3 scripts/ci_runtime_guard.py --self-test</COMMAND>
     <COMMAND>python3 scripts/ci_runtime_guard.py</COMMAND>
+    <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>bash scripts/ci.sh</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
     <MARKER>[CI][run_ci_gate][RUNTIME_GUARD]</MARKER>
+    <MARKER>[CI][run_ci_gate][RELEASE_SMOKE]</MARKER>
     <MARKER>[CI][runtime_guard][SCAN]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>CI blocks production .unwrap(), .expect(), panic!, todo!, and unimplemented! markers outside test-only Rust blocks.</ASSERTION>
+    <ASSERTION>CI validates the release tarball layout and packaged binary execution before release.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-3</PHASE_GATE>
+  <PHASE_GATE>Phase-4</PHASE_GATE>
 </VERIFICATION>
