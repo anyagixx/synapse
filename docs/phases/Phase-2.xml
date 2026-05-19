@@ -22,6 +22,7 @@
     <CHECK>Verification output distinguishes hard file limit from Phase 2 target backlog</CHECK>
     <CHECK>Verification facade under 500-line maintainability target</CHECK>
     <CHECK>Indexer storage facade under 500-line maintainability target without graph cycles</CHECK>
+    <CHECK>Remediation plan sharded under 500-line maintainability target</CHECK>
     <CHECK>refresh --fix preserves Phase-2 as the active phase</CHECK>
     <CHECK>Full local CI gate passes</CHECK>
   </ACCEPTANCE>
