@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER-RESPONSE" type="INTEGRATION" status="active">
+  <NAME>M-MCP-SERVER-RESPONSE</NAME>
+  <PURPOSE>MCP JSON-RPC response helpers and verification failure suggestions</PURPOSE>
+  <SCOPE>JSON-RPC result/error envelopes, FailurePacket, suggest_fix</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server_response.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml</LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER-RESPONSE</VERIFICATION_REF>
+</MODULE>

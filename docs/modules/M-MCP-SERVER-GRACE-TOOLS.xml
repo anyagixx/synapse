@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER-GRACE-TOOLS" type="INTEGRATION" status="active">
+  <NAME>M-MCP-SERVER-GRACE-TOOLS</NAME>
+  <PURPOSE>MCP handlers for MyGRACE verification, review, status, refresh, compression, tracking, and skills</PURPOSE>
+  <SCOPE>verify_project, review_code, project_status, token_savings, compress_text, refresh_project, suggest_contract, grace_* handlers</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server_grace_tools.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE,M-TRACKING,M-COMPRESS,M-SKILLS-ENGINE,M-MCP-SERVER-RESPONSE</DEPENDS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml</LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER-GRACE-TOOLS</VERIFICATION_REF>
+</MODULE>

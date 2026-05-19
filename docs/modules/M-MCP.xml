@@ -2,11 +2,11 @@
 <MODULE id="M-MCP" type="INTEGRATION" status="active">
   <NAME>M-MCP</NAME>
   <PURPOSE>MCP module declaration — exports lsp and server sub-modules</PURPOSE>
-  <SCOPE>Module declarations only (lsp, server)</SCOPE>
+  <SCOPE>Module declarations for MCP server facade and private server helper modules</SCOPE>
   <FILES>
     <FILE>src/mcp/mod.rs</FILE>
   </FILES>
-  <DEPENDS>M-MCP-SERVER,M-MCP-LSP</DEPENDS>
+  <DEPENDS>M-MCP-SERVER,M-MCP-SERVER-CODE-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-MCP-SERVER-RESPONSE,M-MCP-SERVER-TOOLS,M-MCP-LSP</DEPENDS>
   <LINKS></LINKS>
   <VERIFICATION_REF>V-M-MCP</VERIFICATION_REF>
 </MODULE>

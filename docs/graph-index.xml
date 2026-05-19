@@ -46,6 +46,10 @@
     <MODULE id="M-MCP" path="docs/modules/M-MCP.xml" status="active" />
     <MODULE id="M-MCP-LSP" path="docs/modules/M-MCP-LSP.xml" status="active" />
     <MODULE id="M-MCP-SERVER" path="docs/modules/M-MCP-SERVER.xml" status="active" />
+    <MODULE id="M-MCP-SERVER-CODE-TOOLS" path="docs/modules/M-MCP-SERVER-CODE-TOOLS.xml" status="active" />
+    <MODULE id="M-MCP-SERVER-GRACE-TOOLS" path="docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml" status="active" />
+    <MODULE id="M-MCP-SERVER-RESPONSE" path="docs/modules/M-MCP-SERVER-RESPONSE.xml" status="active" />
+    <MODULE id="M-MCP-SERVER-TOOLS" path="docs/modules/M-MCP-SERVER-TOOLS.xml" status="active" />
     <MODULE id="M-PLUGIN" path="docs/modules/M-PLUGIN.xml" status="active" />
     <MODULE id="M-PROXY" path="docs/modules/M-PROXY.xml" status="active" />
     <MODULE id="M-PROXY-FILTER" path="docs/modules/M-PROXY-FILTER.xml" status="active" />
@@ -157,13 +161,28 @@
     <REL source="M-MAIN" target="M-LIB (cli" type="DEPENDS" />
     <REL source="M-MAIN" target="config)" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER" type="DEPENDS" />
+    <REL source="M-MCP" target="M-MCP-SERVER-CODE-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP" target="M-MCP-SERVER-GRACE-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-LSP" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-GRAPHRAG" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-INDEXER" type="DEPENDS" />
-    <REL source="M-MCP-SERVER" target="M-GRACE" type="DEPENDS" />
-    <REL source="M-MCP-SERVER" target="M-TRACKING" type="DEPENDS" />
-    <REL source="M-MCP-SERVER" target="M-COMPRESS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-MCP-SERVER-CODE-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-MCP-SERVER-GRACE-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-INDEXER" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-GRAPHRAG" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-MCP-LSP" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-GRACE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-COMPRESS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-SKILLS-ENGINE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-TOOLS" target="M-SKILLS-REGISTRY" type="DEPENDS" />
     <REL source="M-PLUGIN" target="M-PROXY" type="DEPENDS" />
     <REL source="M-PLUGIN" target="M-MCP" type="DEPENDS" />
     <REL source="M-PLUGIN" target="M-GRACE" type="DEPENDS" />

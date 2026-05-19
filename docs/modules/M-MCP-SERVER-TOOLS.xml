@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER-TOOLS" type="INTEGRATION" status="active">
+  <NAME>M-MCP-SERVER-TOOLS</NAME>
+  <PURPOSE>MCP tool definition registry for Synapse built-in and MyGRACE skill tools</PURPOSE>
+  <SCOPE>Static JSON schema definitions for tools/list</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server_tools.rs</FILE>
+  </FILES>
+  <DEPENDS>M-SKILLS-REGISTRY</DEPENDS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml</LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER-TOOLS</VERIFICATION_REF>
+</MODULE>

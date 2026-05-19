@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER-CODE-TOOLS" type="INTEGRATION" status="active">
+  <NAME>M-MCP-SERVER-CODE-TOOLS</NAME>
+  <PURPOSE>MCP handlers for code search, GraphRAG queries, signature views, and LSP lookups</PURPOSE>
+  <SCOPE>semantic_search, graphrag_query, view_signatures, lsp_hover, lsp_references handlers</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server_code_tools.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER,M-GRAPHRAG,M-MCP-LSP,M-MCP-SERVER-RESPONSE</DEPENDS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml</LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER-CODE-TOOLS</VERIFICATION_REF>
+</MODULE>
