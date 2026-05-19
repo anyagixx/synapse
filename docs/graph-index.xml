@@ -5,6 +5,7 @@
     <MODULE id="M-BUILD" path="docs/modules/M-BUILD.xml" status="active" />
     <MODULE id="M-CAPABILITIES" path="docs/modules/M-CAPABILITIES.xml" status="active" />
     <MODULE id="M-CI" path="docs/modules/M-CI.xml" status="active" />
+    <MODULE id="M-CI-RUNTIME-GUARD" path="docs/modules/M-CI-RUNTIME-GUARD.xml" status="active" />
     <MODULE id="M-CLI" path="docs/modules/M-CLI.xml" status="active" />
     <MODULE id="M-CLI-CODE-COMMANDS" path="docs/modules/M-CLI-CODE-COMMANDS.xml" status="active" />
     <MODULE id="M-CLI-GRACE-COMMANDS" path="docs/modules/M-CLI-GRACE-COMMANDS.xml" status="active" />
@@ -77,6 +78,7 @@
     <REL source="M-CAPABILITIES" target="M-CLI" type="DEPENDS" />
     <REL source="M-CAPABILITIES" target="M-MCP" type="DEPENDS" />
     <REL source="M-CAPABILITIES" target="M-SKILLS-REGISTRY" type="DEPENDS" />
+    <REL source="M-CI" target="M-CI-RUNTIME-GUARD" type="DEPENDS" />
     <REL source="M-CI" target="M-GRACE-VERIFY" type="DEPENDS" />
     <REL source="M-CI" target="M-GRACE-REVIEW" type="DEPENDS" />
     <REL source="M-CI" target="M-GRACE-REFRESH" type="DEPENDS" />

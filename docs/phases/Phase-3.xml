@@ -30,6 +30,7 @@
     <MODULE_REF id="M-TESTS-RELIABILITY" />
     <MODULE_REF id="M-UTILS" />
     <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RUNTIME-GUARD" />
   </MODULE_REFS>
   <ACCEPTANCE>
     <CHECK>Phase-2 marked done and Phase-3 active in plan-index</CHECK>

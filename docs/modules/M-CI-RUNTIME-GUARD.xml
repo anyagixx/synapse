@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CI-RUNTIME-GUARD" type="CORE_LOGIC" status="active">
+  <NAME>M-CI-RUNTIME-GUARD</NAME>
+  <PURPOSE>Production runtime panic guard — blocks unsafe unwrap/expect/panic markers outside test code</PURPOSE>
+  <SCOPE>Rust production source scan, cfg(test) skipping, inline allow marker, self-test fixtures</SCOPE>
+  <FILES>
+    <FILE>scripts/ci_runtime_guard.py</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>scripts/ci.sh,docs/phases/Phase-3.xml</LINKS>
+  <VERIFICATION_REF>V-M-CI-RUNTIME-GUARD</VERIFICATION_REF>
+</MODULE>

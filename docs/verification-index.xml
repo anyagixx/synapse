@@ -5,6 +5,7 @@
     <VERIFICATION id="V-M-BUILD" module="M-BUILD" path="docs/verification/V-M-BUILD.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CAPABILITIES" module="M-CAPABILITIES" path="docs/verification/V-M-CAPABILITIES.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CI" module="M-CI" path="docs/verification/V-M-CI.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CI-RUNTIME-GUARD" module="M-CI-RUNTIME-GUARD" path="docs/verification/V-M-CI-RUNTIME-GUARD.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI" module="M-CLI" path="docs/verification/V-M-CLI.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-CODE-COMMANDS" module="M-CLI-CODE-COMMANDS" path="docs/verification/V-M-CLI-CODE-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-GRACE-COMMANDS" module="M-CLI-GRACE-COMMANDS" path="docs/verification/V-M-CLI-GRACE-COMMANDS.xml" priority="normal" status="active" />

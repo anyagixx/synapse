@@ -2,11 +2,11 @@
 <MODULE id="M-CI" type="CORE_LOGIC" status="active">
   <NAME>M-CI</NAME>
   <PURPOSE>CI quality gate — runs Rust checks and MyGRACE truth gates in one reproducible entrypoint</PURPOSE>
-  <SCOPE>Formatting, linting, tests, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
+  <SCOPE>Formatting, linting, runtime panic guard, tests, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
   <FILES>
     <FILE>scripts/ci.sh</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-VERIFY,M-GRACE-REVIEW,M-GRACE-REFRESH,M-GRACE-STATUS</DEPENDS>
+  <DEPENDS>M-CI-RUNTIME-GUARD,M-GRACE-VERIFY,M-GRACE-REVIEW,M-GRACE-REFRESH,M-GRACE-STATUS</DEPENDS>
   <LINKS>.github/workflows/ci.yml,docs/verification-index.xml</LINKS>
   <VERIFICATION_REF>V-M-CI</VERIFICATION_REF>
 </MODULE>
