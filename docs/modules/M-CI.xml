@@ -2,11 +2,13 @@
 <MODULE id="M-CI" type="CORE_LOGIC" status="active">
   <NAME>M-CI</NAME>
   <PURPOSE>CI quality gate — runs Rust checks, release smoke, and MyGRACE truth gates in one reproducible entrypoint</PURPOSE>
-  <SCOPE>Formatting, linting, runtime panic guard, tests, Linux/macOS hosted platform tests, Linux/macOS release/install smoke matrix, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
+  <SCOPE>Formatting, linting, runtime panic guard, tests, Linux/macOS hosted platform tests, Linux/macOS release/install smoke matrix, Node 24-ready workflow actions, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
   <FILES>
     <FILE>scripts/ci.sh</FILE>
+    <FILE>.github/workflows/ci.yml</FILE>
+    <FILE>.github/workflows/release.yml</FILE>
   </FILES>
   <DEPENDS>M-CI-RUNTIME-GUARD,M-CI-RELEASE-SMOKE,M-GRACE-VERIFY,M-GRACE-REVIEW,M-GRACE-REFRESH,M-GRACE-STATUS</DEPENDS>
-  <LINKS>.github/workflows/ci.yml,docs/verification-index.xml</LINKS>
+  <LINKS>.github/workflows/ci.yml,.github/workflows/release.yml,docs/verification-index.xml</LINKS>
   <VERIFICATION_REF>V-M-CI</VERIFICATION_REF>
 </MODULE>

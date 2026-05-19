@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-6" status="active">
+  <NAME>Actions Runtime Hardening</NAME>
+  <GOAL>Remove GitHub Actions Node.js 20 deprecation exposure while preserving Linux/macOS release and install gates</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+  </MODULE_REFS>
+  <ACCEPTANCE>
+    <CHECK>CI workflow uses Node 24-ready major versions for GitHub-maintained Node actions</CHECK>
+    <CHECK>Release workflow uses Node 24-ready upload, download, checkout, and release actions</CHECK>
+    <CHECK>Linux/macOS release smoke matrix remains unchanged</CHECK>
+    <CHECK>Full local MyGRACE and CI gates pass</CHECK>
+    <CHECK>Hosted main CI completes without Node.js 20 deprecation annotations</CHECK>
+  </ACCEPTANCE>
+  <EVIDENCE>
+    <LOCAL_GATE>pending</LOCAL_GATE>
+    <HOSTED_CI>pending</HOSTED_CI>
+  </EVIDENCE>
+</PHASE>
