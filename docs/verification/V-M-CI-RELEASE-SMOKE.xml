@@ -11,7 +11,7 @@
     <MARKER>[CI][release_install_smoke][RUN]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Release smoke builds with locked dependencies, packages the installer-facing tarball, verifies SHA256SUMS, extracts it, and executes syn --version.</ASSERTION>
+    <ASSERTION>Release smoke builds with locked dependencies, packages installer-facing Linux/macOS target tarballs, verifies checksum sidecars, extracts artifacts, and executes syn --version on runnable host targets.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-4</PHASE_GATE>
+  <PHASE_GATE>Phase-5</PHASE_GATE>
 </VERIFICATION>

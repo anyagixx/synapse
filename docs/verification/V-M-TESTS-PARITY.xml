@@ -5,6 +5,8 @@
     <COMMAND>cargo test --all-targets</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-4</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Docs parity tests require install docs, installer dry-run mapping, release workflow artifacts, checksum aggregation, and release smoke artifact naming to describe the same Linux/macOS release matrix.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-5</PHASE_GATE>
 </VERIFICATION>

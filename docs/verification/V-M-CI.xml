@@ -14,7 +14,7 @@
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>CI blocks production .unwrap(), .expect(), panic!, todo!, and unimplemented! markers outside test-only Rust blocks.</ASSERTION>
-    <ASSERTION>CI validates the release tarball layout and packaged binary execution before release.</ASSERTION>
+    <ASSERTION>CI validates the Linux/macOS release matrix tarball layout, checksum sidecars, and packaged binary execution before release.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-4</PHASE_GATE>
+  <PHASE_GATE>Phase-5</PHASE_GATE>
 </VERIFICATION>

@@ -2,7 +2,7 @@
 <MODULE id="M-CI-RELEASE-SMOKE" type="UTILITY" status="active">
   <NAME>M-CI-RELEASE-SMOKE</NAME>
   <PURPOSE>Release/install smoke gate — validates that the packaged Synapse binary checksum, layout, and executable behavior are release-ready</PURPOSE>
-  <SCOPE>Release build, Linux tarball packaging, SHA256 checksum verification, extraction, executable check, and version smoke</SCOPE>
+  <SCOPE>Linux/macOS target-aware release build, tarball packaging, SHA256 checksum verification, extraction, executable check, and version smoke</SCOPE>
   <FILES>
     <FILE>scripts/release_install_smoke.sh</FILE>
   </FILES>

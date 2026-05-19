@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, install docs, release artifact claims, checksum integrity, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, verify check count, install docs, Linux/macOS release matrix, checksum integrity, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
 
 // START_MODULE_MAP
@@ -16,10 +16,12 @@
 // test_installer_uses_safe_temp_dir_and_cleanup — Installer temp safety check
 // test_release_smoke_builds_package_and_runs_binary — Release smoke behavior check
 // test_release_checksum_integrity_is_enforced — Release checksum integrity check
+// test_release_matrix_declares_linux_macos_targets — Linux/macOS release matrix check
+// test_installer_dry_run_maps_linux_macos_artifacts — Installer dry-run mapping check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 - Added release checksum integrity parity checks]
+// LAST_CHANGE: [v3.0.0 - Added Linux/macOS release matrix parity checks]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -34,7 +36,12 @@ const QUICKSTART: &str = include_str!("../docs/QUICKSTART.md");
 const FAQ: &str = include_str!("../docs/FAQ.md");
 const INSTALL_COMMAND: &str =
     "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh";
-const LINUX_RELEASE_ARTIFACT: &str = "syn-x86_64-unknown-linux-gnu.tar.gz";
+const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
+    "syn-x86_64-unknown-linux-gnu.tar.gz",
+    "syn-aarch64-unknown-linux-gnu.tar.gz",
+    "syn-x86_64-apple-darwin.tar.gz",
+    "syn-aarch64-apple-darwin.tar.gz",
+];
 
 #[test]
 // START_CONTRACT_test_mcp_tool_count_matches_capabilities
@@ -101,7 +108,7 @@ fn test_no_ghost_commands() {
 // PURPOSE: Verify install.sh defaults to the current Cargo package tag
 // SIDE_EFFECTS: test assertion
 fn test_install_default_version_matches_package() {
-    let expected_default = format!("VERSION=\"${{1:-v{}}}\"", env!("CARGO_PKG_VERSION"));
+    let expected_default = format!("VERSION=\"v{}\"", env!("CARGO_PKG_VERSION"));
     assert!(
         INSTALL_SCRIPT.contains(&expected_default),
         "install.sh must default to {}",
@@ -148,18 +155,20 @@ fn test_release_artifact_matches_installer() {
         "install.sh must derive tarball names from detected arch and OS"
     );
     assert!(
-        RELEASE_WORKFLOW.contains(&format!("tar -czf {}", LINUX_RELEASE_ARTIFACT)),
-        "release workflow must package {}",
-        LINUX_RELEASE_ARTIFACT
+        RELEASE_SMOKE_SCRIPT.contains("tar -czf \"$artifact_path\" -C \"$dist_dir\" ."),
+        "release smoke must package tarballs through the shared artifact path"
     );
+    for artifact in EXPECTED_PREBUILT_ARTIFACTS {
+        assert!(
+            RELEASE_WORKFLOW.contains(artifact),
+            "release workflow must declare {}",
+            artifact
+        );
+    }
     assert!(
-        RELEASE_WORKFLOW.contains(LINUX_RELEASE_ARTIFACT),
-        "release workflow must upload {}",
-        LINUX_RELEASE_ARTIFACT
-    );
-    assert!(
-        RELEASE_WORKFLOW.contains("cargo build --release --locked"),
-        "release workflow must use the locked dependency graph"
+        RELEASE_SMOKE_SCRIPT
+            .contains("cargo build --release --locked --target \"$release_target\""),
+        "release smoke must use the locked dependency graph and explicit target"
     );
     assert!(
         RELEASE_WORKFLOW.contains("SHA256SUMS"),
@@ -173,16 +182,24 @@ fn test_release_artifact_matches_installer() {
 // SIDE_EFFECTS: test assertion
 fn test_platform_claims_match_release_truth() {
     assert!(
-        FAQ.contains("Prebuilt release artifact: Linux x86_64."),
-        "FAQ must state the currently published prebuilt artifact scope"
+        FAQ.contains("Prebuilt release artifacts:"),
+        "FAQ must introduce the Linux/macOS prebuilt matrix"
     );
+    for platform in [
+        "Linux x86_64",
+        "Linux aarch64",
+        "macOS x86_64",
+        "macOS arm64",
+    ] {
+        assert!(
+            FAQ.contains(platform),
+            "FAQ must state {} support",
+            platform
+        );
+    }
     assert!(
-        FAQ.contains("Source fallback via Cargo: Linux/macOS on x86_64 or aarch64."),
-        "FAQ must state source fallback platforms"
-    );
-    assert!(
-        FAQ.contains("Windows: build/test support exists in CI; install from source with Cargo."),
-        "FAQ must state Windows install reality"
+        FAQ.contains("Windows: planned later, not a Phase 5 priority."),
+        "FAQ must state Windows is intentionally deferred"
     );
 }
 
@@ -219,12 +236,14 @@ fn test_installer_uses_safe_temp_dir_and_cleanup() {
 // SIDE_EFFECTS: test assertion
 fn test_release_smoke_builds_package_and_runs_binary() {
     assert!(
-        RELEASE_SMOKE_SCRIPT.contains("cargo build --release --locked"),
+        RELEASE_SMOKE_SCRIPT
+            .contains("cargo build --release --locked --target \"$release_target\""),
         "release smoke must build with locked dependencies"
     );
     assert!(
-        RELEASE_SMOKE_SCRIPT.contains(LINUX_RELEASE_ARTIFACT),
-        "release smoke must package the installer-facing artifact name"
+        RELEASE_SMOKE_SCRIPT
+            .contains("artifact_name=\"${SYN_RELEASE_ARTIFACT:-syn-${release_target}.tar.gz}\""),
+        "release smoke must derive the installer-facing artifact name"
     );
     assert!(
         RELEASE_SMOKE_SCRIPT.contains("tar -czf \"$artifact_path\" -C \"$dist_dir\" ."),
@@ -251,8 +270,9 @@ fn test_release_smoke_builds_package_and_runs_binary() {
 // SIDE_EFFECTS: test assertion
 fn test_release_checksum_integrity_is_enforced() {
     assert!(
-        RELEASE_WORKFLOW.contains("sha256sum syn-x86_64-unknown-linux-gnu.tar.gz > SHA256SUMS"),
-        "release workflow must generate SHA256SUMS for the uploaded artifact"
+        RELEASE_WORKFLOW.contains("sort -k2 > dist/SHA256SUMS")
+            && RELEASE_WORKFLOW.contains("sha256sum -c SHA256SUMS"),
+        "release workflow must aggregate and verify SHA256SUMS for uploaded artifacts"
     );
     assert!(
         RELEASE_WORKFLOW.contains("SHA256SUMS"),
@@ -272,8 +292,81 @@ fn test_release_checksum_integrity_is_enforced() {
         "install.sh must support Linux and macOS SHA256 verification tools"
     );
     assert!(
-        RELEASE_SMOKE_SCRIPT.contains("sha256sum \"$artifact_name\" > \"$checksum_file\"")
-            && RELEASE_SMOKE_SCRIPT.contains("sha256sum -c \"$checksum_file\""),
+        RELEASE_SMOKE_SCRIPT.contains("sha256sum \"$artifact_base\" > \"$checksum_base\"")
+            && RELEASE_SMOKE_SCRIPT.contains("sha256sum -c \"$checksum_base\""),
         "release smoke must generate and verify SHA256SUMS"
     );
+}
+
+#[test]
+// START_CONTRACT_test_release_matrix_declares_linux_macos_targets
+// PURPOSE: Verify release and CI workflows declare the Linux/macOS prebuilt artifact matrix
+// SIDE_EFFECTS: test assertion
+fn test_release_matrix_declares_linux_macos_targets() {
+    for target in [
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        "aarch64-apple-darwin",
+    ] {
+        assert!(
+            RELEASE_WORKFLOW.contains(target) && CI_WORKFLOW.contains(target),
+            "release and CI workflows must include target {}",
+            target
+        );
+    }
+    for runner in [
+        "ubuntu-latest",
+        "ubuntu-24.04-arm",
+        "macos-15-intel",
+        "macos-latest",
+    ] {
+        assert!(
+            RELEASE_WORKFLOW.contains(runner) && CI_WORKFLOW.contains(runner),
+            "release and CI workflows must include runner {}",
+            runner
+        );
+    }
+    assert!(
+        !RELEASE_WORKFLOW.contains("windows"),
+        "Phase 5 release matrix must not add Windows prebuilt release targets"
+    );
+}
+
+#[test]
+// START_CONTRACT_test_installer_dry_run_maps_linux_macos_artifacts
+// PURPOSE: Verify install.sh dry-run maps Linux/macOS uname values to expected artifact names
+// SIDE_EFFECTS: executes install.sh in dry-run mode
+fn test_installer_dry_run_maps_linux_macos_artifacts() {
+    let cases = [
+        ("Linux", "x86_64", "syn-x86_64-unknown-linux-gnu.tar.gz"),
+        ("Linux", "aarch64", "syn-aarch64-unknown-linux-gnu.tar.gz"),
+        ("Darwin", "x86_64", "syn-x86_64-apple-darwin.tar.gz"),
+        ("Darwin", "arm64", "syn-aarch64-apple-darwin.tar.gz"),
+    ];
+    for (system, machine, artifact) in cases {
+        let output = std::process::Command::new("sh")
+            .arg("install.sh")
+            .arg("--dry-run")
+            .env("SYN_INSTALL_UNAME_S", system)
+            .env("SYN_INSTALL_UNAME_M", machine)
+            .output()
+            .expect("install.sh dry-run should execute");
+        assert!(
+            output.status.success(),
+            "install.sh dry-run failed for {}/{}: {}",
+            system,
+            machine,
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            stdout.contains(&format!("artifact={}", artifact)),
+            "dry-run output for {}/{} must contain {}: {}",
+            system,
+            machine,
+            artifact,
+            stdout
+        );
+    }
 }

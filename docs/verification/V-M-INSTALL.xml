@@ -10,7 +10,7 @@
     <MARKER>[CI][release_install_smoke][RUN]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Installer release path verifies SHA256SUMS before extracting a downloaded tarball.</ASSERTION>
+    <ASSERTION>Installer dry-run maps Linux x86_64, Linux aarch64, macOS x86_64, and macOS arm64 hosts to declared release artifacts, and the release path verifies SHA256SUMS before extracting a downloaded tarball.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-4</PHASE_GATE>
+  <PHASE_GATE>Phase-5</PHASE_GATE>
 </VERIFICATION>

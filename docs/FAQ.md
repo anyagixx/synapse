@@ -23,9 +23,14 @@ curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | 
 ```
 
 **What platforms are supported?**
-Prebuilt release artifact: Linux x86_64.
-Source fallback via Cargo: Linux/macOS on x86_64 or aarch64.
-Windows: build/test support exists in CI; install from source with Cargo.
+Prebuilt release artifacts:
+- Linux x86_64
+- Linux aarch64
+- macOS x86_64
+- macOS arm64
+
+Source fallback via Cargo remains available on Linux/macOS when a matching prebuilt artifact cannot be downloaded.
+Windows: planned later, not a Phase 5 priority.
 
 ## GRACE
 
