@@ -12,7 +12,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.0.0 - Added release tag versus Cargo.toml version guard]
+# LAST_CHANGE: [v1.1.0 - Skipped branch refs unless an explicit release tag is provided]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_version_guard
@@ -25,7 +25,15 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-release_tag="${SYN_RELEASE_TAG:-${GITHUB_REF_NAME:-}}"
+release_tag="${SYN_RELEASE_TAG:-}"
+
+if [[ -z "$release_tag" && "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+    release_tag="${GITHUB_REF_NAME:-}"
+fi
+
+if [[ -z "$release_tag" && "${GITHUB_REF:-}" == refs/tags/* ]]; then
+    release_tag="${GITHUB_REF#refs/tags/}"
+fi
 
 # START_CONTRACT_read_cargo_version
 # PURPOSE: Extract package.version from the repository Cargo.toml.
