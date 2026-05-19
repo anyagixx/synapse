@@ -32,6 +32,13 @@ Prebuilt release artifacts:
 Source fallback via Cargo remains available on Linux/macOS when a matching prebuilt artifact cannot be downloaded.
 Windows packaging is planned later and is not part of the current Linux/macOS release matrix.
 
+**How do I diagnose install failures?**
+```bash
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh -o /tmp/synapse-install.sh
+sh /tmp/synapse-install.sh --diagnose
+```
+The diagnostic report prints the detected artifact, install directory status, required tools, checksum support, and source fallback prerequisites.
+
 ## GRACE
 
 **What is GRACE?**

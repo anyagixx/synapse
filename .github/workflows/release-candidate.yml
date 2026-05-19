@@ -74,3 +74,14 @@ jobs:
         env:
           SYN_RELEASE_TARGET: ${{ matrix.target }}
           SYN_RELEASE_ARTIFACT: ${{ matrix.artifact }}
+
+      - name: Summarize smoke evidence
+        if: always()
+        run: |
+          {
+            echo "## Release candidate smoke"
+            echo ""
+            echo "- Target: \`${{ matrix.target }}\`"
+            echo "- Artifact: \`${{ matrix.artifact }}\`"
+            echo "- Command: \`bash scripts/release_install_smoke.sh\`"
+          } >> "$GITHUB_STEP_SUMMARY"

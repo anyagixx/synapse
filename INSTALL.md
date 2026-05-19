@@ -16,6 +16,17 @@ curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | 
 
 The installer downloads a matching release tarball when available, verifies `SHA256SUMS`, installs `syn`, and then runs `syn --version`. If a matching archive is unavailable, it falls back to a locked Cargo install from the selected Git tag.
 
+## Diagnostics
+
+Before opening an install issue, run the installer diagnostic mode on the same machine:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh -o /tmp/synapse-install.sh
+sh /tmp/synapse-install.sh --diagnose
+```
+
+The report shows the detected Linux/macOS artifact, install directory status, required tools, checksum verifier availability, and the source fallback prerequisites. Use `SYN_INSTALL_DIR="$HOME/.local/bin"` when the default install path is not writable.
+
 ## Supported Prebuilt Archives
 
 | Platform | Release archive |

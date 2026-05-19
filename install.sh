@@ -2,15 +2,18 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-INSTALL
 # PURPOSE: Installer script — installs Synapse from GitHub release artifacts or cargo source fallback
-# SCOPE: Linux/macOS platform detection, safe release tarball download, SHA256 verification, local binary install, cargo fallback, dry-run mapping, and post-install smoke check
+# SCOPE: Linux/macOS platform detection, safe release tarball download, SHA256 verification, local binary install, cargo fallback, dry-run mapping, support diagnostics, and post-install smoke check
 # DEPENDS: M-BUILD
 # LINKS: install.sh, .github/workflows/release.yml
 
 # START_MODULE_MAP
 # cleanup — Removes installer temporary directory
 # usage — Prints installer usage
-# parse_args — Parses version and dry-run/help flags
+# parse_args — Parses version, dry-run, diagnose, and help flags
 # detect_platform — Maps uname output to release artifact architecture and OS suffix
+# resolve_install_dir — Selects the install directory used by binary installation
+# print_command_status — Reports whether a support diagnostic command is available
+# print_diagnostics — Prints a Linux/macOS support diagnostic report
 # checksum_tool — Selects an available SHA256 verifier
 # verify_release_checksum — Verifies the release tarball against SHA256SUMS
 # install_binary — Copies a built or extracted syn binary to the target install directory
@@ -21,7 +24,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.14.0 - Hardened Cargo source fallback with locked dependency resolution]
+# LAST_CHANGE: [v2.15.0 - Added Linux/macOS support diagnostics and actionable failure hints]
 # END_CHANGE_SUMMARY
 
 set -eu
@@ -64,6 +67,9 @@ Supported prebuilt artifacts:
   syn-aarch64-unknown-linux-gnu.tar.gz
   syn-x86_64-apple-darwin.tar.gz
   syn-aarch64-apple-darwin.tar.gz
+
+Diagnostics:
+  sh install.sh --diagnose
 EOF
 }
 # END_usage
@@ -87,6 +93,9 @@ parse_args() {
                 ;;
             --dry-run)
                 MODE="dry-run"
+                ;;
+            --diagnose)
+                MODE="diagnose"
                 ;;
             v*)
                 VERSION="$1"
@@ -115,7 +124,8 @@ detect_platform() {
         Linux)  OS="unknown-linux-gnu" ;;
         Darwin) OS="apple-darwin" ;;
         *)
-            echo "Unsupported OS '${uname_s}'. Linux and macOS are supported; Windows support is planned later."
+            echo "Unsupported OS '${uname_s}'. Linux and macOS are supported; Windows packaging is planned later."
+            echo "Run: sh install.sh --diagnose"
             exit 1
             ;;
     esac
@@ -125,11 +135,108 @@ detect_platform() {
         aarch64|arm64) ARCH="aarch64" ;;
         *)
             echo "Unsupported architecture '${uname_m}'. Supported: x86_64, aarch64/arm64."
+            echo "Run: sh install.sh --diagnose"
             exit 1
             ;;
     esac
 }
 # END_detect_platform
+
+# START_CONTRACT_resolve_install_dir
+# PURPOSE: Select the install directory used by binary installation.
+# OUTPUTS: { stdout - target install directory }
+# SIDE_EFFECTS: none
+# START_resolve_install_dir
+resolve_install_dir() {
+    if [ -n "${SYN_INSTALL_DIR:-}" ]; then
+        echo "$SYN_INSTALL_DIR"
+    elif [ -w /usr/local/bin ] || command -v sudo >/dev/null 2>&1; then
+        echo "/usr/local/bin"
+    else
+        echo "$HOME/.local/bin"
+    fi
+}
+# END_resolve_install_dir
+
+# START_CONTRACT_print_command_status
+# PURPOSE: Report whether a command needed by release or source install is available.
+# INPUTS: { $1: command name }
+# OUTPUTS: { stdout status line }
+# SIDE_EFFECTS: none
+# START_print_command_status
+print_command_status() {
+    cmd="$1"
+    if command -v "$cmd" >/dev/null 2>&1; then
+        echo "tool.${cmd}=ok"
+    else
+        echo "tool.${cmd}=missing"
+    fi
+}
+# END_print_command_status
+
+# START_CONTRACT_print_diagnostics
+# PURPOSE: Print a no-write Linux/macOS support report for install troubleshooting.
+# OUTPUTS: { stdout key-value diagnostic report }
+# SIDE_EFFECTS: reads uname, PATH, and local tool availability
+# START_print_diagnostics
+print_diagnostics() {
+    uname_s="${SYN_INSTALL_UNAME_S:-$(uname -s)}"
+    uname_m="${SYN_INSTALL_UNAME_M:-$(uname -m)}"
+    diag_os="unsupported"
+    diag_arch="unsupported"
+    platform_status="ok"
+
+    case "$uname_s" in
+        Linux) diag_os="unknown-linux-gnu" ;;
+        Darwin) diag_os="apple-darwin" ;;
+        *) platform_status="unsupported-os" ;;
+    esac
+
+    case "$uname_m" in
+        x86_64|amd64) diag_arch="x86_64" ;;
+        aarch64|arm64) diag_arch="aarch64" ;;
+        *) platform_status="unsupported-arch" ;;
+    esac
+
+    install_dir="$(resolve_install_dir)"
+    install_parent="$(dirname "$install_dir")"
+    if [ -d "$install_dir" ] && [ -w "$install_dir" ]; then
+        install_dir_status="writable"
+    elif [ -d "$install_parent" ] && [ -w "$install_parent" ]; then
+        install_dir_status="creatable"
+    elif command -v sudo >/dev/null 2>&1; then
+        install_dir_status="sudo"
+    else
+        install_dir_status="not-writable"
+    fi
+
+    echo "mode=diagnose"
+    echo "version=${VERSION}"
+    echo "host_os=${uname_s}"
+    echo "host_arch=${uname_m}"
+    echo "platform_status=${platform_status}"
+    if [ "$platform_status" = "ok" ]; then
+        echo "artifact=syn-${diag_arch}-${diag_os}.tar.gz"
+    else
+        echo "artifact=none"
+    fi
+    echo "checksum=SHA256SUMS"
+    echo "install_dir=${install_dir}"
+    echo "install_dir_status=${install_dir_status}"
+    print_command_status curl
+    print_command_status tar
+    print_command_status cargo
+    print_command_status git
+    print_command_status sudo
+    if checksum_tool >/dev/null 2>&1; then
+        echo "tool.sha256=ok"
+    else
+        echo "tool.sha256=missing"
+    fi
+    echo "windows_packaging=deferred"
+    echo "support_hint=Use SYN_INSTALL_DIR for a writable install path, install curl/tar for release downloads, or install Rust and git for source fallback."
+}
+# END_print_diagnostics
 
 # START_CONTRACT_checksum_tool
 # PURPOSE: Select an available SHA256 verification command
@@ -195,15 +302,7 @@ verify_release_checksum() {
 # START_install_binary
 install_binary() {
     source_bin="$1"
-    install_dir="${SYN_INSTALL_DIR:-}"
-
-    if [ -z "$install_dir" ]; then
-        if [ -w /usr/local/bin ] || command -v sudo >/dev/null 2>&1; then
-            install_dir="/usr/local/bin"
-        else
-            install_dir="$HOME/.local/bin"
-        fi
-    fi
+    install_dir="$(resolve_install_dir)"
 
     target_bin="$install_dir/syn"
     if mkdir -p "$install_dir" 2>/dev/null && [ -w "$install_dir" ]; then
@@ -215,6 +314,7 @@ install_binary() {
         sudo chmod +x "$target_bin"
     else
         echo "Cannot write to ${install_dir}. Set SYN_INSTALL_DIR to a writable directory."
+        echo "Run: sh install.sh --diagnose"
         exit 1
     fi
 
@@ -230,8 +330,8 @@ install_binary() {
 # LINKS: .github/workflows/release.yml
 # START_install_from_release
 install_from_release() {
-    command -v curl >/dev/null 2>&1 || { echo "curl not found; trying source build."; return 1; }
-    command -v tar >/dev/null 2>&1 || { echo "tar not found; trying source build."; return 1; }
+    command -v curl >/dev/null 2>&1 || { echo "curl not found; trying source build. Run: sh install.sh --diagnose"; return 1; }
+    command -v tar >/dev/null 2>&1 || { echo "tar not found; trying source build. Run: sh install.sh --diagnose"; return 1; }
 
     TARBALL="syn-${ARCH}-${OS}.tar.gz"
     URL="https://github.com/anyagixx/synapse/releases/download/${VERSION}/${TARBALL}"
@@ -242,7 +342,8 @@ install_from_release() {
 
     if curl -fsSL "$URL" -o "$TMP_DIR/$TARBALL" 2>/dev/null; then
         if ! curl -fsSL "$CHECKSUM_URL" -o "$checksum_file" 2>/dev/null; then
-            echo "Release checksum file unavailable; trying source build."
+            echo "Release checksum file unavailable for ${VERSION}; trying source build."
+            echo "Run: sh install.sh --diagnose"
             return 1
         fi
         verify_release_checksum "$checksum_file" "$TMP_DIR/$TARBALL" "$TARBALL" || return 1
@@ -255,6 +356,8 @@ install_from_release() {
         return 0
     fi
 
+    echo "Release artifact ${TARBALL} unavailable for ${VERSION}; trying source build."
+    echo "Run: sh install.sh --diagnose"
     return 1
 }
 # END_install_from_release
@@ -267,9 +370,10 @@ install_from_release() {
 install_from_source() {
     command -v cargo >/dev/null 2>&1 || {
         echo "Rust not installed. Run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+        echo "Run: sh install.sh --diagnose"
         exit 1
     }
-    command -v git >/dev/null 2>&1 || { echo "git not installed; required for cargo install --git."; exit 1; }
+    command -v git >/dev/null 2>&1 || { echo "git not installed; required for cargo install --git. Run: sh install.sh --diagnose"; exit 1; }
 
     cargo install --locked --git https://github.com/anyagixx/synapse --tag "${VERSION}" --root "$TMP_DIR/cargo-root"
     install_binary "$TMP_DIR/cargo-root/bin/syn"
@@ -284,6 +388,7 @@ install_from_source() {
 verify_install() {
     if [ -z "$INSTALLED_BIN" ] || [ ! -x "$INSTALLED_BIN" ]; then
         echo "Installed binary is missing or not executable."
+        echo "Run: sh install.sh --diagnose"
         exit 1
     fi
 
@@ -298,6 +403,11 @@ verify_install() {
 # SIDE_EFFECTS: downloads artifacts, copies binary, may run cargo install
 # START_main
 parse_args "$@"
+if [ "$MODE" = "diagnose" ]; then
+    print_diagnostics
+    exit 0
+fi
+
 detect_platform
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/synapse-install.XXXXXX")"
 trap cleanup EXIT HUP INT TERM

@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-20" status="current">
   <DATE>2026-05-20</DATE>
-  <PHASE_GATE>Phase-9 complete</PHASE_GATE>
-  <SUMMARY>Synapse is now a credible developer-tool beta with strong MyGRACE integrity, real Linux/macOS release/install coverage, release-candidate dry-run discipline before publishing, Node 24-ready GitHub Actions, hardened MCP/bootstrap/index lifecycle behavior, and public documentation/release metadata aligned with shipped behavior. Remaining readiness risk is concentrated in deferred Windows packaging and broader end-user support diagnostics.</SUMMARY>
+  <PHASE_GATE>Phase-10 complete</PHASE_GATE>
+  <SUMMARY>Synapse is now a credible developer-tool beta with strong MyGRACE integrity, real Linux/macOS release/install coverage, release-candidate dry-run discipline before publishing, installer diagnostic support, Node 24-ready GitHub Actions, hardened MCP/bootstrap/index lifecycle behavior, and public documentation/release metadata aligned with shipped behavior. Remaining readiness risk is concentrated in deferred Windows packaging and broader external adoption evidence.</SUMMARY>
   <SCORES>
-    <OVERALL_READINESS>9.2/10</OVERALL_READINESS>
-    <MYGRACE_TRUTH>9.4/10</MYGRACE_TRUTH>
+    <OVERALL_READINESS>9.3/10</OVERALL_READINESS>
+    <MYGRACE_TRUTH>9.5/10</MYGRACE_TRUTH>
     <RELEASE_INSTALL_TRUTH>9.9/10</RELEASE_INSTALL_TRUTH>
-    <SCORE_RELEASE_CANDIDATE_DISCIPLINE>9.6/10</SCORE_RELEASE_CANDIDATE_DISCIPLINE>
+    <SCORE_RELEASE_CANDIDATE_DISCIPLINE>9.7/10</SCORE_RELEASE_CANDIDATE_DISCIPLINE>
+    <SUPPORT_DIAGNOSTICS_READINESS>9.3/10</SUPPORT_DIAGNOSTICS_READINESS>
     <PROTOCOL_BOOTSTRAP_RELIABILITY>9.1/10</PROTOCOL_BOOTSTRAP_RELIABILITY>
-    <GENERAL_USER_INSTALL_READINESS>8.9/10</GENERAL_USER_INSTALL_READINESS>
+    <GENERAL_USER_INSTALL_READINESS>9.2/10</GENERAL_USER_INSTALL_READINESS>
   </SCORES>
   <EVIDENCE>
     <MYGRACE_DRIFT>0 canonical drift across 70 code modules, graph shards, and verification shards</MYGRACE_DRIFT>
@@ -20,9 +21,11 @@
     <PHASE7_GATE>Local Phase-7 hardening gate passed: 74 tests, clippy -D warnings, runtime guard, release smoke, verify --ci, review --mode full, refresh drift=0, and scripts/ci.sh</PHASE7_GATE>
     <PHASE8_GATE>Local Phase-8 gates passed: docs parity, release tag guard, release smoke with packaged version assertion, cargo audit --deny warnings, all-target tests, clippy -D warnings, refresh drift=0, and verify --ci</PHASE8_GATE>
     <PHASE9_GATE>Local Phase-9 gates passed: release_candidate tests, docs parity, all-target tests, clippy -D warnings, release-candidate dry-run with explicit v2.3.5 tag, release smoke, and scripts/ci.sh with verify/review</PHASE9_GATE>
+    <PHASE10_GATE>Local Phase-10 gates passed: support_readiness tests, release_candidate tests with GitHub Step Summary evidence, docs parity, all-target tests, clippy -D warnings, cargo audit --deny warnings, release-candidate dry-run, release smoke, and scripts/ci.sh with verify/review</PHASE10_GATE>
     <DOC_TRUTH>Public README, INSTALL, COMMANDS, FAQ, QUICKSTART, and WORKFLOW docs are guarded against ghost CLI commands, unsupported installer URLs, obsolete synapse-ai release paths, and unsupported Windows install claims</DOC_TRUTH>
+    <SUPPORT_DIAGNOSTICS>install.sh --diagnose reports Linux/macOS artifact mapping, install directory status, tool availability, checksum verifier status, Windows packaging deferral, and SYN_INSTALL_DIR guidance; INSTALL, FAQ, and SUPPORT docs describe the diagnostic collection flow</SUPPORT_DIAGNOSTICS>
     <RELEASE_DISCIPLINE>Release workflow rejects tag/version mismatches, publishes generated release notes, verifies SHA256SUMS, and runs release smoke for Linux/macOS artifacts</RELEASE_DISCIPLINE>
-    <EVIDENCE_RELEASE_CANDIDATE_DISCIPLINE>Manual release-candidate workflow and real release workflow both run a dry-run gate for tag/version policy, generated release notes, checksum aggregation, installer dry-run mapping, and Linux/macOS smoke coverage before release publishing</EVIDENCE_RELEASE_CANDIDATE_DISCIPLINE>
+    <EVIDENCE_RELEASE_CANDIDATE_DISCIPLINE>Manual release-candidate workflow and real release workflow both run a dry-run gate for tag/version policy, generated release notes, checksum aggregation, installer dry-run mapping, Step Summary evidence, and Linux/macOS smoke coverage before release publishing</EVIDENCE_RELEASE_CANDIDATE_DISCIPLINE>
     <SUPPLY_CHAIN>notify updated to 8.2.0; Cargo.lock no longer includes instant; hosted CI security job enforces cargo audit --deny warnings</SUPPLY_CHAIN>
     <MCP_PROTOCOL>syn mcp keeps stdout protocol-clean and JSON-RPC notifications silent</MCP_PROTOCOL>
     <INDEX_LIFECYCLE>Full re-index removes deleted-file search entries and syn index --no-git is covered by regression tests</INDEX_LIFECYCLE>
@@ -31,7 +34,7 @@
   <RESIDUAL_RISKS>
     <RISK_WINDOWS_DEFERRED>Windows prebuilt install remains intentionally deferred beyond Phase-5</RISK_WINDOWS_DEFERRED>
     <RISK_NON_DEVELOPER_INSTALL>Non-Linux/macOS users still require source fallback or future platform artifacts</RISK_NON_DEVELOPER_INSTALL>
-    <RISK_SUPPORT_DIAGNOSTICS>Linux/macOS installer failure messages can be further improved for non-expert users</RISK_SUPPORT_DIAGNOSTICS>
+    <RISK_EXTERNAL_ADOPTION_EVIDENCE>Fresh-machine Linux/macOS install evidence and real user feedback still need to be collected across more environments</RISK_EXTERNAL_ADOPTION_EVIDENCE>
   </RESIDUAL_RISKS>
-  <NEXT_PHASE>Phase-10 Adoption Feedback and Support Readiness</NEXT_PHASE>
+  <NEXT_PHASE>Phase-11 External Release Evidence and Adoption Feedback</NEXT_PHASE>
 </PRODUCT_READINESS_ASSESSMENT>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-10" status="planned">
+<PHASE id="Phase-10" status="done">
   <NAME>Adoption Feedback and Support Readiness</NAME>
   <GOAL>Improve Linux/macOS user onboarding and support diagnostics after release-candidate automation is stable</GOAL>
   <MODULE_REFS>
@@ -8,13 +8,20 @@
     <MODULE_REF id="M-TESTS-PARITY" />
   </MODULE_REFS>
   <PLANNED_WORK>
-    <step-1 module="M-INSTALL" status="planned">Improve Linux/macOS installer failure guidance and support diagnostics without adding Windows install claims.</step-1>
-    <step-2 module="M-CI" status="planned">Expose release-candidate dry-run evidence in maintainers' workflow outputs for easier release review.</step-2>
-    <step-3 module="M-TESTS-PARITY" status="planned">Extend parity gates as user-facing onboarding and support docs expand.</step-3>
+    <step-1 module="M-INSTALL" status="done">Added Linux/macOS installer diagnose mode, actionable failure guidance, and support docs without adding Windows install claims.</step-1>
+    <step-2 module="M-CI" status="done">Exposed release-candidate dry-run and smoke evidence through GitHub Step Summary for easier maintainer review.</step-2>
+    <step-3 module="M-TESTS-PARITY" status="done">Added support readiness parity gates for diagnostic mode, support docs, and deferred Windows packaging claims.</step-3>
   </PLANNED_WORK>
   <ACCEPTANCE>
     <CHECK>Linux/macOS installation failures produce actionable diagnostics for users</CHECK>
     <CHECK>Release-candidate workflow output is easy for maintainers to audit before publishing</CHECK>
     <CHECK>New onboarding/support docs remain synchronized with shipped commands and platform support</CHECK>
   </ACCEPTANCE>
+  <EVIDENCE>
+    <INSTALLER_DIAGNOSTICS>sh install.sh --diagnose reports artifact mapping, install directory status, required tools, checksum status, and support hints for Linux/macOS hosts</INSTALLER_DIAGNOSTICS>
+    <SUPPORT_DOCS>INSTALL.md, docs/FAQ.md, and docs/SUPPORT.md document diagnostic collection through the supported GitHub raw installer URL</SUPPORT_DOCS>
+    <RELEASE_CANDIDATE_SUMMARY>release_candidate tests verify GitHub Step Summary evidence for tag, Cargo version, checksum policy, installer matrix, smoke status, and non-publishing status</RELEASE_CANDIDATE_SUMMARY>
+    <LOCAL_TESTS>cargo test --test support_readiness; cargo test --test release_candidate; cargo test --test docs_parity; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings</LOCAL_TESTS>
+    <MYGRACE>scripts/ci.sh passed with verify --ci and review --mode full --ci; 74 contracted files, 311 function contracts, and 564 semantic blocks</MYGRACE>
+  </EVIDENCE>
 </PHASE>

@@ -6,6 +6,7 @@
     <COMMAND>python3 scripts/ci_runtime_guard.py</COMMAND>
     <COMMAND>cargo audit --deny warnings</COMMAND>
     <COMMAND>SYN_RC_SKIP_SMOKE=1 bash scripts/release_candidate_dry_run.sh</COMMAND>
+    <COMMAND>cargo test --test release_candidate</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>bash scripts/ci.sh</COMMAND>
   </UNIT_TESTS>
@@ -15,6 +16,7 @@
     <MARKER>[CI][run_ci_gate][RELEASE_CANDIDATE]</MARKER>
     <MARKER>[CI][run_ci_gate][RELEASE_SMOKE]</MARKER>
     <MARKER>[CI][release_candidate][PASS]</MARKER>
+    <MARKER>[CI][release_candidate][SUMMARY]</MARKER>
     <MARKER>[CI][runtime_guard][SCAN]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -22,10 +24,11 @@
     <ASSERTION>CI validates the Linux/macOS release matrix tarball layout, checksum sidecars, and packaged binary execution before release.</ASSERTION>
     <ASSERTION>Release workflow rejects tag/version mismatches and publishes generated release notes.</ASSERTION>
     <ASSERTION>Release-candidate workflow validates tag/version policy, generated release notes, checksum aggregation, installer dry-run mapping, and Linux/macOS release smoke without write permissions or release publishing actions.</ASSERTION>
+    <ASSERTION>Release-candidate dry-run writes GitHub Step Summary evidence for tag, Cargo version, checksum policy, installer matrix, smoke status, and non-publishing status.</ASSERTION>
     <ASSERTION>Hosted security CI runs cargo audit --deny warnings; notify 8.2.0 removes the previous transitive instant warning.</ASSERTION>
     <ASSERTION>Hosted platform-test gate is limited to Linux/macOS for Phase-5 while Windows packaging remains deferred.</ASSERTION>
     <ASSERTION>CI and release workflows pin Node 24-ready action majors for checkout, artifact upload, and GitHub release publishing; release artifact download uses GitHub CLI to avoid Node runtime deprecation noise.</ASSERTION>
     <ASSERTION>CI and release workflows install Rust through retrying rustup shell steps to avoid third-party Node runtime deprecation noise and absorb transient network lookup failures; hosted main CI run 26120689647 completed successfully without Node/deprecation log markers.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-9</PHASE_GATE>
+  <PHASE_GATE>Phase-10</PHASE_GATE>
 </VERIFICATION>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure release-candidate automation remains a dry-run truth gate before publishing.
-// SCOPE: Validate RC workflow permissions, release metadata checks, installer matrix smoke, and CI integration.
+// SCOPE: Validate RC workflow permissions, release metadata checks, installer matrix smoke, GitHub step-summary evidence, and CI integration.
 // DEPENDS: M-CI, M-INSTALL, M-CI-RELEASE-SMOKE
 // LINKS: scripts/release_candidate_dry_run.sh, .github/workflows/release-candidate.yml
 
@@ -10,10 +10,11 @@
 // test_release_candidate_script_checks_release_truth - Script must validate tag, notes, checksums, and installer mapping
 // test_ci_invokes_release_candidate_gate - Local CI must include the lightweight RC policy gate
 // test_release_candidate_script_executes_without_publishing - Script dry-run must pass with the package tag
+// test_release_candidate_step_summary_is_written - Script must write maintainer-readable evidence summary
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added Phase 9 release candidate automation parity tests]
+// LAST_CHANGE: [v1.1.0 - Added Phase 10 release candidate summary evidence tests]
 // END_CHANGE_SUMMARY
 
 const RELEASE_CANDIDATE_WORKFLOW: &str = include_str!("../.github/workflows/release-candidate.yml");
@@ -36,6 +37,11 @@ fn test_release_candidate_workflow_is_dry_run_only() {
     assert!(
         !RELEASE_CANDIDATE_WORKFLOW.contains("contents: write"),
         "release candidate workflow must not publish releases"
+    );
+    assert!(
+        RELEASE_CANDIDATE_WORKFLOW.contains("Summarize smoke evidence")
+            && RELEASE_CANDIDATE_WORKFLOW.contains("$GITHUB_STEP_SUMMARY"),
+        "release candidate workflow must expose smoke evidence in GitHub Step Summary"
     );
     for publishing_marker in ["action-gh-release", "gh release create", "draft: false"] {
         assert!(
@@ -63,6 +69,8 @@ fn test_release_candidate_script_checks_release_truth() {
         "sha256sum -c SHA256SUMS",
         "SYN_INSTALL_UNAME_S",
         "scripts/release_install_smoke.sh",
+        "GITHUB_STEP_SUMMARY",
+        "[CI][release_candidate][SUMMARY]",
     ] {
         assert!(
             RELEASE_CANDIDATE_SCRIPT.contains(marker),
@@ -121,4 +129,43 @@ fn test_release_candidate_script_executes_without_publishing() {
             .contains("[CI][release_candidate][PASS] Release candidate dry-run passed"),
         "release candidate script must emit pass marker"
     );
+}
+
+#[test]
+// START_CONTRACT_test_release_candidate_step_summary_is_written
+// PURPOSE: Verify the dry-run script writes a maintainer-readable GitHub Step Summary.
+fn test_release_candidate_step_summary_is_written() {
+    let expected_tag = format!("v{}", env!("CARGO_PKG_VERSION"));
+    let summary_path =
+        std::env::temp_dir().join(format!("synapse-rc-summary-{}.md", std::process::id()));
+    let _ = std::fs::remove_file(&summary_path);
+
+    let output = std::process::Command::new("bash")
+        .arg("scripts/release_candidate_dry_run.sh")
+        .env("SYN_RELEASE_TAG", expected_tag)
+        .env("SYN_RC_SKIP_SMOKE", "1")
+        .env("GITHUB_STEP_SUMMARY", &summary_path)
+        .output()
+        .expect("release candidate script should execute with summary path");
+
+    assert!(
+        output.status.success(),
+        "release candidate script failed while writing summary"
+    );
+    let summary = std::fs::read_to_string(&summary_path)
+        .expect("release candidate script should write summary file");
+    let _ = std::fs::remove_file(&summary_path);
+
+    for marker in [
+        "## Release candidate dry-run",
+        "Cargo version",
+        "SHA256SUMS aggregation and verification checked",
+        "Installer matrix: Linux x86_64, Linux aarch64, macOS x86_64, macOS arm64",
+        "Publishing: not performed by this dry-run",
+    ] {
+        assert!(
+            summary.contains(marker),
+            "summary missing marker {marker}: {summary}"
+        );
+    }
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-11" status="planned">
+  <NAME>External Release Evidence and Adoption Feedback</NAME>
+  <GOAL>Collect real Linux/macOS release evidence and convert user feedback into support and installer hardening</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <PLANNED_WORK>
+    <step-1 module="M-INSTALL" status="planned">Validate diagnostics against fresh Linux/macOS machines and convert repeated failures into installer guidance.</step-1>
+    <step-2 module="M-CI" status="planned">Keep release-candidate evidence auditable across hosted CI and manual release workflows.</step-2>
+    <step-3 module="M-TESTS-PARITY" status="planned">Expand parity gates only when new public support or onboarding claims are added.</step-3>
+  </PLANNED_WORK>
+  <ACCEPTANCE>
+    <CHECK>Fresh Linux/macOS install evidence is captured before the next public release</CHECK>
+    <CHECK>Support docs reflect observed installer failures without claiming unsupported platforms</CHECK>
+    <CHECK>Release evidence remains reproducible through CI and release-candidate workflows</CHECK>
+  </ACCEPTANCE>
+</PHASE>
