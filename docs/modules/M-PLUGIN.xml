@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-PLUGIN" type="ENTRY_POINT" status="active">
+  <NAME>M-PLUGIN</NAME>
+  <PURPOSE>OpenCode plugin — injects Synapse proxy behavior and GRACE system context</PURPOSE>
+  <SCOPE>Proxy command detection, OpenCode tool.execute.before hook, system prompt transform</SCOPE>
+  <FILES>
+    <FILE>opencode-plugin/plugin.ts</FILE>
+  </FILES>
+  <DEPENDS>M-PROXY,M-MCP,M-GRACE</DEPENDS>
+  <LINKS>opencode-plugin/plugin.json,opencode.jsonc</LINKS>
+  <VERIFICATION_REF>V-M-PLUGIN</VERIFICATION_REF>
+</MODULE>

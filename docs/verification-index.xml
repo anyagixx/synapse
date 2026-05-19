@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION_INDEX>
+  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY></META>
+  <VERIFICATIONS>
+    <VERIFICATION id="V-M-BUILD" module="M-BUILD" path="docs/verification/V-M-BUILD.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CAPABILITIES" module="M-CAPABILITIES" path="docs/verification/V-M-CAPABILITIES.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CI" module="M-CI" path="docs/verification/V-M-CI.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CLI" module="M-CLI" path="docs/verification/V-M-CLI.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-COMPRESS" module="M-COMPRESS" path="docs/verification/V-M-COMPRESS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CONFIG" module="M-CONFIG" path="docs/verification/V-M-CONFIG.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-DASHBOARD" module="M-DASHBOARD" path="docs/verification/V-M-DASHBOARD.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE" module="M-GRACE" path="docs/verification/V-M-GRACE.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-BOOTSTRAP" module="M-GRACE-BOOTSTRAP" path="docs/verification/V-M-GRACE-BOOTSTRAP.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-CONTRACT" module="M-GRACE-CONTRACT" path="docs/verification/V-M-GRACE-CONTRACT.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-EXPLAIN" module="M-GRACE-EXPLAIN" path="docs/verification/V-M-GRACE-EXPLAIN.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-FIX" module="M-GRACE-FIX" path="docs/verification/V-M-GRACE-FIX.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-INVENTORY" module="M-GRACE-INVENTORY" path="docs/verification/V-M-GRACE-INVENTORY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-LAYOUT" module="M-GRACE-LAYOUT" path="docs/verification/V-M-GRACE-LAYOUT.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-REFRESH" module="M-GRACE-REFRESH" path="docs/verification/V-M-GRACE-REFRESH.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-REVIEW" module="M-GRACE-REVIEW" path="docs/verification/V-M-GRACE-REVIEW.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-SEMANTIC" module="M-GRACE-SEMANTIC" path="docs/verification/V-M-GRACE-SEMANTIC.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-STATUS" module="M-GRACE-STATUS" path="docs/verification/V-M-GRACE-STATUS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-VERIFY" module="M-GRACE-VERIFY" path="docs/verification/V-M-GRACE-VERIFY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRAPHRAG" module="M-GRAPHRAG" path="docs/verification/V-M-GRAPHRAG.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRAPHRAG-BUILDER" module="M-GRAPHRAG-BUILDER" path="docs/verification/V-M-GRAPHRAG-BUILDER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRAPHRAG-TYPES" module="M-GRAPHRAG-TYPES" path="docs/verification/V-M-GRAPHRAG-TYPES.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-HOOK-CLAUDE" module="M-HOOK-CLAUDE" path="docs/verification/V-M-HOOK-CLAUDE.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-HOOK-CURSOR" module="M-HOOK-CURSOR" path="docs/verification/V-M-HOOK-CURSOR.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-HOOK-OPENCODE-REWRITE" module="M-HOOK-OPENCODE-REWRITE" path="docs/verification/V-M-HOOK-OPENCODE-REWRITE.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-HOOKS" module="M-HOOKS" path="docs/verification/V-M-HOOKS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-INDEXER" module="M-INDEXER" path="docs/verification/V-M-INDEXER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-INDEXER-LANGS" module="M-INDEXER-LANGS" path="docs/verification/V-M-INDEXER-LANGS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-INDEXER-PARSER" module="M-INDEXER-PARSER" path="docs/verification/V-M-INDEXER-PARSER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-INDEXER-STORAGE" module="M-INDEXER-STORAGE" path="docs/verification/V-M-INDEXER-STORAGE.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-INDEXER-WALKER" module="M-INDEXER-WALKER" path="docs/verification/V-M-INDEXER-WALKER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-INSTALL" module="M-INSTALL" path="docs/verification/V-M-INSTALL.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-LIB" module="M-LIB" path="docs/verification/V-M-LIB.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-MAIN" module="M-MAIN" path="docs/verification/V-M-MAIN.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-MCP" module="M-MCP" path="docs/verification/V-M-MCP.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-MCP-LSP" module="M-MCP-LSP" path="docs/verification/V-M-MCP-LSP.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-MCP-SERVER" module="M-MCP-SERVER" path="docs/verification/V-M-MCP-SERVER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-PLUGIN" module="M-PLUGIN" path="docs/verification/V-M-PLUGIN.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-PROXY" module="M-PROXY" path="docs/verification/V-M-PROXY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-PROXY-FILTER" module="M-PROXY-FILTER" path="docs/verification/V-M-PROXY-FILTER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-PROXY-RUNNER" module="M-PROXY-RUNNER" path="docs/verification/V-M-PROXY-RUNNER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-SKILLS" module="M-SKILLS" path="docs/verification/V-M-SKILLS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-SKILLS-ENGINE" module="M-SKILLS-ENGINE" path="docs/verification/V-M-SKILLS-ENGINE.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-SKILLS-REGISTRY" module="M-SKILLS-REGISTRY" path="docs/verification/V-M-SKILLS-REGISTRY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-SKILLS-TYPES" module="M-SKILLS-TYPES" path="docs/verification/V-M-SKILLS-TYPES.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TESTS-INTEGRATION" module="M-TESTS-INTEGRATION" path="docs/verification/V-M-TESTS-INTEGRATION.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TESTS-MCP" module="M-TESTS-MCP" path="docs/verification/V-M-TESTS-MCP.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TESTS-MCP-PROTOCOL" module="M-TESTS-MCP-PROTOCOL" path="docs/verification/V-M-TESTS-MCP-PROTOCOL.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TESTS-PARITY" module="M-TESTS-PARITY" path="docs/verification/V-M-TESTS-PARITY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TRACKING" module="M-TRACKING" path="docs/verification/V-M-TRACKING.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-UTILS" module="M-UTILS" path="docs/verification/V-M-UTILS.xml" priority="normal" status="active" />
+  </VERIFICATIONS>
+</VERIFICATION_INDEX>

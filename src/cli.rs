@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.6.0 — Added command handler function contracts]
 // END_CHANGE_SUMMARY
 
 use clap::{Parser, Subcommand};
@@ -54,6 +54,9 @@ pub enum Command {
     Hooks(HooksCmd),
     Doctor(DoctorCmd),
     Refresh(RefreshCmd),
+    Skills(SkillsCmd),
+    #[command(name = "ci")]
+    Ci(CiCmd),
     #[command(name = "history")]
     History(HistoryCmd),
     Serve(ServeCmd),
@@ -76,7 +79,10 @@ macro_rules! cmd_struct {
 
 #[derive(clap::Args)]
 #[command(about = "Install Synapse hooks into current project (MCP, plugin, rules)")]
-pub struct InitCmd;
+pub struct InitCmd {
+    #[arg(long)]
+    pub from_existing: bool,
+}
 #[derive(clap::Args)]
 #[command(about = "Index codebase for semantic search")]
 pub struct IndexCmd {
@@ -87,18 +93,41 @@ pub struct IndexCmd {
     #[arg(long)]
     pub no_git: bool,
 }
-cmd_struct!(VerifyCmd, "Run verification suite",
-    level: Option<String>,
-    r#mod: Option<String>,
-);
-cmd_struct!(ReviewCmd, "GRACE integrity review",
-    mode: Option<String>,
-);
+#[derive(clap::Args)]
+#[command(about = "Run verification suite")]
+pub struct VerifyCmd {
+    #[arg(long)]
+    pub level: Option<String>,
+    #[arg(long = "mod")]
+    pub r#mod: Option<String>,
+    #[arg(long)]
+    pub json: bool,
+    #[arg(long)]
+    pub ci: bool,
+}
+
+#[derive(clap::Args)]
+#[command(about = "GRACE integrity review")]
+pub struct ReviewCmd {
+    #[arg(long)]
+    pub mode: Option<String>,
+    #[arg(long = "mod")]
+    pub r#mod: Option<String>,
+    #[arg(long)]
+    pub json: bool,
+    #[arg(long)]
+    pub ci: bool,
+}
+
 #[derive(clap::Args)]
 #[command(about = "Project health report")]
 pub struct StatusCmd {
     #[arg(long)]
     pub json: bool,
+    #[arg(long)]
+    pub r#mod: Option<String>,
+    #[arg(long)]
+    pub ci: bool,
 }
 cmd_struct!(ExplainCmd, "Explain code using indexed context",
     query: Vec<String>,
@@ -192,6 +221,31 @@ pub struct DoctorCmd;
 pub struct RefreshCmd {
     #[arg(long)]
     pub json: bool,
+    #[arg(long)]
+    pub fix: bool,
+}
+
+#[derive(clap::Args)]
+#[command(about = "Run or inspect GRACE workflow skills")]
+pub struct SkillsCmd {
+    pub action: String,
+    pub name: Option<String>,
+    #[arg(trailing_var_arg = true)]
+    pub args: Vec<String>,
+}
+
+#[derive(Subcommand)]
+pub enum CiAction {
+    Verify(VerifyCmd),
+    Review(ReviewCmd),
+    Status(StatusCmd),
+}
+
+#[derive(clap::Args)]
+#[command(about = "CI-friendly grouped commands")]
+pub struct CiCmd {
+    #[command(subcommand)]
+    pub action: CiAction,
 }
 
 #[derive(clap::Args)]
@@ -210,8 +264,15 @@ pub struct ServeCmd {
 }
 
 use crate::config::Config;
+use crate::grace::bootstrap::{bootstrap_existing_repo, resolve_module_scope};
+use crate::grace::layout::DocsLayout;
 
 impl InitCmd {
+    // START_CONTRACT_InitCmd::run
+    // PURPOSE: Initialize project hooks, sharded docs, and optional existing-repo artifacts
+    // INPUTS: { config: Config — runtime config }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes project integration files, docs, and index storage
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
 
@@ -268,109 +329,11 @@ impl InitCmd {
             )?;
         }
 
-        // Phase 0: GRACE architecture templates in docs/
-        let docs_dir = root.join("docs");
-        std::fs::create_dir_all(&docs_dir)?;
-        let phase0_templates: &[(&str, &str)] = &[
-            (
-                "docs/requirements.xml",
-                r#"<?xml version="1.0" encoding="UTF-8"?>
-<REQUIREMENTS>
-  <META>
-    <PROJECT>my-project</PROJECT>
-    <DESCRIPTION>Describe what this project does in one sentence</DESCRIPTION>
-    <LANGUAGE>rust</LANGUAGE>
-  </META>
-  <REQUIREMENT>
-    <NAME>Core Feature</NAME>
-    <PURPOSE>Describe the core purpose</PURPOSE>
-    <DEPENDS></DEPENDS>
-  </REQUIREMENT>
-</REQUIREMENTS>
-"#,
-            ),
-            (
-                "docs/technology.xml",
-                r#"<?xml version="1.0" encoding="UTF-8"?>
-<TECHNOLOGY>
-  <STACK>
-    <LANGUAGE>rust</LANGUAGE>
-    <FRAMEWORK></FRAMEWORK>
-    <DATABASE></DATABASE>
-  </STACK>
-  <TOOLS>
-    <TOOL purpose="build">cargo</TOOL>
-    <TOOL purpose="testing">cargo test</TOOL>
-    <TOOL purpose="lint">cargo clippy</TOOL>
-  </TOOLS>
-</TECHNOLOGY>
-"#,
-            ),
-            (
-                "docs/development-plan.xml",
-                r#"<?xml version="1.0" encoding="UTF-8"?>
-<DEVELOPMENT_PLAN>
-  <META>
-    <GENERATED_BY>syn init</GENERATED_BY>
-  </META>
-  <PHASES>
-    <PHASE id="1" name="Foundation">
-      <DESCRIPTION>Core data structures and module contracts</DESCRIPTION>
-      <MODULES>
-        <M-1>
-          <ID>M-CORE</ID>
-          <NAME>Core Module</NAME>
-          <PURPOSE>Core application logic</PURPOSE>
-          <FILES><FILE>src/core.rs</FILE></FILES>
-        </M-1>
-      </MODULES>
-    </PHASE>
-  </PHASES>
-  <DEPENDENCIES></DEPENDENCIES>
-</DEVELOPMENT_PLAN>
-"#,
-            ),
-            (
-                "docs/verification-plan.xml",
-                r#"<?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION_PLAN>
-  <GLOBAL_POLICY>
-    <DETERMINISTIC_FIRST>true</DETERMINISTIC_FIRST>
-  </GLOBAL_POLICY>
-  <MODULE_VERIFICATION id="V-M-CORE">
-    <MODULE_ID>M-CORE</MODULE_ID>
-    <UNIT_TESTS></UNIT_TESTS>
-    <LOG_MARKERS></LOG_MARKERS>
-  </MODULE_VERIFICATION>
-  <PHASE_GATES>
-    <PHASE id="1">
-      <GATE>module-local verify on all M-1 modules</GATE>
-    </PHASE>
-  </PHASE_GATES>
-</VERIFICATION_PLAN>
-"#,
-            ),
-            (
-                "docs/knowledge-graph.xml",
-                r#"<?xml version="1.0" encoding="UTF-8"?>
-<KNOWLEDGE_GRAPH>
-  <NODES>
-    <NODE id="M-CORE">
-      <NAME>Core Module</NAME>
-      <KIND>module</KIND>
-      <PATH>src/core.rs</PATH>
-    </NODE>
-  </NODES>
-  <RELATIONSHIPS></RELATIONSHIPS>
-</KNOWLEDGE_GRAPH>
-"#,
-            ),
-        ];
-        for (path, content) in phase0_templates {
-            let full = root.join(path);
-            if !full.exists() {
-                std::fs::write(&full, content)?;
-            }
+        // Phase 0+: initialize MyGrace-style sharded docs layout plus compatibility docs
+        let layout = DocsLayout::new(&root);
+        layout.ensure_initialized()?;
+        if self.from_existing {
+            bootstrap_existing_repo(&root)?;
         }
 
         // Index existing sources
@@ -385,12 +348,17 @@ impl InitCmd {
         println!();
         println!("What was created:");
         println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
-        println!("  opencode.jsonc              — MCP auto-start (12 tools for LLM)");
-        println!("  docs/                        — Phase 0 architecture templates (5 XML files)");
+        println!("  opencode.jsonc              — MCP auto-start (27 tools: 12 core + 15 GRACE)");
+        println!(
+            "  docs/                        — Sharded architecture layout + compatibility XML docs"
+        );
         println!("  .opencode/plugins/synapse.ts — auto-proxy + GRACE system context");
         println!("  .opencode/rules/synapse.md   — tool reference for LLM");
         println!();
         println!("Done. Now run: opencode");
+        if self.from_existing {
+            println!("Existing repo bootstrap: seeded sharded docs from current source tree.");
+        }
         println!("The LLM will ask what you want to build and create everything.");
         Ok(())
     }
@@ -546,8 +514,32 @@ impl GrepCmd {
 impl VerifyCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
-        let results = crate::grace::GraceEngine::verify_project(&root).await?;
+        let mut results = crate::grace::GraceEngine::verify_project(&root).await?;
+        if let Some(module) = self.r#mod.as_deref() {
+            let scope = resolve_module_scope(&root, module);
+            if !scope.is_empty() {
+                results.retain(|r| {
+                    r.checks.iter().any(|c| {
+                        scope
+                            .iter()
+                            .any(|p| c.details.contains(&p.display().to_string()))
+                            || c.details.contains(module)
+                            || c.name.contains(module)
+                            || r.level.contains(module)
+                    })
+                });
+            }
+        }
+
         let all_pass = results.iter().all(|r| r.passed);
+        if self.json || self.ci {
+            println!("{}", serde_json::to_string_pretty(&results)?);
+            if all_pass {
+                return Ok(());
+            }
+            anyhow::bail!("Verification failed. Fix issues above and re-run.");
+        }
+
         for r in &results {
             let status = if r.passed { "✓ PASS" } else { "✗ FAIL" };
             println!("[{}] {}", status, r.level);
@@ -567,12 +559,38 @@ impl VerifyCmd {
         Ok(())
     }
 }
-
 impl ReviewCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         let mode = self.mode.as_deref().unwrap_or("scoped");
         let report = crate::grace::review::Reviewer::review(&root, mode)?;
+        let mut sections = report.sections.clone();
+        if let Some(module) = self.r#mod.as_deref() {
+            let scope = resolve_module_scope(&root, module);
+            if !scope.is_empty() {
+                sections.retain(|s| {
+                    s.name.contains(module)
+                        || s.details.contains(module)
+                        || s.issues.iter().any(|i| i.contains(module))
+                        || scope
+                            .iter()
+                            .any(|p| s.details.contains(&p.display().to_string()))
+                });
+            }
+        }
+        let report = crate::grace::review::ReviewReport {
+            mode: report.mode,
+            passed: sections.iter().all(|s| s.passed),
+            sections,
+        };
+        if self.json || self.ci {
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            if report.passed {
+                return Ok(());
+            }
+            anyhow::bail!("Review found issues.");
+        }
+
         println!("=== GRACE Integrity Review ({}) ===", report.mode);
         for s in &report.sections {
             let status = if s.passed { "✓" } else { "✗" };
@@ -594,10 +612,31 @@ impl StatusCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         let report = crate::grace::status::StatusCollector::collect(&root).await?;
-        crate::grace::status::StatusCollector::print_report(&report);
-        if self.json {
-            println!("{}", serde_json::to_string_pretty(&report)?);
+        if let Some(module) = self.r#mod.as_deref() {
+            let scope = resolve_module_scope(&root, module);
+            if self.json || self.ci {
+                let filtered = serde_json::json!({
+                    "health": report.health,
+                    "mygrace_issues": report.mygrace_issues,
+                    "contracts": report.contracts.clone(),
+                    "semantic": report.semantic.clone(),
+                    "verification": report.verification.clone(),
+                    "drift": report.drift.clone(),
+                    "token_economy": report.token_economy,
+                    "system": report.system,
+                    "next_actions": report.next_actions.iter().filter(|a| a.contains(module) || scope.iter().any(|p| a.contains(&p.display().to_string()))).cloned().collect::<Vec<_>>()
+                });
+                println!("{}", serde_json::to_string_pretty(&filtered)?);
+                return Ok(());
+            }
+            crate::grace::status::StatusCollector::print_report(&report);
+            return Ok(());
         }
+        if self.json || self.ci {
+            println!("{}", serde_json::to_string_pretty(&report)?);
+            return Ok(());
+        }
+        crate::grace::status::StatusCollector::print_report(&report);
         Ok(())
     }
 }
@@ -651,6 +690,16 @@ impl GainCmd {
         if stats.total_commands > 0 {
             let est_cost_saved = stats.total_saved_tokens as f64 * 0.000003; // ~$3/M input tokens
             println!("Est. cost saved:     ${:.4}", est_cost_saved);
+        }
+        if !stats.top_commands.is_empty() {
+            println!();
+            println!("Top commands by token savings:");
+            for item in &stats.top_commands {
+                println!(
+                    "  - {}: {} runs, {} tokens saved, avg {:.1}%",
+                    item.command, item.count, item.saved_tokens, item.avg_savings_pct
+                );
+            }
         }
         Ok(())
     }
@@ -1016,7 +1065,11 @@ impl DoctorCmd {
 impl RefreshCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
-        let report = crate::grace::refresh::Refresher::refresh(&root)?;
+        let report = if self.fix {
+            crate::grace::refresh::Refresher::fix(&root)?
+        } else {
+            crate::grace::refresh::Refresher::refresh(&root)?
+        };
 
         if self.json {
             println!("{}", serde_json::to_string_pretty(&report)?);
@@ -1024,6 +1077,9 @@ impl RefreshCmd {
         }
 
         println!("=== GRACE Refresh Report ===");
+        if report.fixed {
+            println!("Canonical artifacts were rewritten from source MODULE_ID contracts.");
+        }
         println!();
         println!("Code modules with contracts: {}", report.total_modules);
         println!("  In knowledge-graph:      {}", report.in_graph);
@@ -1062,6 +1118,49 @@ impl RefreshCmd {
             println!();
         }
 
+        if !report.canonical_drift.files_without_contract.is_empty() {
+            println!("Governed files without MODULE_CONTRACT:");
+            for path in &report.canonical_drift.files_without_contract {
+                println!("  ✗ {}", path);
+            }
+            println!();
+        }
+
+        if !report.canonical_drift.duplicate_graph_ids.is_empty()
+            || !report.canonical_drift.duplicate_verification_ids.is_empty()
+            || !report.canonical_drift.graph_path_mismatches.is_empty()
+            || !report
+                .canonical_drift
+                .verification_path_mismatches
+                .is_empty()
+            || !report.canonical_drift.missing_module_shards.is_empty()
+            || !report
+                .canonical_drift
+                .missing_verification_shards
+                .is_empty()
+        {
+            println!("Canonical MyGRACE drift:");
+            for id in &report.canonical_drift.duplicate_graph_ids {
+                println!("  ✗ duplicate graph id {}", id);
+            }
+            for id in &report.canonical_drift.duplicate_verification_ids {
+                println!("  ✗ duplicate verification id {}", id);
+            }
+            for issue in &report.canonical_drift.graph_path_mismatches {
+                println!("  ✗ {}", issue);
+            }
+            for issue in &report.canonical_drift.verification_path_mismatches {
+                println!("  ✗ {}", issue);
+            }
+            for path in &report.canonical_drift.missing_module_shards {
+                println!("  ✗ missing module shard {}", path);
+            }
+            for path in &report.canonical_drift.missing_verification_shards {
+                println!("  ✗ missing verification shard {}", path);
+            }
+            println!();
+        }
+
         if !report.suggested_actions.is_empty() {
             println!("Suggested actions:");
             for a in &report.suggested_actions {
@@ -1072,6 +1171,7 @@ impl RefreshCmd {
 
         if report.not_in_graph.is_empty()
             && report.not_in_verification.is_empty()
+            && report.canonical_drift.is_clean()
             && report.contract_issues.is_empty()
         {
             println!("All modules synced. No drift detected.");
@@ -1084,6 +1184,61 @@ impl RefreshCmd {
 impl ServeCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         crate::dashboard::start_dashboard(&self.bind).await
+    }
+}
+
+impl SkillsCmd {
+    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
+        match self.action.as_str() {
+            "list" => {
+                println!("=== GRACE Skills ===");
+                for skill in crate::skills::registry::SKILL_DEFS {
+                    println!("- {} — {}", skill.name, skill.description);
+                }
+                Ok(())
+            }
+            "show" => {
+                let name = self
+                    .name
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("Usage: syn skills show <name>"))?;
+                match crate::skills::registry::find_skill(name) {
+                    Some(skill) => {
+                        println!("{} — {}", skill.name, skill.description);
+                        if !skill.args.is_empty() {
+                            println!("Args:");
+                            for arg in skill.args {
+                                let req = if arg.required { "required" } else { "optional" };
+                                println!("  - {} ({}) — {}", arg.name, req, arg.description);
+                            }
+                        }
+                        Ok(())
+                    }
+                    None => anyhow::bail!("Unknown skill: {}", name),
+                }
+            }
+            "run" => {
+                let name = self.name.as_deref().ok_or_else(|| {
+                    anyhow::anyhow!("Usage: syn skills run <name> [key=value ...]")
+                })?;
+                let mut args = serde_json::Map::new();
+                for raw in &self.args {
+                    if let Some((k, v)) = raw.split_once('=') {
+                        args.insert(k.to_string(), serde_json::Value::String(v.to_string()));
+                    }
+                }
+                let engine = crate::skills::SkillEngine::new(&_config);
+                let result = engine
+                    .execute(crate::skills::SkillRequest {
+                        name: name.to_string(),
+                        arguments: serde_json::Value::Object(args),
+                    })
+                    .await?;
+                println!("{}\n\n{}", result.title, result.body);
+                Ok(())
+            }
+            _ => anyhow::bail!("Usage: syn skills list|show|run <name> [key=value ...]"),
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-.PHONY: build test run clean install lint fmt check
+.PHONY: build test run clean install lint fmt check ci
 
 BIN_NAME = syn
 
@@ -27,6 +27,9 @@ fmt-check:
 	cargo fmt --all -- --check
 
 check: fmt-check lint test
+
+ci:
+	bash scripts/ci.sh
 
 clean:
 	cargo clean

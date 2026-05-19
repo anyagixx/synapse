@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-BUILD" type="UTILITY" status="active">
+  <NAME>M-BUILD</NAME>
+  <PURPOSE>Cargo build script — declares rebuild triggers for embedded proxy filters and OpenCode assets</PURPOSE>
+  <SCOPE>Cargo rerun-if-changed directives only</SCOPE>
+  <FILES>
+    <FILE>build.rs</FILE>
+  </FILES>
+  <DEPENDS>M-PROXY-FILTER,M-HOOKS</DEPENDS>
+  <LINKS>Cargo.toml</LINKS>
+  <VERIFICATION_REF>V-M-BUILD</VERIFICATION_REF>
+</MODULE>

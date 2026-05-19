@@ -11,9 +11,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.6.0 — Added public API contract for MCP module exports]
 // END_CHANGE_SUMMARY
 
+// START_CONTRACT_public_api
+// PURPOSE: Export MCP server and LSP bridge modules
+// OUTPUTS: { lsp module }, { server module }
 // START_public_api
 pub mod lsp;
 pub mod server;

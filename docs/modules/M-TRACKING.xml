@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TRACKING" type="DATA_LAYER" status="active">
+  <NAME>M-TRACKING</NAME>
+  <PURPOSE>SQLite token tracker — records command token usage and provides stats</PURPOSE>
+  <SCOPE>Tracker struct, token recording to SQLite, stats querying, TrackingStats model</SCOPE>
+  <FILES>
+    <FILE>src/tracking/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG</DEPENDS>
+  <LINKS>tracking.db</LINKS>
+  <VERIFICATION_REF>V-M-TRACKING</VERIFICATION_REF>
+</MODULE>

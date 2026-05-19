@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KNOWLEDGE_GRAPH>
+  <META><PRIMARY_MODEL>docs/graph-index.xml</PRIMARY_MODEL></META>
+  <NODES><NODE ref="docs/modules/M-CORE.xml" /></NODES>
+</KNOWLEDGE_GRAPH>

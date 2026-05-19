@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP" type="INTEGRATION" status="active">
+  <NAME>M-MCP</NAME>
+  <PURPOSE>MCP module declaration — exports lsp and server sub-modules</PURPOSE>
+  <SCOPE>Module declarations only (lsp, server)</SCOPE>
+  <FILES>
+    <FILE>src/mcp/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-MCP-SERVER,M-MCP-LSP</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-MCP</VERIFICATION_REF>
+</MODULE>

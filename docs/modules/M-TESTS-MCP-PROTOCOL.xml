@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TESTS-MCP-PROTOCOL" type="INTEGRATION" status="active">
+  <NAME>M-TESTS-MCP-PROTOCOL</NAME>
+  <PURPOSE>MCP protocol tests — verify initialize, tools/list shape, and representative grace tool exposure</PURPOSE>
+  <SCOPE>Direct handler tests for initialize and tools/list protocol behavior</SCOPE>
+  <FILES>
+    <FILE>tests/mcp_protocol.rs</FILE>
+  </FILES>
+  <DEPENDS>M-MCP-SERVER,M-SKILLS,M-CAPABILITIES</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-TESTS-MCP-PROTOCOL</VERIFICATION_REF>
+</MODULE>

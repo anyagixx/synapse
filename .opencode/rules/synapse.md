@@ -6,114 +6,81 @@
 
 ## Phase 0 — Architecture Artifacts (MANDATORY BEFORE ANY CODE)
 
-**You are in Phase 0 until ALL 5 files exist in `docs/`. You MAY NOT write source code in Phase 0.**
+**You are in Phase 0 until primary sharded architecture artifacts exist in `docs/`. You MAY NOT write source code in Phase 0.**
 
 Create files in this exact order:
 
-### 1. `docs/requirements.xml`
+### 1. `docs/graph-index.xml`
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<REQUIREMENTS>
-  <META><PROJECT>name</PROJECT><DESCRIPTION>what it does</DESCRIPTION><LANGUAGE>rust|python|ts|go</LANGUAGE></META>
-  <UC-1><Actor>User</Actor><Action>create note</Action><Goal>persist text with title</Goal></UC-1>
-  <NonGoals>what is explicitly OUT of scope</NonGoals>
-  <Risks>what could go wrong</Risks>
-  <OpenQuestions>what needs clarification</OpenQuestions>
-</REQUIREMENTS>
+<GRAPH_INDEX>
+  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY></META>
+  <MODULES><MODULE id="M-CORE" path="docs/modules/M-CORE.xml" status="planned" /></MODULES>
+  <RELATIONSHIPS></RELATIONSHIPS>
+</GRAPH_INDEX>
 ```
 
-### 2. `docs/technology.xml`
+### 2. `docs/plan-index.xml`
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<TECHNOLOGY>
-  <STACK><LANGUAGE>rust</LANGUAGE><FRAMEWORK></FRAMEWORK><DATABASE></DATABASE></STACK>
-  <TOOLS><TOOL purpose="build">cargo</TOOL><TOOL purpose="test">cargo test</TOOL></TOOLS>
-</TECHNOLOGY>
+<PLAN_INDEX>
+  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY><ACTIVE_PHASE>Phase-0</ACTIVE_PHASE></META>
+  <PHASES><PHASE id="Phase-0" path="docs/phases/Phase-0.xml" status="active" /></PHASES>
+</PLAN_INDEX>
 ```
 
-### 3. `docs/development-plan.xml`
+### 3. `docs/verification-index.xml`
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<DEVELOPMENT_PLAN>
-  <META><GENERATED_BY>LLM</GENERATED_BY></META>
-  <ArchitectureNotes>key design decisions</ArchitectureNotes>
-  <PHASES>
-    <Phase-1 name="Foundation" status="pending">
-      <MODULES>
-        <M-CORE name="Core" type="CORE_LOGIC" status="planned">
-          <PURPOSE>Core application logic</PURPOSE>
-          <contract><inputs></inputs><outputs></outputs><errors></errors></contract>
-          <FILES><FILE>src/core.rs</FILE></FILES>
-          <verification-ref>V-M-CORE</verification-ref>
-        </M-CORE>
-      </MODULES>
-    </Phase-1>
-  </PHASES>
-  <DataFlows>
-    <DF-1 name="CreateNote" trigger="user submits form">
-      <step-1 module="M-CORE">validate input</step-1>
-      <step-2 module="M-STORAGE">persist to DB</step-2>
-      <evidence>log: [Core][create_note] saved id={}</evidence>
-    </DF-1>
-  </DataFlows>
-  <ImplementationOrder>
-    <Phase-1><step-1 module="M-CORE">implement core types and create_note</step-1></Phase-1>
-  </ImplementationOrder>
-  <ExecutionPolicy><controller>main agent</controller><worker_per_module>1</worker_per_module></ExecutionPolicy>
-  <DEPENDENCIES><DEP from="M-CORE" to="M-STORAGE"/></DEPENDENCIES>
-</DEVELOPMENT_PLAN>
+<VERIFICATION_INDEX>
+  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY></META>
+  <VERIFICATIONS><VERIFICATION id="V-M-CORE" module="M-CORE" path="docs/verification/V-M-CORE.xml" priority="critical" status="planned" /></VERIFICATIONS>
+</VERIFICATION_INDEX>
 ```
 
-### 4. `docs/verification-plan.xml`
+### 4. `docs/modules/M-XXX.xml`
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION_PLAN>
-  <GlobalPolicy>
-    <deterministic-first>true</deterministic-first>
-    <log-format>[Module][function][BLOCK_NAME] message</log-format>
-    <redaction>no secrets in logs</redaction>
-  </GlobalPolicy>
-  <ModuleVerification>
-    <V-M-CORE MODULE="M-CORE" PRIORITY="critical">
-      <unit-tests>test_core</unit-tests>
-      <required-log-markers><marker>[Core][create_note][CREATE]</marker></required-log-markers>
-      <required-trace-assertions><assert>CREATE log appears exactly once per call</assert></required-trace-assertions>
-      <failure-packet>
-        <scenario>create_note with empty title</scenario>
-        <expected>error returned, no log emitted</expected>
-        <observed>check actual behavior</observed>
-        <suggested>validate before persist, add early return</suggested>
-      </failure-packet>
-    </V-M-CORE>
-  </ModuleVerification>
-  <PhaseGates>
-    <Gate-Phase-1><requires>all V-M-* module checks PASS</requires><command>syn verify</command></Gate-Phase-1>
-  </PhaseGates>
-</VERIFICATION_PLAN>
+<MODULE id="M-CORE" type="CORE_LOGIC" status="planned">
+  <NAME>Core Module</NAME>
+  <PURPOSE>Core application logic</PURPOSE>
+  <FILES><FILE>src/core.rs</FILE></FILES>
+  <VERIFICATION_REF>V-M-CORE</VERIFICATION_REF>
+</MODULE>
 ```
 
-### 5. `docs/knowledge-graph.xml`
+### 5. `docs/phases/Phase-N.xml`
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<KNOWLEDGE_GRAPH>
-  <NODES>
-    <M-CORE TYPE="CORE_LOGIC" STATUS="implemented">
-      <NAME>Core Module</NAME><PATH>src/core.rs</PATH>
-      <exports><fn-create_note>creates and persists a note</fn-create_note></exports>
-      <verification-ref>V-M-CORE</verification-ref>
-    </M-CORE>
-  </NODES>
-  <CrossLinks><CrossLink from="M-CORE" to="M-STORAGE" relation="depends_on"/></CrossLinks>
-</KNOWLEDGE_GRAPH>
+<PHASE id="Phase-1" status="planned">
+  <NAME>Foundation</NAME>
+  <GOAL>Implement initial core modules with contracts and verification</GOAL>
+  <MODULE_REFS><MODULE_REF id="M-CORE" /></MODULE_REFS>
+</PHASE>
 ```
+
+### 6. `docs/verification/V-M-XXX.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CORE" module="M-CORE" priority="critical" status="planned">
+  <UNIT_TESTS></UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-1</PHASE_GATE>
+</VERIFICATION>
+```
+
+Compatibility docs may also exist under `docs/*.xml`, but sharded indexes are primary source of truth.
 
 ### Phase 0 STOP Gates
-- If `docs/requirements.xml` is missing → **STOP. Ask user what to build.**
-- If `docs/technology.xml` is missing → **STOP. Define the tech stack.**
-- If `docs/development-plan.xml` is missing → **STOP. Design architecture with M-xxx modules, Phase-N gates, DF-xxx dataflows.**
-- If `docs/verification-plan.xml` is missing → **STOP. Define V-M-xxx verification per module.**
-- If ANY Phase 0 file is missing → **DO NOT write source code.**
-- Only when ALL 5 exist → proceed to Phase 1.
+- If `docs/graph-index.xml` is missing → **STOP. Ask user what to build.**
+- If `docs/plan-index.xml` is missing → **STOP. Define phases and execution order.**
+- If `docs/verification-index.xml` is missing → **STOP. Define verification structure.**
+- If `docs/modules/` has no module shard → **STOP. Define module architecture.**
+- If `docs/phases/` has no phase shard → **STOP. Define delivery phases.**
+- If `docs/verification/` has no verification shard → **STOP. Define per-module verification.**
+- If ANY primary sharded artifact is missing → **DO NOT write source code.**
+- Only when sharded model exists → proceed to Phase 1.
 
 ---
 

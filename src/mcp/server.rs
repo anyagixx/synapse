@@ -17,6 +17,7 @@
 use crate::config::Config;
 use crate::graphrag::GraphRag;
 use crate::indexer::Indexer;
+use crate::skills::{registry::SKILL_DEFS, SkillEngine, SkillRequest};
 use std::fmt::Display;
 use std::sync::RwLock;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -119,6 +120,7 @@ impl McpServer {
 pub struct SynapseHandler {
     indexer: Indexer,
     graphrag: RwLock<Option<GraphRag>>,
+    skill_engine: SkillEngine,
     initialized: bool,
 }
 // END_SynapseHandler
@@ -137,7 +139,9 @@ impl SynapseHandler {
     pub fn new() -> Self {
         let config = Config::load_or_default();
         let indexer = Indexer::new(&config);
+        let skill_engine = SkillEngine::new(&config);
         let mut graphrag = GraphRag::new();
+
         // Try to find index from current directory
         if let Ok(cwd) = std::env::current_dir() {
             let mut guard = indexer.storage.write().unwrap();
@@ -150,6 +154,7 @@ impl SynapseHandler {
         Self {
             indexer,
             graphrag: RwLock::new(Some(graphrag)),
+            skill_engine,
             initialized: false,
         }
     }
@@ -185,152 +190,12 @@ impl SynapseHandler {
                 if !self.initialized {
                     return self.error(id, -32000, "Not initialized");
                 }
-                self.result(id, serde_json::json!({
-                    "tools": [
-                        {
-                            "name": "semantic_search",
-                            "description": "Search codebase by natural language. Returns code blocks with paths and line numbers.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "query": { "type": "string", "description": "Search query" },
-                                    "max_results": { "type": "number", "default": 10 }
-                                },
-                                "required": ["query"]
-                            }
-                        },
-                        {
-                            "name": "view_signatures",
-                            "description": "View function and class signatures in a file.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "path": { "type": "string", "description": "File path" }
-                                },
-                                "required": ["path"]
-                            }
-                        },
-                        {
-                            "name": "graphrag_query",
-                            "description": "Query the code knowledge graph. Supports: search, get-node, get-relationships, find-path, overview",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "operation": {
-                                        "type": "string",
-                                        "description": "Operation: search | get-node | get-relationships | find-path | overview"
-                                    },
-                                    "query": { "type": "string", "description": "Search query" },
-                                    "node_id": { "type": "string", "description": "Node ID" },
-                                    "from": { "type": "string", "description": "Source node ID" },
-                                    "to": { "type": "string", "description": "Target node ID" }
-                                },
-                                "required": ["operation"]
-                            }
-                        },
-                        {
-                            "name": "verify_project",
-                            "description": "Run GRACE verification checks (module-local, wave, phase). Returns pass/fail status with details.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "level": {
-                                        "type": "string",
-                                        "description": "Verification level: module-local | wave | phase | all"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "name": "review_code",
-                            "description": "Run GRACE integrity review — checks semantic markup, contracts, naming, secrets. Returns issues list.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "mode": {
-                                        "type": "string",
-                                        "description": "Review mode: scoped | full"
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            "name": "project_status",
-                            "description": "Full project health report — contracts, semantic markup, verification, token economy, system info.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {}
-                            }
-                        },
-                        {
-                            "name": "token_savings",
-                            "description": "View token savings analytics — total commands, tokens saved, average savings %, estimated cost saved.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {}
-                            }
-                        },
-                        {
-                            "name": "compress_text",
-                            "description": "Compress text for AI context efficiency. Levels: lite (remove filler), full (also pleasantries), ultra (telegraphic).",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "text": { "type": "string", "description": "Text to compress" },
-                                    "level": {
-                                        "type": "string",
-                                        "description": "Compression level: lite | full | ultra"
-                                    }
-                                },
-                                "required": ["text"]
-                            }
-                        },
-                        {
-                            "name": "refresh_project",
-                            "description": "Sync knowledge graph and verification plan with code.",
-                            "inputSchema": { "type": "object", "properties": {} }
-                        },
-                        {
-                            "name": "suggest_contract",
-                            "description": "Generate a MODULE_CONTRACT template for a new module. Provide module name and purpose.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "module_name": { "type": "string", "description": "Module name (e.g. 'auth')" },
-                                    "purpose": { "type": "string", "description": "What the module does" },
-                                    "language": { "type": "string", "description": "Language: rust | python | ts | go" }
-                                },
-                                "required": ["module_name", "purpose"]
-                            }
-                        },
-                        {
-                            "name": "lsp_hover",
-                            "description": "Get type/signature information at a position via LSP.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "file": { "type": "string", "description": "File path" },
-                                    "line": { "type": "number", "description": "Line (1-based)" },
-                                    "column": { "type": "number", "description": "Column (0-based)" }
-                                },
-                                "required": ["file", "line", "column"]
-                            }
-                        },
-                        {
-                            "name": "lsp_references",
-                            "description": "Find all references to a symbol at a position via LSP.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "file": { "type": "string", "description": "File path" },
-                                    "line": { "type": "number", "description": "Line (1-based)" },
-                                    "column": { "type": "number", "description": "Column (0-based)" }
-                                },
-                                "required": ["file", "line", "column"]
-                            }
-                        }
-                    ]
-                }))
+                self.result(
+                    id,
+                    serde_json::json!({
+                        "tools": self.tool_definitions()
+                    }),
+                )
             }
             "tools/call" => {
                 if !self.initialized {
@@ -353,6 +218,9 @@ impl SynapseHandler {
                     "suggest_contract" => self.handle_suggest_contract(id, args).await,
                     "lsp_hover" => self.handle_lsp_hover(id, args).await,
                     "lsp_references" => self.handle_lsp_references(id, args).await,
+                    name if name.starts_with("grace_") => {
+                        self.handle_grace_skill(id, name, args).await
+                    }
                     _ => self.error(id, -32601, format!("Unknown tool: {}", name)),
                 }
             }
@@ -787,13 +655,19 @@ impl SynapseHandler {
     async fn handle_refresh(
         &self,
         id: Option<serde_json::Value>,
-        _args: &serde_json::Value,
+        args: &serde_json::Value,
     ) -> serde_json::Value {
         let root = match std::env::current_dir() {
             Ok(r) => r,
             Err(e) => return self.error(id, -32603, format!("cwd error: {}", e)),
         };
-        match crate::grace::refresh::Refresher::refresh(&root) {
+        let fix = args["fix"].as_bool().unwrap_or(false);
+        let result = if fix {
+            crate::grace::refresh::Refresher::fix(&root)
+        } else {
+            crate::grace::refresh::Refresher::refresh(&root)
+        };
+        match result {
             Ok(report) => {
                 let text = serde_json::to_string_pretty(&report).unwrap_or_default();
                 self.result(
@@ -882,6 +756,175 @@ impl SynapseHandler {
             }
             Err(e) => self.error(id, -32603, format!("LSP references: {}", e)),
         }
+    }
+
+    async fn handle_grace_skill(
+        &self,
+        id: Option<serde_json::Value>,
+        name: &str,
+        args: &serde_json::Value,
+    ) -> serde_json::Value {
+        match self
+            .skill_engine
+            .execute(SkillRequest {
+                name: name.to_string(),
+                arguments: args.clone(),
+            })
+            .await
+        {
+            Ok(result) => self.result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": format!("{}\n\n{}", result.title, result.body)}],
+                    "isError": false
+                }),
+            ),
+            Err(e) => self.error(id, -32603, format!("Skill error: {}", e)),
+        }
+    }
+
+    fn tool_definitions(&self) -> Vec<serde_json::Value> {
+        let mut tools = vec![
+            serde_json::json!({
+                "name": "semantic_search",
+                "description": "Search codebase by natural language. Returns code blocks with paths and line numbers.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": { "type": "string", "description": "Search query" },
+                        "max_results": { "type": "number", "default": 10 }
+                    },
+                    "required": ["query"]
+                }
+            }),
+            serde_json::json!({
+                "name": "view_signatures",
+                "description": "View function and class signatures in a file.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "path": { "type": "string", "description": "File path" }
+                    },
+                    "required": ["path"]
+                }
+            }),
+            serde_json::json!({
+                "name": "graphrag_query",
+                "description": "Query the code knowledge graph. Supports: search, get-node, get-relationships, find-path, overview",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "operation": { "type": "string", "description": "Operation: search | get-node | get-relationships | find-path | overview" },
+                        "query": { "type": "string", "description": "Search query" },
+                        "node_id": { "type": "string", "description": "Node ID" },
+                        "from": { "type": "string", "description": "Source node ID" },
+                        "to": { "type": "string", "description": "Target node ID" }
+                    },
+                    "required": ["operation"]
+                }
+            }),
+            serde_json::json!({
+                "name": "verify_project",
+                "description": "Run GRACE verification checks (module-local, wave, phase). Returns pass/fail status with details.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "level": { "type": "string", "description": "Verification level: module-local | wave | phase | all" }
+                    }
+                }
+            }),
+            serde_json::json!({
+                "name": "review_code",
+                "description": "Run GRACE integrity review — checks semantic markup, contracts, naming, secrets. Returns issues list.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "mode": { "type": "string", "description": "Review mode: scoped | full" }
+                    }
+                }
+            }),
+            serde_json::json!({
+                "name": "project_status",
+                "description": "Full project health report — contracts, semantic markup, verification, token economy, system info.",
+                "inputSchema": { "type": "object", "properties": {} }
+            }),
+            serde_json::json!({
+                "name": "token_savings",
+                "description": "View token savings analytics — total commands, tokens saved, average savings %, estimated cost saved.",
+                "inputSchema": { "type": "object", "properties": {} }
+            }),
+            serde_json::json!({
+                "name": "compress_text",
+                "description": "Compress text for AI context efficiency. Levels: lite (remove filler), full (also pleasantries), ultra (telegraphic).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "text": { "type": "string", "description": "Text to compress" },
+                        "level": { "type": "string", "description": "Compression level: lite | full | ultra" }
+                    },
+                    "required": ["text"]
+                }
+            }),
+            serde_json::json!({
+                "name": "refresh_project",
+                "description": "Report or fix canonical MyGRACE drift between code contracts and sharded artifacts.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "fix": { "type": "boolean", "description": "When true, rewrite canonical indexes and shards from source MODULE_ID contracts" }
+                    }
+                }
+            }),
+            serde_json::json!({
+                "name": "suggest_contract",
+                "description": "Generate a MODULE_CONTRACT template for a new module. Provide module name and purpose.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "module_name": { "type": "string", "description": "Module name (e.g. 'auth')" },
+                        "purpose": { "type": "string", "description": "What the module does" },
+                        "language": { "type": "string", "description": "Language: rust | python | ts | go" }
+                    },
+                    "required": ["module_name", "purpose"]
+                }
+            }),
+            serde_json::json!({
+                "name": "lsp_hover",
+                "description": "Get type/signature information at a position via LSP.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "file": { "type": "string", "description": "File path" },
+                        "line": { "type": "number", "description": "Line (1-based)" },
+                        "column": { "type": "number", "description": "Column (0-based)" }
+                    },
+                    "required": ["file", "line", "column"]
+                }
+            }),
+            serde_json::json!({
+                "name": "lsp_references",
+                "description": "Find all references to a symbol at a position via LSP.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "file": { "type": "string", "description": "File path" },
+                        "line": { "type": "number", "description": "Line (1-based)" },
+                        "column": { "type": "number", "description": "Column (0-based)" }
+                    },
+                    "required": ["file", "line", "column"]
+                }
+            }),
+        ];
+
+        for skill in SKILL_DEFS {
+            tools.push(serde_json::json!({
+                "name": skill.name,
+                "description": skill.description,
+                "inputSchema": skill.input_schema(),
+            }));
+        }
+
+        tools
     }
 
     fn result(

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-HOOKS" type="INTEGRATION" status="active">
+  <NAME>M-HOOKS</NAME>
+  <PURPOSE>Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode</PURPOSE>
+  <SCOPE>HookManager struct, install/uninstall/status for opencode agent, file generation</SCOPE>
+  <FILES>
+    <FILE>src/hooks/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG</DEPENDS>
+  <LINKS>.opencode/</LINKS>
+  <VERIFICATION_REF>V-M-HOOKS</VERIFICATION_REF>
+</MODULE>

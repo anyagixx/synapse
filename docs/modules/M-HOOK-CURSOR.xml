@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-HOOK-CURSOR" type="INTEGRATION" status="active">
+  <NAME>M-HOOK-CURSOR</NAME>
+  <PURPOSE>Cursor shell hook — aliases common developer commands through syn proxy when Cursor session is active</PURPOSE>
+  <SCOPE>Cursor shell alias setup for token-saving command proxying</SCOPE>
+  <FILES>
+    <FILE>hooks/adapters/cursor.sh</FILE>
+  </FILES>
+  <DEPENDS>M-PROXY</DEPENDS>
+  <LINKS>hooks/adapters/README.md</LINKS>
+  <VERIFICATION_REF>V-M-HOOK-CURSOR</VERIFICATION_REF>
+</MODULE>

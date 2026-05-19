@@ -13,9 +13,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added to all source files]
+// LAST_CHANGE: [v2.6.0 — Added public API contract for crate exports]
 // END_CHANGE_SUMMARY
 
+// START_CONTRACT_public_api
+// PURPOSE: Expose crate modules and compile-time metadata constants
+// OUTPUTS: { public module namespace }, { VERSION }, { NAME }
 pub mod capabilities;
 pub mod cli;
 pub mod compress;

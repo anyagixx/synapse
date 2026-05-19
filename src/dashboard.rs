@@ -51,9 +51,48 @@ async fn shutdown_signal() {
 }
 
 async fn index_html() -> axum::response::Html<String> {
+    let root = std::env::current_dir().unwrap_or_default();
+    let layout = crate::grace::layout::DocsLayout::new(&root);
+    let status = StatusCollector::collect(&root).await.ok();
+    let active_phase = std::fs::read_to_string(layout.plan_index_path())
+        .ok()
+        .and_then(|content| {
+            regex::Regex::new(r#"<ACTIVE_PHASE>([^<]+)</ACTIVE_PHASE>"#)
+                .ok()
+                .and_then(|re| re.captures(&content).map(|c| c[1].to_string()))
+        })
+        .unwrap_or_else(|| "unknown".into());
+    let token_block = status
+        .as_ref()
+        .map(|r| format!(
+            "<div class=\"card\"><h2>Token Economy</h2><pre>tracked: {}\nsaved: {}\navg savings: {:.1}%</pre></div>",
+            r.token_economy.total_commands, r.token_economy.total_saved, r.token_economy.avg_savings_pct
+        ))
+        .unwrap_or_else(|| "<div class=\"card\"><h2>Token Economy</h2><pre>unavailable</pre></div>".into());
+    let next_actions = status
+        .as_ref()
+        .map(|r| {
+            let items = r
+                .next_actions
+                .iter()
+                .take(5)
+                .map(|a| format!("<li>{}</li>", a))
+                .collect::<Vec<_>>()
+                .join("");
+            format!(
+                "<div class=\"card\"><h2>Next Actions</h2><ul>{}</ul></div>",
+                items
+            )
+        })
+        .unwrap_or_else(|| {
+            "<div class=\"card\"><h2>Next Actions</h2><pre>unavailable</pre></div>".into()
+        });
     axum::response::Html(format!(
-        r#"<!DOCTYPE html><html><head><title>Synapse Dashboard</title><meta charset="utf-8"><style>body{{font-family:system-ui;max-width:800px;margin:2em auto;padding:1em;background:#111;color:#eee}}h1{{color:#5c9cf5}}.card{{background:#1a1a1a;border-radius:8px;padding:1em;margin:1em 0}}pre{{background:#0a0a0a;padding:1em;border-radius:4px;overflow-x:auto}}.pass{{color:#4caf50}}.fail{{color:#f44336}}.node{{display:inline-block;background:#2a2a3a;border-radius:4px;padding:0.3em 0.6em;margin:0.2em}}</style></head><body><h1>Synapse Dashboard v{}</h1><div class="card"><h2>Health</h2><a href="/api/status" class="pass">/api/status</a> | <a href="/api/graph">/api/graph</a> | <a href="/api/tokens">/api/tokens</a></div></body></html>"#,
-        crate::VERSION
+        r#"<!DOCTYPE html><html><head><title>Synapse Dashboard</title><meta charset="utf-8"><style>body{{font-family:system-ui;max-width:1000px;margin:2em auto;padding:1em;background:#111;color:#eee}}h1{{color:#5c9cf5}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}}.card{{background:#1a1a1a;border-radius:8px;padding:1em;margin:1em 0}}pre{{background:#0a0a0a;padding:1em;border-radius:4px;overflow-x:auto}}.pass{{color:#4caf50}}.fail{{color:#f44336}}.node{{display:inline-block;background:#2a2a3a;border-radius:4px;padding:0.3em 0.6em;margin:0.2em}}</style></head><body><h1>Synapse Dashboard v{}</h1><p>Active phase: <strong>{}</strong></p><div class="grid"><div class="card"><h2>Health</h2><a href="/api/status" class="pass">/api/status</a> | <a href="/api/graph">/api/graph</a> | <a href="/api/tokens">/api/tokens</a></div>{}{}</div></body></html>"#,
+        crate::VERSION,
+        active_phase,
+        token_block,
+        next_actions,
     ))
 }
 // END_start_dashboard
@@ -105,7 +144,14 @@ async fn api_tokens() -> Json<serde_json::Value> {
     let config = crate::config::Config::load_or_default();
     let tracker = crate::tracking::Tracker::new(&config);
     match tracker.get_stats().await {
-        Ok(stats) => Json(serde_json::to_value(stats).unwrap_or_default()),
+        Ok(stats) => Json(serde_json::json!({
+            "total_commands": stats.total_commands,
+            "total_input_tokens": stats.total_input_tokens,
+            "total_output_tokens": stats.total_output_tokens,
+            "total_saved_tokens": stats.total_saved_tokens,
+            "avg_savings_pct": stats.avg_savings_pct,
+            "top_commands": stats.top_commands,
+        })),
         Err(e) => Json(serde_json::json!({"error": e.to_string()})),
     }
 }

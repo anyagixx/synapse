@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CAPABILITIES" type="CORE_LOGIC" status="active">
+  <NAME>M-CAPABILITIES</NAME>
+  <PURPOSE>Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms</PURPOSE>
+  <SCOPE>Command list, core MCP tool list, GRACE skill tool list, verify check list, review mode list, supported platforms</SCOPE>
+  <FILES>
+    <FILE>src/capabilities.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-MCP,M-SKILLS-REGISTRY</DEPENDS>
+  <LINKS>README.md,docs/COMMANDS.md</LINKS>
+  <VERIFICATION_REF>V-M-CAPABILITIES</VERIFICATION_REF>
+</MODULE>

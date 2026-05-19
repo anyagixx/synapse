@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEVELOPMENT_PLAN>
+  <META><GENERATED_BY>syn init</GENERATED_BY><PRIMARY_MODEL>docs/plan-index.xml</PRIMARY_MODEL></META>
+  <PHASES><PHASE ref="docs/phases/Phase-0.xml" /><PHASE ref="docs/phases/Phase-1.xml" /></PHASES>
+  <MODULES><MODULE ref="docs/modules/M-CORE.xml" /></MODULES>
+</DEVELOPMENT_PLAN>

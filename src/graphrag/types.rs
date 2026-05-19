@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.6.0 — Added function contracts for graph type methods]
 // END_CHANGE_SUMMARY
 
 use serde::{Deserialize, Serialize};
@@ -42,6 +42,9 @@ pub enum RelationType {
 // END_RelationType
 
 impl RelationType {
+    // START_CONTRACT_RelationType::weight
+    // PURPOSE: Return traversal weight for a relationship kind
+    // OUTPUTS: { f64 }
     pub fn weight(&self) -> f64 {
         match self {
             Self::Implements | Self::Extends | Self::Configures => 1.0,
@@ -55,6 +58,9 @@ impl RelationType {
         }
     }
 
+    // START_CONTRACT_RelationType::label
+    // PURPOSE: Return stable string label for a relationship kind
+    // OUTPUTS: { &'static str }
     pub fn label(&self) -> &'static str {
         match self {
             Self::Implements => "implements",
@@ -74,6 +80,10 @@ impl RelationType {
         }
     }
 
+    // START_CONTRACT_RelationType::parse
+    // PURPOSE: Parse a relationship type from its stable string label
+    // INPUTS: { s: &str — relationship label }
+    // OUTPUTS: { Option<RelationType> }
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "implements" => Some(Self::Implements),
@@ -131,12 +141,18 @@ pub struct CodeGraph {
 // END_CodeGraph
 
 impl Default for CodeGraph {
+    // START_CONTRACT_CodeGraph::default
+    // PURPOSE: Create an empty code graph via Default
+    // OUTPUTS: { CodeGraph }
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl CodeGraph {
+    // START_CONTRACT_CodeGraph::new
+    // PURPOSE: Create an empty code graph
+    // OUTPUTS: { CodeGraph }
     pub fn new() -> Self {
         Self {
             nodes: Vec::new(),
@@ -144,20 +160,36 @@ impl CodeGraph {
         }
     }
 
+    // START_CONTRACT_CodeGraph::add_node
+    // PURPOSE: Add a node if another node with the same id does not already exist
+    // INPUTS: { node: CodeNode — node to insert }
+    // SIDE_EFFECTS: mutates graph nodes
     pub fn add_node(&mut self, node: CodeNode) {
         if !self.nodes.iter().any(|n| n.id == node.id) {
             self.nodes.push(node);
         }
     }
 
+    // START_CONTRACT_CodeGraph::add_relationship
+    // PURPOSE: Add a relationship edge to the graph
+    // INPUTS: { rel: CodeRelationship — edge to insert }
+    // SIDE_EFFECTS: mutates graph relationships
     pub fn add_relationship(&mut self, rel: CodeRelationship) {
         self.relationships.push(rel);
     }
 
+    // START_CONTRACT_CodeGraph::get_node
+    // PURPOSE: Return a graph node by id
+    // INPUTS: { id: &str — node id }
+    // OUTPUTS: { Option<&CodeNode> }
     pub fn get_node(&self, id: &str) -> Option<&CodeNode> {
         self.nodes.iter().find(|n| n.id == id)
     }
 
+    // START_CONTRACT_CodeGraph::get_relationships
+    // PURPOSE: Return relationships touching a node
+    // INPUTS: { node_id: &str — node id }
+    // OUTPUTS: { Vec<&CodeRelationship> }
     pub fn get_relationships(&self, node_id: &str) -> Vec<&CodeRelationship> {
         self.relationships
             .iter()
@@ -165,6 +197,10 @@ impl CodeGraph {
             .collect()
     }
 
+    // START_CONTRACT_CodeGraph::find_path
+    // PURPOSE: Find a relationship path between two node ids
+    // INPUTS: { from: &str — source id }, { to: &str — target id }
+    // OUTPUTS: { Vec<String> — path ids or empty if no path }
     pub fn find_path(&self, from: &str, to: &str) -> Vec<String> {
         let mut visited = std::collections::HashSet::new();
         let mut path = Vec::new();
@@ -172,6 +208,11 @@ impl CodeGraph {
         path
     }
 
+    // START_CONTRACT_CodeGraph::dfs
+    // PURPOSE: Depth-first traversal helper for path discovery
+    // INPUTS: { current: &str }, { target: &str }, { visited: &mut HashSet<String> }, { path: &mut Vec<String> }
+    // OUTPUTS: { bool — true if target found }
+    // SIDE_EFFECTS: mutates visited and path
     fn dfs(
         &self,
         current: &str,
@@ -205,6 +246,10 @@ impl CodeGraph {
         false
     }
 
+    // START_CONTRACT_CodeGraph::search_nodes
+    // PURPOSE: Search graph nodes by name, path, or symbol text
+    // INPUTS: { query: &str — search text }
+    // OUTPUTS: { Vec<&CodeNode> }
     /// Find nodes by text search (name, path, symbols)
     pub fn search_nodes(&self, query: &str) -> Vec<&CodeNode> {
         let q = query.to_lowercase();
@@ -232,6 +277,9 @@ impl CodeGraph {
         results.into_iter().map(|(_, n)| n).collect()
     }
 
+    // START_CONTRACT_CodeGraph::overview
+    // PURPOSE: Produce graph summary counts by node kind
+    // OUTPUTS: { GraphOverview }
     pub fn overview(&self) -> GraphOverview {
         let node_types: Vec<&str> = self.nodes.iter().map(|n| n.kind.as_str()).collect();
         let mut type_counts: std::collections::HashMap<&str, usize> =

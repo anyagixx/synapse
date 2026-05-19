@@ -220,7 +220,7 @@ echo "[synapse] Shell proxy hooks loaded"
                 ".opencode/hooks/synapse-proxy.sh",
                 "Shell hook (bash proxy)",
             ),
-            (".opencode/opencode.jsonc", "MCP config (auto-start)"),
+            ("opencode.jsonc", "MCP config (auto-start)"),
             (".opencode/package.json", "Plugin dependencies"),
         ];
 

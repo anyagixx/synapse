@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, contract, semantic, refresh)
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh)
 // SCOPE: Module declarations, GraceEngine struct, delegation to sub-modules
-// DEPENDS: M-GRACE-CONTRACT, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// DEPENDS: M-GRACE-BOOTSTRAP, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,12 +11,15 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.5.0 — Added canonical inventory module]
 // END_CHANGE_SUMMARY
 
+pub mod bootstrap;
 pub mod contract;
 pub mod explain;
 pub mod fix;
+pub mod inventory;
+pub mod layout;
 pub mod refresh;
 pub mod review;
 pub mod semantic;

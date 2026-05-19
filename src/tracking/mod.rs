@@ -157,7 +157,7 @@ impl Tracker {
                  FROM commands WHERE project_path = ?1",
             ) {
                 if stmt
-                    .query_row(rusqlite::params![project], |row| {
+                    .query_row(rusqlite::params![project.clone()], |row| {
                         stats.total_commands = row.get(0)?;
                         stats.total_input_tokens = row.get(1)?;
                         stats.total_output_tokens = row.get(2)?;
@@ -168,20 +168,56 @@ impl Tracker {
                     .is_err()
                 {}
             }
+
+            if let Ok(mut stmt) = conn.prepare(
+                "SELECT CASE
+                        WHEN instr(original_cmd, ' ') > 0 THEN substr(original_cmd, 1, instr(original_cmd, ' ') - 1)
+                        ELSE original_cmd
+                    END AS command_name,
+                    COUNT(*) as count,
+                    COALESCE(SUM(saved_tokens),0) as saved,
+                    COALESCE(AVG(savings_pct),0) as avg_pct
+                 FROM commands
+                 WHERE project_path = ?1
+                 GROUP BY command_name
+                 ORDER BY saved DESC, count DESC
+                 LIMIT 5",
+            ) {
+                let rows = stmt.query_map(rusqlite::params![project], |row| {
+                    Ok(TrackingCommandStat {
+                        command: row.get(0)?,
+                        count: row.get(1)?,
+                        saved_tokens: row.get(2)?,
+                        avg_savings_pct: row.get(3)?,
+                    })
+                })?;
+                stats.top_commands = rows.filter_map(|r| r.ok()).collect();
+            }
         }
         Ok(stats)
     }
     // END_tracker_get_stats
 }
 
+// START_TrackingCommandStat
+#[derive(serde::Serialize, Default, Debug, Clone)]
+pub struct TrackingCommandStat {
+    pub command: String,
+    pub count: u64,
+    pub saved_tokens: u64,
+    pub avg_savings_pct: f64,
+}
+// END_TrackingCommandStat
+
 // START_TrackingStats
-#[derive(serde::Serialize, Default, Debug)]
+#[derive(serde::Serialize, Default, Debug, Clone)]
 pub struct TrackingStats {
     pub total_commands: u64,
     pub total_input_tokens: u64,
     pub total_output_tokens: u64,
     pub total_saved_tokens: u64,
     pub avg_savings_pct: f64,
+    pub top_commands: Vec<TrackingCommandStat>,
 }
 // END_TrackingStats
 // END_public_api

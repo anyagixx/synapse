@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-STATUS" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-STATUS</NAME>
+  <PURPOSE>Project health collector — aggregates contracts, semantic, verification, drift, token economy, system info</PURPOSE>
+  <SCOPE>StatusCollector, StatusReport, TokenEconomy, SystemInfo, print_report</SCOPE>
+  <FILES>
+    <FILE>src/grace/status.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-SEMANTIC,M-GRACE-VERIFY,M-GRACE-REFRESH,M-TRACKING,M-CONFIG</DEPENDS>
+  <LINKS>docs/</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-STATUS</VERIFICATION_REF>
+</MODULE>

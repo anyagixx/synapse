@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TESTS-MCP" type="INTEGRATION" status="active">
+  <NAME>M-TESTS-MCP</NAME>
+  <PURPOSE>MCP and skills integration tests — verify registry, discovery, and representative skill behavior</PURPOSE>
+  <SCOPE>Tool count parity, grace skill visibility, basic CLI skills commands</SCOPE>
+  <FILES>
+    <FILE>tests/mcp_skills.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-MCP,M-SKILLS,M-CAPABILITIES</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-TESTS-MCP</VERIFICATION_REF>
+</MODULE>

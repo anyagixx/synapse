@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-SEMANTIC" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-SEMANTIC</NAME>
+  <PURPOSE>Semantic block scanner — extracts START_/END_ block pairs from source files</PURPOSE>
+  <SCOPE>SemanticExtractor, SemanticBlock, SemanticReport, extract_blocks, scan_project</SCOPE>
+  <FILES>
+    <FILE>src/grace/semantic.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER-WALKER</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-GRACE-SEMANTIC</VERIFICATION_REF>
+</MODULE>

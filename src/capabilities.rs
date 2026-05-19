@@ -1,21 +1,25 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
-// PURPOSE: Single source of truth — machine-readable registry of shipped commands, MCP tools, platforms
-// SCOPE: Command list, MCP tool list, verify check list, review mode list, supported platforms
-// DEPENDS: M-CLI, M-MCP
+// PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, verify check list, review mode list, supported platforms
+// DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
 // START_MODULE_MAP
 // COMMANDS — All shipped CLI commands
-// MCP_TOOLS — All registered MCP tools
+// MCP_TOOLS — All registered MCP tools including 15 GRACE skills
+// CORE_MCP_TOOLS — Base code/verification tools
+// GRACE_SKILL_TOOLS — 15 first-class GRACE workflow tools
 // VERIFY_CHECKS — All verification check names
 // REVIEW_MODES — All review modes
 // PLATFORMS — Supported OS/arch targets
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Initial capability registry]
+// LAST_CHANGE: [v2.6.0 — Added function contract for capability count API]
 // END_CHANGE_SUMMARY
+
+use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
 
 // START_public_api
 
@@ -32,16 +36,89 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("gain", "View token savings analytics"),
     ("compress", "Compress files for AI context"),
     ("mcp", "Start MCP server"),
-    ("graphrag", "Query the code knowledge graph"),
     ("config", "Manage configuration"),
+    ("graphrag", "Query the code knowledge graph"),
     ("hooks", "Manage Synapse hooks for AI agents"),
     ("doctor", "Run diagnostic checks"),
+    ("refresh", "Report or fix canonical MyGRACE artifact drift"),
+    ("skills", "List and run GRACE workflow skills"),
     (
-        "refresh",
-        "Sync knowledge graph and verification plan with code",
+        "ci",
+        "Run CI-friendly verification, review, and status commands",
     ),
     ("history", "Search git history for code changes"),
     ("serve", "Start web dashboard"),
+];
+
+pub const CORE_MCP_TOOL_COUNT: usize = 12;
+pub const GRACE_SKILL_TOOL_COUNT: usize = 15;
+pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
+
+/// Registered base MCP tools (server registry source)
+pub const CORE_TOOLS: &[(&str, &str)] = CORE_MCP_TOOLS;
+
+/// Registered GRACE workflow skill tools
+pub const GRACE_SKILL_TOOLS: &[(&str, &str)] = &[
+    (
+        "grace_init",
+        "Initialize MyGrace-style sharded architecture artifacts for current project.",
+    ),
+    (
+        "grace_plan",
+        "Plan modules, phases, and architecture using sharded GRACE artifacts.",
+    ),
+    (
+        "grace_verification",
+        "Design or inspect verification strategy for modules and phases.",
+    ),
+    (
+        "grace_execute",
+        "Generate bounded execution guidance for active phase or module.",
+    ),
+    (
+        "grace_multiagent_execute",
+        "Produce multi-agent execution split for phase modules and responsibilities.",
+    ),
+    (
+        "grace_reviewer",
+        "Run or summarize GRACE review scope and integrity risks.",
+    ),
+    (
+        "grace_refresh",
+        "Refresh project artifacts against source code and surface drift.",
+    ),
+    (
+        "grace_refactor",
+        "Prepare refactor plan tied to architecture and verification artifacts.",
+    ),
+    (
+        "grace_fix",
+        "Diagnose a failure using modules, graph, verification, and code context.",
+    ),
+    (
+        "grace_status",
+        "Return project health, phase progress, and artifact coverage summary.",
+    ),
+    (
+        "grace_ask",
+        "Answer questions using project artifacts and indexed code context.",
+    ),
+    (
+        "grace_explainer",
+        "Explain code or architecture areas using artifacts and index context.",
+    ),
+    (
+        "grace_cli",
+        "Explain how to use Synapse and OpenCode CLI workflows for project tasks.",
+    ),
+    (
+        "grace_setup_subagents",
+        "Recommend planner, implementer, reviewer, verifier, and fixer subagent setup.",
+    ),
+    (
+        "grace_lint",
+        "Check sharded artifact integrity, consistency, and structural completeness.",
+    ),
 ];
 
 /// Registered MCP tools (exactly matches server tool registry)
@@ -59,11 +136,71 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
     ("compress_text", "Compress text for AI context efficiency"),
     (
         "refresh_project",
-        "Sync knowledge graph and verification plan with code",
+        "Report or fix canonical MyGRACE artifact drift",
     ),
     ("suggest_contract", "Generate a MODULE_CONTRACT template"),
     ("lsp_hover", "Get type/signature information via LSP"),
     ("lsp_references", "Find all references to a symbol via LSP"),
+    (
+        "grace_init",
+        "Initialize MyGrace-style sharded architecture artifacts for current project.",
+    ),
+    (
+        "grace_plan",
+        "Plan modules, phases, and architecture using sharded GRACE artifacts.",
+    ),
+    (
+        "grace_verification",
+        "Design or inspect verification strategy for modules and phases.",
+    ),
+    (
+        "grace_execute",
+        "Generate bounded execution guidance for active phase or module.",
+    ),
+    (
+        "grace_multiagent_execute",
+        "Produce multi-agent execution split for phase modules and responsibilities.",
+    ),
+    (
+        "grace_reviewer",
+        "Run or summarize GRACE review scope and integrity risks.",
+    ),
+    (
+        "grace_refresh",
+        "Refresh project artifacts against source code and surface drift.",
+    ),
+    (
+        "grace_refactor",
+        "Prepare refactor plan tied to architecture and verification artifacts.",
+    ),
+    (
+        "grace_fix",
+        "Diagnose a failure using modules, graph, verification, and code context.",
+    ),
+    (
+        "grace_status",
+        "Return project health, phase progress, and artifact coverage summary.",
+    ),
+    (
+        "grace_ask",
+        "Answer questions using project artifacts and indexed code context.",
+    ),
+    (
+        "grace_explainer",
+        "Explain code or architecture areas using artifacts and index context.",
+    ),
+    (
+        "grace_cli",
+        "Explain how to use Synapse and OpenCode CLI workflows for project tasks.",
+    ),
+    (
+        "grace_setup_subagents",
+        "Recommend planner, implementer, reviewer, verifier, and fixer subagent setup.",
+    ),
+    (
+        "grace_lint",
+        "Check sharded artifact integrity, consistency, and structural completeness.",
+    ),
 ];
 
 /// Verification checks in module-local level
@@ -77,6 +214,9 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "unique-block-names",
     "500-token-rule",
     "trace-assertions",
+    "sharded-artifacts",
+    "artifact-ref-integrity",
+    "canonical-mygrace-drift",
 ];
 
 /// Review modes
@@ -89,5 +229,30 @@ pub const PLATFORMS: &[&str] = &[
     "x86_64-apple-darwin",
     "aarch64-apple-darwin",
 ];
+
+pub const SKILL_NAMES: &[&str] = &[
+    "grace_init",
+    "grace_plan",
+    "grace_verification",
+    "grace_execute",
+    "grace_multiagent_execute",
+    "grace_reviewer",
+    "grace_refresh",
+    "grace_refactor",
+    "grace_fix",
+    "grace_status",
+    "grace_ask",
+    "grace_explainer",
+    "grace_cli",
+    "grace_setup_subagents",
+    "grace_lint",
+];
+
+// START_CONTRACT_skill_defs_count
+// PURPOSE: Return the number of registered GRACE skill definitions
+// OUTPUTS: { usize — registered skill definition count }
+pub fn skill_defs_count() -> usize {
+    SKILL_DEFS.len()
+}
 
 // END_public_api

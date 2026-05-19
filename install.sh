@@ -1,4 +1,25 @@
 #!/bin/sh
+# MODULE_CONTRACT
+# MODULE_ID: M-INSTALL
+# PURPOSE: Installer script — installs Synapse from GitHub release artifacts or cargo source fallback
+# SCOPE: Platform detection, release tarball download, local binary install, cargo fallback
+# DEPENDS: M-BUILD
+# LINKS: install.sh, .github/workflows/release.yml
+
+# START_MODULE_MAP
+# main — Detects platform and installs syn
+# END_MODULE_MAP
+
+# START_CHANGE_SUMMARY
+# LAST_CHANGE: [v2.5.0 — Added MyGRACE contract]
+# END_CHANGE_SUMMARY
+
+# START_CONTRACT_main
+# PURPOSE: Install Synapse for the detected platform
+# INPUTS: { $1: version — optional release tag }
+# OUTPUTS: { installed syn binary or nonzero exit }
+# SIDE_EFFECTS: downloads artifacts, copies binary, may run cargo install
+# START_main
 set -e
 
 VERSION="${1:-v2.1.0}"
@@ -39,3 +60,4 @@ fi
 echo ""
 echo "Run 'syn --help' to get started."
 echo "Quickstart: mkdir my-project && cd my-project && syn init && opencode"
+# END_main

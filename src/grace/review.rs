@@ -1,9 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, contracts, naming, secrets
+// PURPOSE: GRACE integrity review — checks semantic markup, contracts, canonical shards, naming, secrets
 // SCOPE: Reviewer struct, ReviewReport, ReviewSection, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-CONTRACT, M-GRACE-SEMANTIC, M-INDEXER-WALKER
-// LINKS: docs/knowledge-graph.xml, docs/verification-plan.xml
+// DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
 // ReviewReport — Full review report with sections
@@ -12,10 +12,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.5.0 — Full review now fails on canonical MyGRACE drift]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::ContractValidator;
+use crate::grace::inventory::MyGraceInventory;
+use crate::grace::layout::DocsLayout;
 use crate::grace::semantic::SemanticExtractor;
 use std::path::Path;
 
@@ -186,39 +188,85 @@ impl Reviewer {
         let mut sections = Self::scoped_gate(root)?.sections;
 
         // 3. Verification integrity
-        let vp_path = root.join("docs").join("verification-plan.xml");
-        let has_plan = vp_path.exists();
+        let layout = DocsLayout::new(root);
+        let has_verification = layout.verification_index_path().exists();
         sections.push(ReviewSection {
             name: "verification-plan".into(),
-            passed: has_plan,
-            details: if has_plan {
-                "Verification plan exists".into()
+            passed: has_verification,
+            details: if has_verification {
+                "Sharded verification index exists".into()
             } else {
-                "No verification plan".into()
+                "No sharded verification index".into()
             },
-            issues: if has_plan {
+            issues: if has_verification {
                 vec![]
             } else {
-                vec!["Missing docs/verification-plan.xml".into()]
+                vec!["Missing docs/verification-index.xml".into()]
             },
         });
 
         // 4. Graph consistency
-        let kg_path = root.join("docs").join("knowledge-graph.xml");
-        let has_graph = kg_path.exists();
+        let has_graph = layout.graph_index_path().exists();
         sections.push(ReviewSection {
             name: "knowledge-graph".into(),
             passed: has_graph,
             details: if has_graph {
-                "Knowledge graph exists".into()
+                "Sharded graph index exists".into()
             } else {
-                "No knowledge graph".into()
+                "No sharded graph index".into()
             },
             issues: if has_graph {
                 vec![]
             } else {
-                vec!["Missing docs/knowledge-graph.xml".into()]
+                vec!["Missing docs/graph-index.xml".into()]
             },
+        });
+
+        let mut shard_issues = Vec::new();
+        for required in [
+            layout.modules_dir(),
+            layout.phases_dir(),
+            layout.verification_dir(),
+        ] {
+            if !required.exists() {
+                shard_issues.push(format!("Missing {}", required.display()));
+            }
+        }
+        if has_graph {
+            let content = std::fs::read_to_string(layout.graph_index_path()).unwrap_or_default();
+            let module_re = regex::Regex::new(r#"path=\"([^\"]+)\""#).unwrap();
+            for cap in module_re.captures_iter(&content) {
+                let shard = root.join(&cap[1]);
+                if !shard.exists() {
+                    shard_issues.push(format!("Missing shard {}", &cap[1]));
+                }
+            }
+        }
+        sections.push(ReviewSection {
+            name: "sharded-artifacts".into(),
+            passed: shard_issues.is_empty(),
+            details: if shard_issues.is_empty() {
+                "Primary shard directories and graph references are consistent".into()
+            } else {
+                format!("{} shard issues", shard_issues.len())
+            },
+            issues: shard_issues,
+        });
+
+        let drift = MyGraceInventory::drift(root)?;
+        let drift_issues = canonical_drift_issues(&drift);
+        sections.push(ReviewSection {
+            name: "canonical-mygrace-drift".into(),
+            passed: drift.is_clean(),
+            details: if drift.is_clean() {
+                format!(
+                    "{} code modules are synchronized with graph and verification shards",
+                    drift.total_code_modules
+                )
+            } else {
+                format!("{} canonical drift issues", drift.issue_count())
+            },
+            issues: drift_issues,
         });
 
         // 5. Naming conventions (check for common anti-patterns)
@@ -244,6 +292,13 @@ impl Reviewer {
         // 6. Security check (no secrets in code)
         let mut secret_issues = Vec::new();
         for f in &files {
+            if f.path.ends_with("src/grace/review.rs")
+                || f.path.ends_with("src/mcp/server.rs")
+                || f.path.ends_with("AGENTS.md")
+                || f.path.ends_with(".md")
+            {
+                continue;
+            }
             let full_path = root.join(&f.path);
             if let Ok(content) = std::fs::read_to_string(&full_path) {
                 for (i, line) in content.lines().enumerate() {
@@ -275,3 +330,75 @@ impl Reviewer {
     }
 }
 // END_public_api
+
+fn canonical_drift_issues(drift: &crate::grace::inventory::ArtifactDrift) -> Vec<String> {
+    let mut issues = Vec::new();
+    issues.extend(
+        drift
+            .duplicate_graph_ids
+            .iter()
+            .map(|id| format!("Duplicate graph module id: {}", id)),
+    );
+    issues.extend(
+        drift
+            .duplicate_verification_ids
+            .iter()
+            .map(|id| format!("Duplicate verification id: {}", id)),
+    );
+    issues.extend(
+        drift
+            .code_not_in_graph
+            .iter()
+            .map(|id| format!("Code module missing from graph-index.xml: {}", id)),
+    );
+    issues.extend(
+        drift
+            .graph_not_in_code
+            .iter()
+            .map(|id| format!("Graph entry missing from code contracts: {}", id)),
+    );
+    issues.extend(
+        drift
+            .code_not_in_verification
+            .iter()
+            .map(|id| format!("Code module missing from verification-index.xml: {}", id)),
+    );
+    issues.extend(
+        drift
+            .verification_not_in_code
+            .iter()
+            .map(|id| format!("Verification entry missing from code contracts: {}", id)),
+    );
+    issues.extend(
+        drift
+            .files_without_contract
+            .iter()
+            .map(|path| format!("Governed source file lacks MODULE_CONTRACT: {}", path)),
+    );
+    issues.extend(
+        drift
+            .missing_module_shards
+            .iter()
+            .map(|path| format!("Missing module shard: {}", path)),
+    );
+    issues.extend(
+        drift
+            .missing_verification_shards
+            .iter()
+            .map(|path| format!("Missing verification shard: {}", path)),
+    );
+    issues.extend(
+        drift
+            .module_shard_mismatches
+            .iter()
+            .map(|issue| format!("Module shard mismatch: {}", issue)),
+    );
+    issues.extend(
+        drift
+            .verification_shard_mismatches
+            .iter()
+            .map(|issue| format!("Verification shard mismatch: {}", issue)),
+    );
+    issues.truncate(50);
+    issues
+}

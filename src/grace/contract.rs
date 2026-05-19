@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.6.0 — MODULE_CONTRACT parsing stops before map/change/function metadata]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
@@ -176,6 +176,9 @@ impl ContractValidator {
         let after_marker = &content[start_marker..];
         for line in after_marker.lines() {
             let trimmed = line.trim();
+            if is_metadata_boundary(trimmed) {
+                break;
+            }
             if trimmed.starts_with("//") || trimmed.starts_with('#') || trimmed.starts_with('*') {
                 block_end += line.len() + 1;
             } else if trimmed.is_empty() {
@@ -254,72 +257,92 @@ impl ContractValidator {
     // END_cv_validate_project
 }
 
+// START_CONTRACT_is_metadata_boundary
+// PURPOSE: Detect comment markers that begin metadata sections outside MODULE_CONTRACT
+// INPUTS: { trimmed: &str — trimmed source line }
+// OUTPUTS: { bool }
+// START_is_metadata_boundary
+fn is_metadata_boundary(trimmed: &str) -> bool {
+    let marker = trimmed
+        .trim_start_matches('/')
+        .trim_start_matches('#')
+        .trim_start_matches('*')
+        .trim();
+    marker.starts_with("START_MODULE_MAP")
+        || marker.starts_with("START_CHANGE_SUMMARY")
+        || marker.starts_with("START_CONTRACT_")
+}
+// END_is_metadata_boundary
+
 fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<FunctionContract>) {
-    let pattern = format!(r"{} START_CONTRACT_(\w+)", prefix);
+    let pattern = format!(r"{} START_CONTRACT_([A-Za-z0-9_:]+)", regex::escape(prefix));
     let re = regex::Regex::new(&pattern).unwrap();
-    let mut starts = Vec::new();
-    for cap in re.captures_iter(content) {
+    let alt_prefix = if prefix == "//" { "#" } else { "//" };
+    let lines: Vec<&str> = content.lines().collect();
+
+    for (idx, line) in lines.iter().enumerate() {
+        let Some(cap) = re.captures(line) else {
+            continue;
+        };
         let name = cap[1].to_string();
         if contracts.iter().any(|c| c.name == name) {
             continue;
         }
-        if let Some(m) = cap.get(0) {
-            starts.push((m.start(), name));
-        }
-    }
-    for (start_pos, name) in &starts {
-        let after_start = &content[*start_pos..];
-        let end_marker = format!("{} END_{}", prefix, name);
-        let alt_prefix = if prefix == "//" { "#" } else { "//" };
-        let alt_marker = format!("{} END_{}", alt_prefix, name);
-        let end_pos = after_start
-            .find(&end_marker)
-            .or_else(|| after_start.find(&alt_marker));
-        if let Some(end_off) = end_pos {
-            let body = &after_start[..end_off];
-            let body_start = body.find('\n').map(|i| i + 1).unwrap_or(0);
-            let body_text = &body[body_start..];
-            let mut fc = FunctionContract {
-                name: name.clone(),
-                purpose: None,
-                inputs: Vec::new(),
-                outputs: Vec::new(),
-                side_effects: Vec::new(),
-                links: Vec::new(),
-            };
-            for line in body_text.lines() {
-                let t = line.trim().trim_start_matches(prefix).trim();
-                let t = t.trim_start_matches(alt_prefix).trim();
-                if let Some(p) = t.strip_prefix("PURPOSE:") {
-                    fc.purpose = Some(p.trim().to_string());
-                } else if let Some(i) = t.strip_prefix("INPUTS:") {
-                    fc.inputs = i
-                        .split("}, {")
-                        .map(|s| s.trim().trim_matches('{').trim_matches('}').to_string())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                } else if let Some(o) = t.strip_prefix("OUTPUTS:") {
-                    fc.outputs = o
-                        .split("}, {")
-                        .map(|s| s.trim().trim_matches('{').trim_matches('}').to_string())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                } else if let Some(s) = t.strip_prefix("SIDE_EFFECTS:") {
-                    fc.side_effects = s
-                        .split(',')
-                        .map(|s| s.trim().to_string())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                } else if let Some(l) = t.strip_prefix("LINKS:") {
-                    fc.links = l
-                        .split(',')
-                        .map(|s| s.trim().to_string())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                }
+
+        let mut fc = FunctionContract {
+            name,
+            purpose: None,
+            inputs: Vec::new(),
+            outputs: Vec::new(),
+            side_effects: Vec::new(),
+            links: Vec::new(),
+        };
+
+        for body_line in lines.iter().skip(idx + 1) {
+            let trimmed = body_line.trim();
+            if trimmed.is_empty() {
+                continue;
             }
-            contracts.push(fc);
+            if !(trimmed.starts_with(prefix) || trimmed.starts_with(alt_prefix)) {
+                break;
+            }
+
+            let t = trimmed
+                .trim_start_matches(prefix)
+                .trim_start_matches(alt_prefix)
+                .trim();
+            if t.starts_with("START_") && !t.starts_with("START_CONTRACT_") {
+                break;
+            }
+            if let Some(p) = t.strip_prefix("PURPOSE:") {
+                fc.purpose = Some(p.trim().to_string());
+            } else if let Some(i) = t.strip_prefix("INPUTS:") {
+                fc.inputs = i
+                    .split("}, {")
+                    .map(|s| s.trim().trim_matches('{').trim_matches('}').to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+            } else if let Some(o) = t.strip_prefix("OUTPUTS:") {
+                fc.outputs = o
+                    .split("}, {")
+                    .map(|s| s.trim().trim_matches('{').trim_matches('}').to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+            } else if let Some(s) = t.strip_prefix("SIDE_EFFECTS:") {
+                fc.side_effects = s
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+            } else if let Some(l) = t.strip_prefix("LINKS:") {
+                fc.links = l
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+            }
         }
+        contracts.push(fc);
     }
 }
 
@@ -375,6 +398,20 @@ mod tests {
         assert_eq!(mc.function_contracts.len(), 1);
         assert_eq!(mc.function_contracts[0].name, "greet");
         assert_eq!(mc.function_contracts[0].inputs.len(), 1);
+    }
+
+    #[test]
+    fn test_module_contract_stops_before_function_contract() {
+        let code = "# MODULE_CONTRACT\n# MODULE_ID: M-SH\n# PURPOSE: Shell module\n# SCOPE: Test shell parsing\n# DEPENDS: M-ONE\n# LINKS: docs/modules/M-SH.xml\n\n# START_MODULE_MAP\n# run — executes\n# END_MODULE_MAP\n\n# START_CHANGE_SUMMARY\n# LAST_CHANGE: [v1.0.0 — Initial]\n# END_CHANGE_SUMMARY\n\n# START_CONTRACT_run\n# PURPOSE: Function purpose must not replace module purpose\n# START_run\nset -euo pipefail\n# END_run";
+        let mc = ContractValidator::scan_file(Path::new("scripts/test.sh"), code);
+        assert_eq!(mc.module_id.as_deref(), Some("M-SH"));
+        assert_eq!(mc.purpose.as_deref(), Some("Shell module"));
+        assert_eq!(mc.scope.as_deref(), Some("Test shell parsing"));
+        assert_eq!(mc.function_contracts.len(), 1);
+        assert_eq!(
+            mc.function_contracts[0].purpose.as_deref(),
+            Some("Function purpose must not replace module purpose")
+        );
     }
 }
 // END_public_api

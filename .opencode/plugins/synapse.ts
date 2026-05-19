@@ -29,34 +29,37 @@ export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
     },
 
     "experimental.chat.system.transform": async (_input, output) => {
-      output.system.push(`## GRACE Methodology — PHASE GATES ENFORCED
+      output.system.push(`## GRACE Methodology — SHARDED PHASE GATES ENFORCED
 
 You are developing under GRACE. These rules are HARD GATES — not suggestions.
 
 ### PHASE 0 — ARCHITECTURE (BEFORE ANY CODE)
-Before writing ANY source file, these 5 docs MUST exist:
-1. docs/requirements.xml — what are we building?
-2. docs/technology.xml — what stack?
-3. docs/development-plan.xml — modules, phases, dependencies
-4. docs/verification-plan.xml — how to verify?
-5. docs/knowledge-graph.xml — module relationships
+Before writing ANY source file, sharded architecture artifacts MUST exist:
+- docs/graph-index.xml
+- docs/plan-index.xml
+- docs/verification-index.xml
+- docs/modules/
+- docs/phases/
+- docs/verification/
 
-**If ANY of these 5 files is missing or empty:**
+Compatibility docs may also exist under docs/*.xml, but sharded indexes are primary source of truth.
+
+If primary sharded artifacts are missing:
 → STOP immediately
-→ Ask the user what they want to build
-→ Create the missing files BEFORE writing any code
+→ Ask user what they want to build
+→ Create missing artifacts BEFORE writing any code
 → DO NOT create source files during Phase 0
-
-**When ALL 5 exist:** move to Phase 1.
 
 ### PHASE 1+ — IMPLEMENTATION
 - Every source file STARTS with MODULE_CONTRACT
 - Every function wrapped in START_/END_ blocks
 - After each module: call verify_project
 - After each phase: call review_code
+- Use grace_* tools for workflow-level planning, execution, lint, review, refresh, and status
 
-### MCP Tools (use proactively)
-semantic_search | view_signatures | graphrag_query | verify_project | review_code | refresh_project | suggest_contract | project_status | token_savings | compress_text | lsp_hover | lsp_references
+### MCP Tools
+Core: semantic_search | view_signatures | graphrag_query | verify_project | review_code | refresh_project | suggest_contract | project_status | token_savings | compress_text | lsp_hover | lsp_references
+GRACE: grace_init | grace_plan | grace_verification | grace_execute | grace_multiagent_execute | grace_reviewer | grace_refresh | grace_refactor | grace_fix | grace_status | grace_ask | grace_explainer | grace_cli | grace_setup_subagents | grace_lint
 
 Shell commands auto-proxied for token savings.`)
     },

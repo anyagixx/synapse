@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-LIB" type="CORE_LOGIC" status="active">
+  <NAME>M-LIB</NAME>
+  <PURPOSE>Crate root — declares all public modules, version, and crate-level lints</PURPOSE>
+  <SCOPE>Module declarations, VERSION/NAME constants, clippy allows</SCOPE>
+  <FILES>
+    <FILE>src/lib.rs</FILE>
+  </FILES>
+  <DEPENDS>all sub-modules</DEPENDS>
+  <LINKS>Cargo.toml,M-ALL</LINKS>
+  <VERIFICATION_REF>V-M-LIB</VERIFICATION_REF>
+</MODULE>

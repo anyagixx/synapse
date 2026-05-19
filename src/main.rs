@@ -51,6 +51,12 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Hooks(cmd) => cmd.run(config).await,
             syn::cli::Command::Doctor(cmd) => cmd.run(config).await,
             syn::cli::Command::Refresh(cmd) => cmd.run(config).await,
+            syn::cli::Command::Ci(cmd) => match cmd.action {
+                syn::cli::CiAction::Verify(inner) => inner.run(config).await,
+                syn::cli::CiAction::Review(inner) => inner.run(config).await,
+                syn::cli::CiAction::Status(inner) => inner.run(config).await,
+            },
+            syn::cli::Command::Skills(cmd) => cmd.run(config).await,
             syn::cli::Command::History(cmd) => cmd.run(config).await,
             syn::cli::Command::Serve(cmd) => cmd.run(config).await,
         }

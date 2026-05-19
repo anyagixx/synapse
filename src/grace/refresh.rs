@@ -1,20 +1,20 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REFRESH
-// PURPOSE: Artifact synchronization — detects drift between code and knowledge graph/verification plan
-// SCOPE: Refresher struct, RefreshReport, knowledge graph parsing, verification plan parsing, drift detection
-// DEPENDS: M-GRACE-CONTRACT
-// LINKS: docs/knowledge-graph.xml, docs/verification-plan.xml
+// PURPOSE: Artifact synchronization — detects and fixes drift between code contracts and MyGRACE shards
+// SCOPE: Refresher struct, RefreshReport, canonical inventory-backed drift detection and sync
+// DEPENDS: M-GRACE-INVENTORY
+// LINKS: docs/graph-index.xml, docs/verification-index.xml, docs/modules/, docs/verification/
 
 // START_MODULE_MAP
 // RefreshReport — Drift detection report with suggested actions
-// Refresher — Syncs code modules with KG and verification plan
+// Refresher — Reports or fixes canonical MyGRACE artifact drift
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.5.0 — Switched refresh to canonical inventory drift model]
 // END_CHANGE_SUMMARY
 
-use crate::grace::contract::ContractValidator;
+use crate::grace::inventory::{ArtifactDrift, MyGraceInventory};
 use std::path::Path;
 
 // START_public_api
@@ -31,6 +31,8 @@ pub struct RefreshReport {
     pub in_verification_not_in_code: Vec<String>,
     pub contract_issues: Vec<String>,
     pub suggested_actions: Vec<String>,
+    pub fixed: bool,
+    pub canonical_drift: ArtifactDrift,
 }
 // END_RefreshReport
 
@@ -55,145 +57,52 @@ impl Refresher {
     // END_refresher_new
 
     // START_CONTRACT_Refresher::refresh
-    // PURPOSE: Sync knowledge graph and verification plan with code, detect drift
+    // PURPOSE: Detect drift between code contracts and canonical MyGRACE artifacts
     // INPUTS: { root: &Path — project root }
     // OUTPUTS: { anyhow::Result<RefreshReport> }
     // START_refresher_refresh
     pub fn refresh(root: &Path) -> anyhow::Result<RefreshReport> {
-        let contract_report = ContractValidator::validate_project(root)?;
-        let mut report = RefreshReport {
-            total_modules: 0,
-            in_graph: 0,
-            not_in_graph: Vec::new(),
-            in_graph_not_in_code: Vec::new(),
-            in_verification: 0,
-            not_in_verification: Vec::new(),
-            in_verification_not_in_code: Vec::new(),
-            contract_issues: Vec::new(),
-            suggested_actions: Vec::new(),
-        };
-
-        // Collect module IDs from source code
-        let code_modules: Vec<&crate::grace::contract::ModuleContract> = contract_report
-            .contracts
-            .iter()
-            .filter(|c| c.has_contract)
-            .collect();
-        report.total_modules = code_modules.len();
-
-        // Read knowledge-graph.xml
-        let kg_path = root.join("docs").join("knowledge-graph.xml");
-        let kg_content = std::fs::read_to_string(&kg_path).unwrap_or_default();
-
-        // Extract M-xxx node IDs from knowledge graph
-        let graph_nodes: Vec<String> = {
-            let re = regex::Regex::new(r#"<([A-Z]+-[A-Za-z0-9_]+)\b"#).unwrap();
-            re.captures_iter(&kg_content)
-                .filter_map(|c| {
-                    let id = c[1].to_string();
-                    if id.starts_with("M-") {
-                        Some(id)
-                    } else {
-                        None
-                    }
-                })
-                .collect()
-        };
-
-        // Check code modules against graph
-        for mc in &code_modules {
-            let mid = mc.module_id.as_deref().unwrap_or("?");
-            if graph_nodes.contains(&mid.to_string()) {
-                report.in_graph += 1;
-            } else {
-                report
-                    .not_in_graph
-                    .push(format!("{} ({})", mc.file_path, mid));
-                report
-                    .suggested_actions
-                    .push(format!("Add {} to knowledge-graph.xml", mid));
-            }
-            // Contract issues
-            for err in &mc.errors {
-                report
-                    .contract_issues
-                    .push(format!("{}: {}", mc.file_path, err));
-            }
-        }
-
-        // Check graph nodes against code (stale entries)
-        for gn in &graph_nodes {
-            let found = code_modules
-                .iter()
-                .any(|mc| mc.module_id.as_deref() == Some(gn.as_str()));
-            if !found {
-                report.in_graph_not_in_code.push(gn.clone());
-                report
-                    .suggested_actions
-                    .push(format!("Remove stale {} from knowledge-graph.xml", gn));
-            }
-        }
-
-        // Read verification-plan.xml
-        let vp_path = root.join("docs").join("verification-plan.xml");
-        let vp_content = std::fs::read_to_string(&vp_path).unwrap_or_default();
-
-        let vp_modules: Vec<String> = {
-            let re = regex::Regex::new(r#"MODULE="([^"]+)""#).unwrap();
-            re.captures_iter(&vp_content)
-                .map(|c| c[1].to_string())
-                .collect()
-        };
-
-        // Check code modules against verification plan
-        for mc in &code_modules {
-            let mid = mc.module_id.as_deref().unwrap_or("?");
-            if vp_modules.contains(&mid.to_string()) {
-                report.in_verification += 1;
-            } else if !mid.starts_with('?') {
-                report
-                    .not_in_verification
-                    .push(format!("{} ({})", mc.file_path, mid));
-                report
-                    .suggested_actions
-                    .push(format!("Add V-M-{} to verification-plan.xml", mid));
-            }
-        }
-
-        // Check verification modules against code
-        for vm in &vp_modules {
-            let found = code_modules
-                .iter()
-                .any(|mc| mc.module_id.as_deref() == Some(vm.as_str()));
-            if !found {
-                report.in_verification_not_in_code.push(vm.clone());
-                report.suggested_actions.push(format!(
-                    "Remove stale V-M-{} from verification-plan.xml",
-                    vm
-                ));
-            }
-        }
-
-        // Phase 0 check
-        let phase0_files = [
-            "requirements.xml",
-            "technology.xml",
-            "development-plan.xml",
-            "verification-plan.xml",
-            "knowledge-graph.xml",
-        ];
-        for f in &phase0_files {
-            if !root.join("docs").join(f).exists() {
-                report
-                    .suggested_actions
-                    .push(format!("Create docs/{} (Phase 0 incomplete)", f));
-            }
-        }
-
-        report.suggested_actions.sort();
-        report.suggested_actions.dedup();
-        Ok(report)
+        report_from_drift(root, MyGraceInventory::drift(root)?, false)
     }
     // END_refresher_refresh
+
+    // START_CONTRACT_Refresher::fix
+    // PURPOSE: Rewrite canonical MyGRACE artifacts from real source MODULE_ID contracts
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<RefreshReport> }
+    // SIDE_EFFECTS: writes docs/ indexes and shard files
+    // START_refresher_fix
+    pub fn fix(root: &Path) -> anyhow::Result<RefreshReport> {
+        report_from_drift(root, MyGraceInventory::sync(root)?, true)
+    }
+    // END_refresher_fix
 }
 // END_public_api
+
+fn report_from_drift(
+    _root: &Path,
+    drift: ArtifactDrift,
+    fixed: bool,
+) -> anyhow::Result<RefreshReport> {
+    let total_modules = drift.total_code_modules;
+    let not_in_graph = drift.code_not_in_graph.clone();
+    let not_in_verification = drift.code_not_in_verification.clone();
+    let in_graph_not_in_code = drift.graph_not_in_code.clone();
+    let in_verification_not_in_code = drift.verification_not_in_code.clone();
+    let in_graph = total_modules.saturating_sub(not_in_graph.len());
+    let in_verification = total_modules.saturating_sub(not_in_verification.len());
+
+    Ok(RefreshReport {
+        total_modules,
+        in_graph,
+        not_in_graph,
+        in_graph_not_in_code,
+        in_verification,
+        not_in_verification,
+        in_verification_not_in_code,
+        contract_issues: drift.contract_issues.clone(),
+        suggested_actions: drift.suggested_actions.clone(),
+        fixed,
+        canonical_drift: drift,
+    })
+}

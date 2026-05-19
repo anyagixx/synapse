@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TESTS-INTEGRATION" type="UTILITY" status="active">
+  <NAME>M-TESTS-INTEGRATION</NAME>
+  <PURPOSE>End-to-end integration tests for Synapse CLI commands</PURPOSE>
+  <SCOPE>init, index, search, verify, status, proxy, gain, doctor, hooks, compress</SCOPE>
+  <FILES>
+    <FILE>tests/integration_test.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-INDEXER,M-GRACE</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-TESTS-INTEGRATION</VERIFICATION_REF>
+</MODULE>

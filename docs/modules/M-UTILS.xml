@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-UTILS" type="UTILITY" status="active">
+  <NAME>M-UTILS</NAME>
+  <PURPOSE>Token estimation, ANSI stripping, savings formatting — utility functions</PURPOSE>
+  <SCOPE>ANSI escape stripping, naive token estimation (chars/4), savings percentage formatting</SCOPE>
+  <FILES>
+    <FILE>src/utils/mod.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-UTILS</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<REQUIREMENTS>
+  <META><PROJECT>my-project</PROJECT><DESCRIPTION>Describe what this project does</DESCRIPTION><LANGUAGE>rust</LANGUAGE></META>
+  <NonGoals></NonGoals>
+  <Risks></Risks>
+  <OpenQuestions></OpenQuestions>
+</REQUIREMENTS>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TESTS-PARITY" type="UTILITY" status="active">
+  <NAME>M-TESTS-PARITY</NAME>
+  <PURPOSE>Ensure README, docs, and code claims match capabilities registry</PURPOSE>
+  <SCOPE>Compare README tool count, README command count, verify check count</SCOPE>
+  <FILES>
+    <FILE>tests/docs_parity.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CAPABILITIES</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-TESTS-PARITY</VERIFICATION_REF>
+</MODULE>

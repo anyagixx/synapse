@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INSTALL" type="CORE_LOGIC" status="active">
+  <NAME>M-INSTALL</NAME>
+  <PURPOSE>Installer script — installs Synapse from GitHub release artifacts or cargo source fallback</PURPOSE>
+  <SCOPE>Platform detection, release tarball download, local binary install, cargo fallback</SCOPE>
+  <FILES>
+    <FILE>install.sh</FILE>
+  </FILES>
+  <DEPENDS>M-BUILD</DEPENDS>
+  <LINKS>install.sh,.github/workflows/release.yml</LINKS>
+  <VERIFICATION_REF>V-M-INSTALL</VERIFICATION_REF>
+</MODULE>

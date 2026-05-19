@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER" type="INTEGRATION" status="active">
+  <NAME>M-MCP-SERVER</NAME>
+  <PURPOSE>MCP JSON-RPC server — serves Synapse tools over stdio for AI agent consumption</PURPOSE>
+  <SCOPE>McpServer, SynapseHandler, JSON-RPC message handling, 12 MCP tools (semantic_search, view_signatures, graphrag_query, etc.)</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-GRAPHRAG,M-INDEXER,M-GRACE,M-TRACKING,M-COMPRESS</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER</VERIFICATION_REF>
+</MODULE>

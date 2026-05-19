@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.6.0 — Added function contracts for config APIs]
 // END_CHANGE_SUMMARY
 
 use std::path::PathBuf;
@@ -76,11 +76,17 @@ pub struct TrackingConfig {
     pub history_days: u32,
 }
 
+// START_CONTRACT_default_tracking_enabled
+// PURPOSE: Provide serde default for tracking.enabled
+// OUTPUTS: { bool — true when config omits tracking.enabled }
 fn default_tracking_enabled() -> bool {
     true
 }
 
 impl TrackingConfig {
+    // START_CONTRACT_TrackingConfig::enabled
+    // PURPOSE: Return whether token tracking is enabled
+    // OUTPUTS: { bool }
     pub fn enabled(&self) -> bool {
         self.enabled
     }
@@ -93,6 +99,10 @@ pub struct GraphRagConfig {
 }
 
 impl Config {
+    // START_CONTRACT_Config::load
+    // PURPOSE: Load the user config file and fail if it is missing or invalid
+    // OUTPUTS: { anyhow::Result<Config> }
+    // SIDE_EFFECTS: reads synapsec.toml
     /// Read-only load: returns existing config, errors if missing
     pub fn load() -> anyhow::Result<Self> {
         let path = Self::path()?;
@@ -107,11 +117,18 @@ impl Config {
             .map_err(|e| anyhow::anyhow!("Invalid config at {}: {}", path.display(), e))
     }
 
+    // START_CONTRACT_Config::load_or_default
+    // PURPOSE: Load config if available, otherwise return default config without writing it
+    // OUTPUTS: { Config }
     /// Load existing config or return default (does NOT write to disk)
     pub fn load_or_default() -> Self {
         Self::load().unwrap_or_default()
     }
 
+    // START_CONTRACT_Config::init_default
+    // PURPOSE: Write default configuration to the user config path
+    // OUTPUTS: { anyhow::Result<Config> }
+    // SIDE_EFFECTS: creates config directory and writes synapsec.toml
     /// Initialize/overwrite config file with defaults
     pub fn init_default() -> anyhow::Result<Self> {
         let path = Self::path()?;
@@ -125,6 +142,9 @@ impl Config {
         Ok(config)
     }
 
+    // START_CONTRACT_Config::path
+    // PURPOSE: Resolve the user config file path
+    // OUTPUTS: { anyhow::Result<PathBuf> }
     pub fn path() -> anyhow::Result<PathBuf> {
         let config_dir = dirs::config_dir()
             .ok_or_else(|| anyhow::anyhow!("Cannot find config directory"))?
@@ -136,6 +156,9 @@ impl Config {
 // END_Config
 
 impl Default for Config {
+    // START_CONTRACT_Config::default
+    // PURPOSE: Return built-in Synapse configuration defaults
+    // OUTPUTS: { Config }
     fn default() -> Self {
         Self {
             project: ProjectConfig {

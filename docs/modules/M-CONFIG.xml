@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CONFIG" type="CORE_LOGIC" status="active">
+  <NAME>M-CONFIG</NAME>
+  <PURPOSE>Config loading from TOML — loads synapsec.toml, creates default if missing</PURPOSE>
+  <SCOPE>Config struct definitions, TOML deserialization, default config generation, path resolution</SCOPE>
+  <FILES>
+    <FILE>src/config.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>synapsec.toml</LINKS>
+  <VERIFICATION_REF>V-M-CONFIG</VERIFICATION_REF>
+</MODULE>

@@ -13,11 +13,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.5.0 — Added explicit MyGRACE health derived from canonical drift]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
 use crate::grace::contract::{ContractReport, ContractValidator};
+use crate::grace::layout::DocsLayout;
 use crate::grace::refresh::Refresher;
 use crate::grace::semantic::{SemanticExtractor, SemanticReport};
 use crate::grace::verify::Verifier;
@@ -29,6 +30,8 @@ use std::path::Path;
 // START_StatusReport
 #[derive(Debug, serde::Serialize)]
 pub struct StatusReport {
+    pub health: String,
+    pub mygrace_issues: usize,
     pub contracts: ContractReport,
     pub semantic: SemanticReport,
     pub verification: Vec<super::verify::VerificationResult>,
@@ -118,22 +121,85 @@ impl StatusCollector {
             next_actions.push("Run 'syn verify' to see failing checks".into());
         }
 
-        let phase0_done = root.join("docs/requirements.xml").exists()
-            && root.join("docs/technology.xml").exists()
-            && root.join("docs/development-plan.xml").exists()
-            && root.join("docs/verification-plan.xml").exists()
-            && root.join("docs/knowledge-graph.xml").exists();
+        let layout = DocsLayout::new(root);
+        let phase0_done = layout.graph_index_path().exists()
+            && layout.plan_index_path().exists()
+            && layout.verification_index_path().exists()
+            && layout.modules_dir().exists()
+            && layout.phases_dir().exists()
+            && layout.verification_dir().exists();
         if !phase0_done {
-            next_actions.push("Complete Phase 0: create all 5 docs/ files".into());
+            next_actions.push("Complete sharded Phase 0: create graph/plan/verification indexes and shard directories".into());
         }
 
+        let graph_index = std::fs::read_to_string(layout.graph_index_path()).unwrap_or_default();
+        let plan_index = std::fs::read_to_string(layout.plan_index_path()).unwrap_or_default();
+        let verification_index =
+            std::fs::read_to_string(layout.verification_index_path()).unwrap_or_default();
+        let module_shards = std::fs::read_dir(layout.modules_dir())
+            .map(|r| r.count())
+            .unwrap_or(0);
+        let phase_shards = std::fs::read_dir(layout.phases_dir())
+            .map(|r| r.count())
+            .unwrap_or(0);
+        let verification_shards = std::fs::read_dir(layout.verification_dir())
+            .map(|r| r.count())
+            .unwrap_or(0);
+        if graph_index.contains("status=\"planned\"") || plan_index.contains("status=\"active\"") {
+            next_actions.push(format!(
+                "Sharded docs loaded: {} module shards, {} phase shards, {} verification shards",
+                module_shards, phase_shards, verification_shards
+            ));
+        }
+        if verification_index.contains("priority=\"critical\"") {
+            next_actions
+                .push("Critical verification shards present in verification-index.xml".into());
+        }
+
+        if graph_index.is_empty() || plan_index.is_empty() || verification_index.is_empty() {
+            next_actions.push(
+                "Populate primary sharded indexes with module, phase, and verification refs".into(),
+            );
+        }
+
+        let active_phase = regex::Regex::new(r#"<ACTIVE_PHASE>([^<]+)</ACTIVE_PHASE>"#)
+            .ok()
+            .and_then(|re| re.captures(&plan_index).map(|c| c[1].to_string()))
+            .unwrap_or_else(|| "unknown".into());
+
+        next_actions.push(format!(
+            "Active phase: {} | shard coverage: graph={} plan={} verification={} modules={} phases={} verifications={}",
+            active_phase,
+            u8::from(layout.graph_index_path().exists()),
+            u8::from(layout.plan_index_path().exists()),
+            u8::from(layout.verification_index_path().exists()),
+            module_shards,
+            phase_shards,
+            verification_shards
+        ));
+
+        let mygrace_issues = drift
+            .as_ref()
+            .map(|d| d.canonical_drift.issue_count())
+            .unwrap_or(0);
         if let Some(ref d) = drift {
-            if !d.not_in_graph.is_empty() || !d.not_in_verification.is_empty() {
-                next_actions.push("Run 'syn refresh' to sync artifacts".into());
+            if !d.canonical_drift.is_clean() {
+                next_actions
+                    .push("Run 'syn refresh --fix' to sync canonical MyGRACE artifacts".into());
             }
         }
+        let health = if !all_verify_pass || mygrace_issues > 0 {
+            "failing"
+        } else if contracts.invalid > 0 || !semantic.duplicate_name_blocks.is_empty() {
+            "degraded"
+        } else {
+            "healthy"
+        }
+        .to_string();
 
         Ok(StatusReport {
+            health,
+            mygrace_issues,
             token_economy: TokenEconomy {
                 total_commands: stats.total_commands,
                 total_saved: stats.total_saved_tokens,
@@ -164,10 +230,32 @@ impl StatusCollector {
     // SIDE_EFFECTS: prints to stdout
     // START_sc_print_report
     pub fn print_report(report: &StatusReport) {
+        let project = std::path::Path::new(&report.system.project_path);
+        let layout = DocsLayout::new(project);
+        let module_shards = std::fs::read_dir(layout.modules_dir())
+            .map(|it| it.filter_map(|e| e.ok()).count())
+            .unwrap_or(0);
+        let phase_shards = std::fs::read_dir(layout.phases_dir())
+            .map(|it| it.filter_map(|e| e.ok()).count())
+            .unwrap_or(0);
+        let verification_shards = std::fs::read_dir(layout.verification_dir())
+            .map(|it| it.filter_map(|e| e.ok()).count())
+            .unwrap_or(0);
+        let active_phase = std::fs::read_to_string(layout.plan_index_path())
+            .ok()
+            .and_then(|content| {
+                regex::Regex::new(r#"<ACTIVE_PHASE>([^<]+)</ACTIVE_PHASE>"#)
+                    .ok()
+                    .and_then(|re| re.captures(&content).map(|c| c[1].to_string()))
+            })
+            .unwrap_or_else(|| "unknown".into());
+
         println!("╔══════════════════════════════════════╗");
         println!("║       Synapse Project Health        ║");
         println!("╠══════════════════════════════════════╣");
         println!("║ Version: {:<33}║", report.system.version);
+        println!("║ Health:  {:<33}║", report.health);
+        println!("║ MyGRACE issues: {:<24}║", report.mygrace_issues);
         println!("║ Project: {:<32}║", report.system.project_path);
         println!("╠══════════════════════════════════════╣");
         println!("║ CONTRACTS                            ║");
@@ -237,25 +325,34 @@ impl StatusCollector {
             "║  DB size:           {:<15}║",
             report.token_economy.db_size
         );
-        println!("╚══════════════════════════════════════╝");
+        println!("╠══════════════════════════════════════╣");
+        println!("║ SHARDS                               ║");
+        println!("║  Active phase: {:<27}║", active_phase);
+        println!("║  Module shards: {:<27}║", module_shards);
+        println!("║  Phase shards: {:<29}║", phase_shards);
+        println!("║  Verification shards: {:<20}║", verification_shards);
+        println!("╠══════════════════════════════════════╣");
 
         if let Some(ref drift) = report.drift {
-            if !drift.not_in_graph.is_empty()
-                || !drift.not_in_verification.is_empty()
-                || !drift.in_graph_not_in_code.is_empty()
-            {
+            if !drift.canonical_drift.is_clean() {
                 println!();
-                println!("DRIFT DETECTED (run 'syn refresh' for details):");
-                if !drift.not_in_graph.is_empty() {
+                println!("DRIFT DETECTED (run 'syn refresh --fix' to sync):");
+                if !drift.canonical_drift.code_not_in_graph.is_empty() {
                     println!(
-                        "  {} modules not in knowledge graph",
-                        drift.not_in_graph.len()
+                        "  {} modules not in graph-index.xml",
+                        drift.canonical_drift.code_not_in_graph.len()
                     );
                 }
-                if !drift.not_in_verification.is_empty() {
+                if !drift.canonical_drift.code_not_in_verification.is_empty() {
                     println!(
-                        "  {} modules not in verification plan",
-                        drift.not_in_verification.len()
+                        "  {} modules not in verification-index.xml",
+                        drift.canonical_drift.code_not_in_verification.len()
+                    );
+                }
+                if !drift.canonical_drift.files_without_contract.is_empty() {
+                    println!(
+                        "  {} governed files without MODULE_CONTRACT",
+                        drift.canonical_drift.files_without_contract.len()
                     );
                 }
             }

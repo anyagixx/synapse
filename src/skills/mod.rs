@@ -1,44 +1,26 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS
-// PURPOSE: Skill engine stub — placeholder for future skill execution system
-// SCOPE: SkillEngine struct, new constructor, execute stub
-// DEPENDS: M-CONFIG
-// LINKS: N/A
+// PURPOSE: Skill runtime facade — exposes 15 first-class GRACE skill tools for MCP and CLI integration
+// SCOPE: SkillEngine facade, registry exports, skill metadata and execution surface
+// DEPENDS: M-CONFIG, M-GRACE-LAYOUT, M-SKILLS-ENGINE, M-SKILLS-REGISTRY, M-SKILLS-TYPES
+// LINKS: M-MCP-SERVER
 
 // START_MODULE_MAP
-// SkillEngine — Skill execution engine (stub)
+// SkillEngine — Skill execution engine
+// registry — Skill metadata registry
+// types — Shared skill runtime types
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.6.0 — Added public API contract for skill exports]
 // END_CHANGE_SUMMARY
 
-use crate::config::Config;
+// START_CONTRACT_public_api
+// PURPOSE: Export skill engine, registry, types, and public runtime aliases
+// OUTPUTS: { SkillEngine }, { SkillDef }, { SkillRequest }, { SkillResponse }
+mod engine;
+pub mod registry;
+pub mod types;
 
-// START_public_api
-
-// START_SkillEngine
-pub struct SkillEngine;
-// END_SkillEngine
-
-impl SkillEngine {
-    // START_CONTRACT_SkillEngine::new
-    // PURPOSE: Create a new SkillEngine instance
-    // OUTPUTS: { SkillEngine }
-    // START_skill_engine_new
-    pub fn new(_config: &Config) -> Self {
-        SkillEngine
-    }
-    // END_skill_engine_new
-
-    // START_CONTRACT_SkillEngine::execute
-    // PURPOSE: Execute a named skill with arguments
-    // INPUTS: { _skill: &str — skill name }, { _args: &[String] — arguments }
-    // OUTPUTS: { anyhow::Result<String> — execution result or error }
-    // START_skill_engine_execute
-    pub async fn execute(&self, _skill: &str, _args: &[String]) -> anyhow::Result<String> {
-        anyhow::bail!("Skill engine not yet implemented")
-    }
-    // END_skill_engine_execute
-}
-// END_public_api
+pub use engine::SkillEngine;
+pub use types::{SkillDef, SkillRequest, SkillResponse};

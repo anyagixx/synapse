@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-DASHBOARD" type="UI_COMPONENT" status="active">
+  <NAME>M-DASHBOARD</NAME>
+  <PURPOSE>Axum web dashboard — serves health, status, graph, and tokens API endpoints</PURPOSE>
+  <SCOPE>HTTP server with /health, /api/status, /api/graph, /api/tokens routes</SCOPE>
+  <FILES>
+    <FILE>src/dashboard.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-STATUS,M-GRAPHRAG,M-TRACKING,M-CONFIG</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-DASHBOARD</VERIFICATION_REF>
+</MODULE>

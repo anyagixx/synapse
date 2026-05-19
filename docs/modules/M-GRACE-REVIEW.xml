@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-REVIEW" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-REVIEW</NAME>
+  <PURPOSE>GRACE integrity review — checks semantic markup, contracts, canonical shards, naming, secrets</PURPOSE>
+  <SCOPE>Reviewer struct, ReviewReport, ReviewSection, scoped_gate, wave_audit, full_integrity</SCOPE>
+  <FILES>
+    <FILE>src/grace/review.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-INVENTORY,M-GRACE-SEMANTIC,M-INDEXER-WALKER</DEPENDS>
+  <LINKS>docs/graph-index.xml,docs/verification-index.xml</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-REVIEW</VERIFICATION_REF>
+</MODULE>

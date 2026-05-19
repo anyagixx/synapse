@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-SKILLS-TYPES" type="CORE_LOGIC" status="active">
+  <NAME>M-SKILLS-TYPES</NAME>
+  <PURPOSE>Skill runtime types — metadata, schemas, requests, responses, and execution context</PURPOSE>
+  <SCOPE>SkillDef, SkillArg, SkillRequest, SkillResponse, SkillContext</SCOPE>
+  <FILES>
+    <FILE>src/skills/types.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG</DEPENDS>
+  <LINKS>M-SKILLS</LINKS>
+  <VERIFICATION_REF>V-M-SKILLS-TYPES</VERIFICATION_REF>
+</MODULE>

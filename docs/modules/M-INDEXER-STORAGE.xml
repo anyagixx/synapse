@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-STORAGE" type="DATA_LAYER" status="active">
+  <NAME>M-INDEXER-STORAGE</NAME>
+  <PURPOSE>JSON block storage with search — BM25 ranking and n-gram vector search</PURPOSE>
+  <SCOPE>Storage struct, StoredBlock, JSON persistence, BM25 scoring, cosine similarity</SCOPE>
+  <FILES>
+    <FILE>src/indexer/storage.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-STORAGE</VERIFICATION_REF>
+</MODULE>
