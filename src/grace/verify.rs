@@ -1,18 +1,18 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
-// PURPOSE: 3-level verification — module-local, wave, phase checks for GRACE compliance
-// SCOPE: Verifier struct, VerificationResult, CheckResult, verify_all, verify_module_local, verify_wave, verify_phase
-// DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for GRACE compliance
+// SCOPE: Verifier struct, verify_all, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
-// VerificationResult — Per-level verification result with check list
-// CheckResult — Single verification check result
 // Verifier — Runs 3-level GRACE verification
+// VerificationResult — Re-exported per-level verification result
+// CheckResult — Re-exported single verification check result
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Made file-size verification distinguish hard limit from Phase 2 target]
+// LAST_CHANGE: [v2.8.0 — Extracted phase checks and result types into split modules]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::ContractValidator;
@@ -21,25 +21,9 @@ use crate::grace::layout::DocsLayout;
 use crate::grace::semantic::SemanticExtractor;
 use std::path::Path;
 
+pub use crate::grace::verify_types::{CheckResult, VerificationResult};
+
 // START_public_api
-
-// START_VerificationResult
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct VerificationResult {
-    pub level: String,
-    pub passed: bool,
-    pub checks: Vec<CheckResult>,
-}
-// END_VerificationResult
-
-// START_CheckResult
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct CheckResult {
-    pub name: String,
-    pub passed: bool,
-    pub details: String,
-}
-// END_CheckResult
 
 // START_Verifier
 pub struct Verifier;
@@ -459,108 +443,7 @@ impl Verifier {
     // OUTPUTS: { anyhow::Result<VerificationResult> }
     // START_verifier_verify_phase
     pub async fn verify_phase(root: &Path) -> anyhow::Result<VerificationResult> {
-        let mut checks = Vec::new();
-        let layout = DocsLayout::new(root);
-        let phase0_done = layout.graph_index_path().exists()
-            && layout.plan_index_path().exists()
-            && layout.verification_index_path().exists()
-            && layout.modules_dir().exists()
-            && layout.phases_dir().exists()
-            && layout.verification_dir().exists();
-        checks.push(CheckResult {
-            name: "phase-0-sharded".into(),
-            passed: phase0_done,
-            details: if phase0_done {
-                "Primary sharded Phase 0 artifacts complete".into()
-            } else {
-                "Missing one or more primary sharded Phase 0 artifacts".into()
-            },
-        });
-
-        // Check no TODO/FIXME in indexed code (warning)
-        let walker = crate::indexer::walker::Walker::new(root);
-        let files = walker.walk();
-        let mut todos = Vec::new();
-        for file in &files {
-            let full_path = root.join(&file.path);
-            if let Ok(content) = std::fs::read_to_string(&full_path) {
-                for (i, line) in content.lines().enumerate() {
-                    let l = line.trim().to_lowercase();
-                    if (l.starts_with("// todo")
-                        || l.starts_with("# todo")
-                        || l.starts_with("/* todo")
-                        || l.contains("TODO:"))
-                        || (l.starts_with("// fixme")
-                            || l.starts_with("# fixme")
-                            || l.starts_with("/* fixme")
-                            || l.contains("FIXME:"))
-                    {
-                        todos.push(format!("{}:{}", file.path, i + 1));
-                    }
-                }
-            }
-        }
-        checks.push(CheckResult {
-            name: "no-todos".into(),
-            passed: todos.is_empty(),
-            details: if todos.is_empty() {
-                "No TODO/FIXME found".into()
-            } else {
-                format!(
-                    "{} TODO/FIXME found:\n  {}",
-                    todos.len(),
-                    todos.join("\n  ")
-                )
-            },
-        });
-
-        // Check hard file-size limit and report Phase 2 maintainability target drift.
-        const SOURCE_TARGET_LINES: usize = 500;
-        const SOURCE_HARD_LIMIT_LINES: usize = 1300;
-        let mut large_files = Vec::new();
-        let mut target_overages = Vec::new();
-        for file in &files {
-            let full_path = root.join(&file.path);
-            if let Ok(content) = std::fs::read_to_string(&full_path) {
-                let line_count = content.lines().count();
-                let max_lines = SOURCE_HARD_LIMIT_LINES;
-                if line_count > max_lines {
-                    large_files.push(format!("{} ({} lines)", file.path, line_count));
-                } else if line_count > SOURCE_TARGET_LINES {
-                    target_overages.push(format!("{} ({} lines)", file.path, line_count));
-                }
-            }
-        }
-        checks.push(CheckResult {
-            name: "file-size-limit".into(),
-            passed: large_files.is_empty(),
-            details: if large_files.is_empty() {
-                if target_overages.is_empty() {
-                    "All files within 500-line Phase 2 target".into()
-                } else {
-                    format!(
-                        "All files within {}-line hard limit; {} files exceed {}-line Phase 2 target:\n  {}",
-                        SOURCE_HARD_LIMIT_LINES,
-                        target_overages.len(),
-                        SOURCE_TARGET_LINES,
-                        target_overages.join("\n  ")
-                    )
-                }
-            } else {
-                format!(
-                    "Files over {}-line hard limit:\n  {}",
-                    SOURCE_HARD_LIMIT_LINES,
-                    large_files.join("\n  ")
-                )
-            },
-        });
-
-        let passed = checks.iter().all(|c| c.passed);
-        Ok(VerificationResult {
-            level: "phase".into(),
-            passed,
-            checks,
-        })
+        crate::grace::verify_phase::verify_phase(root).await
     }
     // END_verifier_verify_phase
 }

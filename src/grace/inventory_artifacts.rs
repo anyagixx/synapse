@@ -15,6 +15,7 @@
 // LAST_CHANGE: [v2.7.0 — Extracted artifact IO from M-GRACE-INVENTORY]
 // END_CHANGE_SUMMARY
 
+use crate::grace::inventory_plan::{write_phase_index, write_phase_one};
 use crate::grace::inventory_types::{
     ArtifactDrift, ArtifactInventory, CodeModule, GraphEntry, VerificationEntry,
 };
@@ -382,24 +383,6 @@ fn write_verification_index(layout: &DocsLayout, modules: &[CodeModule]) -> anyh
     }
     xml.push_str("  </VERIFICATIONS>\n</VERIFICATION_INDEX>\n");
     std::fs::write(layout.verification_index_path(), xml)?;
-    Ok(())
-}
-
-fn write_phase_index(layout: &DocsLayout) -> anyhow::Result<()> {
-    let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PLAN_INDEX>\n  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY><ACTIVE_PHASE>Phase-1</ACTIVE_PHASE></META>\n  <PHASES>\n    <PHASE id=\"Phase-1\" path=\"docs/phases/Phase-1.xml\" status=\"active\" />\n  </PHASES>\n</PLAN_INDEX>\n";
-    std::fs::write(layout.plan_index_path(), xml)?;
-    Ok(())
-}
-
-fn write_phase_one(layout: &DocsLayout, modules: &[CodeModule]) -> anyhow::Result<()> {
-    let mut xml = String::from(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PHASE id=\"Phase-1\" status=\"active\">\n  <NAME>MyGRACE Truth Restoration</NAME>\n  <GOAL>Keep code contracts, graph index, module shards, and verification shards synchronized</GOAL>\n  <MODULE_REFS>\n",
-    );
-    for module in modules {
-        xml.push_str(&format!("    <MODULE_REF id=\"{}\" />\n", module.id));
-    }
-    xml.push_str("  </MODULE_REFS>\n</PHASE>\n");
-    std::fs::write(layout.phases_dir().join("Phase-1.xml"), xml)?;
     Ok(())
 }
 

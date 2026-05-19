@@ -2,7 +2,7 @@
 // MODULE_ID: M-GRACE
 // PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh)
 // SCOPE: Module declarations, GraceEngine struct, delegation to sub-modules
-// DEPENDS: M-GRACE-BOOTSTRAP, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-TYPES, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// DEPENDS: M-GRACE-BOOTSTRAP, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Added split inventory submodules for Phase 2 maintainability]
+// LAST_CHANGE: [v2.8.0 — Added split verification and inventory plan submodules for Phase 2 maintainability]
 // END_CHANGE_SUMMARY
 
 pub mod bootstrap;
@@ -20,6 +20,7 @@ pub mod explain;
 pub mod fix;
 pub mod inventory;
 pub mod inventory_artifacts;
+pub mod inventory_plan;
 pub mod inventory_types;
 pub mod layout;
 pub mod refresh;
@@ -27,6 +28,8 @@ pub mod review;
 pub mod semantic;
 pub mod status;
 pub mod verify;
+pub mod verify_phase;
+pub mod verify_types;
 
 use contract::ContractValidator;
 use std::path::Path;

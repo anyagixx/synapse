@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-VERIFY-TYPES" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-VERIFY-TYPES</NAME>
+  <PURPOSE>Verification result types shared by MyGRACE verification modules</PURPOSE>
+  <SCOPE>VerificationResult and CheckResult data structures</SCOPE>
+  <FILES>
+    <FILE>src/grace/verify_types.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>docs/modules/M-GRACE-VERIFY.xml</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-VERIFY-TYPES</VERIFICATION_REF>
+</MODULE>

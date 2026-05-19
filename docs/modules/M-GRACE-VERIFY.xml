@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-VERIFY" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-VERIFY</NAME>
-  <PURPOSE>3-level verification — module-local, wave, phase checks for GRACE compliance</PURPOSE>
-  <SCOPE>Verifier struct, VerificationResult, CheckResult, verify_all, verify_module_local, verify_wave, verify_phase</SCOPE>
+  <PURPOSE>3-level verification facade — module-local, wave, and delegated phase checks for GRACE compliance</PURPOSE>
+  <SCOPE>Verifier struct, verify_all, verify_module_local, verify_wave, delegated verify_phase</SCOPE>
   <FILES>
     <FILE>src/grace/verify.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-INVENTORY,M-GRACE-SEMANTIC,M-INDEXER-WALKER</DEPENDS>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-INVENTORY,M-GRACE-SEMANTIC,M-GRACE-VERIFY-PHASE,M-GRACE-VERIFY-TYPES,M-INDEXER-WALKER</DEPENDS>
   <LINKS>docs/requirements.xml,docs/technology.xml,docs/development-plan.xml,docs/verification-plan.xml,docs/knowledge-graph.xml</LINKS>
   <VERIFICATION_REF>V-M-GRACE-VERIFY</VERIFICATION_REF>
 </MODULE>

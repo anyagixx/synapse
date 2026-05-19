@@ -16,6 +16,7 @@
     <MODULE id="M-GRACE-FIX" path="docs/modules/M-GRACE-FIX.xml" status="active" />
     <MODULE id="M-GRACE-INVENTORY" path="docs/modules/M-GRACE-INVENTORY.xml" status="active" />
     <MODULE id="M-GRACE-INVENTORY-ARTIFACTS" path="docs/modules/M-GRACE-INVENTORY-ARTIFACTS.xml" status="active" />
+    <MODULE id="M-GRACE-INVENTORY-PLAN" path="docs/modules/M-GRACE-INVENTORY-PLAN.xml" status="active" />
     <MODULE id="M-GRACE-INVENTORY-TYPES" path="docs/modules/M-GRACE-INVENTORY-TYPES.xml" status="active" />
     <MODULE id="M-GRACE-LAYOUT" path="docs/modules/M-GRACE-LAYOUT.xml" status="active" />
     <MODULE id="M-GRACE-REFRESH" path="docs/modules/M-GRACE-REFRESH.xml" status="active" />
@@ -23,6 +24,8 @@
     <MODULE id="M-GRACE-SEMANTIC" path="docs/modules/M-GRACE-SEMANTIC.xml" status="active" />
     <MODULE id="M-GRACE-STATUS" path="docs/modules/M-GRACE-STATUS.xml" status="active" />
     <MODULE id="M-GRACE-VERIFY" path="docs/modules/M-GRACE-VERIFY.xml" status="active" />
+    <MODULE id="M-GRACE-VERIFY-PHASE" path="docs/modules/M-GRACE-VERIFY-PHASE.xml" status="active" />
+    <MODULE id="M-GRACE-VERIFY-TYPES" path="docs/modules/M-GRACE-VERIFY-TYPES.xml" status="active" />
     <MODULE id="M-GRAPHRAG" path="docs/modules/M-GRAPHRAG.xml" status="active" />
     <MODULE id="M-GRAPHRAG-BUILDER" path="docs/modules/M-GRAPHRAG-BUILDER.xml" status="active" />
     <MODULE id="M-GRAPHRAG-TYPES" path="docs/modules/M-GRAPHRAG-TYPES.xml" status="active" />
@@ -85,8 +88,11 @@
     <REL source="M-GRACE" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-INVENTORY-ARTIFACTS" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-INVENTORY-PLAN" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-INVENTORY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-VERIFY" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-VERIFY-PHASE" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-VERIFY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-REVIEW" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-SEMANTIC" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-REFRESH" type="DEPENDS" />
@@ -102,6 +108,8 @@
     <REL source="M-GRACE-INVENTORY" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY-ARTIFACTS" target="M-GRACE-INVENTORY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY-ARTIFACTS" target="M-GRACE-LAYOUT" type="DEPENDS" />
+    <REL source="M-GRACE-INVENTORY-PLAN" target="M-GRACE-INVENTORY-TYPES" type="DEPENDS" />
+    <REL source="M-GRACE-INVENTORY-PLAN" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-REFRESH" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-INVENTORY" type="DEPENDS" />
@@ -117,7 +125,12 @@
     <REL source="M-GRACE-VERIFY" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-SEMANTIC" type="DEPENDS" />
+    <REL source="M-GRACE-VERIFY" target="M-GRACE-VERIFY-PHASE" type="DEPENDS" />
+    <REL source="M-GRACE-VERIFY" target="M-GRACE-VERIFY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-GRACE-VERIFY-PHASE" target="M-GRACE-LAYOUT" type="DEPENDS" />
+    <REL source="M-GRACE-VERIFY-PHASE" target="M-GRACE-VERIFY-TYPES" type="DEPENDS" />
+    <REL source="M-GRACE-VERIFY-PHASE" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-GRAPHRAG" target="M-GRAPHRAG-TYPES" type="DEPENDS" />
     <REL source="M-GRAPHRAG" target="M-GRAPHRAG-BUILDER" type="DEPENDS" />
     <REL source="M-GRAPHRAG-BUILDER" target="M-GRAPHRAG-TYPES" type="DEPENDS" />
