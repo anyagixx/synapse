@@ -24,6 +24,7 @@
     <ASSERTION>CI blocks production .unwrap(), .expect(), panic!, todo!, and unimplemented! markers outside test-only Rust blocks.</ASSERTION>
     <ASSERTION>CI isolates XDG_DATA_HOME under its temporary directory when no caller-provided value exists.</ASSERTION>
     <ASSERTION>CI validates the Linux/macOS release matrix tarball layout, checksum sidecars, and packaged binary execution before release.</ASSERTION>
+    <ASSERTION>Push CI captures hosted Linux/macOS fresh-install evidence through the public raw installer URL and temporary SYN_INSTALL_DIR.</ASSERTION>
     <ASSERTION>Release workflow rejects tag/version mismatches and publishes generated release notes.</ASSERTION>
     <ASSERTION>Release-candidate workflow checks out the requested candidate ref, validates tag/version policy, generated release notes, checksum aggregation, installer dry-run mapping, fresh Linux/macOS installer smoke, and Linux/macOS release smoke without write permissions or release publishing actions.</ASSERTION>
     <ASSERTION>Release-candidate dry-run writes GitHub Step Summary evidence for tag, commit, Cargo version, checksum policy, installer matrix, smoke status, and non-publishing status.</ASSERTION>

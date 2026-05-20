@@ -19,11 +19,12 @@
 // test_release_checksum_integrity_is_enforced — Release checksum integrity check
 // test_release_policy_gates_are_explicit — Release notes and audit policy check
 // test_release_matrix_declares_linux_macos_targets — Linux/macOS release matrix check
+// test_ci_declares_fresh_install_evidence — Hosted CI fresh install evidence check
 // test_installer_dry_run_maps_linux_macos_artifacts — Installer dry-run mapping check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.1.0 - Added support docs and command-flag parity checks]
+// LAST_CHANGE: [v4.2.0 - Added hosted CI fresh-install evidence gate]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -501,6 +502,27 @@ fn test_release_matrix_declares_linux_macos_targets() {
         !RELEASE_WORKFLOW.contains("windows"),
         "Phase 5 release matrix must not add Windows prebuilt release targets"
     );
+}
+
+#[test]
+// START_CONTRACT_test_ci_declares_fresh_install_evidence
+// PURPOSE: Verify push CI captures hosted public-installer fresh install evidence on Linux/macOS
+fn test_ci_declares_fresh_install_evidence() {
+    for marker in [
+        "fresh-install:",
+        "github.event_name == 'push'",
+        "bash scripts/fresh_install_smoke.sh",
+        "raw.githubusercontent.com/anyagixx/synapse/${{ github.sha }}/install.sh",
+        "ubuntu-latest",
+        "macos-latest",
+        "Fresh install smoke",
+        "Install dir: temporary",
+    ] {
+        assert!(
+            CI_WORKFLOW.contains(marker),
+            "CI workflow must declare hosted fresh install marker {marker}"
+        );
+    }
 }
 
 #[test]

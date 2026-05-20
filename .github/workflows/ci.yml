@@ -61,6 +61,37 @@ jobs:
           SYN_RELEASE_TARGET: ${{ matrix.target }}
           SYN_RELEASE_ARTIFACT: ${{ matrix.artifact }}
 
+  fresh-install:
+    if: github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux
+            runner: ubuntu-latest
+          - os: macos
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run public installer fresh smoke
+        run: bash scripts/fresh_install_smoke.sh
+        env:
+          SYN_INSTALL_SCRIPT_URL: https://raw.githubusercontent.com/anyagixx/synapse/${{ github.sha }}/install.sh
+      - name: Summarize fresh install evidence
+        if: always()
+        run: |
+          {
+            echo "## Fresh install smoke"
+            echo ""
+            echo "- OS: \`${{ matrix.os }}\`"
+            echo "- Ref: \`${{ github.ref_name }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Installer: \`raw.githubusercontent.com/anyagixx/synapse/${{ github.sha }}/install.sh\`"
+            echo "- Command: \`bash scripts/fresh_install_smoke.sh\`"
+            echo "- Install dir: temporary \`SYN_INSTALL_DIR\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   platform-test:
     strategy:
       fail-fast: false
