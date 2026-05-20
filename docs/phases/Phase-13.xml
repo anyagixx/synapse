@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-13" status="active">
+  <NAME>Professional GRACE Framework Upgrade</NAME>
+  <GOAL>Implement the grace-upgrade-guide roadmap as a persistent MyGRACE execution plan, starting with Sprint 1 P0 Foundation and continuing through all 13 feature sections without losing order across context compaction.</GOAL>
+  <SOURCE_GUIDE>
+    <README>/home/truffle/Загрузки/grace-upgrade-guide/README.md</README>
+    <section-1 id="1.5" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.5-links-format-upgrade.md" />
+    <section-2 id="1.4" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.4-log-driven-development.md" />
+    <section-3 id="1.1" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.1-belief-state.md" />
+    <section-4 id="4.1" path="/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.1-xml-anchor-syntax.md" />
+    <section-5 id="2.1" path="/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.1-requirements-analysis.md" />
+    <section-6 id="2.2" path="/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.2-technology-stack.md" />
+    <section-7 id="2.3" path="/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.3-development-plan.md" />
+    <section-8 id="1.2" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.2-mental-tests.md" />
+    <section-9 id="1.6" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.6-end-to-end-traceability.md" />
+    <section-10 id="1.3" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.3-non-human-patterns.md" />
+    <section-11 id="3.1" path="/home/truffle/Загрузки/grace-upgrade-guide/part-3-advanced-mechanics/3.1-agent-based-testing.md" />
+    <section-12 id="3.2" path="/home/truffle/Загрузки/grace-upgrade-guide/part-3-advanced-mechanics/3.2-cascade-update-engine.md" />
+    <section-13 id="4.2" path="/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.2-belief-state-dashboard.md" />
+    <roadmap path="/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.3-roadmap.md" />
+  </SOURCE_GUIDE>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRACE" />
+    <MODULE_REF id="M-GRACE-CONTRACT" />
+    <MODULE_REF id="M-GRACE-SEMANTIC" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-GRACE-REVIEW" />
+    <MODULE_REF id="M-GRACE-STATUS" />
+    <MODULE_REF id="M-GRACE-REFRESH" />
+    <MODULE_REF id="M-GRACE-LAYOUT" />
+    <MODULE_REF id="M-GRACE-INVENTORY" />
+    <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
+    <MODULE_REF id="M-GRAPHRAG" />
+    <MODULE_REF id="M-GRAPHRAG-BUILDER" />
+    <MODULE_REF id="M-GRAPHRAG-TYPES" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-SKILLS-REGISTRY" />
+    <MODULE_REF id="M-SKILLS-ENGINE" />
+    <MODULE_REF id="M-DASHBOARD" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <EXECUTION_POLICY>
+    <rule-1>Always resume from docs/plan-index.xml, then this Phase-13 shard, then the current section source guide.</rule-1>
+    <rule-2>Implement sections strictly in roadmap order: Sprint 1 section-1 through section-4, Sprint 2 section-5 through section-8, Sprint 3 section-9 through section-11, Sprint 4 section-12 through section-13.</rule-2>
+    <rule-3>For every new runtime module, add a source MODULE_CONTRACT, update docs/graph-index.xml, create docs/modules/M-*.xml, update docs/verification-index.xml, and create docs/verification/V-M-*.xml before or in the same patch.</rule-3>
+    <rule-4>Each section must add focused tests before moving to the next section; after each sprint run cargo fmt, cargo test, cargo clippy, refresh, verify --ci, and review --mode full --ci.</rule-4>
+    <rule-5>Keep legacy behavior compatible unless the guide explicitly makes a new check strict. Old LINKS and START/END anchors must keep working during migration.</rule-5>
+  </EXECUTION_POLICY>
+  <SPRINTS>
+    <sprint-1 name="P0 Foundation" status="pending">
+      <step-1 section="1.5" status="pending" priority="P0">
+        <TITLE>Typed LINKS Format Upgrade</TITLE>
+        <INTENT>Introduce typed, directional semantic links while preserving old comma-separated LINKS as backward-compatible warnings.</INTENT>
+        <IMPLEMENTATION>Extend M-GRACE-CONTRACT with TypedLink, LinkDirection, LinkType parsing; update GraphRAG relationship types and builder extraction; add links-valid-types, links-targets-exist, links-no-dangling, and links-format checks; extend graphrag_query type filters; update AGENTS.md.</IMPLEMENTATION>
+        <VERIFY>Unit tests for new and old LINKS formats, invalid type, dangling target, and type-filtered GraphRAG query.</VERIFY>
+      </step-1>
+      <step-2 section="1.4" status="pending" priority="P0">
+        <TITLE>Log Driven Development Structured LOG Format</TITLE>
+        <INTENT>Add structured LOG entries with EVENT, CONTEXT, STATE, DECISION, EXPECTATION, RESULT, and TRACEABILITY so runtime behavior can be semantically analyzed.</INTENT>
+        <IMPLEMENTATION>Create grace log model/formatter; add structured-log-format verification; add analyze_logs MCP handler with trajectory, anomaly, and compare modes; document the new logging contract in AGENTS.md.</IMPLEMENTATION>
+        <VERIFY>Tests for valid LOG parsing, missing EXPECTATION, duplicate log IDs, anomaly report, and contract comparison report.</VERIFY>
+      </step-2>
+      <step-3 section="1.1" status="pending" priority="P0">
+        <TITLE>Observable AI Belief State</TITLE>
+        <INTENT>Require explicit AI understanding, strategy, verification intent, and acknowledged risks before code generation.</INTENT>
+        <IMPLEMENTATION>Create M-GRACE-BELIEF-STATE module, docs/belief-states directory support, parser/validator, belief-state-exists verify check, status/review coverage, and extract_belief_state MCP handler.</IMPLEMENTATION>
+        <VERIFY>Tests for valid belief state, missing required field, source scan coverage, status coverage, and MCP storage path.</VERIFY>
+      </step-3>
+      <step-4 section="4.1" status="pending" priority="P0">
+        <TITLE>XML-like Anchor Syntax</TITLE>
+        <INTENT>Support GRACE XML-like anchors alongside legacy START/END anchors through normalization and parser support.</INTENT>
+        <IMPLEMENTATION>Extend semantic extractor and contract parser to recognize MODULE, BLOCK, METHOD, FUNCTION_CONTRACT, LOG, BELIEF_STATE, and LINKS XML-like anchors; add normalize_anchor_syntax; add anchor-syntax-consistent warning; update AGENTS.md.</IMPLEMENTATION>
+        <VERIFY>Tests for XML-like blocks, nested anchors, XML-like function contracts, mixed syntax warning, normalization, and legacy regression.</VERIFY>
+      </step-4>
+    </sprint-1>
+    <sprint-2 name="P1 Core Artifacts" status="pending">
+      <step-5 section="2.1" status="pending" priority="P1">
+        <TITLE>RequirementsAnalysis with AAG Notation</TITLE>
+        <INTENT>Replace stub requirements with a complete requirements artifact model: goals, domain entities, actors, use cases, NFRs, constraints, and glossary.</INTENT>
+        <IMPLEMENTATION>Create requirements parser/validator, full init template, generate_requirements MCP handler, requirements-* verify checks, and status/review coverage.</IMPLEMENTATION>
+        <VERIFY>Tests for init template, generated complete requirements, incomplete section failures, AAG extraction, and glossary/entity matching.</VERIFY>
+      </step-5>
+      <step-6 section="2.2" status="pending" priority="P1">
+        <TITLE>Technology Stack Version Pinning</TITLE>
+        <INTENT>Make technology.xml exact, version-pinned, compatibility-aware, and detectable from project dependency files.</INTENT>
+        <IMPLEMENTATION>Create technology parser, dependency detector, compatibility checks, full init template, generate_technology MCP handler, and technology-* verify checks.</IMPLEMENTATION>
+        <VERIFY>Tests for Cargo detection, exact version validation, latest/blank rejection, known issues section, and incompatible matrix detection.</VERIFY>
+      </step-6>
+      <step-7 section="2.3" status="pending" priority="P1">
+        <TITLE>DevelopmentPlan DataFlows and GenerationOrder</TITLE>
+        <INTENT>Upgrade the plan artifact into a real generation blueprint with architecture graph, DataFlows, GenerationOrder, NonHumanPatterns, and contract guidelines.</INTENT>
+        <IMPLEMENTATION>Create development_plan module, parse DataFlows and GenerationOrder in inventory_plan, add dataflow-* and genorder-* checks, add generate_development_plan MCP handler, and update grace_execute skill behavior.</IMPLEMENTATION>
+        <VERIFY>Tests for valid plan, circular generation order, missing module refs, dataflow contract mismatch, and status phase progress.</VERIFY>
+      </step-7>
+      <step-8 section="1.2" status="pending" priority="P1">
+        <TITLE>Mental Tests</TITLE>
+        <INTENT>Add pre-code algorithm simulation and make failed mental tests block code generation for complex or critical modules.</INTENT>
+        <IMPLEMENTATION>Create mental_test parser/executor, mental-test-defined, mental-tests-passed, and mental-test-no-drift checks; add mental_test_run MCP handler; integrate with plan, execute, review, status, and fix workflows.</IMPLEMENTATION>
+        <VERIFY>Tests for pass/fail simulations, edge cases, missing mental tests for critical modules, and drift between expectations and implementation/logs.</VERIFY>
+      </step-8>
+    </sprint-2>
+    <sprint-3 name="P2 Advanced Core" status="pending">
+      <step-9 section="1.6" status="pending" priority="P2">
+        <TITLE>End-to-End Traceability</TITLE>
+        <INTENT>Build bidirectional traceability from requirement and use case through module, function, code block, verification, and LOG entry.</INTENT>
+        <IMPLEMENTATION>Create traceability module and docs/traceability-index.xml generator; add traceability_report MCP handler; add traceability-* verify checks and status/review score.</IMPLEMENTATION>
+        <VERIFY>Tests for upward and downward trace, unimplemented requirement gap, untraced function gap, dangling trace link, and LOG traceability extraction.</VERIFY>
+      </step-9>
+      <step-10 section="1.3" status="pending" priority="P2">
+        <TITLE>Non-Human Programming Patterns</TITLE>
+        <INTENT>Enforce AI-deterministic coding patterns: explicit typing, explicit flow, explicit null handling, no magic values, and deterministic iteration.</INTENT>
+        <IMPLEMENTATION>Create non_human_patterns checker with profile-aware severities; integrate verify, review, status, capabilities, and contract validation.</IMPLEMENTATION>
+        <VERIFY>Tests for each anti-pattern, profile behavior lite/balanced/strict, clean examples, and real-module score reporting.</VERIFY>
+      </step-10>
+      <step-11 section="3.1" status="pending" priority="P2">
+        <TITLE>Agent-Based Testing</TITLE>
+        <INTENT>Add natural-language testing guides, tester-agent failure reports, and an embedded agent console for tool-based application testing.</INTENT>
+        <IMPLEMENTATION>Create agent_console module, grace testing module, docs/tests layout, run_test_guide and submit_test_report MCP handlers, tester subagent skill updates, and AGENTS.md protocol documentation.</IMPLEMENTATION>
+        <VERIFY>Tests for Markdown guide parsing, pass report, failure XML report with LOG evidence, console tool registration, and tester agent configuration output.</VERIFY>
+      </step-11>
+    </sprint-3>
+    <sprint-4 name="P3 Integration and Polish" status="pending">
+      <step-12 section="3.2" status="pending" priority="P3">
+        <TITLE>Cascade Update Engine</TITLE>
+        <INTENT>Detect downstream impact of artifact changes, preview cascades, apply safe contract updates, and record cascade changelogs.</INTENT>
+        <IMPLEMENTATION>Create cascade and cascade_change modules, docs/cascade layout, cascade_impact and cascade_execute MCP handlers, cascade-no-drift verify check, and cascade-aware refresh/status/review.</IMPLEMENTATION>
+        <VERIFY>Tests for requirement impact analysis, unrelated artifact no-op, preview chain formatting, changelog creation, and post-cascade drift detection.</VERIFY>
+      </step-12>
+      <step-13 section="4.2" status="pending" priority="P3">
+        <TITLE>Belief State Dashboard</TITLE>
+        <INTENT>Expose belief states, mental tests, traceability chains, cascade preview, and cascade history in the existing dashboard.</INTENT>
+        <IMPLEMENTATION>Extend dashboard routes and JSON APIs for belief-states, mental-tests, traceability, cascade-impact, and cascade history using the new GRACE modules as data sources.</IMPLEMENTATION>
+        <VERIFY>Tests or smoke checks for each route/API, JSON validity, module detail rendering, and data refresh after artifact changes.</VERIFY>
+      </step-13>
+    </sprint-4>
+  </SPRINTS>
+  <GLOBAL_ACCEPTANCE>
+    <CHECK status="pending">syn verify reports the new checks: belief-state-exists, mental-tests-passed, non-human-*, structured-log-format, links-*, traceability-*, dataflow-*, genorder-*, cascade-no-drift, and anchor-syntax-consistent.</CHECK>
+    <CHECK status="pending">syn init generates complete requirements.xml, technology.xml, DevelopmentPlan-compatible sharded artifacts, graph-index.xml, and verification-index.xml.</CHECK>
+    <CHECK status="pending">MCP tools exist and are listed in capabilities: extract_belief_state, mental_test_run, analyze_logs, traceability_report, generate_requirements, generate_technology, generate_development_plan, cascade_impact, cascade_execute, run_test_guide, and submit_test_report.</CHECK>
+    <CHECK status="pending">Synapse self-verifies against the new checks without regressing legacy projects that use comma-separated LINKS or START/END anchors.</CHECK>
+    <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
+  </GLOBAL_ACCEPTANCE>
+  <RESUME_POINTER>
+    <NEXT_ACTION>Begin Sprint 1 step-1 section 1.5 Typed LINKS Format Upgrade.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-CONTRACT.xml, docs/modules/M-GRAPHRAG-TYPES.xml, docs/modules/M-GRAPHRAG-BUILDER.xml, docs/verification/V-M-GRACE-CONTRACT.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.5-links-format-upgrade.md</SOURCE_SPEC>
+  </RESUME_POINTER>
+  <LOCAL_GATE>
+    cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci
+  </LOCAL_GATE>
+</PHASE>
