@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles and requirements/technology/development-plan generation
+// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles, requirements/technology/development-plan generation, and traceability reporting
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Added mental_test_run MCP tool schema]
+// LAST_CHANGE: [v2.19.0 — Added traceability_report MCP tool schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -163,6 +163,18 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                     "step_by_step": { "type": "boolean", "description": "Return step-by-step trace behavior", "default": true }
                 },
                 "required": ["module_id", "mental_test_id"]
+            }
+        }),
+        serde_json::json!({
+            "name": "traceability_report",
+            "description": "Generate an end-to-end traceability report from requirements/use cases to modules, functions, blocks, and LOG evidence.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "scope": { "type": "string", "description": "project | module | requirement", "default": "project" },
+                    "target": { "type": "string", "description": "Required for module or requirement scope, such as M-ORDER or REQ-001" },
+                    "direction": { "type": "string", "description": "up | down", "default": "up" }
+                }
             }
         }),
         serde_json::json!({

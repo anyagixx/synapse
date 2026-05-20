@@ -1,6 +1,6 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-REGISTRY
-// PURPOSE: Skill registry — declares 15 first-class GRACE skill tools for MCP exposure
+// PURPOSE: Skill registry — declares 15 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
 // SCOPE: Skill metadata constants, built-in MCP tool descriptions, and lookup helpers
 // DEPENDS: M-SKILLS-TYPES
 // LINKS: M-SKILLS
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Documented mental_test_run MCP capability]
+// LAST_CHANGE: [v2.19.0 — Documented traceability_report MCP capability]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -287,6 +287,10 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     (
         "mental_test_run",
         "Run a DevelopmentPlan MentalTest before code generation",
+    ),
+    (
+        "traceability_report",
+        "Generate an end-to-end traceability matrix and gap report",
     ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),

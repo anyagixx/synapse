@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
-// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state and mental-test storage, requirements/technology/development-plan templates, and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test indexes, requirements, technology, and development-plan templates, and shard dirs
-// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST
+// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state, mental-test, and traceability storage, requirements/technology/development-plan templates, and bootstraps templates
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability indexes, requirements, technology, and development-plan templates, and shard dirs
+// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Added mental-test trace directory support]
+// LAST_CHANGE: [v2.19.0 — Added traceability index path and skeleton]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -118,6 +118,15 @@ impl DocsLayout {
         self.docs_dir().join("verification-index.xml")
     }
     // END_docs_layout_verification_index
+
+    // START_CONTRACT_DocsLayout::traceability_index_path
+    // PURPOSE: Return traceability index path
+    // OUTPUTS: { PathBuf — docs/traceability-index.xml path }
+    // START_docs_layout_traceability_index
+    pub fn traceability_index_path(&self) -> PathBuf {
+        self.docs_dir().join("traceability-index.xml")
+    }
+    // END_docs_layout_traceability_index
 
     // START_CONTRACT_DocsLayout::ensure_initialized
     // PURPOSE: Create sharded docs directories, indexes, starter shards, and legacy compatibility docs if missing
@@ -248,6 +257,8 @@ impl DocsLayout {
             &self.docs_dir().join("development-plan.xml"),
             &development_plan,
         )?;
+        let traceability_index = crate::grace::traceability::traceability_index_template();
+        self.write_if_missing(&self.traceability_index_path(), &traceability_index)?;
         self.write_if_missing(
             &self.docs_dir().join("verification-plan.xml"),
             r#"<?xml version="1.0" encoding="UTF-8"?>

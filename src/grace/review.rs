@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, traceability, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, traceability, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Added MentalTests review section]
+// LAST_CHANGE: [v2.19.0 — Added traceability review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -299,6 +299,38 @@ impl Reviewer {
                 mental_tests.required_targets.len()
             ),
             issues: mental_issues,
+        });
+
+        let traceability = crate::grace::traceability::scan_project_traceability(root)?;
+        let mut trace_issues: Vec<String> = traceability
+            .gaps
+            .iter()
+            .take(40)
+            .map(|gap| format!("{}: {} — {}", gap.gap_type, gap.source_id, gap.description))
+            .collect();
+        if traceability.gaps.len() > trace_issues.len() {
+            trace_issues.push(format!(
+                "{} additional traceability gaps omitted",
+                traceability.gaps.len() - trace_issues.len()
+            ));
+        }
+        sections.push(ReviewSection {
+            name: "traceability".into(),
+            passed: traceability.requirements_implemented_gate()
+                && traceability.code_traced_gate()
+                && traceability.no_dangling_gate(),
+            details: format!(
+                "score={:.1}% requirements={} use_cases={} traced_functions={}/{} traced_logs={}/{} enforcement={}",
+                traceability.traceability_score * 100.0,
+                traceability.requirements_total,
+                traceability.use_cases_total,
+                traceability.functions_with_traceability,
+                traceability.total_functions,
+                traceability.logs_with_traceability,
+                traceability.total_logs,
+                traceability.enforcement_mode
+            ),
+            issues: trace_issues,
         });
 
         let passed = sections.iter().all(|s| s.passed);

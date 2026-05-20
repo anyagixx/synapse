@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests, traceability and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Added MentalTests verification gates]
+// LAST_CHANGE: [v2.19.0 — Added end-to-end traceability verification gates]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -661,6 +661,73 @@ impl Verifier {
                 "Mental test targets resolve to current source modules".into()
             } else {
                 format!("Mental test drift issues: {:?}", mental_tests.drift_issues)
+            },
+        });
+
+        let traceability = crate::grace::traceability::scan_project_traceability(root)?;
+        checks.push(CheckResult {
+            name: "traceability-requirements-implemented".into(),
+            passed: traceability.requirements_implemented_gate(),
+            details: if traceability.untraced_requirements.is_empty() {
+                format!(
+                    "{} requirements have implementing trace links",
+                    traceability.requirements_total
+                )
+            } else {
+                format!(
+                    "{} untraced requirements under {} enforcement: {:?}",
+                    traceability.untraced_requirements.len(),
+                    traceability.enforcement_mode,
+                    traceability.untraced_requirements
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "traceability-code-traced".into(),
+            passed: traceability.code_traced_gate(),
+            details: if traceability.untraced_functions.is_empty() {
+                format!(
+                    "{}/{} function contracts trace to requirements or use cases",
+                    traceability.functions_with_traceability, traceability.total_functions
+                )
+            } else {
+                format!(
+                    "{}/{} functions traced; {} gaps under {} enforcement",
+                    traceability.functions_with_traceability,
+                    traceability.total_functions,
+                    traceability.untraced_functions.len(),
+                    traceability.enforcement_mode
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "traceability-logs-traced".into(),
+            passed: traceability.logs_traced_gate(),
+            details: if traceability.total_logs == 0 {
+                "No structured LOG markers found; TRACEABILITY evidence adoption pending".into()
+            } else {
+                format!(
+                    "{}/{} structured LOG markers include TRACEABILITY fields",
+                    traceability.logs_with_traceability, traceability.total_logs
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "traceability-no-dangling".into(),
+            passed: traceability.no_dangling_gate(),
+            details: if traceability.no_dangling_gate() {
+                format!(
+                    "Traceability links resolve across {} chains; score {:.1}%",
+                    traceability.chains.len(),
+                    traceability.traceability_score * 100.0
+                )
+            } else {
+                let dangling = traceability
+                    .gaps
+                    .iter()
+                    .filter(|gap| gap.gap_type == "dangling_traceability_link")
+                    .count();
+                format!("{} dangling traceability links detected", dangling)
             },
         });
 

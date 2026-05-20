@@ -34,6 +34,7 @@
     <MODULE_REF id="M-GRACE-TECHNOLOGY" />
     <MODULE_REF id="M-GRACE-DEVELOPMENT-PLAN" />
     <MODULE_REF id="M-GRACE-MENTAL-TEST" />
+    <MODULE_REF id="M-GRACE-TRACEABILITY" />
     <MODULE_REF id="M-GRACE-INVENTORY" />
     <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
     <MODULE_REF id="M-GRAPHRAG" />
@@ -106,15 +107,15 @@
         <TITLE>Mental Tests</TITLE>
         <INTENT>Add pre-code algorithm simulation and make failed mental tests block code generation for complex or critical modules.</INTENT>
         <IMPLEMENTATION>Create mental_test parser/runner, add MentalTests to DevelopmentPlan templates, add mental-tests-defined, mental-tests-passed, and mental-test-no-drift checks, add mental_test_run MCP handler, and integrate plan/execute/review/status/fix guidance.</IMPLEMENTATION>
-        <VERIFY status="passed">Tests for MentalTest parsing, pass/fail blocking, missing critical target coverage, trace persistence, mental_test_run MCP output, 33-tool MCP parity, and full verify/review gates.</VERIFY>
+        <VERIFY status="passed">Tests for MentalTest parsing, pass/fail blocking, missing critical target coverage, trace persistence, mental_test_run MCP output, MCP parity, and full verify/review gates.</VERIFY>
       </step-8>
     </sprint-2>
-    <sprint-3 name="P2 Advanced Core" status="pending">
-      <step-9 section="1.6" status="pending" priority="P2">
+    <sprint-3 name="P2 Advanced Core" status="active">
+      <step-9 section="1.6" status="done" priority="P2">
         <TITLE>End-to-End Traceability</TITLE>
         <INTENT>Build bidirectional traceability from requirement and use case through module, function, code block, verification, and LOG entry.</INTENT>
-        <IMPLEMENTATION>Create traceability module and docs/traceability-index.xml generator; add traceability_report MCP handler; add traceability-* verify checks and status/review score.</IMPLEMENTATION>
-        <VERIFY>Tests for upward and downward trace, unimplemented requirement gap, untraced function gap, dangling trace link, and LOG traceability extraction.</VERIFY>
+        <IMPLEMENTATION>Create M-GRACE-TRACEABILITY with TraceabilityChain/TraceabilityReport, docs/traceability-index.xml skeleton/generator, traceability_report MCP handler, traceability-* verify checks, review/status scoring, and traceability guidance in skills/capabilities/docs.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for complete chain coverage, untraced function gap, dangling trace link, index writing, traceability_report MCP output, 34-tool MCP parity, refresh drift, verify --ci, and review --mode full --ci.</VERIFY>
       </step-9>
       <step-10 section="1.3" status="pending" priority="P2">
         <TITLE>Non-Human Programming Patterns</TITLE>
@@ -152,9 +153,9 @@
     <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 3 step-9 section 1.6 End-to-End Traceability.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-DEVELOPMENT-PLAN.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.6-end-to-end-traceability.md</SOURCE_SPEC>
+    <NEXT_ACTION>Begin Sprint 3 step-10 section 1.3 Non-Human Programming Patterns.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-CAPABILITIES.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.3-non-human-patterns.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

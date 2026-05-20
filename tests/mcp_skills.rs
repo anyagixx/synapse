@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Updated MCP capability count for mental_test_run]
+// LAST_CHANGE: [v2.19.0 — Updated MCP capability count for traceability_report]
 // END_CHANGE_SUMMARY
 
 use std::sync::{Mutex, OnceLock};
@@ -41,8 +41,8 @@ fn test_skill_registry_count() {
 fn test_capabilities_include_skills() {
     assert!(capabilities::COMMANDS.iter().any(|(n, _)| *n == "skills"));
     assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 15);
-    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 18);
-    assert_eq!(capabilities::MCP_TOOLS.len(), 33);
+    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 19);
+    assert_eq!(capabilities::MCP_TOOLS.len(), 34);
 }
 
 #[test]

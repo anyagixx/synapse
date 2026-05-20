@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-TRACEABILITY" module="M-GRACE-TRACEABILITY" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test traceability --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[Traceability][scan_project_traceability][GAP]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>TraceabilityReport counts requirements, use cases, modules, functions, LOG evidence, score, and gaps.</ASSERTION>
+    <ASSERTION>Strict enforcement fails untraced requirements or functions while advisory mode reports gaps without blocking migration.</ASSERTION>
+    <ASSERTION>traceability_report MCP output persists docs/traceability-index.xml and returns scoped module/requirement matrices.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

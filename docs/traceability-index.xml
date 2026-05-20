@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TRACEABILITY_INDEX enforcement="advisory">
+  <META>
+    <MODEL>mygrace-sharded</MODEL>
+    <PRIMARY>true</PRIMARY>
+    <GENERATED_BY>M-GRACE-TRACEABILITY</GENERATED_BY>
+  </META>
+  <SUMMARY requirements="3" use_cases="2" traced_modules="1" traced_functions="0" traced_logs="1" score="0.006" />
+  <ENFORCEMENT mode="advisory">Traceability gaps are reported before strict rollout.</ENFORCEMENT>
+  <REQUIREMENTS>
+    <REQUIREMENT id="NFR-002">
+      <IMPLEMENTED_BY>
+        <ARTIFACT ref="M-GRACE-TRACEABILITY" type="module" relationship="implemented_by" />
+      </IMPLEMENTED_BY>
+    </REQUIREMENT>
+  </REQUIREMENTS>
+  <USE_CASES>
+    <USE_CASE id="UC-002">
+      <IMPLEMENTED_BY>
+        <ARTIFACT ref="M-GRACE-TRACEABILITY" type="module" relationship="implemented_by" />
+      </IMPLEMENTED_BY>
+    </USE_CASE>
+  </USE_CASES>
+  <GAPS>
+    <GAP type="requirement_not_implemented" id="NFR-001">Requirement has no implementing module, function, verification, or LOG trace.</GAP>
+    <GAP type="requirement_not_implemented" id="NFR-003">Requirement has no implementing module, function, verification, or LOG trace.</GAP>
+    <GAP type="use_case_not_implemented" id="UC-001">Use case has no implementing module, function, verification, or LOG trace.</GAP>
+    <GAP type="function_not_traced" id="summary">Most existing function contracts predate end-to-end traceability and are reported in advisory mode until the strict rollout.</GAP>
+  </GAPS>
+</TRACEABILITY_INDEX>

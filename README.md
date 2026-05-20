@@ -1,7 +1,7 @@
 # Synapse
 
 > **AI Agent Engineering Platform — works transparently through OpenCode CLI**
-> *33 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
+> *34 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
 
 ---
 
@@ -13,7 +13,7 @@
          ┌─────────────┼─────────────┐
          ▼             ▼             ▼
     MCP Tools       Plugin       AGENTS.md
-  (33 инструмента)   (proxy,      (GRACE
+  (34 инструмента)   (proxy,      (GRACE
                      GRACE)       конституция)
          │
          ▼
@@ -21,7 +21,7 @@
 ```
 
 Ты общаешься с AI через `opencode`. Synapse невидимо:
-- Даёт LLM **33 MCP-инструмента** для поиска, проверки и генерации кода
+- Даёт LLM **34 MCP-инструмента** для поиска, проверки и генерации кода
 - Авто-фильтрует шумный вывод shell-команд; фактическую экономию показывает `syn gain`
 - **Принуждает GRACE методологию**: Phase 0, контракты, верификация, ревью
 - **Сам проходит собственные проверки**: `syn verify` → ALL PASS
@@ -36,7 +36,7 @@
 
 Synapse решает это так:
 - хранит архитектуру в **sharded GRACE artifacts**
-- даёт OpenCode **33 MCP tools**
+- даёт OpenCode **34 MCP tools**
 - даёт **15 workflow tools** для init/plan/execute/review/fix/status
 - режет shell noise через proxy
 - навязывает verify/review discipline прямо в цикле работы
@@ -98,7 +98,7 @@ cd synapse && make install
 ```bash
 mkdir my-project && cd my-project
 syn init          # 1 сек: интеграция с OpenCode
-opencode          # LLM видит 33 MCP инструмента + sharded Phase 0 gate
+opencode          # LLM видит 34 MCP инструмента + sharded Phase 0 gate
 # LLM: "Что ты хочешь построить?"
 # Ты:  "Приложение для заметок с поиском"
 ```
@@ -127,6 +127,7 @@ LLM **не может писать код** пока не созданы shard i
 | `docs/graph-index.xml` | Граф модулей |
 | `docs/plan-index.xml` | Фазы и порядок |
 | `docs/verification-index.xml` | Проверки модулей |
+| `docs/traceability-index.xml` | Матрица requirement/use-case -> code/log |
 | `docs/modules/` | Sharded module docs |
 | `docs/phases/` | Sharded phase docs |
 | `docs/verification/` | Sharded verification docs |
@@ -135,9 +136,9 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 
 ---
 
-## 33 MCP Tools
+## 34 MCP Tools
 
-### 18 Core tools
+### 19 Core tools
 
 | Инструмент | Назначение |
 |-----------|-----------|
@@ -153,6 +154,7 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 | `generate_technology` | Создание и валидация полного `docs/technology.xml` с exact versions и compatibility matrix |
 | `generate_development_plan` | Создание и валидация `docs/development-plan.xml` с DataFlows, GenerationOrder и MentalTests |
 | `mental_test_run` | Запуск MentalTest перед кодогенерацией и запись trace в `docs/mental-tests/` |
+| `traceability_report` | End-to-end matrix: requirements/use cases -> modules/functions/LOG evidence |
 | `token_savings` | Статистика экономии токенов |
 | `compress_text` | Сжатие текста (3 уровня) |
 | `refresh_project` | Синхронизация графа и плана с кодом |
@@ -242,7 +244,7 @@ my-project/
 | **Octocode** | AST-индексация (5 языков) + fallback (14), BM25 + векторный + гибридный поиск |
 | **RTK Proxy** | 30+ TOML-фильтров, 8-стадийный пайплайн, авто-прокси через плагин |
 | **Caveman** | 3 уровня сжатия (lite/full/ultra) |
-| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 33 MCP tools, 15 workflow tools, 3 режима ревью |
+| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 34 MCP tools, 15 workflow tools, 3 режима ревью |
 
 ---
 
@@ -252,15 +254,15 @@ my-project/
 |---------|----------|
 | Бинарник | ~13 MB release |
 | Зависимости | 0 внешних системных (всё статически слинковано) |
-| MCP инструментов | **33** |
+| MCP инструментов | **34** |
 | CLI команд | 19 |
-| Проверок verify | 37 |
+| Проверок verify | 41 |
 | GRACE workflow tools | 15 |
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
-| Тестов | **146** (cargo test --all-targets) |
-| Контрактов в своём коде | **40/40** |
+| Тестов | **151** (cargo test --all-targets) |
+| Контрактов в своём коде | **84/84** |
 | self-verify | **ALL PASS** |
 
 ## License

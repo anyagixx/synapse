@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, log analysis, belief extraction, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
-// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
+// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, log analysis, belief extraction, compression, tracking, and skills
+// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
@@ -15,6 +15,7 @@
 // handle_generate_technology — Generates and validates docs/technology.xml with exact versions
 // handle_generate_development_plan — Generates and validates docs/development-plan.xml with DataFlows and GenerationOrder
 // handle_mental_test_run — Runs one DevelopmentPlan MentalTest and persists trace output
+// handle_traceability_report — Builds end-to-end traceability matrix and updates docs/traceability-index.xml
 // handle_gain — Returns token savings stats
 // handle_compress — Compresses input text
 // handle_refresh — Reports or fixes MyGRACE drift
@@ -25,7 +26,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Added mental_test_run MCP handler]
+// LAST_CHANGE: [v2.19.0 — Added traceability_report MCP handler]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
@@ -494,6 +495,71 @@ pub(crate) async fn handle_mental_test_run(
     }
 }
 // END_handle_mental_test_run
+
+// START_CONTRACT_handle_traceability_report
+// PURPOSE: Generate an end-to-end traceability matrix for project, module, or requirement scope
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: writes docs/traceability-index.xml
+// START_handle_traceability_report
+pub(crate) async fn handle_traceability_report(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let scope = args["scope"].as_str().unwrap_or("project").trim();
+    if !matches!(scope, "project" | "module" | "requirement") {
+        return error(
+            id,
+            -32602,
+            "Invalid scope. Use project | module | requirement.",
+        );
+    }
+    let direction = args["direction"].as_str().unwrap_or("up").trim();
+    if !matches!(direction, "up" | "down") {
+        return error(id, -32602, "Invalid direction. Use up | down.");
+    }
+    let target = args["target"]
+        .as_str()
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+    if scope != "project" && target.is_none() {
+        return error(
+            id,
+            -32602,
+            "Missing 'target' for module or requirement scope",
+        );
+    }
+    let root = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+    match crate::grace::traceability::scan_project_traceability(&root) {
+        Ok(report) => {
+            let index_path = crate::grace::traceability::write_traceability_index(&root, &report)
+                .map(|path| path.display().to_string())
+                .unwrap_or_else(|_| "docs/traceability-index.xml not written".into());
+            let mut text = crate::grace::traceability::format_traceability_report(
+                &report, scope, target, direction,
+            );
+            text.push_str(&format!(
+                "\n<TraceabilityIndex>{}</TraceabilityIndex>",
+                index_path
+            ));
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        Err(e) => error(id, -32603, format!("Traceability error: {}", e)),
+    }
+}
+// END_handle_traceability_report
 
 // START_CONTRACT_handle_gain
 // PURPOSE: Execute token_savings and return tracking statistics
@@ -968,6 +1034,74 @@ mod tests {
         assert!(dir.path().join("docs/mental-tests/MT-001.xml").exists());
     }
     // END_test_handle_mental_test_run_writes_trace
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_traceability_report_writes_index
+    // PURPOSE: Verify traceability_report returns a matrix and persists docs/traceability-index.xml
+    // START_test_handle_traceability_report_writes_index
+    async fn test_handle_traceability_report_writes_index() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir_all(dir.path().join("docs")).expect("docs");
+        std::fs::create_dir_all(dir.path().join("src")).expect("src");
+        std::fs::write(
+            dir.path().join("docs/requirements.xml"),
+            concat!(
+                "<RequirementsAnalysis><DomainModel><Entity name=\"Order\" /></DomainModel>",
+                "<UseCases><UseCase id=\"UC-001\"><Actor>User</Actor><Action>Order</Action><Goal>Done</Goal></UseCase></UseCases>",
+                "<NonFunctionalRequirements><Requirement id=\"REQ-001\"><Description>Traceable order</Description></Requirement></NonFunctionalRequirements>",
+                "</RequirementsAnalysis>",
+            ),
+        )
+        .expect("requirements");
+        std::fs::write(
+            dir.path().join("src/order.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-ORDER\n",
+                "// PURPOSE: Order module\n",
+                "// SCOPE: Order flow\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "//   -> UC-001 (implements) - order use case\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// place_order - Places order\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 - Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_place_order\n",
+                "// PURPOSE: Place order\n",
+                "// LINKS:\n",
+                "//   -> UC-001 (implements) - order use case\n",
+                "// START_place_order\n",
+                "pub fn place_order() {}\n",
+                "// END_place_order\n",
+            ),
+        )
+        .expect("source");
+
+        let response = handle_traceability_report(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "scope": "module",
+                "target": "M-ORDER",
+                "direction": "up",
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("<TraceabilityReport"));
+        assert!(text.contains("M-ORDER::place_order"));
+        assert!(dir.path().join("docs/traceability-index.xml").exists());
+    }
+    // END_test_handle_traceability_report_writes_index
 }
 
 // END_public_api

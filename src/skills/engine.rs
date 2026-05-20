@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
 // PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
-// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, belief state, and project workflows
-// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
+// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, traceability, belief state, and project workflows
+// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Added MentalTests gating to planning, execution, and fix guidance]
+// LAST_CHANGE: [v2.19.0 — Added traceability guidance to status and execution skills]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -214,7 +214,7 @@ impl SkillEngine {
                     })
                     .unwrap_or_else(|| "unknown".into());
                 format!(
-                    "Execution guidance:\n- phase: {}\n- module: {}\n- generation-order next: {}\n- data flows in plan: {}\n- mental test gate: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read docs/development-plan.xml GenerationOrder, DataFlows, and MentalTests for {}\n2. run mental_test_run for {} if a matching MentalTest exists\n3. read shard docs for {}\n4. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n5. inspect affected source files for {}\n6. implement smallest safe change for objective only after mental test PASS\n7. run verify_project\n8. if verify fails, switch to grace_fix",
+                    "Execution guidance:\n- phase: {}\n- module: {}\n- generation-order next: {}\n- data flows in plan: {}\n- mental test gate: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read docs/development-plan.xml GenerationOrder, DataFlows, and MentalTests for {}\n2. run mental_test_run for {} if a matching MentalTest exists\n3. read shard docs for {}\n4. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n5. inspect affected source files for {}\n6. add/update LINKS to requirements or use cases and run traceability_report for {}\n7. implement smallest safe change for objective only after mental test PASS\n8. run verify_project\n9. if verify fails, switch to grace_fix",
                     active_phase,
                     module,
                     next_plan_module,
@@ -222,6 +222,7 @@ impl SkillEngine {
                     mental_gate,
                     string_arg(&request.arguments, "objective", "complete next bounded implementation step"),
                     failing,
+                    module,
                     module,
                     module,
                     module,
@@ -269,13 +270,14 @@ impl SkillEngine {
                 )
             }
             "grace_status" => format!(
-                "Status skill overview:\n- root: {}\n- detail level: {}\n- skill count: {}\n\nPrimary model:\n- {}\n- {}\n- {}\n\nUse project_status for machine report and grace_lint for structural integrity.",
+                "Status skill overview:\n- root: {}\n- detail level: {}\n- skill count: {}\n\nPrimary model:\n- {}\n- {}\n- {}\n- {}\n\nUse project_status for machine report, traceability_report for requirement/code chains, and grace_lint for structural integrity.",
                 self.context.root.display(),
                 string_arg(&request.arguments, "detail_level", "standard"),
                 SKILL_DEFS.len(),
                 rel(&self.context.root, &layout.graph_index_path()),
                 rel(&self.context.root, &layout.plan_index_path()),
                 rel(&self.context.root, &layout.verification_index_path()),
+                rel(&self.context.root, &layout.traceability_index_path()),
             ),
             "grace_ask" => format!(
                 "Artifact-aware answer flow prepared.\n\nQuestion: {}\n\nUse sources in order:\n1. docs/plan-index.xml\n2. docs/graph-index.xml\n3. docs/verification-index.xml\n4. relevant shards under docs/modules, docs/phases, docs/verification\n5. indexed code search",

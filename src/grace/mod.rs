@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test reporting, and anchor normalization export
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.18.0 — Registered MentalTest module]
+// LAST_CHANGE: [v2.19.0 — Registered Traceability module]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
@@ -35,6 +35,7 @@ pub mod review;
 pub mod semantic;
 pub mod status;
 pub mod technology;
+pub mod traceability;
 pub mod verify;
 pub mod verify_phase;
 pub mod verify_types;
@@ -180,6 +181,16 @@ impl GraceEngine {
         mental_test::scan_project_mental_tests(root)
     }
     // END_grace_engine_mental_test_report
+
+    // START_CONTRACT_GraceEngine::traceability_report
+    // PURPOSE: Scan project traceability chains and return coverage, score, and gap report
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<TraceabilityReport> }
+    // START_grace_engine_traceability_report
+    pub fn traceability_report(root: &Path) -> anyhow::Result<traceability::TraceabilityReport> {
+        traceability::scan_project_traceability(root)
+    }
+    // END_grace_engine_traceability_report
 
     // START_CONTRACT_GraceEngine::run_mental_test
     // PURPOSE: Run one MentalTest by module and id, persisting a trace artifact
