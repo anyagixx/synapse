@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, profile-aware contracts, typed LINKS, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS review, review_with_profile, scoped_gate, wave_audit, full_integrity
+// PURPOSE: GRACE integrity review — checks semantic markup, profile-aware contracts, typed LINKS, structured LOGs, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS and structured LOG review, review_with_profile, scoped_gate, wave_audit, full_integrity
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Added typed LINKS review section]
+// LAST_CHANGE: [v2.12.0 — Added structured LOG review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -160,6 +160,23 @@ impl Reviewer {
                 )
             },
             issues: link_issues,
+        });
+
+        let log_report = crate::grace::log::scan_source_logs(root)?;
+        sections.push(ReviewSection {
+            name: "structured-logs".into(),
+            passed: log_report.passed(),
+            details: if log_report.total_logs == 0 {
+                "No structured LOG markers found; LDD adoption pending".into()
+            } else {
+                format!(
+                    "{} valid, {} invalid, {} duplicates",
+                    log_report.valid_logs,
+                    log_report.invalid_logs,
+                    log_report.duplicate_ids.len()
+                )
+            },
+            issues: log_report.issues,
         });
 
         let passed = sections.iter().all(|s| s.passed);

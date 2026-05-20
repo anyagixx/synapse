@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// SCOPE: Verifier struct, typed LINKS and structured LOG validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Added typed LINKS validation checks]
+// LAST_CHANGE: [v2.12.0 — Added structured LOG format verification]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -383,6 +383,22 @@ impl Verifier {
             } else {
                 "No log trace markers found. Add [Module][function][BLOCK_NAME] for observability."
                     .into()
+            },
+        });
+
+        let log_report = crate::grace::log::scan_source_logs(root)?;
+        checks.push(CheckResult {
+            name: "structured-log-format".into(),
+            passed: log_report.passed(),
+            details: if log_report.total_logs == 0 {
+                "No structured LOG markers found; optional until LDD adoption.".into()
+            } else if log_report.passed() {
+                format!("{} structured LOG markers valid", log_report.valid_logs)
+            } else {
+                format!(
+                    "{} invalid structured LOG markers, duplicates={:?}, issues={:?}",
+                    log_report.invalid_logs, log_report.duplicate_ids, log_report.issues
+                )
             },
         });
 

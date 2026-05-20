@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.4.0 — Documented typed GraphRAG query filters]
+// LAST_CHANGE: [v2.5.0 — Added analyze_logs MCP tool schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -89,6 +89,19 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
             "name": "project_status",
             "description": "Full project health report — contracts, semantic markup, verification, token economy, system info.",
             "inputSchema": { "type": "object", "properties": {} }
+        }),
+        serde_json::json!({
+            "name": "analyze_logs",
+            "description": "Analyze structured GRACE LOG files in trajectory, anomaly, or compare mode.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "log_path": { "type": "string", "description": "Path to a structured LOG file" },
+                    "mode": { "type": "string", "description": "trajectory | anomaly | compare", "default": "trajectory" },
+                    "contract_ref": { "type": "string", "description": "Optional module id or function contract name filter" }
+                },
+                "required": ["log_path"]
+            }
         }),
         serde_json::json!({
             "name": "token_savings",

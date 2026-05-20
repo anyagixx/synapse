@@ -2,7 +2,7 @@
 <MODULE id="M-CAPABILITIES" type="CORE_LOGIC" status="active">
   <NAME>M-CAPABILITIES</NAME>
   <PURPOSE>Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms</PURPOSE>
-  <SCOPE>Command list, core MCP tool list, GRACE skill tool list, typed LINKS/profile-aware verify/review check list, supported platforms</SCOPE>
+  <SCOPE>Command list, core MCP tool list, GRACE skill tool list, structured LOG/typed LINKS/profile-aware verify/review check list, supported platforms</SCOPE>
   <FILES>
     <FILE>src/capabilities.rs</FILE>
   </FILES>

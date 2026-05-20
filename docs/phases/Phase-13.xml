@@ -58,11 +58,11 @@
         <IMPLEMENTATION>Extend M-GRACE-CONTRACT with TypedLink, LinkDirection, LinkType parsing; update GraphRAG relationship types and builder extraction; add links-valid-types, links-targets-exist, links-no-dangling, and links-format checks; extend graphrag_query type filters; update AGENTS.md.</IMPLEMENTATION>
         <VERIFY status="passed">Unit tests for new and old LINKS formats, invalid type, dangling target, GraphRAG typed relationships, and type-filtered query support.</VERIFY>
       </step-1>
-      <step-2 section="1.4" status="pending" priority="P0">
+      <step-2 section="1.4" status="done" priority="P0">
         <TITLE>Log Driven Development Structured LOG Format</TITLE>
         <INTENT>Add structured LOG entries with EVENT, CONTEXT, STATE, DECISION, EXPECTATION, RESULT, and TRACEABILITY so runtime behavior can be semantically analyzed.</INTENT>
         <IMPLEMENTATION>Create grace log model/formatter; add structured-log-format verification; add analyze_logs MCP handler with trajectory, anomaly, and compare modes; document the new logging contract in AGENTS.md.</IMPLEMENTATION>
-        <VERIFY>Tests for valid LOG parsing, missing EXPECTATION, duplicate log IDs, anomaly report, and contract comparison report.</VERIFY>
+        <VERIFY status="passed">Tests for GraceLog emission/parsing, missing EXPECTATION detection, anomaly reports, analyze_logs MCP output, and structured-log-format verify/review checks.</VERIFY>
       </step-2>
       <step-3 section="1.1" status="pending" priority="P0">
         <TITLE>Observable AI Belief State</TITLE>
@@ -146,9 +146,9 @@
     <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 1 step-2 section 1.4 Log Driven Development Structured LOG Format.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml, docs/verification/V-M-GRACE-VERIFY.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.4-log-driven-development.md</SOURCE_SPEC>
+    <NEXT_ACTION>Begin Sprint 1 step-3 section 1.1 Observable AI Belief State.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.1-belief-state.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Documented typed LINKS verification checks]
+// LAST_CHANGE: [v2.12.0 — Added analyze_logs MCP capability and structured LOG verify check]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -50,7 +50,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("serve", "Start web dashboard"),
 ];
 
-pub const CORE_MCP_TOOL_COUNT: usize = 12;
+pub const CORE_MCP_TOOL_COUNT: usize = 13;
 pub const GRACE_SKILL_TOOL_COUNT: usize = 15;
 pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
 
@@ -138,6 +138,10 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
     ),
     ("review_code", "Run profile-aware GRACE integrity review"),
     ("project_status", "Full project health report"),
+    (
+        "analyze_logs",
+        "Analyze structured GRACE LOG files for LDD trajectory and anomalies",
+    ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),
     (
@@ -227,6 +231,7 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "unique-block-names",
     "500-token-rule",
     "trace-assertions",
+    "structured-log-format",
     "sharded-artifacts",
     "artifact-ref-integrity",
     "canonical-mygrace-drift",

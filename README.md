@@ -1,7 +1,7 @@
 # Synapse
 
 > **AI Agent Engineering Platform — works transparently through OpenCode CLI**
-> *27 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
+> *28 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
 
 ---
 
@@ -13,7 +13,7 @@
          ┌─────────────┼─────────────┐
          ▼             ▼             ▼
     MCP Tools       Plugin       AGENTS.md
-  (27 инструментов)  (proxy,      (GRACE
+  (28 инструментов)  (proxy,      (GRACE
                      GRACE)       конституция)
          │
          ▼
@@ -21,7 +21,7 @@
 ```
 
 Ты общаешься с AI через `opencode`. Synapse невидимо:
-- Даёт LLM **27 MCP-инструментов** для поиска, проверки и генерации кода
+- Даёт LLM **28 MCP-инструментов** для поиска, проверки и генерации кода
 - Авто-фильтрует шумный вывод shell-команд; фактическую экономию показывает `syn gain`
 - **Принуждает GRACE методологию**: Phase 0, контракты, верификация, ревью
 - **Сам проходит собственные проверки**: `syn verify` → ALL PASS
@@ -36,7 +36,7 @@
 
 Synapse решает это так:
 - хранит архитектуру в **sharded GRACE artifacts**
-- даёт OpenCode **27 MCP tools**
+- даёт OpenCode **28 MCP tools**
 - даёт **15 workflow tools** для init/plan/execute/review/fix/status
 - режет shell noise через proxy
 - навязывает verify/review discipline прямо в цикле работы
@@ -98,7 +98,7 @@ cd synapse && make install
 ```bash
 mkdir my-project && cd my-project
 syn init          # 1 сек: интеграция с OpenCode
-opencode          # LLM видит 27 MCP инструментов + sharded Phase 0 gate
+opencode          # LLM видит 28 MCP инструментов + sharded Phase 0 gate
 # LLM: "Что ты хочешь построить?"
 # Ты:  "Приложение для заметок с поиском"
 ```
@@ -134,9 +134,9 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 
 ---
 
-## 27 MCP Tools
+## 28 MCP Tools
 
-### 12 Core tools
+### 13 Core tools
 
 | Инструмент | Назначение |
 |-----------|-----------|
@@ -146,6 +146,7 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 | `verify_project` | 3 уровня проверки (sharded model) |
 | `review_code` | 3 режима ревью (scoped/wave-audit/full) |
 | `project_status` | Полный health-отчёт |
+| `analyze_logs` | LDD-анализ structured LOG trajectory/anomaly/compare |
 | `token_savings` | Статистика экономии токенов |
 | `compress_text` | Сжатие текста (3 уровня) |
 | `refresh_project` | Синхронизация графа и плана с кодом |
@@ -234,7 +235,7 @@ my-project/
 | **Octocode** | AST-индексация (5 языков) + fallback (14), BM25 + векторный + гибридный поиск |
 | **RTK Proxy** | 30+ TOML-фильтров, 8-стадийный пайплайн, авто-прокси через плагин |
 | **Caveman** | 3 уровня сжатия (lite/full/ultra) |
-| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 27 MCP tools, 15 workflow tools, 3 режима ревью |
+| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 28 MCP tools, 15 workflow tools, 3 режима ревью |
 
 ---
 
@@ -244,7 +245,7 @@ my-project/
 |---------|----------|
 | Бинарник | ~13 MB release |
 | Зависимости | 0 внешних системных (всё статически слинковано) |
-| MCP инструментов | **27** |
+| MCP инструментов | **28** |
 | CLI команд | 19 |
 | Проверок verify | 11 |
 | GRACE workflow tools | 15 |

@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Wired safe OpenCode MCP merge and real --no-git index behavior]
+// LAST_CHANGE: [v3.2.0 — Updated install summary for 28 MCP tools]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
@@ -95,7 +95,7 @@ impl InitCmd {
         println!();
         println!("What was created:");
         println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
-        println!("  opencode.jsonc              — MCP auto-start (27 tools: 12 core + 15 GRACE)");
+        println!("  opencode.jsonc              — MCP auto-start (28 tools: 13 core + 15 GRACE)");
         println!(
             "  docs/                        — Sharded architecture layout + compatibility XML docs"
         );

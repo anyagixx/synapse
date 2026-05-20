@@ -1,14 +1,15 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
-// DEPENDS: M-GRACE, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
+// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, log analysis, compression, tracking, and skills
+// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// DEPENDS: M-GRACE, M-GRACE-LOG, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
 // handle_verify — Runs profile-aware MyGRACE verification and formats failure packets
 // handle_review — Runs profile-aware MyGRACE review
 // handle_status — Returns project status JSON
+// handle_analyze_logs — Runs structured LOG trajectory/anomaly/compare analysis
 // handle_gain — Returns token savings stats
 // handle_compress — Compresses input text
 // handle_refresh — Reports or fixes MyGRACE drift
@@ -19,12 +20,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.3.0 — Added profiles and language-aware contract suggestions]
+// LAST_CHANGE: [v2.12.0 — Added analyze_logs MCP handler]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
 use crate::grace::GraceProfile;
 use crate::skills::{SkillEngine, SkillRequest};
+use std::path::PathBuf;
 
 // START_public_api
 
@@ -172,6 +174,46 @@ pub(crate) async fn handle_status(
     }
 }
 // END_handle_status
+
+// START_CONTRACT_handle_analyze_logs
+// PURPOSE: Analyze a structured LOG file and return trajectory/anomaly/compare XML
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_handle_analyze_logs
+pub(crate) async fn handle_analyze_logs(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let log_path = match args["log_path"].as_str() {
+        Some(path) if !path.trim().is_empty() => path.trim(),
+        _ => return error(id, -32602, "Missing 'log_path' parameter"),
+    };
+    let mode = args["mode"].as_str().unwrap_or("trajectory");
+    if !matches!(mode, "trajectory" | "anomaly" | "compare") {
+        return error(
+            id,
+            -32602,
+            "Invalid mode. Use trajectory | anomaly | compare.",
+        );
+    }
+    let root = match std::env::current_dir() {
+        Ok(root) => root,
+        Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+    };
+    let path = resolve_log_path(&root, log_path);
+    let contract_ref = args["contract_ref"].as_str();
+    match crate::grace::log::analyze_log_file(&path, mode, contract_ref) {
+        Ok(report) => result(
+            id,
+            serde_json::json!({
+                "content": [{"type": "text", "text": report.to_xml()}],
+                "isError": false
+            }),
+        ),
+        Err(e) => error(id, -32603, format!("Log analysis error: {}", e)),
+    }
+}
+// END_handle_analyze_logs
 
 // START_CONTRACT_handle_gain
 // PURPOSE: Execute token_savings and return tracking statistics
@@ -342,6 +384,15 @@ fn parse_grace_profile_arg(args: &serde_json::Value) -> Result<GraceProfile, Str
 }
 // END_parse_grace_profile_arg
 
+fn resolve_log_path(root: &std::path::Path, log_path: &str) -> PathBuf {
+    let path = PathBuf::from(log_path);
+    if path.is_absolute() {
+        path
+    } else {
+        root.join(path)
+    }
+}
+
 // START_CONTRACT_comment_prefix_for_language
 // PURPOSE: Select the correct line comment prefix for generated contract templates
 // INPUTS: { language: &str — language name or extension }
@@ -441,6 +492,42 @@ mod tests {
         assert_eq!(module_id_from_name("date parser"), "M-DATE-PARSER");
     }
     // END_test_module_id_from_name_removes_commas
+
+    #[tokio::test]
+    // START_CONTRACT_test_handle_analyze_logs_returns_report
+    // PURPOSE: Verify analyze_logs reads a structured LOG file and returns an XML report
+    // START_test_handle_analyze_logs_returns_report
+    async fn test_handle_analyze_logs_returns_report() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let log_path = dir.path().join("sample.log");
+        std::fs::write(
+            &log_path,
+            concat!(
+                "<LOG id=\"sample-001\" level=\"INFO\" ref=\"run\" module=\"M-SAMPLE\" contract=\"run\">\n",
+                "  EVENT: run_started\n",
+                "  DECISION: Execute sample\n",
+                "  EXPECTATION: Sample succeeds\n",
+                "  RESULT: success\n",
+                "</LOG>\n",
+            ),
+        )
+        .expect("write log");
+        let response = handle_analyze_logs(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "log_path": log_path.to_string_lossy(),
+                "mode": "trajectory",
+                "contract_ref": "M-SAMPLE"
+            }),
+        )
+        .await;
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("<LogAnalysisReport"));
+        assert!(text.contains("<TotalEvents>1</TotalEvents>"));
+    }
+    // END_test_handle_analyze_logs_returns_report
 }
 
 // END_public_api

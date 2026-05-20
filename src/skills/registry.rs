@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-REGISTRY
 // PURPOSE: Skill registry — declares 15 first-class GRACE skill tools for MCP exposure
-// SCOPE: Skill metadata constants and lookup helpers
+// SCOPE: Skill metadata constants, built-in MCP tool descriptions, and lookup helpers
 // DEPENDS: M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Documented typed GraphRAG query capability]
+// LAST_CHANGE: [v2.12.0 — Documented analyze_logs MCP capability]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -264,6 +264,10 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     ("verify_project", "Run GRACE verification checks"),
     ("review_code", "Run GRACE integrity review"),
     ("project_status", "Full project health report"),
+    (
+        "analyze_logs",
+        "Analyze structured GRACE LOG files for LDD trajectory and anomalies",
+    ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),
     (

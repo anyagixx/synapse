@@ -170,7 +170,25 @@ CREATE TABLE users (...);
 3. **Names describe WHAT, not HOW**: use `VALIDATE_INPUT` not `checkIfNullAndTrim`.
 4. **Paired markers**: every START_X must have END_X. No orphans.
 5. **Test files too**: substantial test files use the same structure (MODULE_CONTRACT, MODULE_MAP, blocks, CHANGE_SUMMARY).
-6. **Log format**: `[ModuleName][functionName][BLOCK_NAME] descriptive message` — structured, stable fields, redacted secrets.
+6. **Log format**: use structured `<LOG>` entries at semantic transition points; legacy `[ModuleName][functionName][BLOCK_NAME]` trace markers remain readable but do not carry LDD expectations.
+
+### Structured Log Format
+
+Every semantic transition point SHOULD emit a structured LOG entry:
+
+```
+// <LOG id="module-001" level="INFO" ref="block-name" module="M-XXX" contract="functionName">
+//   EVENT: event_name
+//   CONTEXT: key=value
+//   STATE: variable=value
+//   DECISION: Why this path was chosen
+//   EXPECTATION: What should happen next
+//   RESULT: success|failure|warning|blocked
+//   TRACEABILITY: useCase=UC-001, mentalTest=MT-001
+// </LOG>
+```
+
+`EXPECTATION` plus `RESULT` enables Log Driven Development. After collecting runtime logs, call `analyze_logs` with `mode=trajectory|anomaly|compare`.
 
 ### PCAM (Purpose, Constraints, Autonomy, Metrics)
 

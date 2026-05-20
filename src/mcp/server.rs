@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing, guarded index and GraphRAG preload
+// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, guarded index and GraphRAG preload
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
 // LINKS: N/A
 
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Removed unused HTTP stub from public MCP path]
+// LAST_CHANGE: [v3.3.0 — Routed analyze_logs MCP tool]
 // END_CHANGE_SUMMARY
 
 use super::{server_code_tools, server_grace_tools, server_response, server_tools};
@@ -246,6 +246,7 @@ impl SynapseHandler {
                     "verify_project" => server_grace_tools::handle_verify(id, args).await,
                     "review_code" => server_grace_tools::handle_review(id, args).await,
                     "project_status" => server_grace_tools::handle_status(id, args).await,
+                    "analyze_logs" => server_grace_tools::handle_analyze_logs(id, args).await,
                     "token_savings" => server_grace_tools::handle_gain(id, args).await,
                     "compress_text" => server_grace_tools::handle_compress(id, args).await,
                     "refresh_project" => server_grace_tools::handle_refresh(id, args).await,

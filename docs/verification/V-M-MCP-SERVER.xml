@@ -14,6 +14,7 @@
     <ASSERTION>syn mcp stdout contains only JSON-RPC responses while tracing logs are emitted on stderr.</ASSERTION>
     <ASSERTION>syn mcp public help remains stdio-only and does not expose HTTP or LSP flags before those transports are implemented.</ASSERTION>
     <ASSERTION>JSON-RPC notifications do not produce response objects.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes analyze_logs to the GRACE structured LOG analyzer.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-12</PHASE_GATE>
 </VERIFICATION>
