@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.17.0 — Documented generate_development_plan MCP capability]
+// LAST_CHANGE: [v2.18.0 — Documented mental_test_run MCP capability]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -282,7 +282,11 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     ),
     (
         "generate_development_plan",
-        "Generate and validate a complete DevelopmentPlan with DataFlows and GenerationOrder",
+        "Generate and validate a complete DevelopmentPlan with DataFlows, GenerationOrder, and MentalTests",
+    ),
+    (
+        "mental_test_run",
+        "Run a DevelopmentPlan MentalTest before code generation",
     ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),

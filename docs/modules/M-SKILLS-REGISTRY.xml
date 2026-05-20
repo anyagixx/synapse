@@ -2,7 +2,7 @@
 <MODULE id="M-SKILLS-REGISTRY" type="CORE_LOGIC" status="active">
   <NAME>M-SKILLS-REGISTRY</NAME>
   <PURPOSE>Skill registry — declares 15 first-class GRACE skill tools for MCP exposure</PURPOSE>
-  <SCOPE>Skill metadata constants, built-in MCP tool descriptions including extract_belief_state, generate_requirements, generate_technology, and generate_development_plan, and lookup helpers</SCOPE>
+  <SCOPE>Skill metadata constants, built-in MCP tool descriptions including extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, and lookup helpers</SCOPE>
   <FILES>
     <FILE>src/skills/registry.rs</FILE>
   </FILES>

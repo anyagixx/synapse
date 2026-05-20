@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
-// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state storage, requirements/technology/development-plan templates, and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes, requirements, technology, and development-plan templates, and shard dirs
-// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN
+// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state and mental-test storage, requirements/technology/development-plan templates, and bootstraps templates
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test indexes, requirements, technology, and development-plan templates, and shard dirs
+// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.17.0 — Added full DevelopmentPlan template generation]
+// LAST_CHANGE: [v2.18.0 — Added mental-test trace directory support]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -83,6 +83,15 @@ impl DocsLayout {
     }
     // END_docs_layout_belief_states_dir
 
+    // START_CONTRACT_DocsLayout::mental_tests_dir
+    // PURPOSE: Return mental test trace directory path
+    // OUTPUTS: { PathBuf — docs/mental-tests directory }
+    // START_docs_layout_mental_tests_dir
+    pub fn mental_tests_dir(&self) -> PathBuf {
+        self.docs_dir().join("mental-tests")
+    }
+    // END_docs_layout_mental_tests_dir
+
     // START_CONTRACT_DocsLayout::graph_index_path
     // PURPOSE: Return graph index path
     // OUTPUTS: { PathBuf — docs/graph-index.xml path }
@@ -121,6 +130,7 @@ impl DocsLayout {
         std::fs::create_dir_all(self.phases_dir())?;
         std::fs::create_dir_all(self.verification_dir())?;
         std::fs::create_dir_all(self.belief_states_dir())?;
+        std::fs::create_dir_all(self.mental_tests_dir())?;
 
         self.write_if_missing(
             &self.graph_index_path(),

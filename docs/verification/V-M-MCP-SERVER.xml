@@ -19,6 +19,7 @@
     <ASSERTION>JSON-RPC tool dispatch routes generate_requirements to the GRACE RequirementsAnalysis writer.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes generate_technology to the GRACE Technology writer.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes generate_development_plan to the GRACE DevelopmentPlan writer.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes mental_test_run to the GRACE MentalTest runner.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-12</PHASE_GATE>
 </VERIFICATION>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-MENTAL-TEST" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-MENTAL-TEST</NAME>
+  <PURPOSE>MentalTest support — parses DevelopmentPlan MentalTests, validates pre-code simulations, runs tests, and persists traces</PURPOSE>
+  <SCOPE>MentalTestStatus, MentalTestStep, EdgeCase, MentalTestSpec, MentalTestReport, MentalTestRunReport, parse_mental_tests, scan_project_mental_tests, run_mental_test, and mental_tests_template</SCOPE>
+  <FILES>
+    <FILE>src/grace/mental_test.rs</FILE>
+    <FILE>docs/development-plan.xml</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-DEVELOPMENT-PLAN</DEPENDS>
+  <LINKS>docs/development-plan.xml,docs/mental-tests/,docs/verification/V-M-GRACE-MENTAL-TEST.xml</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-MENTAL-TEST</VERIFICATION_REF>
+</MODULE>

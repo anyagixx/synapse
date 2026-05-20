@@ -18,19 +18,29 @@
       </Dependencies>
       <LINKS><Link ref="docs/modules/M-GRACE-DEVELOPMENT-PLAN.xml" type="traces_to" /></LINKS>
     </Module>
+    <Module id="M-GRACE-MENTAL-TEST" type="core" critical="true" complexity="complex">
+      <Responsibility>MentalTest parser, runner, pass/fail report, and trace persistence before code generation</Responsibility>
+      <Dependencies>
+        <Depends on="M-GRACE-DEVELOPMENT-PLAN" type="uses">MentalTests section source</Depends>
+        <Depends on="M-GRACE-CONTRACT" type="uses">Target module drift checks</Depends>
+      </Dependencies>
+      <LINKS><Link ref="docs/modules/M-GRACE-MENTAL-TEST.xml" type="traces_to" /></LINKS>
+    </Module>
     <Module id="M-MCP-SERVER-GRACE-TOOLS" type="integration">
       <Responsibility>MCP handlers for GRACE artifact generation and validation tools</Responsibility>
       <Dependencies>
         <Depends on="M-GRACE-REQUIREMENTS" type="uses">generate_requirements backend</Depends>
         <Depends on="M-GRACE-TECHNOLOGY" type="uses">generate_technology backend</Depends>
         <Depends on="M-GRACE-DEVELOPMENT-PLAN" type="uses">generate_development_plan backend</Depends>
+        <Depends on="M-GRACE-MENTAL-TEST" type="uses">mental_test_run backend</Depends>
       </Dependencies>
       <LINKS><Link ref="docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml" type="traces_to" /></LINKS>
     </Module>
     <Module id="M-GRACE-VERIFY" type="core">
-      <Responsibility>Verification checks for requirements, technology, DataFlows, and GenerationOrder</Responsibility>
+      <Responsibility>Verification checks for requirements, technology, DataFlows, GenerationOrder, and MentalTests</Responsibility>
       <Dependencies>
         <Depends on="M-GRACE-DEVELOPMENT-PLAN" type="uses">dataflow-* and genorder-* checks</Depends>
+        <Depends on="M-GRACE-MENTAL-TEST" type="uses">mental-tests-* checks</Depends>
       </Dependencies>
       <LINKS><Link ref="docs/modules/M-GRACE-VERIFY.xml" type="traces_to" /></LINKS>
     </Module>
@@ -38,6 +48,7 @@
       <Responsibility>Review sections for artifact completeness and integrity risks</Responsibility>
       <Dependencies>
         <Depends on="M-GRACE-DEVELOPMENT-PLAN" type="uses">plan completeness review</Depends>
+        <Depends on="M-GRACE-MENTAL-TEST" type="uses">mental test review</Depends>
       </Dependencies>
       <LINKS><Link ref="docs/modules/M-GRACE-REVIEW.xml" type="traces_to" /></LINKS>
     </Module>
@@ -45,6 +56,7 @@
       <Responsibility>Status reporting for artifact coverage and generation progress</Responsibility>
       <Dependencies>
         <Depends on="M-GRACE-DEVELOPMENT-PLAN" type="uses">generation progress counts</Depends>
+        <Depends on="M-GRACE-MENTAL-TEST" type="uses">mental test pass/fail counts</Depends>
       </Dependencies>
       <LINKS><Link ref="docs/modules/M-GRACE-STATUS.xml" type="traces_to" /></LINKS>
     </Module>
@@ -52,6 +64,7 @@
       <Responsibility>GRACE skill guidance that reads GenerationOrder and DataFlows before execution</Responsibility>
       <Dependencies>
         <Depends on="M-GRACE-DEVELOPMENT-PLAN" type="uses">grace_execute next-module guidance</Depends>
+        <Depends on="M-GRACE-MENTAL-TEST" type="uses">pre-code mental test gate</Depends>
       </Dependencies>
       <LINKS><Link ref="docs/modules/M-SKILLS-ENGINE.xml" type="traces_to" /></LINKS>
     </Module>
@@ -78,6 +91,20 @@
       <Contracts><Contract module="M-GRACE-VERIFY" function="Verifier::verify_module_local" /></Contracts>
       <ErrorHandling>Verification returns failed checks with actionable details instead of mutating artifacts</ErrorHandling>
     </DataFlow>
+    <DataFlow id="DF-004" from="Developer" to="M-MCP-SERVER-GRACE-TOOLS">
+      <Data>mental_test_run request with module_id, mental_test_id, and step_by_step mode</Data>
+      <Protocol>MCP JSON-RPC</Protocol>
+      <Transformation>Validate request and delegate to MentalTest runner</Transformation>
+      <Contracts><Contract module="M-MCP-SERVER-GRACE-TOOLS" function="handle_mental_test_run" /></Contracts>
+      <ErrorHandling>Return structured JSON-RPC error details without code generation when a mental test fails</ErrorHandling>
+    </DataFlow>
+    <DataFlow id="DF-005" from="M-MCP-SERVER-GRACE-TOOLS" to="M-GRACE-MENTAL-TEST">
+      <Data>MentalTest target, scenario, expected steps, and edge cases</Data>
+      <Protocol>In-process Rust call</Protocol>
+      <Transformation>Parse MentalTests, evaluate expected vs actual steps, and persist trace XML</Transformation>
+      <Contracts><Contract module="M-GRACE-MENTAL-TEST" function="run_mental_test" /></Contracts>
+      <ErrorHandling>Return failure report and block execution guidance when steps do not pass</ErrorHandling>
+    </DataFlow>
   </DataFlows>
   <GenerationOrder>
     <Phase id="Phase-1" name="Artifact Foundation">
@@ -95,29 +122,53 @@
           <Rationale>DevelopmentPlan consumes requirements and technology context</Rationale>
           <DependsOn>M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY</DependsOn>
         </Module>
-        <Module id="M-MCP-SERVER-GRACE-TOOLS" order="4">
+        <Module id="M-GRACE-MENTAL-TEST" order="4">
+          <Rationale>MentalTests depend on DevelopmentPlan structure before execution guidance can gate code</Rationale>
+          <DependsOn>M-GRACE-DEVELOPMENT-PLAN</DependsOn>
+        </Module>
+        <Module id="M-MCP-SERVER-GRACE-TOOLS" order="5">
           <Rationale>MCP handlers depend on artifact generator modules</Rationale>
-          <DependsOn>M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN</DependsOn>
+          <DependsOn>M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST</DependsOn>
         </Module>
-        <Module id="M-GRACE-VERIFY" order="5">
+        <Module id="M-GRACE-VERIFY" order="6">
           <Rationale>Verification checks depend on artifact validators</Rationale>
-          <DependsOn>M-GRACE-DEVELOPMENT-PLAN</DependsOn>
+          <DependsOn>M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST</DependsOn>
         </Module>
-        <Module id="M-GRACE-REVIEW" order="6">
+        <Module id="M-GRACE-REVIEW" order="7">
           <Rationale>Review sections depend on artifact validators and verification model</Rationale>
-          <DependsOn>M-GRACE-DEVELOPMENT-PLAN</DependsOn>
+          <DependsOn>M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST</DependsOn>
         </Module>
-        <Module id="M-GRACE-STATUS" order="7">
+        <Module id="M-GRACE-STATUS" order="8">
           <Rationale>Status aggregates DevelopmentPlan validation and generation progress</Rationale>
-          <DependsOn>M-GRACE-DEVELOPMENT-PLAN</DependsOn>
+          <DependsOn>M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST</DependsOn>
         </Module>
-        <Module id="M-SKILLS-ENGINE" order="8">
+        <Module id="M-SKILLS-ENGINE" order="9">
           <Rationale>Execution guidance reads GenerationOrder and DataFlows after validation exists</Rationale>
-          <DependsOn>M-GRACE-DEVELOPMENT-PLAN</DependsOn>
+          <DependsOn>M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST</DependsOn>
         </Module>
       </Generates>
     </Phase>
   </GenerationOrder>
+  <MentalTests>
+    <MentalTest id="MT-001" target="M-GRACE-MENTAL-TEST::run_mental_test" status="pass">
+      <Description>Pre-code simulation for running a mental test before implementation proceeds</Description>
+      <Scenario>
+        GIVEN: DevelopmentPlan contains MT-001 with expected and actual step traces
+        WHEN: mental_test_run is called for M-GRACE-MENTAL-TEST and MT-001
+      </Scenario>
+      <Steps>
+        <Step n="1" action="parse_mental_tests" expected="MT-001 is extracted with target, steps, edge cases, result, and rationale" actual="PASS — MT-001 is extracted with target, steps, edge cases, result, and rationale">Parser reads only the MentalTests section and keeps DevelopmentPlan validation separate.</Step>
+        <Step n="2" action="evaluate_steps" expected="all PASS actual values satisfy expected outcomes" actual="PASS — all PASS actual values satisfy expected outcomes">Runner compares expected/actual step traces before code generation continues.</Step>
+        <Step n="3" action="persist_trace" expected="docs/mental-tests/MT-001.xml records the run result" actual="PASS — docs/mental-tests/MT-001.xml records the run result">Trace persistence makes later implementation drift visible.</Step>
+      </Steps>
+      <EdgeCases>
+        <Case id="EC-001" description="A step actual starts with FAIL" expectation="mental_test_run returns passed=false and verify blocks code generation" />
+        <Case id="EC-002" description="Critical module has no MentalTest" expectation="mental-tests-defined reports the missing target" />
+      </EdgeCases>
+      <Result>pass</Result>
+      <Rationale>The algorithm blocks on missing or failed simulations and records a trace before implementation work continues.</Rationale>
+    </MentalTest>
+  </MentalTests>
   <NonHumanPatterns>
     <Pattern name="ExplicitTyping" severity="error">
       <Rule>All type conversions must use explicit cast/parse syntax.</Rule>

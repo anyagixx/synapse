@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.17.0 — Added DevelopmentPlan DataFlow and GenerationOrder verification]
+// LAST_CHANGE: [v2.18.0 — Added MentalTests verification gates]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -616,6 +616,51 @@ impl Verifier {
                     "GenerationOrder dependency issues: {:?}",
                     plan.generation_order_issues
                 )
+            },
+        });
+
+        let mental_tests = crate::grace::mental_test::scan_project_mental_tests(root)?;
+        checks.push(CheckResult {
+            name: "mental-tests-defined".into(),
+            passed: mental_tests.mental_tests_defined(),
+            details: if mental_tests.mental_tests_defined() {
+                format!(
+                    "{} mental tests cover {} required targets",
+                    mental_tests.total,
+                    mental_tests.required_targets.len()
+                )
+            } else {
+                format!(
+                    "Missing mental tests for critical targets: {:?}",
+                    mental_tests.missing_required_targets
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "mental-tests-passed".into(),
+            passed: mental_tests.mental_tests_passed(),
+            details: if mental_tests.mental_tests_passed() {
+                format!(
+                    "{} passed, {} total",
+                    mental_tests.passed, mental_tests.total
+                )
+            } else {
+                format!(
+                    "Mental test failures: failed={} not_run={} needs_clarification={} errors={:?}",
+                    mental_tests.failed,
+                    mental_tests.not_run,
+                    mental_tests.needs_clarification,
+                    mental_tests.errors
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "mental-test-no-drift".into(),
+            passed: mental_tests.mental_test_no_drift(),
+            details: if mental_tests.mental_test_no_drift() {
+                "Mental test targets resolve to current source modules".into()
+            } else {
+                format!("Mental test drift issues: {:?}", mental_tests.drift_issues)
             },
         });
 

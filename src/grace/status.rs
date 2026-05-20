@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, belief states, semantic, verification, drift, token economy, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology/development-plan and belief-state coverage, print_report, active-phase display helpers
-// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
+// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, mental tests, belief states, semantic, verification, drift, token economy, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology/development-plan/mental-test and belief-state coverage, print_report, active-phase display helpers
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
 // START_MODULE_MAP
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.17.0 — Added DevelopmentPlan coverage to status]
+// LAST_CHANGE: [v2.18.0 — Added MentalTests coverage to status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -21,6 +21,7 @@ use crate::grace::belief_state::BeliefStateReport;
 use crate::grace::contract::{ContractReport, ContractValidator};
 use crate::grace::development_plan::DevelopmentPlanReport;
 use crate::grace::layout::DocsLayout;
+use crate::grace::mental_test::MentalTestReport;
 use crate::grace::refresh::Refresher;
 use crate::grace::requirements::RequirementsReport;
 use crate::grace::semantic::{SemanticExtractor, SemanticReport};
@@ -40,6 +41,7 @@ pub struct StatusReport {
     pub requirements: RequirementsReport,
     pub technology: TechnologyReport,
     pub development_plan: DevelopmentPlanReport,
+    pub mental_tests: MentalTestReport,
     pub belief_state: BeliefStateReport,
     pub semantic: SemanticReport,
     pub verification: Vec<super::verify::VerificationResult>,
@@ -100,6 +102,7 @@ impl StatusCollector {
         let requirements = crate::grace::requirements::validate_requirements(root)?;
         let technology = crate::grace::technology::validate_technology(root)?;
         let development_plan = crate::grace::development_plan::validate_development_plan(root)?;
+        let mental_tests = crate::grace::mental_test::scan_project_mental_tests(root)?;
         let belief_state = crate::grace::belief_state::scan_project_belief_states(root)?;
         let semantic = SemanticExtractor::scan_project(root)?;
         let verification = Verifier::verify_all(root).await?;
@@ -137,6 +140,22 @@ impl StatusCollector {
             next_actions.push(format!(
                 "Complete DevelopmentPlan: {} issues",
                 development_plan.errors.len()
+            ));
+        }
+        if !mental_tests.mental_tests_defined() {
+            next_actions.push(format!(
+                "Add mental tests for {} critical targets",
+                mental_tests.missing_required_targets.len()
+            ));
+        } else if !mental_tests.mental_tests_passed() {
+            next_actions.push(format!(
+                "Pass mental tests before code generation: failed={} not_run={}",
+                mental_tests.failed, mental_tests.not_run
+            ));
+        } else if !mental_tests.mental_test_no_drift() {
+            next_actions.push(format!(
+                "Resolve {} mental test drift issues",
+                mental_tests.drift_issues.len()
             ));
         }
         if belief_state.invalid_states > 0 {
@@ -257,6 +276,7 @@ impl StatusCollector {
             requirements,
             technology,
             development_plan,
+            mental_tests,
             belief_state,
             semantic,
             verification,
@@ -368,6 +388,15 @@ impl StatusCollector {
             report.development_plan.completed_generation_modules
         );
         println!("║  Valid:          {:<20}║", report.development_plan.valid);
+        println!("╠══════════════════════════════════════╣");
+        println!("║ MENTAL TESTS                         ║");
+        println!("║  Total:          {:<20}║", report.mental_tests.total);
+        println!("║  Passed:         {:<20}║", report.mental_tests.passed);
+        println!("║  Failed:         {:<20}║", report.mental_tests.failed);
+        println!(
+            "║  Required:       {:<20}║",
+            report.mental_tests.required_targets.len()
+        );
         println!("╠══════════════════════════════════════╣");
         println!("║ BELIEF STATE                         ║");
         println!(

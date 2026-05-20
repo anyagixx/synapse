@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.17.0 — Added DevelopmentPlan review section]
+// LAST_CHANGE: [v2.18.0 — Added MentalTests review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -273,6 +273,32 @@ impl Reviewer {
                 plan.completed_generation_modules
             ),
             issues: plan.errors,
+        });
+
+        let mental_tests = crate::grace::mental_test::scan_project_mental_tests(root)?;
+        let mut mental_issues = Vec::new();
+        mental_issues.extend(
+            mental_tests
+                .missing_required_targets
+                .iter()
+                .map(|target| format!("Missing mental test for critical target {}", target)),
+        );
+        mental_issues.extend(mental_tests.errors.iter().cloned());
+        mental_issues.extend(mental_tests.drift_issues.iter().cloned());
+        sections.push(ReviewSection {
+            name: "mental-tests".into(),
+            passed: mental_tests.mental_tests_defined()
+                && mental_tests.mental_tests_passed()
+                && mental_tests.mental_test_no_drift(),
+            details: format!(
+                "total={} passed={} failed={} not_run={} required_targets={}",
+                mental_tests.total,
+                mental_tests.passed,
+                mental_tests.failed,
+                mental_tests.not_run,
+                mental_tests.required_targets.len()
+            ),
+            issues: mental_issues,
         });
 
         let passed = sections.iter().all(|s| s.passed);

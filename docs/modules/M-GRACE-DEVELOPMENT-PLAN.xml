@@ -2,12 +2,12 @@
 <MODULE id="M-GRACE-DEVELOPMENT-PLAN" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-DEVELOPMENT-PLAN</NAME>
   <PURPOSE>DevelopmentPlan support — parses, validates, and generates GRACE Stage 3 DataFlows and GenerationOrder artifacts</PURPOSE>
-  <SCOPE>DevelopmentPlanReport, DataFlow, GenerationModule, development_plan_template, contract-derived generation, validate_development_plan, parse_development_plan_content, and generate_development_plan_file</SCOPE>
+  <SCOPE>DevelopmentPlanReport, DataFlow, GenerationModule, development_plan_template, contract-derived generation, MentalTests template inclusion, validate_development_plan, parse_development_plan_content, and generate_development_plan_file</SCOPE>
   <FILES>
     <FILE>src/grace/development_plan.rs</FILE>
     <FILE>docs/development-plan.xml</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-CONTRACT</DEPENDS>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-MENTAL-TEST</DEPENDS>
   <LINKS>docs/development-plan.xml,docs/verification/V-M-GRACE-DEVELOPMENT-PLAN.xml</LINKS>
   <VERIFICATION_REF>V-M-GRACE-DEVELOPMENT-PLAN</VERIFICATION_REF>
 </MODULE>

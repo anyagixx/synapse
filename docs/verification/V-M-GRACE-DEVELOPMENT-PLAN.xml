@@ -7,7 +7,7 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Generated development-plan.xml validates as DevelopmentPlan with ArchitectureGraph, DataFlows, GenerationOrder, NonHumanPatterns, and ContractGuidelines.</ASSERTION>
+    <ASSERTION>Generated development-plan.xml validates as DevelopmentPlan with ArchitectureGraph, DataFlows, GenerationOrder, MentalTests, NonHumanPatterns, and ContractGuidelines.</ASSERTION>
     <ASSERTION>Legacy DEVELOPMENT_PLAN stubs and out-of-order generation dependencies fail validation.</ASSERTION>
     <ASSERTION>DataFlow contract references are matched against MODULE_CONTRACT function contracts.</ASSERTION>
     <ASSERTION>generate_development_plan writes docs/development-plan.xml and returns section counts through MCP.</ASSERTION>

@@ -33,6 +33,7 @@
     <MODULE_REF id="M-GRACE-REQUIREMENTS" />
     <MODULE_REF id="M-GRACE-TECHNOLOGY" />
     <MODULE_REF id="M-GRACE-DEVELOPMENT-PLAN" />
+    <MODULE_REF id="M-GRACE-MENTAL-TEST" />
     <MODULE_REF id="M-GRACE-INVENTORY" />
     <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
     <MODULE_REF id="M-GRAPHRAG" />
@@ -82,7 +83,7 @@
         <VERIFY status="passed">Tests for XML-like blocks, nested anchors, XML-like function contracts, mixed syntax warning, normalization, markdown-example skip, and legacy regression.</VERIFY>
       </step-4>
     </sprint-1>
-    <sprint-2 name="P1 Core Artifacts" status="active">
+    <sprint-2 name="P1 Core Artifacts" status="done">
       <step-5 section="2.1" status="done" priority="P1">
         <TITLE>RequirementsAnalysis with AAG Notation</TITLE>
         <INTENT>Replace stub requirements with a complete requirements artifact model: goals, domain entities, actors, use cases, NFRs, constraints, and glossary.</INTENT>
@@ -99,13 +100,13 @@
         <TITLE>DevelopmentPlan DataFlows and GenerationOrder</TITLE>
         <INTENT>Upgrade the plan artifact into a real generation blueprint with architecture graph, DataFlows, GenerationOrder, NonHumanPatterns, and contract guidelines.</INTENT>
         <IMPLEMENTATION>Create development_plan module, validate DataFlows and GenerationOrder against graph/contracts, add dataflow-* and genorder-* checks, add generate_development_plan MCP handler, and update grace_plan/grace_execute/status/review behavior.</IMPLEMENTATION>
-        <VERIFY status="passed">Tests for complete DevelopmentPlan templates, incomplete artifact failures, invalid GenerationOrder topology, generated artifact writes, generate_development_plan MCP output, 32-tool MCP parity, and full verify/review gates.</VERIFY>
+        <VERIFY status="passed">Tests for complete DevelopmentPlan templates, incomplete artifact failures, invalid GenerationOrder topology, generated artifact writes, generate_development_plan MCP output, MCP parity, and full verify/review gates.</VERIFY>
       </step-7>
-      <step-8 section="1.2" status="pending" priority="P1">
+      <step-8 section="1.2" status="done" priority="P1">
         <TITLE>Mental Tests</TITLE>
         <INTENT>Add pre-code algorithm simulation and make failed mental tests block code generation for complex or critical modules.</INTENT>
-        <IMPLEMENTATION>Create mental_test parser/executor, mental-test-defined, mental-tests-passed, and mental-test-no-drift checks; add mental_test_run MCP handler; integrate with plan, execute, review, status, and fix workflows.</IMPLEMENTATION>
-        <VERIFY>Tests for pass/fail simulations, edge cases, missing mental tests for critical modules, and drift between expectations and implementation/logs.</VERIFY>
+        <IMPLEMENTATION>Create mental_test parser/runner, add MentalTests to DevelopmentPlan templates, add mental-tests-defined, mental-tests-passed, and mental-test-no-drift checks, add mental_test_run MCP handler, and integrate plan/execute/review/status/fix guidance.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for MentalTest parsing, pass/fail blocking, missing critical target coverage, trace persistence, mental_test_run MCP output, 33-tool MCP parity, and full verify/review gates.</VERIFY>
       </step-8>
     </sprint-2>
     <sprint-3 name="P2 Advanced Core" status="pending">
@@ -151,9 +152,9 @@
     <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 2 step-8 section 1.2 Mental Tests.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.2-mental-tests.md</SOURCE_SPEC>
+    <NEXT_ACTION>Begin Sprint 3 step-9 section 1.6 End-to-End Traceability.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-DEVELOPMENT-PLAN.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.6-end-to-end-traceability.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

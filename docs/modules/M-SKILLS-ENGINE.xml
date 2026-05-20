@@ -2,11 +2,11 @@
 <MODULE id="M-SKILLS-ENGINE" type="CORE_LOGIC" status="active">
   <NAME>M-SKILLS-ENGINE</NAME>
   <PURPOSE>Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries</PURPOSE>
-  <SCOPE>SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, belief state, and project workflows</SCOPE>
+  <SCOPE>SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, belief state, and project workflows</SCOPE>
   <FILES>
     <FILE>src/skills/engine.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-LAYOUT,M-GRACE-REQUIREMENTS,M-GRACE-TECHNOLOGY,M-SKILLS-REGISTRY,M-SKILLS-TYPES</DEPENDS>
+  <DEPENDS>M-CONFIG,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-MENTAL-TEST,M-GRACE-LAYOUT,M-GRACE-REQUIREMENTS,M-GRACE-TECHNOLOGY,M-SKILLS-REGISTRY,M-SKILLS-TYPES</DEPENDS>
   <LINKS>M-SKILLS</LINKS>
   <VERIFICATION_REF>V-M-SKILLS-ENGINE</VERIFICATION_REF>
 </MODULE>

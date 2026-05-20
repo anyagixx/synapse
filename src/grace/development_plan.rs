@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-DEVELOPMENT-PLAN
 // PURPOSE: DevelopmentPlan parser, validator, and generator for GRACE Stage 3 DataFlows and GenerationOrder artifacts
-// SCOPE: DevelopmentPlanReport, DataFlow, GenerationModule, template generation, contract-derived file generation, file validation, generation order topology, contract coverage
-// DEPENDS: M-GRACE-CONTRACT
+// SCOPE: DevelopmentPlanReport, DataFlow, GenerationModule, template generation, contract-derived file generation, MentalTests template inclusion, file validation, generation order topology, contract coverage
+// DEPENDS: M-GRACE-CONTRACT, M-GRACE-MENTAL-TEST
 // LINKS:
 //   → V-M-GRACE-DEVELOPMENT-PLAN (verified_by) — DevelopmentPlan parser, validator, and generator tests
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 — Generate DevelopmentPlan from real project contracts]
+// LAST_CHANGE: [v1.2.0 — Include MentalTests section in generated DevelopmentPlan]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -157,6 +157,10 @@ pub fn development_plan_template(project_name: &str, modules: &[String]) -> Stri
     let architecture = architecture_xml(&modules);
     let flows = dataflows_xml(&modules);
     let generation_order = generation_order_xml(&modules);
+    let mental_tests = crate::grace::mental_test::mental_tests_template(
+        modules.first().map_or("M-CORE", String::as_str),
+        "",
+    );
     format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <DevelopmentPlan project="{project_name}" version="1.0">
@@ -169,6 +173,9 @@ pub fn development_plan_template(project_name: &str, modules: &[String]) -> Stri
   <GenerationOrder>
 {generation_order}
   </GenerationOrder>
+  <MentalTests>
+{mental_tests}
+  </MentalTests>
   <NonHumanPatterns>
     <Pattern name="ExplicitTyping" severity="error">
       <Rule>All type conversions must use explicit cast/parse syntax.</Rule>
@@ -292,6 +299,11 @@ fn validate_static_shape(content: &str, report: &mut DevelopmentPlanReport) {
         report
             .errors
             .push("GenerationOrder must define at least one Module".into());
+    }
+    if !content.contains("<MentalTests>") {
+        report
+            .errors
+            .push("MentalTests section must be present".into());
     }
     if report.non_human_patterns == 0 {
         report
@@ -598,6 +610,9 @@ fn contract_based_development_plan(
         return Ok(None);
     }
     let generation_order = generation_order_xml(&modules);
+    let (mental_module, mental_function) = first_contract_target(&module_functions);
+    let mental_tests =
+        crate::grace::mental_test::mental_tests_template(&mental_module, &mental_function);
     Ok(Some(format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <DevelopmentPlan project="{project_name}" version="1.0">
@@ -610,6 +625,9 @@ fn contract_based_development_plan(
   <GenerationOrder>
 {generation_order}
   </GenerationOrder>
+  <MentalTests>
+{mental_tests}
+  </MentalTests>
   <NonHumanPatterns>
     <Pattern name="ExplicitTyping" severity="error">
       <Rule>All public contracts must declare explicit inputs and outputs.</Rule>
@@ -652,6 +670,17 @@ fn contract_dataflows_xml(module_functions: &BTreeMap<String, Vec<String>>) -> S
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+fn first_contract_target(module_functions: &BTreeMap<String, Vec<String>>) -> (String, String) {
+    module_functions
+        .iter()
+        .find_map(|(module, functions)| {
+            functions
+                .first()
+                .map(|function| (module.clone(), function.clone()))
+        })
+        .unwrap_or_else(|| ("M-CORE".into(), String::new()))
 }
 
 fn generation_order_xml(modules: &[String]) -> String {

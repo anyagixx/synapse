@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-MENTAL-TEST" module="M-GRACE-MENTAL-TEST" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test grace::mental_test --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_mental_test_run_writes_trace --lib</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>parse_mental_tests extracts MentalTest target, status, steps, edge cases, result, and rationale from DevelopmentPlan.</ASSERTION>
+    <ASSERTION>Failed or not_run mental tests cause mental-tests-passed to fail.</ASSERTION>
+    <ASSERTION>Critical ArchitectureGraph modules without a MentalTest cause mental-tests-defined to fail.</ASSERTION>
+    <ASSERTION>mental_test_run writes docs/mental-tests/&lt;id&gt;.xml and returns a MentalTestRun report.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

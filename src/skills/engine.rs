@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
 // PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
-// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, belief state, and project workflows
-// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
+// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, belief state, and project workflows
+// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.17.0 — Added DevelopmentPlan awareness to grace_execute guidance]
+// LAST_CHANGE: [v2.18.0 — Added MentalTests gating to planning, execution, and fix guidance]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -92,6 +92,8 @@ impl SkillEngine {
                 let development_plan =
                     crate::grace::development_plan::validate_development_plan(&self.context.root)
                         .ok();
+                let mental_tests =
+                    crate::grace::mental_test::scan_project_mental_tests(&self.context.root).ok();
                 let active_phase = read_active_phase(&layout).unwrap_or_else(|| "Phase-0".into());
                 let drift_hint = refresh
                     .as_ref()
@@ -134,14 +136,27 @@ impl SkillEngine {
                         )
                     })
                     .unwrap_or_else(|| "no development plan report available".into());
+                let mental_tests_hint = mental_tests
+                    .as_ref()
+                    .map(|m| {
+                        format!(
+                            "total={}, passed={}, failed={}, required={}",
+                            m.total,
+                            m.passed,
+                            m.failed,
+                            m.required_targets.len()
+                        )
+                    })
+                    .unwrap_or_else(|| "no mental test report available".into());
                 format!(
-                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nTechnology: {}\nDevelopmentPlan: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. read docs/technology.xml and confirm exact pinned versions plus compatibility checks\n3. read docs/development-plan.xml and confirm DataFlows plus GenerationOrder\n4. confirm module boundaries in docs/modules/\n5. confirm phase order in docs/phases/\n6. confirm verification coverage in docs/verification/\n7. implement only next bounded module step",
+                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nTechnology: {}\nDevelopmentPlan: {}\nMentalTests: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. read docs/technology.xml and confirm exact pinned versions plus compatibility checks\n3. read docs/development-plan.xml and confirm DataFlows, GenerationOrder, and which algorithms need MentalTests\n4. scaffold or update <MentalTests> before code for critical/complex modules\n5. confirm module boundaries in docs/modules/\n6. confirm phase order in docs/phases/\n7. confirm verification coverage in docs/verification/\n8. implement only next bounded module step after mental tests pass",
                     active_phase,
                     string_arg(&request.arguments, "goal", "Define architecture and delivery plan"),
                     string_arg(&request.arguments, "constraints", "none provided"),
                     requirements_hint,
                     technology_hint,
                     development_plan_hint,
+                    mental_tests_hint,
                     drift_hint,
                     next_hint,
                 )
@@ -168,6 +183,8 @@ impl SkillEngine {
                 let plan =
                     crate::grace::development_plan::validate_development_plan(&self.context.root)
                         .ok();
+                let mental_tests =
+                    crate::grace::mental_test::scan_project_mental_tests(&self.context.root).ok();
                 let failing = verify
                     .as_ref()
                     .map(|results| results.iter().filter(|r| !r.passed).count())
@@ -178,14 +195,34 @@ impl SkillEngine {
                     .map(|m| m.id.clone())
                     .unwrap_or_else(|| module.clone());
                 let flow_count = plan.as_ref().map(|p| p.data_flows.len()).unwrap_or(0);
+                let mental_gate = mental_tests
+                    .as_ref()
+                    .map(|m| {
+                        if m.mental_tests_defined()
+                            && m.mental_tests_passed()
+                            && m.mental_test_no_drift()
+                        {
+                            format!("pass ({} tests)", m.total)
+                        } else {
+                            format!(
+                                "block: failed={} not_run={} missing_required={}",
+                                m.failed,
+                                m.not_run,
+                                m.missing_required_targets.len()
+                            )
+                        }
+                    })
+                    .unwrap_or_else(|| "unknown".into());
                 format!(
-                    "Execution guidance:\n- phase: {}\n- module: {}\n- generation-order next: {}\n- data flows in plan: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read docs/development-plan.xml GenerationOrder and DataFlows for {}\n2. read shard docs for {}\n3. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n4. inspect affected source files for {}\n5. implement smallest safe change for objective\n6. run verify_project\n7. if verify fails, switch to grace_fix",
+                    "Execution guidance:\n- phase: {}\n- module: {}\n- generation-order next: {}\n- data flows in plan: {}\n- mental test gate: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read docs/development-plan.xml GenerationOrder, DataFlows, and MentalTests for {}\n2. run mental_test_run for {} if a matching MentalTest exists\n3. read shard docs for {}\n4. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n5. inspect affected source files for {}\n6. implement smallest safe change for objective only after mental test PASS\n7. run verify_project\n8. if verify fails, switch to grace_fix",
                     active_phase,
                     module,
                     next_plan_module,
                     flow_count,
+                    mental_gate,
                     string_arg(&request.arguments, "objective", "complete next bounded implementation step"),
                     failing,
+                    module,
                     module,
                     module,
                     module,
@@ -224,7 +261,7 @@ impl SkillEngine {
                     .map(|r| r.not_in_verification.len())
                     .unwrap_or(0);
                 format!(
-                    "Fix workflow:\n- issue: {}\n- module hint: {}\n- graph drift: {}\n- verification drift: {}\n\nDebug path:\n1. identify failing module or contract\n2. inspect shard docs for module hint or active module\n3. inspect source files and graph refs\n4. patch smallest cause, not symptoms\n5. run verify_project and review_code before done",
+                    "Fix workflow:\n- issue: {}\n- module hint: {}\n- graph drift: {}\n- verification drift: {}\n\nDebug path:\n1. identify failing module or contract\n2. run or add a MentalTest that reproduces the expected fix behavior\n3. inspect shard docs for module hint or active module\n4. inspect source files and graph refs\n5. patch smallest cause, not symptoms\n6. run verify_project and review_code before done",
                     string_arg(&request.arguments, "issue", "unspecified issue"),
                     module_hint,
                     missing_graph,

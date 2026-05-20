@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.17.0 — Added generate_development_plan MCP tool schema]
+// LAST_CHANGE: [v2.18.0 — Added mental_test_run MCP tool schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -142,7 +142,7 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
         }),
         serde_json::json!({
             "name": "generate_development_plan",
-            "description": "Generate and validate a complete DevelopmentPlan.xml artifact with DataFlows and GenerationOrder.",
+            "description": "Generate and validate a complete DevelopmentPlan.xml artifact with DataFlows, GenerationOrder, and MentalTests.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -150,6 +150,19 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                     "data_flow_analysis": { "type": "string", "description": "auto | guided | manual", "default": "auto" },
                     "generation_order": { "type": "string", "description": "topological | phase | manual", "default": "topological" }
                 }
+            }
+        }),
+        serde_json::json!({
+            "name": "mental_test_run",
+            "description": "Run a DevelopmentPlan MentalTest before code generation and persist a trace artifact.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "module_id": { "type": "string", "description": "Target module id such as M-GRACE-MENTAL-TEST" },
+                    "mental_test_id": { "type": "string", "description": "Mental test id such as MT-001" },
+                    "step_by_step": { "type": "boolean", "description": "Return step-by-step trace behavior", "default": true }
+                },
+                "required": ["module_id", "mental_test_id"]
             }
         }),
         serde_json::json!({

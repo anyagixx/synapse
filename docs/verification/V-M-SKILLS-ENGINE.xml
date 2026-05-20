@@ -9,6 +9,7 @@
     <ASSERTION>grace_plan guidance reads docs/requirements.xml and reports RequirementsAnalysis validity.</ASSERTION>
     <ASSERTION>grace_plan guidance reads docs/technology.xml and reports Technology validity.</ASSERTION>
     <ASSERTION>grace_plan and grace_execute guidance read docs/development-plan.xml and report DataFlow plus GenerationOrder coverage.</ASSERTION>
+    <ASSERTION>grace_plan, grace_execute, and grace_fix guidance require MentalTests before critical code generation or fixes.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan reporting, and anchor normalization export
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.17.0 — Registered DevelopmentPlan module]
+// LAST_CHANGE: [v2.18.0 — Registered MentalTest module]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
@@ -28,6 +28,7 @@ pub mod inventory_types;
 pub mod inventory_verification;
 pub mod layout;
 pub mod log;
+pub mod mental_test;
 pub mod refresh;
 pub mod requirements;
 pub mod review;
@@ -169,6 +170,31 @@ impl GraceEngine {
         development_plan::validate_development_plan(root)
     }
     // END_grace_engine_development_plan_report
+
+    // START_CONTRACT_GraceEngine::mental_test_report
+    // PURPOSE: Scan DevelopmentPlan MentalTests and return pass/fail/coverage report
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<MentalTestReport> }
+    // START_grace_engine_mental_test_report
+    pub fn mental_test_report(root: &Path) -> anyhow::Result<mental_test::MentalTestReport> {
+        mental_test::scan_project_mental_tests(root)
+    }
+    // END_grace_engine_mental_test_report
+
+    // START_CONTRACT_GraceEngine::run_mental_test
+    // PURPOSE: Run one MentalTest by module and id, persisting a trace artifact
+    // INPUTS: { root: &Path }, { module_id: &str }, { mental_test_id: &str }, { step_by_step: bool }
+    // OUTPUTS: { anyhow::Result<MentalTestRunReport> }
+    // START_grace_engine_run_mental_test
+    pub fn run_mental_test(
+        root: &Path,
+        module_id: &str,
+        mental_test_id: &str,
+        step_by_step: bool,
+    ) -> anyhow::Result<mental_test::MentalTestRunReport> {
+        mental_test::run_mental_test(root, module_id, mental_test_id, step_by_step)
+    }
+    // END_grace_engine_run_mental_test
 
     // START_CONTRACT_GraceEngine::refresh_project
     // PURPOSE: Sync knowledge graph and verification plan with code

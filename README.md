@@ -1,7 +1,7 @@
 # Synapse
 
 > **AI Agent Engineering Platform — works transparently through OpenCode CLI**
-> *32 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
+> *33 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
 
 ---
 
@@ -13,7 +13,7 @@
          ┌─────────────┼─────────────┐
          ▼             ▼             ▼
     MCP Tools       Plugin       AGENTS.md
-  (32 инструмента)   (proxy,      (GRACE
+  (33 инструмента)   (proxy,      (GRACE
                      GRACE)       конституция)
          │
          ▼
@@ -21,7 +21,7 @@
 ```
 
 Ты общаешься с AI через `opencode`. Synapse невидимо:
-- Даёт LLM **32 MCP-инструмента** для поиска, проверки и генерации кода
+- Даёт LLM **33 MCP-инструмента** для поиска, проверки и генерации кода
 - Авто-фильтрует шумный вывод shell-команд; фактическую экономию показывает `syn gain`
 - **Принуждает GRACE методологию**: Phase 0, контракты, верификация, ревью
 - **Сам проходит собственные проверки**: `syn verify` → ALL PASS
@@ -36,7 +36,7 @@
 
 Synapse решает это так:
 - хранит архитектуру в **sharded GRACE artifacts**
-- даёт OpenCode **32 MCP tools**
+- даёт OpenCode **33 MCP tools**
 - даёт **15 workflow tools** для init/plan/execute/review/fix/status
 - режет shell noise через proxy
 - навязывает verify/review discipline прямо в цикле работы
@@ -98,7 +98,7 @@ cd synapse && make install
 ```bash
 mkdir my-project && cd my-project
 syn init          # 1 сек: интеграция с OpenCode
-opencode          # LLM видит 32 MCP инструмента + sharded Phase 0 gate
+opencode          # LLM видит 33 MCP инструмента + sharded Phase 0 gate
 # LLM: "Что ты хочешь построить?"
 # Ты:  "Приложение для заметок с поиском"
 ```
@@ -135,9 +135,9 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 
 ---
 
-## 32 MCP Tools
+## 33 MCP Tools
 
-### 17 Core tools
+### 18 Core tools
 
 | Инструмент | Назначение |
 |-----------|-----------|
@@ -151,7 +151,8 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 | `extract_belief_state` | Создание и валидация docs/belief-states перед кодогенерацией |
 | `generate_requirements` | Создание и валидация полного `docs/requirements.xml` с AAG use cases |
 | `generate_technology` | Создание и валидация полного `docs/technology.xml` с exact versions и compatibility matrix |
-| `generate_development_plan` | Создание и валидация `docs/development-plan.xml` с DataFlows и GenerationOrder |
+| `generate_development_plan` | Создание и валидация `docs/development-plan.xml` с DataFlows, GenerationOrder и MentalTests |
+| `mental_test_run` | Запуск MentalTest перед кодогенерацией и запись trace в `docs/mental-tests/` |
 | `token_savings` | Статистика экономии токенов |
 | `compress_text` | Сжатие текста (3 уровня) |
 | `refresh_project` | Синхронизация графа и плана с кодом |
@@ -198,9 +199,10 @@ my-project/
 │   │   └── Phase-1.xml
 │   ├── verification/
 │   │   └── V-M-CORE.xml
+│   ├── mental-tests/            ← MentalTest traces
 │   ├── requirements.xml          ← RequirementsAnalysis + AAG use cases
 │   ├── technology.xml            ← exact versions + compatibility matrix
-│   ├── development-plan.xml      ← DataFlows + GenerationOrder
+│   ├── development-plan.xml      ← DataFlows + GenerationOrder + MentalTests
 │   ├── verification-plan.xml     ← compatibility layer
 │   └── knowledge-graph.xml       ← compatibility layer
 └── .opencode/
@@ -240,7 +242,7 @@ my-project/
 | **Octocode** | AST-индексация (5 языков) + fallback (14), BM25 + векторный + гибридный поиск |
 | **RTK Proxy** | 30+ TOML-фильтров, 8-стадийный пайплайн, авто-прокси через плагин |
 | **Caveman** | 3 уровня сжатия (lite/full/ultra) |
-| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 32 MCP tools, 15 workflow tools, 3 режима ревью |
+| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 33 MCP tools, 15 workflow tools, 3 режима ревью |
 
 ---
 
@@ -250,14 +252,14 @@ my-project/
 |---------|----------|
 | Бинарник | ~13 MB release |
 | Зависимости | 0 внешних системных (всё статически слинковано) |
-| MCP инструментов | **32** |
+| MCP инструментов | **33** |
 | CLI команд | 19 |
-| Проверок verify | 34 |
+| Проверок verify | 37 |
 | GRACE workflow tools | 15 |
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
-| Тестов | **141** (cargo test --all-targets) |
+| Тестов | **146** (cargo test --all-targets) |
 | Контрактов в своём коде | **40/40** |
 | self-verify | **ALL PASS** |
 
