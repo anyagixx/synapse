@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Added Technology review section]
+// LAST_CHANGE: [v2.17.0 — Added DevelopmentPlan review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -257,6 +257,22 @@ impl Reviewer {
                 technology.detected_dependencies.len()
             ),
             issues: technology.errors,
+        });
+
+        let plan = crate::grace::development_plan::validate_development_plan(root)?;
+        sections.push(ReviewSection {
+            name: "development-plan".into(),
+            passed: plan.valid,
+            details: format!(
+                "architecture_modules={} data_flows={} generation_modules={} patterns={} guidelines={} completed_generation_modules={}",
+                plan.architecture_modules.len(),
+                plan.data_flows.len(),
+                plan.generation_modules.len(),
+                plan.non_human_patterns,
+                plan.contract_guidelines,
+                plan.completed_generation_modules
+            ),
+            issues: plan.errors,
         });
 
         let passed = sections.iter().all(|s| s.passed);

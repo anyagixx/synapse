@@ -1,9 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REFRESH
 // PURPOSE: Artifact synchronization — detects and fixes drift between code contracts and MyGRACE shards
-// SCOPE: Refresher struct, RefreshReport, canonical inventory-backed drift detection and sync
-// DEPENDS: M-GRACE-INVENTORY
-// LINKS: docs/graph-index.xml, docs/verification-index.xml, docs/modules/, docs/verification/
+// SCOPE: Refresher struct, RefreshReport, canonical inventory-backed drift detection and sync including generated DevelopmentPlan refresh
+// DEPENDS: M-GRACE-INVENTORY, M-GRACE-DEVELOPMENT-PLAN
+// LINKS: docs/graph-index.xml, docs/verification-index.xml, docs/modules/, docs/verification/, docs/development-plan.xml
 
 // START_MODULE_MAP
 // RefreshReport — Drift detection report with suggested actions
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.5.0 — Switched refresh to canonical inventory drift model]
+// LAST_CHANGE: [v2.6.0 — Refresh DevelopmentPlan from source contracts during --fix]
 // END_CHANGE_SUMMARY
 
 use crate::grace::inventory::{ArtifactDrift, MyGraceInventory};
@@ -67,13 +67,20 @@ impl Refresher {
     // END_refresher_refresh
 
     // START_CONTRACT_Refresher::fix
-    // PURPOSE: Rewrite canonical MyGRACE artifacts from real source MODULE_ID contracts
+    // PURPOSE: Rewrite canonical MyGRACE artifacts and DevelopmentPlan from real source MODULE_ID contracts
     // INPUTS: { root: &Path — project root }
     // OUTPUTS: { anyhow::Result<RefreshReport> }
     // SIDE_EFFECTS: writes docs/ indexes and shard files
     // START_refresher_fix
     pub fn fix(root: &Path) -> anyhow::Result<RefreshReport> {
-        report_from_drift(root, MyGraceInventory::sync(root)?, true)
+        let drift = MyGraceInventory::sync(root)?;
+        crate::grace::development_plan::generate_development_plan_file(
+            root,
+            true,
+            "auto",
+            "topological",
+        )?;
+        report_from_drift(root, drift, true)
     }
     // END_refresher_fix
 }

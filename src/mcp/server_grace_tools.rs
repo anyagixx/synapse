@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, log analysis, belief extraction, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
-// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
+// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, log analysis, belief extraction, compression, tracking, and skills
+// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
@@ -13,6 +13,7 @@
 // handle_extract_belief_state — Stores observable AI belief state scaffold for a module
 // handle_generate_requirements — Generates and validates docs/requirements.xml with AAG notation
 // handle_generate_technology — Generates and validates docs/technology.xml with exact versions
+// handle_generate_development_plan — Generates and validates docs/development-plan.xml with DataFlows and GenerationOrder
 // handle_gain — Returns token savings stats
 // handle_compress — Compresses input text
 // handle_refresh — Reports or fixes MyGRACE drift
@@ -23,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Added generate_technology MCP handler]
+// LAST_CHANGE: [v2.17.0 — Added generate_development_plan MCP handler]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
@@ -379,6 +380,78 @@ pub(crate) async fn handle_generate_technology(
     }
 }
 // END_handle_generate_technology
+
+// START_CONTRACT_handle_generate_development_plan
+// PURPOSE: Generate and validate a complete DevelopmentPlan artifact from requirements, technology, and graph modules
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: writes docs/development-plan.xml
+// START_handle_generate_development_plan
+pub(crate) async fn handle_generate_development_plan(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let from_requirements = args["from_requirements"].as_bool().unwrap_or(true);
+    let data_flow_analysis = args["data_flow_analysis"].as_str().unwrap_or("auto").trim();
+    if !matches!(data_flow_analysis, "auto" | "guided" | "manual") {
+        return error(
+            id,
+            -32602,
+            "Invalid data_flow_analysis. Use auto | guided | manual.",
+        );
+    }
+    let generation_order = args["generation_order"]
+        .as_str()
+        .unwrap_or("topological")
+        .trim();
+    if !matches!(generation_order, "topological" | "phase" | "manual") {
+        return error(
+            id,
+            -32602,
+            "Invalid generation_order. Use topological | phase | manual.",
+        );
+    }
+    let root = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+
+    match crate::grace::development_plan::generate_development_plan_file(
+        &root,
+        from_requirements,
+        data_flow_analysis,
+        generation_order,
+    ) {
+        Ok(report) => {
+            let text = format!(
+                "<DevelopmentPlanGeneration valid=\"{}\">\n  <Path>{}</Path>\n  <ArchitectureModules>{}</ArchitectureModules>\n  <DataFlows>{}</DataFlows>\n  <GenerationModules>{}</GenerationModules>\n  <NonHumanPatterns>{}</NonHumanPatterns>\n  <ContractGuidelines>{}</ContractGuidelines>\n</DevelopmentPlanGeneration>",
+                report.valid,
+                report.path,
+                report.architecture_modules.len(),
+                report.data_flows.len(),
+                report.generation_modules.len(),
+                report.non_human_patterns,
+                report.contract_guidelines,
+            );
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        Err(e) => error(
+            id,
+            -32603,
+            format!("DevelopmentPlan generation error: {}", e),
+        ),
+    }
+}
+// END_handle_generate_development_plan
 
 // START_CONTRACT_handle_gain
 // PURPOSE: Execute token_savings and return tracking statistics
@@ -781,6 +854,37 @@ mod tests {
         assert!(dir.path().join("docs/technology.xml").exists());
     }
     // END_test_handle_generate_technology_writes_valid_artifact
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_generate_development_plan_writes_artifact
+    // PURPOSE: Verify generate_development_plan writes a DevelopmentPlan artifact
+    // START_test_handle_generate_development_plan_writes_artifact
+    async fn test_handle_generate_development_plan_writes_artifact() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir_all(dir.path().join("docs")).expect("docs");
+        std::fs::write(
+            dir.path().join("docs/graph-index.xml"),
+            r#"<GRAPH_INDEX><MODULES><MODULE id="M-CORE" path="docs/modules/M-CORE.xml" status="active" /></MODULES></GRAPH_INDEX>"#,
+        )
+        .expect("graph");
+        let response = handle_generate_development_plan(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "from_requirements": false,
+                "data_flow_analysis": "auto",
+                "generation_order": "topological",
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("<DevelopmentPlanGeneration"));
+        assert!(dir.path().join("docs/development-plan.xml").exists());
+    }
+    // END_test_handle_generate_development_plan_writes_artifact
 }
 
 // END_public_api

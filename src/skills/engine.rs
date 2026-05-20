@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
 // PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
-// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, belief state, and project workflows
-// DEPENDS: M-CONFIG, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
+// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, belief state, and project workflows
+// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Added Technology awareness to grace_plan guidance]
+// LAST_CHANGE: [v2.17.0 — Added DevelopmentPlan awareness to grace_execute guidance]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -89,6 +89,9 @@ impl SkillEngine {
                     crate::grace::requirements::validate_requirements(&self.context.root).ok();
                 let technology =
                     crate::grace::technology::validate_technology(&self.context.root).ok();
+                let development_plan =
+                    crate::grace::development_plan::validate_development_plan(&self.context.root)
+                        .ok();
                 let active_phase = read_active_phase(&layout).unwrap_or_else(|| "Phase-0".into());
                 let drift_hint = refresh
                     .as_ref()
@@ -120,13 +123,25 @@ impl SkillEngine {
                         )
                     })
                     .unwrap_or_else(|| "no technology report available".into());
+                let development_plan_hint = development_plan
+                    .as_ref()
+                    .map(|p| {
+                        format!(
+                            "data_flows={}, generation_modules={}, valid={}",
+                            p.data_flows.len(),
+                            p.generation_modules.len(),
+                            p.valid
+                        )
+                    })
+                    .unwrap_or_else(|| "no development plan report available".into());
                 format!(
-                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nTechnology: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. read docs/technology.xml and confirm exact pinned versions plus compatibility checks\n3. confirm module boundaries in docs/modules/\n4. confirm phase order in docs/phases/\n5. confirm verification coverage in docs/verification/\n6. implement only next bounded module step",
+                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nTechnology: {}\nDevelopmentPlan: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. read docs/technology.xml and confirm exact pinned versions plus compatibility checks\n3. read docs/development-plan.xml and confirm DataFlows plus GenerationOrder\n4. confirm module boundaries in docs/modules/\n5. confirm phase order in docs/phases/\n6. confirm verification coverage in docs/verification/\n7. implement only next bounded module step",
                     active_phase,
                     string_arg(&request.arguments, "goal", "Define architecture and delivery plan"),
                     string_arg(&request.arguments, "constraints", "none provided"),
                     requirements_hint,
                     technology_hint,
+                    development_plan_hint,
                     drift_hint,
                     next_hint,
                 )
@@ -150,16 +165,28 @@ impl SkillEngine {
                     &first_module_id(&layout).unwrap_or_else(|| "M-CORE".into()),
                 );
                 let verify = Verifier::verify_all(&self.context.root).await.ok();
+                let plan =
+                    crate::grace::development_plan::validate_development_plan(&self.context.root)
+                        .ok();
                 let failing = verify
                     .as_ref()
                     .map(|results| results.iter().filter(|r| !r.passed).count())
                     .unwrap_or(0);
+                let next_plan_module = plan
+                    .as_ref()
+                    .and_then(|p| p.generation_modules.first())
+                    .map(|m| m.id.clone())
+                    .unwrap_or_else(|| module.clone());
+                let flow_count = plan.as_ref().map(|p| p.data_flows.len()).unwrap_or(0);
                 format!(
-                    "Execution guidance:\n- phase: {}\n- module: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read shard docs for {}\n2. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n3. inspect affected source files for {}\n4. implement smallest safe change for objective\n5. run verify_project\n6. if verify fails, switch to grace_fix",
+                    "Execution guidance:\n- phase: {}\n- module: {}\n- generation-order next: {}\n- data flows in plan: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read docs/development-plan.xml GenerationOrder and DataFlows for {}\n2. read shard docs for {}\n3. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n4. inspect affected source files for {}\n5. implement smallest safe change for objective\n6. run verify_project\n7. if verify fails, switch to grace_fix",
                     active_phase,
                     module,
+                    next_plan_module,
+                    flow_count,
                     string_arg(&request.arguments, "objective", "complete next bounded implementation step"),
                     failing,
+                    module,
                     module,
                     module,
                     module,

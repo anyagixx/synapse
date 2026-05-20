@@ -1,24 +1,25 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, requirements, technology, belief states, semantic, verification, drift, token economy, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology and belief-state coverage, print_report, active-phase display helpers
-// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
+// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, belief states, semantic, verification, drift, token economy, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology/development-plan and belief-state coverage, print_report, active-phase display helpers
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
 // START_MODULE_MAP
-// StatusReport — Full project health report with requirements, technology, and belief state coverage
+// StatusReport — Full project health report with requirements, technology, development plan, and belief state coverage
 // TokenEconomy — Token usage statistics
 // SystemInfo — System metadata (version, paths)
 // StatusCollector — Collects and prints project health
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Added Technology stack coverage to status]
+// LAST_CHANGE: [v2.17.0 — Added DevelopmentPlan coverage to status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
 use crate::grace::belief_state::BeliefStateReport;
 use crate::grace::contract::{ContractReport, ContractValidator};
+use crate::grace::development_plan::DevelopmentPlanReport;
 use crate::grace::layout::DocsLayout;
 use crate::grace::refresh::Refresher;
 use crate::grace::requirements::RequirementsReport;
@@ -38,6 +39,7 @@ pub struct StatusReport {
     pub contracts: ContractReport,
     pub requirements: RequirementsReport,
     pub technology: TechnologyReport,
+    pub development_plan: DevelopmentPlanReport,
     pub belief_state: BeliefStateReport,
     pub semantic: SemanticReport,
     pub verification: Vec<super::verify::VerificationResult>,
@@ -97,6 +99,7 @@ impl StatusCollector {
         let contracts = ContractValidator::validate_project(root)?;
         let requirements = crate::grace::requirements::validate_requirements(root)?;
         let technology = crate::grace::technology::validate_technology(root)?;
+        let development_plan = crate::grace::development_plan::validate_development_plan(root)?;
         let belief_state = crate::grace::belief_state::scan_project_belief_states(root)?;
         let semantic = SemanticExtractor::scan_project(root)?;
         let verification = Verifier::verify_all(root).await?;
@@ -128,6 +131,12 @@ impl StatusCollector {
             next_actions.push(format!(
                 "Complete Technology stack: {} issues",
                 technology.errors.len()
+            ));
+        }
+        if !development_plan.valid {
+            next_actions.push(format!(
+                "Complete DevelopmentPlan: {} issues",
+                development_plan.errors.len()
             ));
         }
         if belief_state.invalid_states > 0 {
@@ -247,6 +256,7 @@ impl StatusCollector {
             contracts,
             requirements,
             technology,
+            development_plan,
             belief_state,
             semantic,
             verification,
@@ -343,6 +353,21 @@ impl StatusCollector {
             report.technology.compatibility_checks.len()
         );
         println!("║  Valid:          {:<20}║", report.technology.valid);
+        println!("╠══════════════════════════════════════╣");
+        println!("║ DEVELOPMENT PLAN                     ║");
+        println!(
+            "║  DataFlows:      {:<20}║",
+            report.development_plan.data_flows.len()
+        );
+        println!(
+            "║  Gen modules:    {:<20}║",
+            report.development_plan.generation_modules.len()
+        );
+        println!(
+            "║  Completed:      {:<20}║",
+            report.development_plan.completed_generation_modules
+        );
+        println!("║  Valid:          {:<20}║", report.development_plan.valid);
         println!("╠══════════════════════════════════════╣");
         println!("║ BELIEF STATE                         ║");
         println!(

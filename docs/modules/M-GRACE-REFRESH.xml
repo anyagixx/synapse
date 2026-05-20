@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-REFRESH" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-REFRESH</NAME>
-  <PURPOSE>Artifact synchronization — detects and fixes drift between code contracts and MyGRACE shards</PURPOSE>
-  <SCOPE>Refresher struct, RefreshReport, canonical inventory-backed drift detection and sync</SCOPE>
+  <PURPOSE>Artifact synchronization — detects and fixes drift between code contracts, MyGRACE shards, and generated DevelopmentPlan</PURPOSE>
+  <SCOPE>Refresher struct, RefreshReport, canonical inventory-backed drift detection and sync including generated DevelopmentPlan refresh</SCOPE>
   <FILES>
     <FILE>src/grace/refresh.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-INVENTORY</DEPENDS>
-  <LINKS>docs/graph-index.xml,docs/verification-index.xml,docs/modules/,docs/verification/</LINKS>
+  <DEPENDS>M-GRACE-INVENTORY,M-GRACE-DEVELOPMENT-PLAN</DEPENDS>
+  <LINKS>docs/graph-index.xml,docs/verification-index.xml,docs/modules/,docs/verification/,docs/development-plan.xml</LINKS>
   <VERIFICATION_REF>V-M-GRACE-REFRESH</VERIFICATION_REF>
 </MODULE>

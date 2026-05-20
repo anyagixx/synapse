@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
-// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state storage, requirements/technology templates, and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes, requirements and technology templates, and shard dirs
-// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY
+// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state storage, requirements/technology/development-plan templates, and bootstraps templates
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes, requirements, technology, and development-plan templates, and shard dirs
+// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Added full Technology template generation]
+// LAST_CHANGE: [v2.17.0 — Added full DevelopmentPlan template generation]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -232,15 +232,11 @@ impl DocsLayout {
         let technology =
             crate::grace::technology::technology_template("my-project", &[], "2026-05-20");
         self.write_if_missing(&self.docs_dir().join("technology.xml"), &technology)?;
+        let development_plan =
+            crate::grace::development_plan::development_plan_template("my-project", &[]);
         self.write_if_missing(
             &self.docs_dir().join("development-plan.xml"),
-            r#"<?xml version="1.0" encoding="UTF-8"?>
-<DEVELOPMENT_PLAN>
-  <META><GENERATED_BY>syn init</GENERATED_BY><PRIMARY_MODEL>docs/plan-index.xml</PRIMARY_MODEL></META>
-  <PHASES><PHASE ref="docs/phases/Phase-0.xml" /><PHASE ref="docs/phases/Phase-1.xml" /></PHASES>
-  <MODULES><MODULE ref="docs/modules/M-CORE.xml" /></MODULES>
-</DEVELOPMENT_PLAN>
-"#,
+            &development_plan,
         )?;
         self.write_if_missing(
             &self.docs_dir().join("verification-plan.xml"),

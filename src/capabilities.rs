@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, requirements/technology/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Added generate_technology MCP capability and technology checks]
+// LAST_CHANGE: [v2.17.0 — Added generate_development_plan MCP capability and plan checks]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -50,7 +50,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("serve", "Start web dashboard"),
 ];
 
-pub const CORE_MCP_TOOL_COUNT: usize = 16;
+pub const CORE_MCP_TOOL_COUNT: usize = 17;
 pub const GRACE_SKILL_TOOL_COUNT: usize = 15;
 pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
 
@@ -154,6 +154,10 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "generate_technology",
         "Generate and validate a complete exact-version Technology artifact",
     ),
+    (
+        "generate_development_plan",
+        "Generate and validate a complete DevelopmentPlan with DataFlows and GenerationOrder",
+    ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),
     (
@@ -254,6 +258,13 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "technology-dependencies-compatible",
     "technology-no-version-guessing",
     "technology-known-issues",
+    "dataflow-sources-exist",
+    "dataflow-contracts-exist",
+    "dataflow-protocol-consistent",
+    "dataflow-errors-documented",
+    "genorder-topology-correct",
+    "genorder-all-modules",
+    "genorder-no-dangling-deps",
     "sharded-artifacts",
     "artifact-ref-integrity",
     "canonical-mygrace-drift",

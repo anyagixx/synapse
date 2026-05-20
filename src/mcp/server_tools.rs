@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles and requirements/technology generation
+// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles and requirements/technology/development-plan generation
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Added generate_technology MCP tool schema]
+// LAST_CHANGE: [v2.17.0 — Added generate_development_plan MCP tool schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -137,6 +137,18 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                     "project_path": { "type": "string", "description": "Project path to scan", "default": "." },
                     "detect_existing": { "type": "boolean", "description": "Scan dependency manifests such as Cargo.toml, package.json, requirements.txt, and go.mod", "default": true },
                     "compatibility_check": { "type": "boolean", "description": "Emit compatibility matrix checks", "default": true }
+                }
+            }
+        }),
+        serde_json::json!({
+            "name": "generate_development_plan",
+            "description": "Generate and validate a complete DevelopmentPlan.xml artifact with DataFlows and GenerationOrder.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "from_requirements": { "type": "boolean", "description": "Read RequirementsAnalysis when generating the plan", "default": true },
+                    "data_flow_analysis": { "type": "string", "description": "auto | guided | manual", "default": "auto" },
+                    "generation_order": { "type": "string", "description": "topological | phase | manual", "default": "topological" }
                 }
             }
         }),

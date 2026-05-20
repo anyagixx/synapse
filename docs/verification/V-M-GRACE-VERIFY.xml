@@ -13,6 +13,7 @@
     <ASSERTION>Verification reports anchor-syntax-consistent and treats mixed syntax as a warning-level compatibility detail.</ASSERTION>
     <ASSERTION>Verification reports requirements-entities-defined, requirements-use-cases, requirements-glossary, and requirements-no-empty-sections.</ASSERTION>
     <ASSERTION>Verification reports technology-language-defined, technology-dependencies-compatible, technology-no-version-guessing, and technology-known-issues.</ASSERTION>
+    <ASSERTION>Verification reports dataflow-* and genorder-* checks for DevelopmentPlan.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

@@ -2,7 +2,7 @@
 <MODULE id="M-TESTS-MCP" type="INTEGRATION" status="active">
   <NAME>M-TESTS-MCP</NAME>
   <PURPOSE>MCP and skills integration tests — verify registry, discovery, and representative skill behavior</PURPOSE>
-  <SCOPE>Tool count parity including extract_belief_state, generate_requirements, and generate_technology, grace skill visibility, basic CLI skills commands</SCOPE>
+  <SCOPE>Tool count parity including extract_belief_state, generate_requirements, generate_technology, and generate_development_plan, grace skill visibility, basic CLI skills commands</SCOPE>
   <FILES>
     <FILE>tests/mcp_skills.rs</FILE>
   </FILES>

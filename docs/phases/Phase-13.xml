@@ -32,6 +32,7 @@
     <MODULE_REF id="M-GRACE-LAYOUT" />
     <MODULE_REF id="M-GRACE-REQUIREMENTS" />
     <MODULE_REF id="M-GRACE-TECHNOLOGY" />
+    <MODULE_REF id="M-GRACE-DEVELOPMENT-PLAN" />
     <MODULE_REF id="M-GRACE-INVENTORY" />
     <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
     <MODULE_REF id="M-GRAPHRAG" />
@@ -94,11 +95,11 @@
         <IMPLEMENTATION>Create technology parser, dependency detector, compatibility checks, full init template, generate_technology MCP handler, and technology-* verify checks.</IMPLEMENTATION>
         <VERIFY status="passed">Tests for Technology template completeness, legacy stub failure, Cargo lock exact-version detection, generated artifact validation, generate_technology MCP output, technology-* verify checks, and review/status coverage.</VERIFY>
       </step-6>
-      <step-7 section="2.3" status="pending" priority="P1">
+      <step-7 section="2.3" status="done" priority="P1">
         <TITLE>DevelopmentPlan DataFlows and GenerationOrder</TITLE>
         <INTENT>Upgrade the plan artifact into a real generation blueprint with architecture graph, DataFlows, GenerationOrder, NonHumanPatterns, and contract guidelines.</INTENT>
-        <IMPLEMENTATION>Create development_plan module, parse DataFlows and GenerationOrder in inventory_plan, add dataflow-* and genorder-* checks, add generate_development_plan MCP handler, and update grace_execute skill behavior.</IMPLEMENTATION>
-        <VERIFY>Tests for valid plan, circular generation order, missing module refs, dataflow contract mismatch, and status phase progress.</VERIFY>
+        <IMPLEMENTATION>Create development_plan module, validate DataFlows and GenerationOrder against graph/contracts, add dataflow-* and genorder-* checks, add generate_development_plan MCP handler, and update grace_plan/grace_execute/status/review behavior.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for complete DevelopmentPlan templates, incomplete artifact failures, invalid GenerationOrder topology, generated artifact writes, generate_development_plan MCP output, 32-tool MCP parity, and full verify/review gates.</VERIFY>
       </step-7>
       <step-8 section="1.2" status="pending" priority="P1">
         <TITLE>Mental Tests</TITLE>
@@ -150,9 +151,9 @@
     <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 2 step-7 section 2.3 DevelopmentPlan DataFlows and GenerationOrder.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-LAYOUT.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.3-development-plan.md</SOURCE_SPEC>
+    <NEXT_ACTION>Begin Sprint 2 step-8 section 1.2 Mental Tests.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.2-mental-tests.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

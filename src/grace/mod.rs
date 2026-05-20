@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology reporting, and anchor normalization export
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,13 +11,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Registered Technology stack module]
+// LAST_CHANGE: [v2.17.0 — Registered DevelopmentPlan module]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
 pub mod belief_state;
 pub mod bootstrap;
 pub mod contract;
+pub mod development_plan;
 pub mod explain;
 pub mod fix;
 pub mod inventory;
@@ -156,6 +157,18 @@ impl GraceEngine {
         technology::validate_technology(root)
     }
     // END_grace_engine_technology_report
+
+    // START_CONTRACT_GraceEngine::development_plan_report
+    // PURPOSE: Validate DevelopmentPlan artifact and return DataFlow/GenerationOrder report
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<DevelopmentPlanReport> }
+    // START_grace_engine_development_plan_report
+    pub fn development_plan_report(
+        root: &Path,
+    ) -> anyhow::Result<development_plan::DevelopmentPlanReport> {
+        development_plan::validate_development_plan(root)
+    }
+    // END_grace_engine_development_plan_report
 
     // START_CONTRACT_GraceEngine::refresh_project
     // PURPOSE: Sync knowledge graph and verification plan with code

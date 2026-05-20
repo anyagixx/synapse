@@ -20,6 +20,7 @@
     <VERIFICATION id="V-M-GRACE-BELIEF-STATE" module="M-GRACE-BELIEF-STATE" path="docs/verification/V-M-GRACE-BELIEF-STATE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-BOOTSTRAP" module="M-GRACE-BOOTSTRAP" path="docs/verification/V-M-GRACE-BOOTSTRAP.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-CONTRACT" module="M-GRACE-CONTRACT" path="docs/verification/V-M-GRACE-CONTRACT.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-DEVELOPMENT-PLAN" module="M-GRACE-DEVELOPMENT-PLAN" path="docs/verification/V-M-GRACE-DEVELOPMENT-PLAN.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-EXPLAIN" module="M-GRACE-EXPLAIN" path="docs/verification/V-M-GRACE-EXPLAIN.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-FIX" module="M-GRACE-FIX" path="docs/verification/V-M-GRACE-FIX.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-INVENTORY" module="M-GRACE-INVENTORY" path="docs/verification/V-M-GRACE-INVENTORY.xml" priority="normal" status="active" />

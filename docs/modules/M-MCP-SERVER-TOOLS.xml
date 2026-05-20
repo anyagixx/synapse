@@ -2,7 +2,7 @@
 <MODULE id="M-MCP-SERVER-TOOLS" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER-TOOLS</NAME>
   <PURPOSE>MCP tool definition registry for Synapse built-in and MyGRACE skill tools</PURPOSE>
-  <SCOPE>Static JSON schema definitions for tools/list including GRACE profiles, analyze_logs, extract_belief_state, generate_requirements, and generate_technology</SCOPE>
+  <SCOPE>Static JSON schema definitions for tools/list including GRACE profiles, analyze_logs, extract_belief_state, generate_requirements, generate_technology, and generate_development_plan</SCOPE>
   <FILES>
     <FILE>src/mcp/server_tools.rs</FILE>
   </FILES>

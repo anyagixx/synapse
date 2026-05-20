@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-DEVELOPMENT-PLAN" module="M-GRACE-DEVELOPMENT-PLAN" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test grace::development_plan --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_development_plan_writes_artifact --lib</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Generated development-plan.xml validates as DevelopmentPlan with ArchitectureGraph, DataFlows, GenerationOrder, NonHumanPatterns, and ContractGuidelines.</ASSERTION>
+    <ASSERTION>Legacy DEVELOPMENT_PLAN stubs and out-of-order generation dependencies fail validation.</ASSERTION>
+    <ASSERTION>DataFlow contract references are matched against MODULE_CONTRACT function contracts.</ASSERTION>
+    <ASSERTION>generate_development_plan writes docs/development-plan.xml and returns section counts through MCP.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

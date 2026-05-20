@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Added Technology exact-version verification]
+// LAST_CHANGE: [v2.17.0 — Added DevelopmentPlan DataFlow and GenerationOrder verification]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -336,26 +336,28 @@ impl Verifier {
             },
         });
 
-        // Check 500-token rule on XML artifacts (tokens ≈ chars/4)
+        // Check profile-aware artifact size guidance (tokens ≈ chars/4).
+        // DevelopmentPlan is a structured blueprint with DataFlows and GenerationOrder,
+        // so it has a larger budget and is validated by dedicated structural checks below.
         let templates = [
-            "requirements.xml",
-            "technology.xml",
-            "development-plan.xml",
-            "verification-plan.xml",
-            "knowledge-graph.xml",
+            ("requirements.xml", 2000usize),
+            ("technology.xml", 2000usize),
+            ("development-plan.xml", 3500usize),
+            ("verification-plan.xml", 2000usize),
+            ("knowledge-graph.xml", 2000usize),
         ];
         let mut passing = true;
         let mut details = Vec::new();
-        for tpl in &templates {
+        for (tpl, token_budget) in &templates {
             let path = root.join("docs").join(tpl);
             if let Ok(content) = std::fs::read_to_string(&path) {
                 let token_estimate = content.len() / 4;
-                let ok = token_estimate <= 2000;
+                let ok = token_estimate <= *token_budget;
                 if !ok {
                     passing = false;
                     details.push(format!(
-                        "{} exceeds ~500 tokens (est. {} tokens)",
-                        tpl, token_estimate
+                        "{} exceeds artifact token budget {} (est. {} tokens)",
+                        tpl, token_budget, token_estimate
                     ));
                 }
             }
@@ -534,6 +536,89 @@ impl Verifier {
             details: format!("{} known issue entries documented", technology.known_issues),
         });
 
+        let plan = crate::grace::development_plan::validate_development_plan(root)?;
+        checks.push(CheckResult {
+            name: "dataflow-sources-exist".into(),
+            passed: plan.dataflow_sources_exist(),
+            details: if plan.dataflow_sources_exist() {
+                format!(
+                    "{} DataFlows have resolvable endpoints",
+                    plan.data_flows.len()
+                )
+            } else {
+                format!(
+                    "DataFlow endpoint issues: {:?}",
+                    plan.missing_dataflow_sources
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "dataflow-contracts-exist".into(),
+            passed: plan.dataflow_contracts_exist(),
+            details: if plan.dataflow_contracts_exist() {
+                format!("{} DataFlow contract refs resolved", plan.data_flows.len())
+            } else {
+                format!(
+                    "DataFlow contract issues: {:?}",
+                    plan.missing_dataflow_contracts
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "dataflow-protocol-consistent".into(),
+            passed: plan.dataflow_protocol_consistent(),
+            details: if plan.dataflow_protocol_consistent() {
+                "All DataFlows declare protocols".into()
+            } else {
+                format!("DataFlow protocol issues: {:?}", plan.protocol_issues)
+            },
+        });
+        checks.push(CheckResult {
+            name: "dataflow-errors-documented".into(),
+            passed: plan.dataflow_errors_documented(),
+            details: if plan.dataflow_errors_documented() {
+                "All DataFlows document error handling".into()
+            } else {
+                format!(
+                    "DataFlow error handling issues: {:?}",
+                    plan.error_handling_issues
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "genorder-topology-correct".into(),
+            passed: plan.genorder_topology_correct(),
+            details: if plan.genorder_topology_correct() {
+                format!(
+                    "{} GenerationOrder modules are topologically ordered",
+                    plan.generation_modules.len()
+                )
+            } else {
+                format!("GenerationOrder issues: {:?}", plan.generation_order_issues)
+            },
+        });
+        checks.push(CheckResult {
+            name: "genorder-all-modules".into(),
+            passed: plan.genorder_all_modules(),
+            details: format!(
+                "{} architecture modules, {} generated modules",
+                plan.architecture_modules.len(),
+                plan.generation_modules.len()
+            ),
+        });
+        checks.push(CheckResult {
+            name: "genorder-no-dangling-deps".into(),
+            passed: plan.genorder_no_dangling_deps(),
+            details: if plan.genorder_no_dangling_deps() {
+                "All GenerationOrder DependsOn refs resolve to known modules".into()
+            } else {
+                format!(
+                    "GenerationOrder dependency issues: {:?}",
+                    plan.generation_order_issues
+                )
+            },
+        });
+
         let passed = checks.iter().all(|c| c.passed);
         Ok(VerificationResult {
             level: "module-local".into(),
@@ -664,7 +749,9 @@ impl Verifier {
         let dp_path = root.join("docs").join("development-plan.xml");
         if dp_path.exists() {
             let has_modules = std::fs::read_to_string(&dp_path)
-                .map(|c| c.contains("<MODULE ref=") || c.contains("<M-"))
+                .map(|c| {
+                    c.contains("<MODULE ref=") || c.contains("<Module id=\"M-") || c.contains("<M-")
+                })
                 .unwrap_or(false);
             checks.push(CheckResult {
                 name: "development-plan".into(),

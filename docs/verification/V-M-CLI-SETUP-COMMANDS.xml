@@ -11,7 +11,7 @@
     <ASSERTION>Index command status reporting uses guarded indexer storage counts instead of direct RwLock unwraps.</ASSERTION>
     <ASSERTION>Index command passes --no-git through to walker gitignore handling.</ASSERTION>
     <ASSERTION>Init command safely merges mcp.synapse into existing OpenCode config.</ASSERTION>
-    <ASSERTION>Init command prints the current 31-tool MCP registry summary.</ASSERTION>
+    <ASSERTION>Init command prints the current 32-tool MCP registry summary.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-7</PHASE_GATE>
 </VERIFICATION>

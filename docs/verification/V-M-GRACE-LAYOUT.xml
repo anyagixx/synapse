@@ -8,6 +8,7 @@
     <ASSERTION>DocsLayout creates docs/belief-states for observable belief state artifacts during initialization.</ASSERTION>
     <ASSERTION>DocsLayout initializes docs/requirements.xml with a complete RequirementsAnalysis template instead of a stub.</ASSERTION>
     <ASSERTION>DocsLayout initializes docs/technology.xml with exact versions, DependencyMatrix, KnownIssues, and DevOps sections instead of a stub.</ASSERTION>
+    <ASSERTION>DocsLayout initializes docs/development-plan.xml with DataFlows, GenerationOrder, NonHumanPatterns, and ContractGuidelines instead of a stub.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

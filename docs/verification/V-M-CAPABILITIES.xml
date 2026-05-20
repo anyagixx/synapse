@@ -5,8 +5,8 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>VERIFY_CHECKS lists typed LINKS, structured LOG, belief-state, requirements, technology, and anchor syntax checks exposed by syn verify/status capability metadata.</ASSERTION>
-    <ASSERTION>MCP capability counts include generate_technology as the 16th core tool.</ASSERTION>
+    <ASSERTION>VERIFY_CHECKS lists typed LINKS, structured LOG, belief-state, requirements, technology, development-plan DataFlow/GenerationOrder, and anchor syntax checks exposed by syn verify/status capability metadata.</ASSERTION>
+    <ASSERTION>MCP capability counts include generate_development_plan as the 17th core tool.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

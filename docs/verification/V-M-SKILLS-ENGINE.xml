@@ -8,6 +8,7 @@
     <ASSERTION>grace_execute guidance requires extract_belief_state before substantial code generation.</ASSERTION>
     <ASSERTION>grace_plan guidance reads docs/requirements.xml and reports RequirementsAnalysis validity.</ASSERTION>
     <ASSERTION>grace_plan guidance reads docs/technology.xml and reports Technology validity.</ASSERTION>
+    <ASSERTION>grace_plan and grace_execute guidance read docs/development-plan.xml and report DataFlow plus GenerationOrder coverage.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

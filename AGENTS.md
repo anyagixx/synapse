@@ -73,6 +73,7 @@ Create files in this exact order:
 Compatibility docs may also exist under `docs/*.xml`, but sharded indexes are primary source of truth.
 `docs/requirements.xml` must be a complete `<RequirementsAnalysis>` artifact with Goals, DomainModel entities, Actors, AAG UseCases (`Actor` + `Action` + `Goal`), NonFunctionalRequirements, Constraints, and Glossary before implementation starts. Use `generate_requirements` when it is missing or still a stub.
 `docs/technology.xml` must be a complete `<Technology>` artifact with exact Language/Runtime/PackageManager versions, versioned dependencies, DependencyMatrix compatibility checks, KnownIssues, and DevOps notes. Use `generate_technology` when versions are missing, blank, `latest`, wildcard, or range-only.
+`docs/development-plan.xml` must be a complete `<DevelopmentPlan>` artifact with ArchitectureGraph, DataFlows, GenerationOrder, NonHumanPatterns, and ContractGuidelines. Use `generate_development_plan` when DataFlows or GenerationOrder are missing.
 
 ### Phase 0 STOP Gates
 - If `docs/graph-index.xml` is missing → **STOP. Ask user what to build.**
@@ -289,6 +290,7 @@ Phase Gate: Call verify_project (phase level) + review_code (full)
 | `extract_belief_state` | Create/refine observable belief state before substantial code generation |
 | `generate_requirements` | Create complete RequirementsAnalysis with AAG use cases when requirements are missing or stale |
 | `generate_technology` | Create complete Technology with exact versions and compatibility checks |
+| `generate_development_plan` | Create complete DevelopmentPlan with DataFlows and GenerationOrder |
 | `suggest_contract` | Generate MODULE_CONTRACT template for new modules |
 | `project_status` | Overall health: contracts, markup, verification, token economy |
 | `token_savings` | Cost tracking — commands, tokens saved, estimated $ saved |

@@ -18,6 +18,7 @@
     <ASSERTION>JSON-RPC tool dispatch routes extract_belief_state to the GRACE belief-state artifact writer.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes generate_requirements to the GRACE RequirementsAnalysis writer.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes generate_technology to the GRACE Technology writer.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes generate_development_plan to the GRACE DevelopmentPlan writer.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-12</PHASE_GATE>
 </VERIFICATION>
