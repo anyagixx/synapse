@@ -2,7 +2,7 @@
 <MODULE id="M-GRACE-VERIFY" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-VERIFY</NAME>
   <PURPOSE>3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance</PURPOSE>
-  <SCOPE>Verifier struct, verify_all, verify_all_with_profile, verify_module_local, verify_module_local_with_profile, verify_wave, delegated verify_phase</SCOPE>
+  <SCOPE>Verifier struct, typed LINKS validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase</SCOPE>
   <FILES>
     <FILE>src/grace/verify.rs</FILE>
   </FILES>

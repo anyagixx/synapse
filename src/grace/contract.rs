@@ -1,22 +1,25 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-CONTRACT
-// PURPOSE: MODULE_CONTRACT validator — scans source files for language-aware GRACE contract blocks and validates them
-// SCOPE: GraceProfile, ModuleContract, FunctionContract, ContractReport models, ContractValidator with scan_file, scan_file_with_profile, validate_project, and validate_project_with_profile
+// PURPOSE: MODULE_CONTRACT validator — scans source files for language-aware GRACE contract blocks and validates contracts plus typed LINKS
+// SCOPE: GraceProfile, TypedLink, ModuleContract, FunctionContract, ContractReport models, ContractValidator scan/validate/link-validation APIs
 // DEPENDS: M-INDEXER-WALKER
 // LINKS: N/A
 
 // START_MODULE_MAP
 // GraceProfile — Verification strictness profile for contract-heavy or lightweight projects
+// TypedLink — Directional semantic relationship parsed from LINKS
 // ModuleContract — Parsed MODULE_CONTRACT block from a source file
 // FunctionContract — Parsed START_CONTRACT block for a function
 // ContractReport — Aggregate contract validation report
+// LinkValidationReport — Aggregate typed LINKS validation report
 // ContractValidator — Scans and validates GRACE contract blocks
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.10.0 — Added language-aware markers, MODULE_ID validation, and GRACE profiles]
+// LAST_CHANGE: [v2.11.0 — Added typed LINKS parsing, legacy compatibility, and link validation reports]
 // END_CHANGE_SUMMARY
 
+use std::collections::HashSet;
 use std::path::Path;
 
 // START_public_api
@@ -97,7 +100,8 @@ pub struct ModuleContract {
     pub purpose: Option<String>,
     pub scope: Option<String>,
     pub depends: Vec<String>,
-    pub links: Vec<String>,
+    pub links: Vec<TypedLink>,
+    pub link_errors: Vec<String>,
     pub has_contract: bool,
     pub valid: bool,
     pub has_module_map: bool,
@@ -107,6 +111,119 @@ pub struct ModuleContract {
 }
 // END_ModuleContract
 
+impl ModuleContract {
+    // START_CONTRACT_ModuleContract::typed_links
+    // PURPOSE: Return parsed directional LINKS for graph and traceability consumers
+    // OUTPUTS: { Vec<TypedLink> }
+    // START_module_contract_typed_links
+    pub fn typed_links(&self) -> Vec<TypedLink> {
+        self.links.clone()
+    }
+    // END_module_contract_typed_links
+}
+
+// START_LinkDirection
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+pub enum LinkDirection {
+    Outgoing,
+    Incoming,
+}
+// END_LinkDirection
+
+impl LinkDirection {
+    // START_CONTRACT_LinkDirection::label
+    // PURPOSE: Return the stable symbol used in typed LINKS output
+    // OUTPUTS: { &'static str }
+    // START_link_direction_label
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Outgoing => "outgoing",
+            Self::Incoming => "incoming",
+        }
+    }
+    // END_link_direction_label
+}
+
+// START_LinkType
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+pub enum LinkType {
+    Implements,
+    Depends,
+    Refines,
+    TracesTo,
+    VerifiedBy,
+    Manages,
+    Uses,
+}
+// END_LinkType
+
+impl LinkType {
+    // START_CONTRACT_LinkType::parse
+    // PURPOSE: Parse a typed LINKS relationship label
+    // INPUTS: { value: &str — link type label }
+    // OUTPUTS: { Option<LinkType> }
+    // START_link_type_parse
+    pub fn parse(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "implements" => Some(Self::Implements),
+            "depends" => Some(Self::Depends),
+            "refines" => Some(Self::Refines),
+            "traces_to" | "traces" => Some(Self::TracesTo),
+            "verified_by" => Some(Self::VerifiedBy),
+            "manages" => Some(Self::Manages),
+            "uses" => Some(Self::Uses),
+            _ => None,
+        }
+    }
+    // END_link_type_parse
+
+    // START_CONTRACT_LinkType::label
+    // PURPOSE: Return the canonical typed LINKS relationship label
+    // OUTPUTS: { &'static str }
+    // START_link_type_label
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Implements => "implements",
+            Self::Depends => "depends",
+            Self::Refines => "refines",
+            Self::TracesTo => "traces_to",
+            Self::VerifiedBy => "verified_by",
+            Self::Manages => "manages",
+            Self::Uses => "uses",
+        }
+    }
+    // END_link_type_label
+}
+
+// START_TypedLink
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+pub struct TypedLink {
+    pub direction: LinkDirection,
+    pub target: String,
+    pub link_type: LinkType,
+    pub description: Option<String>,
+    pub legacy: bool,
+}
+// END_TypedLink
+
+impl TypedLink {
+    // START_CONTRACT_TypedLink::legacy_depends
+    // PURPOSE: Convert an old comma-separated LINKS target into a backward-compatible depends link
+    // INPUTS: { target: String — old-format target }
+    // OUTPUTS: { TypedLink }
+    // START_typed_link_legacy_depends
+    pub fn legacy_depends(target: String) -> Self {
+        Self {
+            direction: LinkDirection::Outgoing,
+            target,
+            link_type: LinkType::Depends,
+            description: None,
+            legacy: true,
+        }
+    }
+    // END_typed_link_legacy_depends
+}
+
 // START_FunctionContract
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct FunctionContract {
@@ -115,9 +232,21 @@ pub struct FunctionContract {
     pub inputs: Vec<String>,
     pub outputs: Vec<String>,
     pub side_effects: Vec<String>,
-    pub links: Vec<String>,
+    pub links: Vec<TypedLink>,
+    pub link_errors: Vec<String>,
 }
 // END_FunctionContract
+
+impl FunctionContract {
+    // START_CONTRACT_FunctionContract::typed_links
+    // PURPOSE: Return parsed directional LINKS for this function contract
+    // OUTPUTS: { Vec<TypedLink> }
+    // START_function_contract_typed_links
+    pub fn typed_links(&self) -> Vec<TypedLink> {
+        self.links.clone()
+    }
+    // END_function_contract_typed_links
+}
 
 // START_ContractReport
 #[derive(Debug, Clone, serde::Serialize)]
@@ -130,6 +259,29 @@ pub struct ContractReport {
     pub contracts: Vec<ModuleContract>,
 }
 // END_ContractReport
+
+// START_LinkValidationReport
+#[derive(Debug, Clone, serde::Serialize, Default)]
+pub struct LinkValidationReport {
+    pub invalid_type_issues: Vec<String>,
+    pub missing_target_issues: Vec<String>,
+    pub dangling_target_issues: Vec<String>,
+    pub legacy_format_warnings: Vec<String>,
+}
+// END_LinkValidationReport
+
+impl LinkValidationReport {
+    // START_CONTRACT_LinkValidationReport::is_clean
+    // PURPOSE: Return true when typed LINKS contain no blocking validation issues
+    // OUTPUTS: { bool }
+    // START_link_validation_report_is_clean
+    pub fn is_clean(&self) -> bool {
+        self.invalid_type_issues.is_empty()
+            && self.missing_target_issues.is_empty()
+            && self.dangling_target_issues.is_empty()
+    }
+    // END_link_validation_report_is_clean
+}
 
 // START_ContractValidator
 pub struct ContractValidator;
@@ -179,6 +331,7 @@ impl ContractValidator {
             scope: None,
             depends: Vec::new(),
             links: Vec::new(),
+            link_errors: Vec::new(),
             has_contract: false,
             valid: false,
             has_module_map: false,
@@ -206,12 +359,11 @@ impl ContractValidator {
         // Extract function contracts
         mc.function_contracts = Self::extract_function_contracts(content);
 
-        let lines: Vec<&str> = block.lines().collect();
-        for line in &lines {
-            if let Some(val) = normalize_comment_line(line.trim()) {
-                Self::parse_field(&mut mc, &val);
-            }
-        }
+        let lines: Vec<String> = block
+            .lines()
+            .filter_map(|line| normalize_comment_line(line.trim()))
+            .collect();
+        Self::parse_module_fields(&mut mc, &lines);
 
         let mut header_valid = true;
         if mc.purpose.is_none() {
@@ -295,6 +447,34 @@ impl ContractValidator {
         }
     }
 
+    fn parse_module_fields(mc: &mut ModuleContract, lines: &[String]) {
+        let mut idx = 0usize;
+        while idx < lines.len() {
+            let val = lines[idx].as_str();
+            if let Some(rest) = val.strip_prefix("LINKS:") {
+                Self::parse_link_values(
+                    rest.trim(),
+                    &mut mc.links,
+                    &mut mc.link_errors,
+                    &format!("{} MODULE_CONTRACT", mc.file_path),
+                );
+                idx += 1;
+                while idx < lines.len() && looks_like_typed_link_line(&lines[idx]) {
+                    Self::parse_link_values(
+                        &lines[idx],
+                        &mut mc.links,
+                        &mut mc.link_errors,
+                        &format!("{} MODULE_CONTRACT", mc.file_path),
+                    );
+                    idx += 1;
+                }
+                continue;
+            }
+            Self::parse_field(mc, val);
+            idx += 1;
+        }
+    }
+
     fn parse_field(mc: &mut ModuleContract, val: &str) {
         if let Some(p) = val.strip_prefix("PURPOSE:") {
             mc.purpose = Some(p.trim().to_string());
@@ -306,14 +486,33 @@ impl ContractValidator {
                 .map(|s| s.trim().to_string())
                 .filter(|s| !s.is_empty())
                 .collect();
-        } else if let Some(l) = val.strip_prefix("LINKS:") {
-            mc.links = l
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
         } else if let Some(id) = val.strip_prefix("MODULE_ID:") {
             mc.module_id = Some(id.trim().to_string());
+        }
+    }
+
+    fn parse_link_values(
+        value: &str,
+        links: &mut Vec<TypedLink>,
+        errors: &mut Vec<String>,
+        context: &str,
+    ) {
+        let trimmed = value.trim();
+        if trimmed.is_empty() || trimmed == "N/A" {
+            return;
+        }
+        if looks_like_typed_link_line(trimmed) {
+            match parse_typed_link(trimmed) {
+                Ok(link) => links.push(link),
+                Err(message) => errors.push(format!("{}: {}", context, message)),
+            }
+            return;
+        }
+        for target in trimmed.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+            if target == "N/A" {
+                continue;
+            }
+            links.push(TypedLink::legacy_depends(target.to_string()));
         }
     }
 
@@ -373,6 +572,63 @@ impl ContractValidator {
         })
     }
     // END_cv_validate_project_with_profile
+
+    // START_CONTRACT_ContractValidator::validate_links
+    // PURPOSE: Validate parsed typed LINKS across a contract report
+    // INPUTS: { root: &Path }, { report: &ContractReport }
+    // OUTPUTS: { LinkValidationReport }
+    // START_cv_validate_links
+    pub fn validate_links(root: &Path, report: &ContractReport) -> LinkValidationReport {
+        let mut result = LinkValidationReport::default();
+        let module_ids: HashSet<String> = report
+            .contracts
+            .iter()
+            .filter_map(|contract| contract.module_id.clone())
+            .collect();
+        let verification_ids = collect_verification_ids(root);
+        let artifact_ids = collect_artifact_ids(root);
+
+        for contract in report
+            .contracts
+            .iter()
+            .filter(|contract| contract.has_contract)
+        {
+            result
+                .invalid_type_issues
+                .extend(contract.link_errors.iter().cloned());
+            for link in &contract.links {
+                validate_one_link(
+                    root,
+                    &module_ids,
+                    &verification_ids,
+                    &artifact_ids,
+                    &contract.file_path,
+                    link,
+                    &mut result,
+                );
+            }
+            for function in &contract.function_contracts {
+                result
+                    .invalid_type_issues
+                    .extend(function.link_errors.iter().cloned());
+                let context = format!("{}::{}", contract.file_path, function.name);
+                for link in &function.links {
+                    validate_one_link(
+                        root,
+                        &module_ids,
+                        &verification_ids,
+                        &artifact_ids,
+                        &context,
+                        link,
+                        &mut result,
+                    );
+                }
+            }
+        }
+
+        result
+    }
+    // END_cv_validate_links
 }
 
 // START_CONTRACT_is_metadata_boundary
@@ -411,8 +667,10 @@ fn extract_contracts_style(content: &str, contracts: &mut Vec<FunctionContract>)
             outputs: Vec::new(),
             side_effects: Vec::new(),
             links: Vec::new(),
+            link_errors: Vec::new(),
         };
 
+        let mut link_mode = false;
         for body_line in lines.iter().skip(idx + 1) {
             let trimmed = body_line.trim();
             if trimmed.is_empty() {
@@ -427,6 +685,16 @@ fn extract_contracts_style(content: &str, contracts: &mut Vec<FunctionContract>)
             {
                 break;
             }
+            if link_mode && looks_like_typed_link_line(&t) {
+                ContractValidator::parse_link_values(
+                    &t,
+                    &mut fc.links,
+                    &mut fc.link_errors,
+                    &format!("FUNCTION_CONTRACT {}", fc.name),
+                );
+                continue;
+            }
+            link_mode = false;
             if let Some(p) = t.strip_prefix("PURPOSE:") {
                 fc.purpose = Some(p.trim().to_string());
             } else if let Some(i) = t.strip_prefix("INPUTS:") {
@@ -448,11 +716,13 @@ fn extract_contracts_style(content: &str, contracts: &mut Vec<FunctionContract>)
                     .filter(|s| !s.is_empty())
                     .collect();
             } else if let Some(l) = t.strip_prefix("LINKS:") {
-                fc.links = l
-                    .split(',')
-                    .map(|s| s.trim().to_string())
-                    .filter(|s| !s.is_empty())
-                    .collect();
+                ContractValidator::parse_link_values(
+                    l.trim(),
+                    &mut fc.links,
+                    &mut fc.link_errors,
+                    &format!("FUNCTION_CONTRACT {}", fc.name),
+                );
+                link_mode = true;
             }
         }
         contracts.push(fc);
@@ -564,6 +834,171 @@ fn is_valid_module_id(module_id: &str) -> bool {
 }
 // END_is_valid_module_id
 
+// START_CONTRACT_looks_like_typed_link_line
+// PURPOSE: Detect new directional LINKS continuation lines
+// INPUTS: { value: &str — normalized metadata line }
+// OUTPUTS: { bool }
+// START_looks_like_typed_link_line
+fn looks_like_typed_link_line(value: &str) -> bool {
+    let trimmed = value.trim_start();
+    trimmed.starts_with('→')
+        || trimmed.starts_with('←')
+        || trimmed.starts_with("->")
+        || trimmed.starts_with("<-")
+}
+// END_looks_like_typed_link_line
+
+// START_CONTRACT_parse_typed_link
+// PURPOSE: Parse one directional typed LINKS line into a TypedLink
+// INPUTS: { value: &str — typed link line }
+// OUTPUTS: { Result<TypedLink, String> }
+// START_parse_typed_link
+fn parse_typed_link(value: &str) -> Result<TypedLink, String> {
+    let trimmed = value.trim();
+    let (direction, rest) = if let Some(rest) = trimmed.strip_prefix('→') {
+        (LinkDirection::Outgoing, rest)
+    } else if let Some(rest) = trimmed.strip_prefix("->") {
+        (LinkDirection::Outgoing, rest)
+    } else if let Some(rest) = trimmed.strip_prefix('←') {
+        (LinkDirection::Incoming, rest)
+    } else if let Some(rest) = trimmed.strip_prefix("<-") {
+        (LinkDirection::Incoming, rest)
+    } else {
+        return Err(format!("typed link missing direction: {}", value));
+    };
+
+    let rest = rest.trim();
+    let open = rest
+        .find('(')
+        .ok_or_else(|| format!("typed link missing relationship type: {}", value))?;
+    let close = rest[open + 1..]
+        .find(')')
+        .map(|idx| idx + open + 1)
+        .ok_or_else(|| format!("typed link has unclosed relationship type: {}", value))?;
+    let target = rest[..open].trim();
+    if target.is_empty() {
+        return Err(format!("typed link missing target: {}", value));
+    }
+    let type_label = rest[open + 1..close].trim();
+    let link_type = LinkType::parse(type_label).ok_or_else(|| {
+        format!(
+            "invalid typed link relationship '{}': {}",
+            type_label, value
+        )
+    })?;
+    let trailing = rest[close + 1..].trim();
+    let description = trailing
+        .strip_prefix('—')
+        .or_else(|| trailing.strip_prefix('-'))
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned);
+
+    Ok(TypedLink {
+        direction,
+        target: target.to_string(),
+        link_type,
+        description,
+        legacy: false,
+    })
+}
+// END_parse_typed_link
+
+fn collect_verification_ids(root: &Path) -> HashSet<String> {
+    let mut ids = HashSet::new();
+    let path = root.join("docs").join("verification-index.xml");
+    let Ok(content) = std::fs::read_to_string(path) else {
+        return ids;
+    };
+    let Ok(re) = regex::Regex::new(r#"id="([^"]+)""#) else {
+        return ids;
+    };
+    for cap in re.captures_iter(&content) {
+        ids.insert(cap[1].to_string());
+    }
+    ids
+}
+
+fn collect_artifact_ids(root: &Path) -> HashSet<String> {
+    let mut ids = HashSet::new();
+    let Ok(id_re) = regex::Regex::new(r#"id="([^"]+)""#) else {
+        return ids;
+    };
+    let Ok(entity_re) = regex::Regex::new(r#"<Entity\s+name="([^"]+)""#) else {
+        return ids;
+    };
+    for relative in [
+        "docs/requirements.xml",
+        "docs/technology.xml",
+        "docs/development-plan.xml",
+    ] {
+        let Ok(content) = std::fs::read_to_string(root.join(relative)) else {
+            continue;
+        };
+        for cap in id_re.captures_iter(&content) {
+            ids.insert(cap[1].to_string());
+        }
+        for cap in entity_re.captures_iter(&content) {
+            ids.insert(format!("Entity:{}", &cap[1]));
+        }
+    }
+    ids
+}
+
+fn validate_one_link(
+    root: &Path,
+    module_ids: &HashSet<String>,
+    verification_ids: &HashSet<String>,
+    artifact_ids: &HashSet<String>,
+    context: &str,
+    link: &TypedLink,
+    result: &mut LinkValidationReport,
+) {
+    let target = link.target.trim();
+    if target.is_empty() {
+        result
+            .missing_target_issues
+            .push(format!("{} has an empty LINKS target", context));
+        return;
+    }
+    if link.legacy {
+        result.legacy_format_warnings.push(format!(
+            "{} uses old LINKS target '{}' as depends",
+            context, target
+        ));
+    }
+    if target == "N/A" {
+        return;
+    }
+    let exists = if target.starts_with("M-") {
+        module_ids.contains(target)
+    } else if target.starts_with("V-") {
+        verification_ids.contains(target)
+    } else if target.starts_with("UC-")
+        || target.starts_with("REQ-")
+        || target.starts_with("NFR-")
+        || target.starts_with("CON-")
+        || target.starts_with("G-")
+        || target.starts_with("Entity:")
+    {
+        artifact_ids.contains(target)
+    } else if target.starts_with("~/")
+        || target.starts_with(".synapse/")
+        || target.starts_with(".config/")
+    {
+        true
+    } else if target.contains('/') || target.ends_with(".md") || target.ends_with(".xml") {
+        root.join(target).exists()
+    } else {
+        true
+    };
+    if !exists {
+        result
+            .dangling_target_issues
+            .push(format!("{} links to missing target '{}'", context, target));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -577,6 +1012,10 @@ mod tests {
         assert_eq!(mc.module_id.as_deref(), Some("M-TEST"));
         assert!(mc.purpose.is_some());
         assert_eq!(mc.depends.len(), 1);
+        assert_eq!(mc.links.len(), 1);
+        assert_eq!(mc.links[0].target, "docs/kg.xml");
+        assert_eq!(mc.links[0].link_type, LinkType::Depends);
+        assert!(mc.links[0].legacy);
         assert!(mc.has_module_map);
         assert!(mc.has_change_summary);
         assert_eq!(mc.function_contracts.len(), 1);
@@ -681,6 +1120,74 @@ mod tests {
             .errors
             .iter()
             .all(|error| !error.contains("Missing function contracts")));
+    }
+
+    #[test]
+    fn test_typed_links_parse_direction_type_and_description() {
+        let code = "// MODULE_CONTRACT\n// MODULE_ID: M-LINKS\n// PURPOSE: Link test\n// SCOPE: Testing typed links\n// DEPENDS: M-DB\n// LINKS:\n//   → M-STORAGE (depends) — user data persistence\n//   ← V-M-LINKS (verified_by) — verification shard\n\n// START_MODULE_MAP\n// run — runs\n// END_MODULE_MAP\n\n// START_CHANGE_SUMMARY\n// LAST_CHANGE: [v1.0.0 — Initial]\n// END_CHANGE_SUMMARY\n\n// START_CONTRACT_run\n// PURPOSE: Run\n// LINKS:\n//   → UC-001 (implements) — use case\n// START_run\nfn run() {}\n// END_run";
+        let mc = ContractValidator::scan_file(Path::new("src/links.rs"), code);
+        assert!(mc.link_errors.is_empty(), "{:?}", mc.link_errors);
+        assert_eq!(mc.links.len(), 2);
+        assert_eq!(mc.links[0].direction, LinkDirection::Outgoing);
+        assert_eq!(mc.links[0].target, "M-STORAGE");
+        assert_eq!(mc.links[0].link_type, LinkType::Depends);
+        assert_eq!(
+            mc.links[0].description.as_deref(),
+            Some("user data persistence")
+        );
+        assert_eq!(mc.links[1].direction, LinkDirection::Incoming);
+        assert_eq!(mc.links[1].link_type, LinkType::VerifiedBy);
+        assert!(!mc.links[1].legacy);
+        assert_eq!(mc.function_contracts[0].links[0].target, "UC-001");
+        assert_eq!(
+            mc.function_contracts[0].links[0].link_type,
+            LinkType::Implements
+        );
+    }
+
+    #[test]
+    fn test_invalid_typed_link_type_is_reported() {
+        let code = "// MODULE_CONTRACT\n// MODULE_ID: M-LINKS\n// PURPOSE: Link test\n// SCOPE: Testing typed links\n// DEPENDS: N/A\n// LINKS:\n//   → M-STORAGE (mystery) — invalid\n\n// START_MODULE_MAP\n// run — runs\n// END_MODULE_MAP\n\n// START_CHANGE_SUMMARY\n// LAST_CHANGE: [v1.0.0 — Initial]\n// END_CHANGE_SUMMARY\n\n// START_CONTRACT_run\n// PURPOSE: Run\n// START_run\nfn run() {}\n// END_run";
+        let mc = ContractValidator::scan_file(Path::new("src/links.rs"), code);
+        assert_eq!(mc.links.len(), 0);
+        assert_eq!(mc.link_errors.len(), 1);
+        assert!(mc.link_errors[0].contains("invalid typed link relationship"));
+    }
+
+    #[test]
+    fn test_link_validation_reports_dangling_module_target() {
+        let mut report = ContractReport {
+            total_files: 1,
+            with_contract: 1,
+            without_contract: 0,
+            valid: 1,
+            invalid: 0,
+            contracts: Vec::new(),
+        };
+        report.contracts.push(ModuleContract {
+            file_path: "src/links.rs".into(),
+            module_id: Some("M-LINKS".into()),
+            purpose: Some("Link test".into()),
+            scope: Some("Testing".into()),
+            depends: Vec::new(),
+            links: vec![TypedLink {
+                direction: LinkDirection::Outgoing,
+                target: "M-MISSING".into(),
+                link_type: LinkType::Depends,
+                description: None,
+                legacy: false,
+            }],
+            link_errors: Vec::new(),
+            has_contract: true,
+            valid: true,
+            has_module_map: true,
+            has_change_summary: true,
+            function_contracts: Vec::new(),
+            errors: Vec::new(),
+        });
+        let validation = ContractValidator::validate_links(Path::new("."), &report);
+        assert_eq!(validation.dangling_target_issues.len(), 1);
+        assert!(validation.dangling_target_issues[0].contains("M-MISSING"));
     }
 }
 // END_public_api

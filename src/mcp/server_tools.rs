@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.3.0 — Documented GRACE profile arguments for verify/review tools]
+// LAST_CHANGE: [v2.4.0 — Documented typed GraphRAG query filters]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -48,15 +48,17 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
         }),
         serde_json::json!({
             "name": "graphrag_query",
-            "description": "Query the code knowledge graph. Supports: search, get-node, get-relationships, find-path, overview",
+            "description": "Query the code knowledge graph. Supports: search, get-node, get-relationships, find-path, dependents, tracedown, overview",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "operation": { "type": "string", "description": "Operation: search | get-node | get-relationships | find-path | overview" },
+                    "operation": { "type": "string", "description": "Operation: search | get-node | get-relationships | find-path | dependents | tracedown | overview" },
                     "query": { "type": "string", "description": "Search query" },
                     "node_id": { "type": "string", "description": "Node ID" },
                     "from": { "type": "string", "description": "Source node ID" },
-                    "to": { "type": "string", "description": "Target node ID" }
+                    "to": { "type": "string", "description": "Target node ID" },
+                    "target": { "type": "string", "description": "Target artifact for dependents/tracedown" },
+                    "link_type": { "type": "string", "description": "Typed LINKS filter: implements | depends | refines | traces_to | verified_by | manages | uses" }
                 },
                 "required": ["operation"]
             }

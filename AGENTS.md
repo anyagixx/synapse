@@ -97,7 +97,9 @@ Use the file's native comment syntax: Rust/TypeScript/JavaScript `//`, Python/sh
 // PURPOSE: [one sentence — what this module does]
 // SCOPE: [what operations are included]
 // DEPENDS: [module dependencies]
-// LINKS: [knowledge graph references]
+// LINKS:
+//   → M-STORAGE (depends) — runtime dependency
+//   ← V-M-XXX (verified_by) — verification shard
 
 // START_MODULE_MAP
 // create_note — Creates and persists a new note
@@ -124,11 +126,28 @@ Rust/TypeScript example:
 // INPUTS: { title: String — note title }, { content: String — note body }
 // OUTPUTS: { Note — the created note with id assigned }
 // SIDE_EFFECTS: writes to database, emits [Core][create_note][CREATE] log
-// LINKS: M-STORAGE, V-M-CORE
+// LINKS:
+//   → M-STORAGE (uses) — note persistence
+//   ← V-M-CORE (verified_by) — core verification
 // START_create_note
 pub fn create_note(title: &str, content: &str) -> Note { ... }
 // END_create_note
 ```
+
+### Typed LINKS
+
+Prefer directional typed LINKS:
+
+```
+// LINKS:
+//   → M-STORAGE (depends) — user data persistence
+//   ← V-M-CORE (verified_by) — verification evidence
+//   → UC-001 (implements) — user-facing use case
+//   → Entity:Order (manages) — domain entity lifecycle
+```
+
+Allowed types: `implements`, `depends`, `refines`, `traces_to`, `verified_by`, `manages`, `uses`.
+Old comma-separated `LINKS: M-STORAGE, V-M-CORE` remains supported and is parsed as legacy `depends`, but new work should use the typed format.
 
 Python and SQL use the same markers with native comments:
 

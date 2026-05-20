@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRAPHRAG
-// PURPOSE: GraphRAG facade — knowledge graph navigation with search, relationships, and path finding
-// SCOPE: GraphRag struct, build from storage, search_nodes, get_node, get_relationships, find_path, overview
-// DEPENDS: M-GRAPHRAG-TYPES, M-GRAPHRAG-BUILDER
+// PURPOSE: GraphRAG facade — knowledge graph navigation with search, typed relationships, and path finding
+// SCOPE: GraphRag struct, build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview
+// DEPENDS: M-GRACE-CONTRACT, M-GRAPHRAG-TYPES, M-GRAPHRAG-BUILDER
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -10,12 +10,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.11.0 — Added typed LINKS query facade methods]
 // END_CHANGE_SUMMARY
 
 pub mod builder;
 pub mod types;
 
+use crate::grace::contract::LinkType;
 use builder::GraphBuilder;
 use std::path::Path;
 
@@ -109,6 +110,40 @@ impl GraphRag {
     }
     // END_graphrag_get_relationships
 
+    // START_CONTRACT_GraphRag::get_typed_relationships
+    // PURPOSE: Get typed LINKS relationships for a node with an optional relationship type filter
+    // INPUTS: { node_id: &str }, { link_type: Option<LinkType> }
+    // OUTPUTS: { Vec<&TypedCodeRelationship> }
+    // START_graphrag_get_typed_relationships
+    pub fn get_typed_relationships(
+        &self,
+        node_id: &str,
+        link_type: Option<LinkType>,
+    ) -> Vec<&TypedCodeRelationship> {
+        self.graph
+            .as_ref()
+            .map(|g| g.get_typed_relationships(node_id, link_type))
+            .unwrap_or_default()
+    }
+    // END_graphrag_get_typed_relationships
+
+    // START_CONTRACT_GraphRag::get_incoming_typed_relationships
+    // PURPOSE: Get typed LINKS relationships that point to a target artifact
+    // INPUTS: { target_id: &str }, { link_type: Option<LinkType> }
+    // OUTPUTS: { Vec<&TypedCodeRelationship> }
+    // START_graphrag_get_incoming_typed_relationships
+    pub fn get_incoming_typed_relationships(
+        &self,
+        target_id: &str,
+        link_type: Option<LinkType>,
+    ) -> Vec<&TypedCodeRelationship> {
+        self.graph
+            .as_ref()
+            .map(|g| g.get_incoming_typed_relationships(target_id, link_type))
+            .unwrap_or_default()
+    }
+    // END_graphrag_get_incoming_typed_relationships
+
     // START_CONTRACT_GraphRag::find_path
     // PURPOSE: Find a path between two nodes via DFS
     // INPUTS: { from: &str }, { to: &str }
@@ -121,6 +156,24 @@ impl GraphRag {
             .unwrap_or_default()
     }
     // END_graphrag_find_path
+
+    // START_CONTRACT_GraphRag::find_path_by_link_type
+    // PURPOSE: Find a path using only typed LINKS of the requested type when provided
+    // INPUTS: { from: &str }, { to: &str }, { link_type: Option<LinkType> }
+    // OUTPUTS: { Vec<String> — path of node IDs }
+    // START_graphrag_find_path_by_link_type
+    pub fn find_path_by_link_type(
+        &self,
+        from: &str,
+        to: &str,
+        link_type: Option<LinkType>,
+    ) -> Vec<String> {
+        self.graph
+            .as_ref()
+            .map(|g| g.find_path_by_link_type(from, to, link_type))
+            .unwrap_or_default()
+    }
+    // END_graphrag_find_path_by_link_type
 
     // START_CONTRACT_GraphRag::overview
     // PURPOSE: Return a graph overview with node and relationship counts

@@ -15,7 +15,7 @@
 // LAST_CHANGE: [v2.7.0 — Split inventory types and artifact IO into dedicated modules]
 // END_CHANGE_SUMMARY
 
-use crate::grace::contract::{ContractValidator, ModuleContract};
+use crate::grace::contract::{ContractValidator, ModuleContract, TypedLink};
 use crate::grace::inventory_artifacts::{
     drift_from_inventory, list_xml_stems, parse_graph_index, parse_verification_index,
     sync_inventory_artifacts,
@@ -107,7 +107,7 @@ fn code_module_from_contract(root: &Path, contract: &ModuleContract, id: &str) -
         purpose: contract.purpose.clone().unwrap_or_default(),
         scope: contract.scope.clone().unwrap_or_default(),
         depends: clean_refs(&contract.depends),
-        links: clean_refs(&contract.links),
+        links: clean_link_targets(&contract.links),
         contract_errors: contract.errors.clone(),
     }
 }
@@ -120,6 +120,15 @@ fn clean_refs(values: &[String]) -> Vec<String> {
             !value.is_empty() && value != "N/A"
         })
         .cloned()
+        .collect()
+}
+
+fn clean_link_targets(values: &[TypedLink]) -> Vec<String> {
+    values
+        .iter()
+        .map(|link| link.target.trim())
+        .filter(|value| !value.is_empty() && *value != "N/A")
+        .map(ToOwned::to_owned)
         .collect()
 }
 

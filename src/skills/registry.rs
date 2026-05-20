@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.5.0 — Removed unused empty arg sentinel]
+// LAST_CHANGE: [v2.11.0 — Documented typed GraphRAG query capability]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -257,7 +257,10 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
         "view_signatures",
         "View function and class signatures in a file",
     ),
-    ("graphrag_query", "Query the code knowledge graph"),
+    (
+        "graphrag_query",
+        "Query the code knowledge graph with typed LINKS filters",
+    ),
     ("verify_project", "Run GRACE verification checks"),
     ("review_code", "Run GRACE integrity review"),
     ("project_status", "Full project health report"),

@@ -6,6 +6,9 @@
     <COMMAND>cargo test grace::contract::tests::test_extract_contracts_sql_comment_style --lib</COMMAND>
     <COMMAND>cargo test grace::contract::tests::test_module_id_with_commas_is_invalid --lib</COMMAND>
     <COMMAND>cargo test grace::contract::tests::test_lite_profile_allows_small_helper_without_function_contracts --lib</COMMAND>
+    <COMMAND>cargo test grace::contract::tests::test_typed_links_parse_direction_type_and_description --lib</COMMAND>
+    <COMMAND>cargo test grace::contract::tests::test_invalid_typed_link_type_is_reported --lib</COMMAND>
+    <COMMAND>cargo test grace::contract::tests::test_link_validation_reports_dangling_module_target --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -13,6 +16,8 @@
     <ASSERTION>Contract parsing supports Python # and SQL -- markers without producing invalid source templates.</ASSERTION>
     <ASSERTION>MODULE_ID accepts exactly one canonical M-XXX id and reports comma-separated ids as invalid.</ASSERTION>
     <ASSERTION>Lite profile allows small helper files to rely on module-level contracts.</ASSERTION>
+    <ASSERTION>Typed LINKS preserve direction, relationship type, target, and description while old LINKS remain legacy depends links.</ASSERTION>
+    <ASSERTION>Invalid typed LINKS relationship labels and dangling module targets are reported separately from generic contract validity.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

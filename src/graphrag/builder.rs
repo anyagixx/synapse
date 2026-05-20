@@ -1,18 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRAPHRAG-BUILDER
-// PURPOSE: Graph builder — constructs CodeGraph from indexed storage with import and hierarchy relationships
-// SCOPE: GraphBuilder struct, build from storage blocks and files, extract_imports for multi-language
-// DEPENDS: M-GRAPHRAG-TYPES, M-INDEXER-STORAGE, M-INDEXER-WALKER
+// PURPOSE: Graph builder — constructs CodeGraph from indexed storage, imports, hierarchy, and typed GRACE LINKS
+// SCOPE: GraphBuilder struct, build from storage blocks/files/contracts, typed LINKS extraction, extract_imports for multi-language
+// DEPENDS: M-GRAPHRAG-TYPES, M-GRACE-CONTRACT, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS: N/A
 
 // START_MODULE_MAP
-// GraphBuilder — Builds a CodeGraph from indexed code blocks and file list
+// GraphBuilder — Builds a CodeGraph from indexed code blocks, file list, and typed LINKS
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.11.0 — Added typed LINKS extraction into GraphRAG relationships]
 // END_CHANGE_SUMMARY
 
+use crate::grace::contract::{ContractValidator, GraceProfile, TypedLink};
 use crate::graphrag::types::*;
 use crate::indexer::storage::Storage;
 use crate::indexer::walker::Walker;
@@ -54,11 +55,13 @@ impl GraphBuilder {
         let walker = Walker::new(root);
         let files = walker.walk();
 
-        // 1. Create nodes from files
+        let mut contract_links: Vec<(String, Vec<TypedLink>)> = Vec::new();
+
+        // 1. Create nodes from files and MODULE_CONTRACT ids
         for file in &files {
             let full_path = root.join(&file.path);
-            let content = std::fs::read_to_string(&full_path).ok();
-            let size = content.as_ref().map(|c| c.lines().count()).unwrap_or(0);
+            let content = std::fs::read_to_string(&full_path).unwrap_or_default();
+            let size = content.lines().count();
 
             // Extract symbols from blocks for this file
             let symbols: Vec<String> = blocks
@@ -68,7 +71,7 @@ impl GraphBuilder {
                 .collect();
 
             // Extract imports via regex
-            let imports = extract_imports(&content.unwrap_or_default(), &file.language);
+            let imports = extract_imports(&content, &file.language);
 
             let node = CodeNode {
                 id: file.path.clone(),
@@ -86,6 +89,45 @@ impl GraphBuilder {
                 exports: Vec::new(),
             };
             graph.add_node(node);
+
+            let contract =
+                ContractValidator::scan_file_with_profile(&full_path, &content, GraceProfile::Lite);
+            if let Some(module_id) = contract.module_id.clone().filter(|_| contract.has_contract) {
+                let symbols: Vec<String> = contract
+                    .function_contracts
+                    .iter()
+                    .map(|function| function.name.clone())
+                    .collect();
+                graph.add_node(CodeNode {
+                    id: module_id.clone(),
+                    name: module_id.clone(),
+                    kind: "module".into(),
+                    path: file.path.clone(),
+                    language: file.language.clone(),
+                    description: contract.purpose.clone(),
+                    symbols: symbols.clone(),
+                    size_lines: size,
+                    imports: contract.depends.clone(),
+                    exports: symbols.clone(),
+                });
+                contract_links.push((module_id.clone(), contract.typed_links()));
+                for function in &contract.function_contracts {
+                    let function_id = format!("{}::{}", module_id, function.name);
+                    graph.add_node(CodeNode {
+                        id: function_id.clone(),
+                        name: function.name.clone(),
+                        kind: "function_contract".into(),
+                        path: file.path.clone(),
+                        language: file.language.clone(),
+                        description: function.purpose.clone(),
+                        symbols: Vec::new(),
+                        size_lines: 0,
+                        imports: Vec::new(),
+                        exports: Vec::new(),
+                    });
+                    contract_links.push((function_id, function.typed_links()));
+                }
+            }
         }
 
         // 2. Create relationships from imports
@@ -160,9 +202,61 @@ impl GraphBuilder {
             }
         }
 
+        // 4. Create typed semantic relationships from GRACE LINKS.
+        for (source_id, links) in contract_links {
+            for link in links {
+                ensure_artifact_node(&mut graph, &link.target);
+                let relation_type = RelationType::from_link_type(&link.link_type);
+                graph.add_typed_relationship(TypedCodeRelationship {
+                    source_id: source_id.clone(),
+                    target_id: link.target,
+                    link_type: link.link_type,
+                    direction: link.direction,
+                    description: link.description,
+                    weight: relation_type.weight(),
+                });
+            }
+        }
+
         Ok(graph)
     }
     // END_gb_build
+}
+
+fn ensure_artifact_node(graph: &mut CodeGraph, target: &str) {
+    if graph.get_node(target).is_some() || target == "N/A" {
+        return;
+    }
+    graph.add_node(CodeNode {
+        id: target.to_string(),
+        name: target.to_string(),
+        kind: artifact_kind(target).into(),
+        path: target.to_string(),
+        language: "artifact".into(),
+        description: None,
+        symbols: Vec::new(),
+        size_lines: 0,
+        imports: Vec::new(),
+        exports: Vec::new(),
+    });
+}
+
+fn artifact_kind(target: &str) -> &'static str {
+    if target.starts_with("M-") {
+        "module_ref"
+    } else if target.starts_with("V-") {
+        "verification"
+    } else if target.starts_with("UC-") {
+        "use_case"
+    } else if target.starts_with("REQ-") {
+        "requirement"
+    } else if target.starts_with("Entity:") {
+        "entity"
+    } else if target.ends_with(".xml") || target.ends_with(".md") || target.contains('/') {
+        "artifact"
+    } else {
+        "external"
+    }
 }
 
 fn extract_imports(content: &str, language: &str) -> Vec<String> {
@@ -264,5 +358,65 @@ fn extract_imports(content: &str, language: &str) -> Vec<String> {
         _ => {}
     }
     imports
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::grace::contract::LinkType;
+
+    #[test]
+    fn test_build_extracts_typed_links_from_contracts() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(
+            src.join("order.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-ORDER\n",
+                "// PURPOSE: Order module\n",
+                "// SCOPE: Test typed LINKS graph extraction\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "//   → UC-001 (implements) — order use case\n",
+                "//   → M-STORAGE (depends) — storage module\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// place_order — places order\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 — Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_place_order\n",
+                "// PURPOSE: Place order\n",
+                "// LINKS:\n",
+                "//   → REQ-001 (traces_to) — requirement\n",
+                "// START_place_order\n",
+                "pub fn place_order() {}\n",
+                "// END_place_order\n",
+            ),
+        )
+        .expect("write source");
+
+        let graph = GraphBuilder::build(dir.path()).expect("build graph");
+        assert!(graph.get_node("M-ORDER").is_some());
+        assert!(graph.get_node("UC-001").is_some());
+        assert!(graph.get_node("M-ORDER::place_order").is_some());
+        assert_eq!(
+            graph
+                .get_typed_relationships("M-ORDER", Some(LinkType::Implements))
+                .len(),
+            1
+        );
+        assert_eq!(
+            graph
+                .get_typed_relationships("M-ORDER::place_order", Some(LinkType::TracesTo))
+                .len(),
+            1
+        );
+    }
 }
 // END_public_api

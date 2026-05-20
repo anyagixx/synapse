@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, profile-aware contracts, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, review_with_profile, scoped_gate, wave_audit, full_integrity
+// PURPOSE: GRACE integrity review — checks semantic markup, profile-aware contracts, typed LINKS, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS review, review_with_profile, scoped_gate, wave_audit, full_integrity
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Added profile-aware contract review gates]
+// LAST_CHANGE: [v2.11.0 — Added typed LINKS review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -137,6 +137,29 @@ impl Reviewer {
                 .filter(|c| !c.valid && c.has_contract)
                 .map(|c| format!("Invalid contract: {}", c.file_path))
                 .collect(),
+        });
+
+        let link_report = ContractValidator::validate_links(root, &report);
+        let mut link_issues = Vec::new();
+        link_issues.extend(link_report.invalid_type_issues.iter().cloned());
+        link_issues.extend(link_report.missing_target_issues.iter().cloned());
+        link_issues.extend(link_report.dangling_target_issues.iter().cloned());
+        sections.push(ReviewSection {
+            name: "typed-links".into(),
+            passed: link_issues.is_empty(),
+            details: if link_issues.is_empty() {
+                format!(
+                    "Typed LINKS valid; {} legacy entries should be migrated",
+                    link_report.legacy_format_warnings.len()
+                )
+            } else {
+                format!(
+                    "{} typed LINKS issues; {} legacy entries",
+                    link_issues.len(),
+                    link_report.legacy_format_warnings.len()
+                )
+            },
+            issues: link_issues,
         });
 
         let passed = sections.iter().all(|s| s.passed);

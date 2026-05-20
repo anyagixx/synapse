@@ -174,9 +174,12 @@
     <REL source="M-GRACE-VERIFY-PHASE" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY-PHASE" target="M-GRACE-VERIFY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY-PHASE" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-GRAPHRAG" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRAPHRAG" target="M-GRAPHRAG-TYPES" type="DEPENDS" />
     <REL source="M-GRAPHRAG" target="M-GRAPHRAG-BUILDER" type="DEPENDS" />
+    <REL source="M-GRAPHRAG-TYPES" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRAPHRAG-BUILDER" target="M-GRAPHRAG-TYPES" type="DEPENDS" />
+    <REL source="M-GRAPHRAG-BUILDER" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRAPHRAG-BUILDER" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-GRAPHRAG-BUILDER" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-HOOK-CLAUDE" target="M-PROXY" type="DEPENDS" />
@@ -212,6 +215,7 @@
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-UTILS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-GRAPHRAG" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-MCP-LSP" type="DEPENDS" />

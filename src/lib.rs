@@ -3,7 +3,7 @@
 // PURPOSE: Crate root — declares all public modules, version, and crate-level lints
 // SCOPE: Module declarations, VERSION/NAME constants, clippy allows
 // DEPENDS: all sub-modules
-// LINKS: Cargo.toml, M-ALL
+// LINKS: Cargo.toml
 
 #![allow(clippy::if_same_then_else, clippy::new_without_default)]
 
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.6.0 — Added public API contract for crate exports]
+// LAST_CHANGE: [v2.11.0 — Removed non-canonical M-ALL pseudo link]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_public_api

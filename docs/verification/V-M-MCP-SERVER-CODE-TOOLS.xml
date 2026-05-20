@@ -7,6 +7,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>GraphRAG MCP calls return JSON-RPC error responses when the shared graph lock is poisoned.</ASSERTION>
+    <ASSERTION>graphrag_query accepts link_type filters and supports dependents/tracedown typed LINKS operations.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

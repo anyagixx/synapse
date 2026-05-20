@@ -1,13 +1,13 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
-// PURPOSE: MCP handlers for code search, GraphRAG queries, signature views, and guarded LSP lookups
-// SCOPE: semantic_search, graphrag_query, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
-// DEPENDS: M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
+// PURPOSE: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
+// SCOPE: semantic_search, graphrag_query with type filters, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
+// DEPENDS: M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
 // handle_search — Runs indexed semantic search and formats MCP text content
-// handle_graphrag — Runs graph overview/search/node/path operations
+// handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship operations
 // read_graphrag — Reads GraphRAG state without panicking on poisoned locks
 // handle_view_signatures — Returns indexed signatures for a file
 // handle_lsp_hover — Returns LSP hover contents
@@ -15,10 +15,11 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Use Unicode-safe search result previews]
+// LAST_CHANGE: [v3.1.0 — Added typed LINKS filters to graphrag_query]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result};
+use crate::grace::contract::LinkType;
 use crate::graphrag::GraphRag;
 use crate::indexer::Indexer;
 use std::sync::{RwLock, RwLockReadGuard};
@@ -75,7 +76,7 @@ pub(crate) async fn handle_search(
 // END_handle_search
 
 // START_CONTRACT_handle_graphrag
-// PURPOSE: Execute GraphRAG overview, search, node lookup, relationship lookup, or path query
+// PURPOSE: Execute GraphRAG overview, search, node lookup, relationship lookup, path, dependents, or tracedown query
 // INPUTS: { graphrag: &RwLock<Option<GraphRag>> }, { id: Option<serde_json::Value> }, { args: &serde_json::Value }
 // OUTPUTS: { serde_json::Value }
 // START_handle_graphrag
@@ -100,8 +101,8 @@ pub(crate) fn handle_graphrag(
                 id,
                 serde_json::json!({
                     "content": [{"type": "text", "text": format!(
-                        "Graph Overview:\n  Nodes: {}\n  Relationships: {}\n  Types:\n    {}",
-                        ov.total_nodes, ov.total_relationships, ov.node_types.join("\n    ")
+                        "Graph Overview:\n  Nodes: {}\n  Relationships: {}\n  Typed LINKS: {}\n  Types:\n    {}",
+                        ov.total_nodes, ov.total_relationships, ov.typed_relationships, ov.node_types.join("\n    ")
                     )}],
                     "isError": false
                 }),
@@ -180,6 +181,28 @@ pub(crate) fn handle_graphrag(
             if node_id.is_empty() {
                 return error(id, -32602, "Missing 'node_id' parameter");
             }
+            let link_type = match parse_link_type_arg(args) {
+                Ok(link_type) => link_type,
+                Err(message) => return error(id, -32602, message),
+            };
+            if link_type.is_some() {
+                let rels = graphrag.get_typed_relationships(node_id, link_type);
+                let text = if rels.is_empty() {
+                    format!("No typed relationships for {}", node_id)
+                } else {
+                    rels.iter()
+                        .map(|r| format_typed_relationship(r))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                };
+                return result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                );
+            }
             let rels = graphrag.get_relationships(node_id);
             let text = if rels.is_empty() {
                 format!("No relationships for {}", node_id)
@@ -211,11 +234,79 @@ pub(crate) fn handle_graphrag(
             if from.is_empty() || to.is_empty() {
                 return error(id, -32602, "Missing 'from' or 'to' parameter");
             }
-            let path = graphrag.find_path(from, to);
+            let link_type = match parse_link_type_arg(args) {
+                Ok(link_type) => link_type,
+                Err(message) => return error(id, -32602, message),
+            };
+            let path = if link_type.is_some() {
+                graphrag.find_path_by_link_type(from, to, link_type)
+            } else {
+                graphrag.find_path(from, to)
+            };
             let text = if path.is_empty() {
                 format!("No path between '{}' and '{}'", from, to)
             } else {
                 path.join(" -> ")
+            };
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        "dependents" => {
+            let target = args["target"]
+                .as_str()
+                .or_else(|| args["node_id"].as_str())
+                .unwrap_or("");
+            if target.is_empty() {
+                return error(id, -32602, "Missing 'target' or 'node_id' parameter");
+            }
+            let link_type = match parse_link_type_arg(args) {
+                Ok(link_type) => link_type.or(Some(LinkType::Depends)),
+                Err(message) => return error(id, -32602, message),
+            };
+            let rels = graphrag.get_incoming_typed_relationships(target, link_type);
+            let text = if rels.is_empty() {
+                format!("No dependents for {}", target)
+            } else {
+                rels.iter()
+                    .map(|r| format_typed_relationship(r))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            };
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        "tracedown" => {
+            let target = args["target"]
+                .as_str()
+                .or_else(|| args["node_id"].as_str())
+                .unwrap_or("");
+            if target.is_empty() {
+                return error(id, -32602, "Missing 'target' or 'node_id' parameter");
+            }
+            let rels = graphrag.get_incoming_typed_relationships(target, None);
+            let text = if rels.is_empty() {
+                format!("No typed LINKS trace down from {}", target)
+            } else {
+                rels.iter()
+                    .filter(|rel| {
+                        matches!(
+                            rel.link_type,
+                            LinkType::Implements | LinkType::TracesTo | LinkType::VerifiedBy
+                        )
+                    })
+                    .map(|r| format_typed_relationship(r))
+                    .collect::<Vec<_>>()
+                    .join("\n")
             };
             result(
                 id,
@@ -247,6 +338,38 @@ fn read_graphrag(
         .map_err(|_| "GraphRAG lock unavailable; restart MCP server".to_string())
 }
 // END_read_graphrag
+
+fn parse_link_type_arg(args: &serde_json::Value) -> Result<Option<LinkType>, String> {
+    let Some(raw) = args["link_type"]
+        .as_str()
+        .or_else(|| args["type"].as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    else {
+        return Ok(None);
+    };
+    LinkType::parse(raw)
+        .map(Some)
+        .ok_or_else(|| format!("Invalid link_type '{}'", raw))
+}
+
+fn format_typed_relationship(rel: &crate::graphrag::types::TypedCodeRelationship) -> String {
+    let direction = rel.direction.label();
+    let description = rel
+        .description
+        .as_ref()
+        .map(|value| format!(" — {}", value))
+        .unwrap_or_default();
+    format!(
+        "{} --[{}:{}]--> {} (w={}){}",
+        rel.source_id,
+        rel.link_type.label(),
+        direction,
+        rel.target_id,
+        rel.weight,
+        description
+    )
+}
 
 // START_CONTRACT_handle_view_signatures
 // PURPOSE: Execute view_signatures and format signature lines for MCP response content

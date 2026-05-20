@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-REVIEW" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-REVIEW</NAME>
-  <PURPOSE>GRACE integrity review — checks semantic markup, profile-aware contracts, canonical shards, naming, secrets</PURPOSE>
-  <SCOPE>Reviewer struct, ReviewReport, ReviewSection, review, review_with_profile, scoped/wave/full integrity gates</SCOPE>
+  <PURPOSE>GRACE integrity review — checks semantic markup, profile-aware contracts, typed LINKS, canonical shards, naming, secrets</PURPOSE>
+  <SCOPE>Reviewer struct, ReviewReport, ReviewSection, typed LINKS review, review_with_profile, scoped/wave/full integrity gates</SCOPE>
   <FILES>
     <FILE>src/grace/review.rs</FILE>
   </FILES>

@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-GRAPHRAG-BUILDER" module="M-GRAPHRAG-BUILDER" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test graphrag::builder::tests::test_build_extracts_typed_links_from_contracts --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>GraphBuilder extracts module-level and function-level typed LINKS from MODULE_CONTRACT source files into graph relationships.</ASSERTION>
+  </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

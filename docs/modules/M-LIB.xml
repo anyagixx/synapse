@@ -7,6 +7,6 @@
     <FILE>src/lib.rs</FILE>
   </FILES>
   <DEPENDS>all sub-modules</DEPENDS>
-  <LINKS>Cargo.toml,M-ALL</LINKS>
+  <LINKS>Cargo.toml</LINKS>
   <VERIFICATION_REF>V-M-LIB</VERIFICATION_REF>
 </MODULE>

@@ -111,7 +111,9 @@ syn review --profile balanced
 syn doctor --deps
 ```
 
-`MODULE_ID` должен быть одним значением вроде `M-BOT`; связанные модули перечисляются в `DEPENDS` или `LINKS`.
+`MODULE_ID` должен быть одним значением вроде `M-BOT`; связанные модули перечисляются в `DEPENDS` или typed `LINKS`.
+Новый формат `LINKS` поддерживает направление и тип связи, например `→ M-STORAGE (depends) — persistence` или `← V-M-BOT (verified_by) — tests`.
+Старый `LINKS: M-STORAGE, V-M-BOT` остаётся совместимым и трактуется как legacy `depends`.
 
 ---
 
@@ -140,7 +142,7 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 |-----------|-----------|
 | `semantic_search` | BM25 + векторный поиск (14 языков) |
 | `view_signatures` | Сигнатуры функций и классов |
-| `graphrag_query` | Граф знаний — узлы, связи, пути |
+| `graphrag_query` | Граф знаний — узлы, typed LINKS, связи, пути |
 | `verify_project` | 3 уровня проверки (sharded model) |
 | `review_code` | 3 режима ревью (scoped/wave-audit/full) |
 | `project_status` | Полный health-отчёт |

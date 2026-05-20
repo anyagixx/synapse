@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// SCOPE: Verifier struct, typed LINKS validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.10.0 — Added profile-aware verification for lightweight projects]
+// LAST_CHANGE: [v2.11.0 — Added typed LINKS validation checks]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -217,6 +217,59 @@ impl Verifier {
                     format!(
                         "No function contracts found; {} profile allows module-level contracts for small/non-critical helpers",
                         profile.as_str()
+                    )
+                },
+            });
+
+            let link_report = ContractValidator::validate_links(root, &report);
+            checks.push(CheckResult {
+                name: "links-valid-types".into(),
+                passed: link_report.invalid_type_issues.is_empty(),
+                details: if link_report.invalid_type_issues.is_empty() {
+                    "All typed LINKS use allowed relationship types".into()
+                } else {
+                    format!(
+                        "{} typed LINKS have invalid relationship types: {:?}",
+                        link_report.invalid_type_issues.len(),
+                        link_report.invalid_type_issues
+                    )
+                },
+            });
+            checks.push(CheckResult {
+                name: "links-targets-exist".into(),
+                passed: link_report.missing_target_issues.is_empty(),
+                details: if link_report.missing_target_issues.is_empty() {
+                    "All LINKS declare non-empty targets".into()
+                } else {
+                    format!(
+                        "{} LINKS have empty targets: {:?}",
+                        link_report.missing_target_issues.len(),
+                        link_report.missing_target_issues
+                    )
+                },
+            });
+            checks.push(CheckResult {
+                name: "links-no-dangling".into(),
+                passed: link_report.dangling_target_issues.is_empty(),
+                details: if link_report.dangling_target_issues.is_empty() {
+                    "No typed LINKS point to missing known artifacts".into()
+                } else {
+                    format!(
+                        "{} dangling LINKS targets: {:?}",
+                        link_report.dangling_target_issues.len(),
+                        link_report.dangling_target_issues
+                    )
+                },
+            });
+            checks.push(CheckResult {
+                name: "links-format".into(),
+                passed: true,
+                details: if link_report.legacy_format_warnings.is_empty() {
+                    "All LINKS use typed directional format".into()
+                } else {
+                    format!(
+                        "{} legacy LINKS entries parsed as depends; migrate to directional typed LINKS",
+                        link_report.legacy_format_warnings.len()
                     )
                 },
             });

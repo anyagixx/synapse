@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, profile-aware verify/review check list, supported platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, typed LINKS/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Documented profile-aware verify/review and doctor dependency capabilities]
+// LAST_CHANGE: [v2.11.0 — Documented typed LINKS verification checks]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -128,7 +128,10 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "view_signatures",
         "View function and class signatures in a file",
     ),
-    ("graphrag_query", "Query the code knowledge graph"),
+    (
+        "graphrag_query",
+        "Query the code knowledge graph with typed LINKS filters",
+    ),
     (
         "verify_project",
         "Run profile-aware GRACE verification checks",
@@ -216,6 +219,10 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "module-map",
     "change-summary",
     "function-contracts",
+    "links-valid-types",
+    "links-targets-exist",
+    "links-no-dangling",
+    "links-format",
     "semantic-blocks",
     "unique-block-names",
     "500-token-rule",

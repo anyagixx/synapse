@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-GRAPHRAG-TYPES" module="M-GRAPHRAG-TYPES" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test graphrag::types::tests::test_typed_relationship_filter_and_path --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>TypedCodeRelationship supports link_type filtering, incoming relationship lookup, and type-filtered path traversal.</ASSERTION>
+  </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>
