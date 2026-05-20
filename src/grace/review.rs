@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.14.0 — Added anchor syntax consistency review section]
+// LAST_CHANGE: [v2.15.0 — Added RequirementsAnalysis review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -225,6 +225,23 @@ impl Reviewer {
                 )
             },
             issues: belief_report.issues,
+        });
+
+        let requirements = crate::grace::requirements::validate_requirements(root)?;
+        sections.push(ReviewSection {
+            name: "requirements-analysis".into(),
+            passed: requirements.valid,
+            details: format!(
+                "goals={} entities={} actors={} use_cases={} nfrs={} constraints={} glossary_terms={}",
+                requirements.goals,
+                requirements.entities.len(),
+                requirements.actors,
+                requirements.use_cases.len(),
+                requirements.non_functional_requirements,
+                requirements.constraints,
+                requirements.glossary_terms.len()
+            ),
+            issues: requirements.errors,
         });
 
         let passed = sections.iter().all(|s| s.passed);

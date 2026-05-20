@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, log analysis, belief extraction, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
-// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-LOG, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
+// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, log analysis, belief extraction, compression, tracking, and skills
+// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
@@ -11,6 +11,7 @@
 // handle_status — Returns project status JSON
 // handle_analyze_logs — Runs structured LOG trajectory/anomaly/compare analysis
 // handle_extract_belief_state — Stores observable AI belief state scaffold for a module
+// handle_generate_requirements — Generates and validates docs/requirements.xml with AAG notation
 // handle_gain — Returns token savings stats
 // handle_compress — Compresses input text
 // handle_refresh — Reports or fixes MyGRACE drift
@@ -21,7 +22,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added extract_belief_state MCP handler]
+// LAST_CHANGE: [v2.15.0 — Added generate_requirements MCP handler]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
@@ -258,6 +259,69 @@ pub(crate) async fn handle_extract_belief_state(
     }
 }
 // END_handle_extract_belief_state
+
+// START_CONTRACT_handle_generate_requirements
+// PURPOSE: Generate and validate a complete RequirementsAnalysis artifact from project description inputs
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: writes docs/requirements.xml
+// START_handle_generate_requirements
+pub(crate) async fn handle_generate_requirements(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let project_description = match args["project_description"].as_str() {
+        Some(value) if !value.trim().is_empty() => value.trim(),
+        _ => return error(id, -32602, "Missing 'project_description' parameter"),
+    };
+    let domain = args["domain"].as_str().unwrap_or("application").trim();
+    let detail_level = args["detail_level"].as_str().unwrap_or("standard").trim();
+    if !matches!(detail_level, "quick" | "standard" | "detailed") {
+        return error(
+            id,
+            -32602,
+            "Invalid detail_level. Use quick | standard | detailed.",
+        );
+    }
+    let root = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+
+    match crate::grace::requirements::generate_requirements_file(
+        &root,
+        project_description,
+        domain,
+        detail_level,
+    ) {
+        Ok(report) => {
+            let text = format!(
+                "<RequirementsGeneration valid=\"{}\">\n  <Path>{}</Path>\n  <Goals>{}</Goals>\n  <Entities>{}</Entities>\n  <Actors>{}</Actors>\n  <UseCases>{}</UseCases>\n  <NonFunctionalRequirements>{}</NonFunctionalRequirements>\n  <Constraints>{}</Constraints>\n  <GlossaryTerms>{}</GlossaryTerms>\n</RequirementsGeneration>",
+                report.valid,
+                report.path,
+                report.goals,
+                report.entities.len(),
+                report.actors,
+                report.use_cases.len(),
+                report.non_functional_requirements,
+                report.constraints,
+                report.glossary_terms.len(),
+            );
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        Err(e) => error(id, -32603, format!("Requirements generation error: {}", e)),
+    }
+}
+// END_handle_generate_requirements
 
 // START_CONTRACT_handle_gain
 // PURPOSE: Execute token_savings and return tracking statistics
@@ -610,6 +674,31 @@ mod tests {
         assert!(dir.path().join("docs/belief-states/M-SAMPLE.xml").exists());
     }
     // END_test_handle_extract_belief_state_writes_artifact
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_generate_requirements_writes_valid_artifact
+    // PURPOSE: Verify generate_requirements writes a valid RequirementsAnalysis artifact
+    // START_test_handle_generate_requirements_writes_valid_artifact
+    async fn test_handle_generate_requirements_writes_valid_artifact() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let response = handle_generate_requirements(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "project_description": "Developer automation platform",
+                "domain": "developer tooling",
+                "detail_level": "standard",
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("<RequirementsGeneration valid=\"true\""));
+        assert!(dir.path().join("docs/requirements.xml").exists());
+    }
+    // END_test_handle_generate_requirements_writes_valid_artifact
 }
 
 // END_public_api

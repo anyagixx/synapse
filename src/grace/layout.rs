@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
 // PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state storage, and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes and shard dirs
-// DEPENDS: N/A
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes, requirements template, and shard dirs
+// DEPENDS: M-GRACE-REQUIREMENTS
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added docs/belief-states layout support]
+// LAST_CHANGE: [v2.15.0 — Added full RequirementsAnalysis template generation]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -222,17 +222,13 @@ impl DocsLayout {
 "#,
         )?;
 
-        self.write_if_missing(
-            &self.docs_dir().join("requirements.xml"),
-            r#"<?xml version="1.0" encoding="UTF-8"?>
-<REQUIREMENTS>
-  <META><PROJECT>my-project</PROJECT><DESCRIPTION>Describe what this project does</DESCRIPTION><LANGUAGE>rust</LANGUAGE></META>
-  <NonGoals></NonGoals>
-  <Risks></Risks>
-  <OpenQuestions></OpenQuestions>
-</REQUIREMENTS>
-"#,
-        )?;
+        let requirements = crate::grace::requirements::requirements_template(
+            "my-project",
+            "Describe what this project does",
+            "application",
+            "standard",
+        );
+        self.write_if_missing(&self.docs_dir().join("requirements.xml"), &requirements)?;
         self.write_if_missing(
             &self.docs_dir().join("technology.xml"),
             r#"<?xml version="1.0" encoding="UTF-8"?>

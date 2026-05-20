@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, requirements/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.14.0 — Added anchor-syntax-consistent verify check]
+// LAST_CHANGE: [v2.15.0 — Added generate_requirements MCP capability and requirements checks]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -50,7 +50,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("serve", "Start web dashboard"),
 ];
 
-pub const CORE_MCP_TOOL_COUNT: usize = 14;
+pub const CORE_MCP_TOOL_COUNT: usize = 15;
 pub const GRACE_SKILL_TOOL_COUNT: usize = 15;
 pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
 
@@ -146,6 +146,10 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "extract_belief_state",
         "Create and validate an observable AI belief state artifact",
     ),
+    (
+        "generate_requirements",
+        "Generate and validate a complete RequirementsAnalysis artifact",
+    ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),
     (
@@ -238,6 +242,10 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "trace-assertions",
     "structured-log-format",
     "belief-state-exists",
+    "requirements-entities-defined",
+    "requirements-use-cases",
+    "requirements-glossary",
+    "requirements-no-empty-sections",
     "sharded-artifacts",
     "artifact-ref-integrity",
     "canonical-mygrace-drift",

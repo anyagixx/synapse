@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state reporting, and anchor normalization export
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.14.0 — Registered XML-like anchor normalization module]
+// LAST_CHANGE: [v2.15.0 — Registered RequirementsAnalysis module]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
@@ -28,6 +28,7 @@ pub mod inventory_verification;
 pub mod layout;
 pub mod log;
 pub mod refresh;
+pub mod requirements;
 pub mod review;
 pub mod semantic;
 pub mod status;
@@ -134,6 +135,16 @@ impl GraceEngine {
         belief_state::scan_project_belief_states(root)
     }
     // END_grace_engine_belief_state_report
+
+    // START_CONTRACT_GraceEngine::requirements_report
+    // PURPOSE: Validate RequirementsAnalysis artifact and return completeness report
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<RequirementsReport> }
+    // START_grace_engine_requirements_report
+    pub fn requirements_report(root: &Path) -> anyhow::Result<requirements::RequirementsReport> {
+        requirements::validate_requirements(root)
+    }
+    // END_grace_engine_requirements_report
 
     // START_CONTRACT_GraceEngine::refresh_project
     // PURPOSE: Sync knowledge graph and verification plan with code

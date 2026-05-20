@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
 // PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
-// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, belief state, and project workflows
-// DEPENDS: M-CONFIG, M-GRACE-LAYOUT, M-SKILLS-REGISTRY, M-SKILLS-TYPES
+// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, belief state, and project workflows
+// DEPENDS: M-CONFIG, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added belief state requirement to grace_execute guidance]
+// LAST_CHANGE: [v2.15.0 — Added RequirementsAnalysis awareness to grace_plan guidance]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -85,6 +85,8 @@ impl SkillEngine {
             "grace_plan" => {
                 let refresh = Refresher::refresh(&self.context.root).ok();
                 let status = StatusCollector::collect(&self.context.root).await.ok();
+                let requirements =
+                    crate::grace::requirements::validate_requirements(&self.context.root).ok();
                 let active_phase = read_active_phase(&layout).unwrap_or_else(|| "Phase-0".into());
                 let drift_hint = refresh
                     .as_ref()
@@ -94,11 +96,23 @@ impl SkillEngine {
                     .as_ref()
                     .and_then(|s| s.next_actions.first().cloned())
                     .unwrap_or_else(|| "define modules and implementation order".into());
+                let requirements_hint = requirements
+                    .as_ref()
+                    .map(|r| {
+                        format!(
+                            "entities={}, use_cases={}, valid={}",
+                            r.entities.len(),
+                            r.use_cases.len(),
+                            r.valid
+                        )
+                    })
+                    .unwrap_or_else(|| "no requirements report available".into());
                 format!(
-                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. confirm module boundaries in docs/modules/\n2. confirm phase order in docs/phases/\n3. confirm verification coverage in docs/verification/\n4. implement only next bounded module step",
+                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. confirm module boundaries in docs/modules/\n3. confirm phase order in docs/phases/\n4. confirm verification coverage in docs/verification/\n5. implement only next bounded module step",
                     active_phase,
                     string_arg(&request.arguments, "goal", "Define architecture and delivery plan"),
                     string_arg(&request.arguments, "constraints", "none provided"),
+                    requirements_hint,
                     drift_hint,
                     next_hint,
                 )

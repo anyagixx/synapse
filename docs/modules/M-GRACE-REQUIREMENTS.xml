@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-REQUIREMENTS" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-REQUIREMENTS</NAME>
+  <PURPOSE>RequirementsAnalysis support — parses, validates, and generates complete GRACE Stage 1 requirements artifacts with AAG use cases</PURPOSE>
+  <SCOPE>RequirementsReport, RequirementsEntity, RequirementsUseCase, requirements_template, validate_requirements, parse_requirements_content, and generate_requirements_file</SCOPE>
+  <FILES>
+    <FILE>src/grace/requirements.rs</FILE>
+    <FILE>docs/requirements.xml</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>docs/requirements.xml,docs/verification/V-M-GRACE-REQUIREMENTS.xml</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-REQUIREMENTS</VERIFICATION_REF>
+</MODULE>

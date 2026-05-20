@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, belief states, semantic, verification, drift, token economy, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, belief-state coverage, print_report, active-phase display helpers
-// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
+// PURPOSE: Project health collector — aggregates contracts, requirements, belief states, semantic, verification, drift, token economy, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements and belief-state coverage, print_report, active-phase display helpers
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-REQUIREMENTS, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
 // START_MODULE_MAP
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added observable belief state coverage to status]
+// LAST_CHANGE: [v2.15.0 — Added RequirementsAnalysis coverage to status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -21,6 +21,7 @@ use crate::grace::belief_state::BeliefStateReport;
 use crate::grace::contract::{ContractReport, ContractValidator};
 use crate::grace::layout::DocsLayout;
 use crate::grace::refresh::Refresher;
+use crate::grace::requirements::RequirementsReport;
 use crate::grace::semantic::{SemanticExtractor, SemanticReport};
 use crate::grace::verify::Verifier;
 use crate::tracking::Tracker;
@@ -34,6 +35,7 @@ pub struct StatusReport {
     pub health: String,
     pub mygrace_issues: usize,
     pub contracts: ContractReport,
+    pub requirements: RequirementsReport,
     pub belief_state: BeliefStateReport,
     pub semantic: SemanticReport,
     pub verification: Vec<super::verify::VerificationResult>,
@@ -91,6 +93,7 @@ impl StatusCollector {
     // START_sc_collect
     pub async fn collect(root: &Path) -> anyhow::Result<StatusReport> {
         let contracts = ContractValidator::validate_project(root)?;
+        let requirements = crate::grace::requirements::validate_requirements(root)?;
         let belief_state = crate::grace::belief_state::scan_project_belief_states(root)?;
         let semantic = SemanticExtractor::scan_project(root)?;
         let verification = Verifier::verify_all(root).await?;
@@ -111,6 +114,12 @@ impl StatusCollector {
         }
         if contracts.invalid > 0 {
             next_actions.push(format!("Fix {} invalid contracts", contracts.invalid));
+        }
+        if !requirements.valid {
+            next_actions.push(format!(
+                "Complete RequirementsAnalysis: {} issues",
+                requirements.errors.len()
+            ));
         }
         if belief_state.invalid_states > 0 {
             next_actions.push(format!(
@@ -227,6 +236,7 @@ impl StatusCollector {
                 project_path: root.display().to_string(),
             },
             contracts,
+            requirements,
             belief_state,
             semantic,
             verification,
@@ -301,6 +311,17 @@ impl StatusCollector {
         println!("║  With MODULE_MAP:       {:<12}║", with_map);
         println!("║  With CHANGE_SUMMARY:   {:<12}║", with_cs);
         println!("║  Function contracts:   {:<12}║", total_fn);
+        println!("╠══════════════════════════════════════╣");
+        println!("║ REQUIREMENTS                         ║");
+        println!(
+            "║  Entities:       {:<20}║",
+            report.requirements.entities.len()
+        );
+        println!(
+            "║  Use cases:      {:<20}║",
+            report.requirements.use_cases.len()
+        );
+        println!("║  Valid:          {:<20}║", report.requirements.valid);
         println!("╠══════════════════════════════════════╣");
         println!("║ BELIEF STATE                         ║");
         println!(

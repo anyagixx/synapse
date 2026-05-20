@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Documented extract_belief_state MCP capability]
+// LAST_CHANGE: [v2.15.0 — Documented generate_requirements MCP capability]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -271,6 +271,10 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     (
         "extract_belief_state",
         "Create and validate an observable AI belief state artifact",
+    ),
+    (
+        "generate_requirements",
+        "Generate and validate a complete RequirementsAnalysis artifact",
     ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),

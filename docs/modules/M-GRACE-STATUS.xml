@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-STATUS" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-STATUS</NAME>
-  <PURPOSE>Project health collector — aggregates contracts, belief states, semantic, verification, drift, token economy, phase state, and system info</PURPOSE>
-  <SCOPE>StatusCollector, StatusReport, TokenEconomy, SystemInfo, belief-state coverage, print_report, and active-phase display that reports no active phase when all indexed phase shards are done</SCOPE>
+  <PURPOSE>Project health collector — aggregates contracts, requirements, belief states, semantic, verification, drift, token economy, phase state, and system info</PURPOSE>
+  <SCOPE>StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements and belief-state coverage, print_report, and active-phase display that reports no active phase when all indexed phase shards are done</SCOPE>
   <FILES>
     <FILE>src/grace/status.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-BELIEF-STATE,M-GRACE-CONTRACT,M-GRACE-SEMANTIC,M-GRACE-VERIFY,M-GRACE-REFRESH,M-TRACKING,M-CONFIG</DEPENDS>
+  <DEPENDS>M-GRACE-BELIEF-STATE,M-GRACE-CONTRACT,M-GRACE-REQUIREMENTS,M-GRACE-SEMANTIC,M-GRACE-VERIFY,M-GRACE-REFRESH,M-TRACKING,M-CONFIG</DEPENDS>
   <LINKS>docs/</LINKS>
   <VERIFICATION_REF>V-M-GRACE-STATUS</VERIFICATION_REF>
 </MODULE>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs and extract_belief_state, guarded index and GraphRAG preload
+// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, and generate_requirements, guarded index and GraphRAG preload
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
 // LINKS: N/A
 
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.4.0 — Routed extract_belief_state MCP tool]
+// LAST_CHANGE: [v3.5.0 — Routed generate_requirements MCP tool]
 // END_CHANGE_SUMMARY
 
 use super::{server_code_tools, server_grace_tools, server_response, server_tools};
@@ -249,6 +249,9 @@ impl SynapseHandler {
                     "analyze_logs" => server_grace_tools::handle_analyze_logs(id, args).await,
                     "extract_belief_state" => {
                         server_grace_tools::handle_extract_belief_state(id, args).await
+                    }
+                    "generate_requirements" => {
+                        server_grace_tools::handle_generate_requirements(id, args).await
                     }
                     "token_savings" => server_grace_tools::handle_gain(id, args).await,
                     "compress_text" => server_grace_tools::handle_compress(id, args).await,

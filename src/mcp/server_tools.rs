@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles
+// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles and requirements generation
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.6.0 — Added extract_belief_state MCP tool schema]
+// LAST_CHANGE: [v2.15.0 — Added generate_requirements MCP tool schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -113,6 +113,19 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                     "context": { "type": "string", "description": "Execution context read before generating code" }
                 },
                 "required": ["module_id"]
+            }
+        }),
+        serde_json::json!({
+            "name": "generate_requirements",
+            "description": "Generate and validate a complete RequirementsAnalysis.xml artifact with AAG use cases.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_description": { "type": "string", "description": "Brief description of the project" },
+                    "domain": { "type": "string", "description": "Domain such as retail, developer tooling, finance" },
+                    "detail_level": { "type": "string", "description": "quick | standard | detailed", "default": "standard" }
+                },
+                "required": ["project_description"]
             }
         }),
         serde_json::json!({

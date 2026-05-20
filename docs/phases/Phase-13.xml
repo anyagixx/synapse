@@ -30,6 +30,7 @@
     <MODULE_REF id="M-GRACE-STATUS" />
     <MODULE_REF id="M-GRACE-REFRESH" />
     <MODULE_REF id="M-GRACE-LAYOUT" />
+    <MODULE_REF id="M-GRACE-REQUIREMENTS" />
     <MODULE_REF id="M-GRACE-INVENTORY" />
     <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
     <MODULE_REF id="M-GRAPHRAG" />
@@ -79,12 +80,12 @@
         <VERIFY status="passed">Tests for XML-like blocks, nested anchors, XML-like function contracts, mixed syntax warning, normalization, markdown-example skip, and legacy regression.</VERIFY>
       </step-4>
     </sprint-1>
-    <sprint-2 name="P1 Core Artifacts" status="pending">
-      <step-5 section="2.1" status="pending" priority="P1">
+    <sprint-2 name="P1 Core Artifacts" status="active">
+      <step-5 section="2.1" status="done" priority="P1">
         <TITLE>RequirementsAnalysis with AAG Notation</TITLE>
         <INTENT>Replace stub requirements with a complete requirements artifact model: goals, domain entities, actors, use cases, NFRs, constraints, and glossary.</INTENT>
         <IMPLEMENTATION>Create requirements parser/validator, full init template, generate_requirements MCP handler, requirements-* verify checks, and status/review coverage.</IMPLEMENTATION>
-        <VERIFY>Tests for init template, generated complete requirements, incomplete section failures, AAG extraction, and glossary/entity matching.</VERIFY>
+        <VERIFY status="passed">Tests for RequirementsAnalysis template completeness, generated artifact validation, incomplete section failures, section-scoped AAG extraction, glossary/entity matching, MCP generation, verify checks, review/status coverage, and capability count parity.</VERIFY>
       </step-5>
       <step-6 section="2.2" status="pending" priority="P1">
         <TITLE>Technology Stack Version Pinning</TITLE>
@@ -148,9 +149,9 @@
     <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 2 step-5 section 2.1 RequirementsAnalysis with AAG Notation.</NEXT_ACTION>
+    <NEXT_ACTION>Begin Sprint 2 step-6 section 2.2 Technology Stack Version Pinning.</NEXT_ACTION>
     <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-LAYOUT.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.1-requirements-analysis.md</SOURCE_SPEC>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.2-technology-stack.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

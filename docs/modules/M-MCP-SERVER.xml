@@ -2,7 +2,7 @@
 <MODULE id="M-MCP-SERVER" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER</NAME>
   <PURPOSE>MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization</PURPOSE>
-  <SCOPE>McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs and extract_belief_state, Unicode-safe trace previews, guarded index and GraphRAG preload; HTTP transport remains out of the public CLI until implemented</SCOPE>
+  <SCOPE>McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, and generate_requirements, Unicode-safe trace previews, guarded index and GraphRAG preload; HTTP transport remains out of the public CLI until implemented</SCOPE>
   <FILES>
     <FILE>src/mcp/server.rs</FILE>
   </FILES>

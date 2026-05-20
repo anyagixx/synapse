@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.14.0 — Added anchor syntax consistency verification]
+// LAST_CHANGE: [v2.15.0 — Added RequirementsAnalysis completeness verification]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -449,6 +449,43 @@ impl Verifier {
                     belief_report.coverage_pct,
                     belief_report.missing_modules.len()
                 )
+            },
+        });
+
+        let requirements = crate::grace::requirements::validate_requirements(root)?;
+        checks.push(CheckResult {
+            name: "requirements-entities-defined".into(),
+            passed: requirements.has_entities_defined(),
+            details: format!(
+                "{} entities parsed from RequirementsAnalysis",
+                requirements.entities.len()
+            ),
+        });
+        checks.push(CheckResult {
+            name: "requirements-use-cases".into(),
+            passed: requirements.has_use_cases(),
+            details: format!(
+                "{} use cases parsed; AAG complete={}",
+                requirements.use_cases.len(),
+                requirements.has_use_cases()
+            ),
+        });
+        checks.push(CheckResult {
+            name: "requirements-glossary".into(),
+            passed: requirements.has_glossary(),
+            details: format!(
+                "{} glossary terms; entity terms matched={}",
+                requirements.glossary_terms.len(),
+                requirements.has_glossary()
+            ),
+        });
+        checks.push(CheckResult {
+            name: "requirements-no-empty-sections".into(),
+            passed: requirements.has_no_empty_sections(),
+            details: if requirements.valid {
+                "RequirementsAnalysis sections are populated".into()
+            } else {
+                format!("RequirementsAnalysis errors: {:?}", requirements.errors)
             },
         });
 

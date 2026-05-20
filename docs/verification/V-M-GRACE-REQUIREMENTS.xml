@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-REQUIREMENTS" module="M-GRACE-REQUIREMENTS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test grace::requirements --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_requirements_writes_valid_artifact --lib</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Generated requirements.xml validates as RequirementsAnalysis with Goals, DomainModel entities, Actors, AAG UseCases, NFRs, Constraints, and Glossary.</ASSERTION>
+    <ASSERTION>Incomplete legacy requirements stubs fail validation with actionable errors.</ASSERTION>
+    <ASSERTION>generate_requirements writes docs/requirements.xml and returns section counts through MCP.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

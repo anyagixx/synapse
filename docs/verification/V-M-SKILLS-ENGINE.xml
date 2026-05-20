@@ -6,6 +6,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>grace_execute guidance requires extract_belief_state before substantial code generation.</ASSERTION>
+    <ASSERTION>grace_plan guidance reads docs/requirements.xml and reports RequirementsAnalysis validity.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>
