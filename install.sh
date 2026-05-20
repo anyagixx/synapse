@@ -25,12 +25,12 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.19.0 - Bumped default release tag to v2.5.0]
+# LAST_CHANGE: [v2.20.0 - Bumped default release tag to v2.5.1 post-release cleanup line]
 # END_CHANGE_SUMMARY
 
 set -eu
 
-DEFAULT_VERSION="v2.5.0"
+DEFAULT_VERSION="v2.5.1"
 VERSION="$DEFAULT_VERSION"
 VERSION_EXPLICIT="0"
 MODE="install"
@@ -344,7 +344,7 @@ install_binary() {
 
 # START_CONTRACT_remote_tag_available
 # PURPOSE: Check whether the selected release tag exists upstream before using tagged source fallback.
-# INPUTS: { $1: tag - release tag such as v2.5.0 }
+# INPUTS: { $1: tag - release tag such as v2.5.1 }
 # OUTPUTS: { exit code 0 - tag exists, nonzero - tag unavailable }
 # SIDE_EFFECTS: reads remote git refs
 # START_remote_tag_available

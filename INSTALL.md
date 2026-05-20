@@ -46,7 +46,7 @@ cd synapse
 make install
 ```
 
-For a specific release tag:
+For the latest published release tag:
 
 ```bash
 cargo install --locked --git https://github.com/anyagixx/synapse --tag v2.5.0

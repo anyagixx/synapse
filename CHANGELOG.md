@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.1 (unreleased)
+
+- Removed superseded planning artifacts after the v2.5.0 public release: `PLAN.md` and the completed remediation plan shards
+- Updated product readiness evidence from pre-release pending state to post-release v2.5.0 evidence
+- Bumped the main development line to 2.5.1 so release freshness gates stay valid after cleanup commits
+
 ## 2.5.0 (2026-05-20)
 
 - Added language-aware MyGRACE contract parsing and suggestions for Python `#`, SQL `--`, and block/HTML markers
