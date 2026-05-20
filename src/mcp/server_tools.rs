@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.5.0 — Added analyze_logs MCP tool schema]
+// LAST_CHANGE: [v2.6.0 — Added extract_belief_state MCP tool schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -101,6 +101,18 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                     "contract_ref": { "type": "string", "description": "Optional module id or function contract name filter" }
                 },
                 "required": ["log_path"]
+            }
+        }),
+        serde_json::json!({
+            "name": "extract_belief_state",
+            "description": "Create and validate a docs/belief-states artifact for a module before code generation.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "module_id": { "type": "string", "description": "Module ID such as M-ORDER-SERVICE" },
+                    "context": { "type": "string", "description": "Execution context read before generating code" }
+                },
+                "required": ["module_id"]
             }
         }),
         serde_json::json!({

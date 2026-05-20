@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.12.0 — Documented analyze_logs MCP capability]
+// LAST_CHANGE: [v2.13.0 — Documented extract_belief_state MCP capability]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -267,6 +267,10 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     (
         "analyze_logs",
         "Analyze structured GRACE LOG files for LDD trajectory and anomalies",
+    ),
+    (
+        "extract_belief_state",
+        "Create and validate an observable AI belief state artifact",
     ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),

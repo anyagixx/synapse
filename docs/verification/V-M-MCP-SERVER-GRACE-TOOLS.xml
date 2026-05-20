@@ -5,12 +5,14 @@
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_comment_prefix_for_python_and_sql --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_module_id_from_name_removes_commas --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_analyze_logs_returns_report --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_extract_belief_state_writes_artifact --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>MCP suggest_contract emits # for Python, -- for SQL, and one canonical MODULE_ID for comma-separated input.</ASSERTION>
     <ASSERTION>MCP verify_project and review_code accept lite, balanced, and strict profile arguments.</ASSERTION>
     <ASSERTION>MCP analyze_logs reads a structured LOG file and returns an XML LogAnalysisReport.</ASSERTION>
+    <ASSERTION>MCP extract_belief_state writes a validated docs/belief-states artifact.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

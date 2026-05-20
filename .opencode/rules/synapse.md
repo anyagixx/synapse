@@ -151,7 +151,53 @@ CREATE TABLE users (...);
 3. **Names describe WHAT, not HOW**: use `VALIDATE_INPUT` not `checkIfNullAndTrim`.
 4. **Paired markers**: every START_X must have END_X. No orphans.
 5. **Test files too**: substantial test files use the same structure (MODULE_CONTRACT, MODULE_MAP, blocks, CHANGE_SUMMARY).
-6. **Log format**: `[ModuleName][functionName][BLOCK_NAME] descriptive message` — structured, stable fields, redacted secrets.
+6. **Log format**: use structured `<LOG>` entries at semantic transition points; legacy `[ModuleName][functionName][BLOCK_NAME]` trace markers remain readable but do not carry LDD expectations.
+
+### Structured Log Format
+
+Every semantic transition point SHOULD emit a structured LOG entry:
+
+```
+// <LOG id="module-001" level="INFO" ref="block-name" module="M-XXX" contract="functionName">
+//   EVENT: event_name
+//   CONTEXT: key=value
+//   STATE: variable=value
+//   DECISION: Why this path was chosen
+//   EXPECTATION: What should happen next
+//   RESULT: success|failure|warning|blocked
+//   TRACEABILITY: useCase=UC-001, mentalTest=MT-001
+// </LOG>
+```
+
+`EXPECTATION` plus `RESULT` enables Log Driven Development. After collecting runtime logs, call `analyze_logs` with `mode=trajectory|anomaly|compare`.
+
+### Observable Belief State
+
+Before substantial module code generation, call `extract_belief_state` for the target module and inspect/refine the generated `docs/belief-states/M-XXX.xml` artifact. New source files may also embed the same block near the module contract:
+
+```
+// <BELIEF_STATE module="M-XXX" version="1.0">
+//   UNDERSTANDING:
+//     Module responsibility: Restate the module purpose in your own words
+//     Key data flows:
+//       - INPUT: what enters this module and from where
+//       - PROCESSING: key transformations and decisions
+//       - OUTPUT: what leaves the module and side effects
+//     Critical invariants:
+//       - what must always remain true
+//   IMPLEMENTATION_STRATEGY:
+//     Approach: high-level strategy
+//     Complexity_areas: parsing, compatibility, verification
+//     Patterns_applied: explicit flow, typed links, bounded blocks
+//   VERIFICATION_INTENT:
+//     I expect the following to be true after my code runs:
+//     - expected behavior or invariant
+//   RISKS_ACKNOWLEDGED:
+//     - known risk before coding
+// </BELIEF_STATE>
+```
+
+`belief-state-exists` validates discovered belief state structure and reports coverage in `syn status`, `verify_project`, and `review_code`.
 
 ### PCAM (Purpose, Constraints, Autonomy, Metrics)
 
@@ -166,11 +212,12 @@ CREATE TABLE users (...);
 Phase 0:   Architecture → 5 XML docs (M-xxx, V-M-xxx, DF-xxx, Phase-N)
 Phase 1-N: Per module:
   1. Read MODULE_CONTRACT + knowledge graph
-  2. Write code with contracts, MODULE_MAP, CHANGE_SUMMARY, semantic blocks
-  3. Call verify_project — if FAIL: STOP and fix
-  4. Call review_code (scoped) — fix critical issues
-  5. Update CHANGE_SUMMARY
-  6. Update knowledge-graph.xml
+  2. Call extract_belief_state for the target module and refine the belief if needed
+  3. Write code with contracts, MODULE_MAP, CHANGE_SUMMARY, semantic blocks
+  4. Call verify_project — if FAIL: STOP and fix
+  5. Call review_code (scoped) — fix critical issues
+  6. Update CHANGE_SUMMARY
+  7. Update knowledge-graph.xml
 Phase Gate: Call verify_project (phase level) + review_code (full)
 ```
 

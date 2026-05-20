@@ -1,17 +1,17 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
-// PURPOSE: Sharded GRACE artifact layout — resolves new index-based docs paths and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification indexes and shard dirs
+// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state storage, and bootstraps templates
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes and shard dirs
 // DEPENDS: N/A
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
-// DocsLayout — Path resolver for sharded artifact model
+// DocsLayout — Path resolver for sharded artifact and belief-state model
 // ensure_initialized — Create sharded docs skeleton and compatibility docs
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.4.0 — Added MyGrace-style sharded docs layout foundation]
+// LAST_CHANGE: [v2.13.0 — Added docs/belief-states layout support]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -74,6 +74,15 @@ impl DocsLayout {
     }
     // END_docs_layout_verification_dir
 
+    // START_CONTRACT_DocsLayout::belief_states_dir
+    // PURPOSE: Return sharded belief states directory path
+    // OUTPUTS: { PathBuf — docs/belief-states directory }
+    // START_docs_layout_belief_states_dir
+    pub fn belief_states_dir(&self) -> PathBuf {
+        self.docs_dir().join("belief-states")
+    }
+    // END_docs_layout_belief_states_dir
+
     // START_CONTRACT_DocsLayout::graph_index_path
     // PURPOSE: Return graph index path
     // OUTPUTS: { PathBuf — docs/graph-index.xml path }
@@ -111,6 +120,7 @@ impl DocsLayout {
         std::fs::create_dir_all(self.modules_dir())?;
         std::fs::create_dir_all(self.phases_dir())?;
         std::fs::create_dir_all(self.verification_dir())?;
+        std::fs::create_dir_all(self.belief_states_dir())?;
 
         self.write_if_missing(
             &self.graph_index_path(),

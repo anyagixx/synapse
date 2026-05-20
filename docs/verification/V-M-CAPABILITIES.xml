@@ -5,8 +5,8 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>VERIFY_CHECKS lists typed LINKS checks exposed by syn verify/status capability metadata.</ASSERTION>
-    <ASSERTION>MCP capability counts include analyze_logs as the 13th core tool.</ASSERTION>
+    <ASSERTION>VERIFY_CHECKS lists typed LINKS, structured LOG, and belief-state checks exposed by syn verify/status capability metadata.</ASSERTION>
+    <ASSERTION>MCP capability counts include extract_belief_state as the 14th core tool.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

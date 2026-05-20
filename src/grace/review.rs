@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, profile-aware contracts, typed LINKS, structured LOGs, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS and structured LOG review, review_with_profile, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG and belief state review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.12.0 — Added structured LOG review section]
+// LAST_CHANGE: [v2.13.0 — Added observable belief state review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -177,6 +177,29 @@ impl Reviewer {
                 )
             },
             issues: log_report.issues,
+        });
+
+        let belief_report = crate::grace::belief_state::scan_project_belief_states(root)?;
+        sections.push(ReviewSection {
+            name: "belief-state".into(),
+            passed: belief_report.passed(),
+            details: if belief_report.total_modules == 0 {
+                "No contracted modules found for belief state coverage".into()
+            } else if belief_report.invalid_states > 0 {
+                format!(
+                    "{} invalid BELIEF_STATE blocks; coverage {:.1}%",
+                    belief_report.invalid_states, belief_report.coverage_pct
+                )
+            } else {
+                format!(
+                    "{}/{} modules covered ({:.1}%); {} persisted artifacts",
+                    belief_report.states_found,
+                    belief_report.total_modules,
+                    belief_report.coverage_pct,
+                    belief_report.persisted_states
+                )
+            },
+            issues: belief_report.issues,
         });
 
         let passed = sections.iter().all(|s| s.passed);

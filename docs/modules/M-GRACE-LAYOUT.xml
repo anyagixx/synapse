@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-LAYOUT" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-LAYOUT</NAME>
-  <PURPOSE>Sharded GRACE artifact layout — resolves new index-based docs paths and bootstraps templates</PURPOSE>
-  <SCOPE>DocsLayout struct, path helpers, initialization of graph/plan/verification indexes and shard dirs</SCOPE>
+  <PURPOSE>Sharded GRACE artifact layout — resolves index-based docs paths, belief state storage, and bootstraps templates</PURPOSE>
+  <SCOPE>DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes and shard dirs</SCOPE>
   <FILES>
     <FILE>src/grace/layout.rs</FILE>
   </FILES>

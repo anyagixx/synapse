@@ -1,19 +1,20 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules
-// DEPENDS: M-GRACE-BOOTSTRAP, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules and belief state reporting
+// DEPENDS: M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
 // ModuleContract and GraceProfile — Re-exports from contract module
-// GraceEngine — Facade for all GRACE methodology operations
+// GraceEngine — Facade for all GRACE methodology operations and belief state reports
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.12.0 — Registered structured GRACE LOG module]
+// LAST_CHANGE: [v2.13.0 — Registered observable belief state module]
 // END_CHANGE_SUMMARY
 
+pub mod belief_state;
 pub mod bootstrap;
 pub mod contract;
 pub mod explain;
@@ -121,6 +122,16 @@ impl GraceEngine {
         semantic::SemanticExtractor::scan_project(root)
     }
     // END_grace_engine_semantic_report
+
+    // START_CONTRACT_GraceEngine::belief_state_report
+    // PURPOSE: Scan project belief states and return coverage/validation report
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<BeliefStateReport> }
+    // START_grace_engine_belief_state_report
+    pub fn belief_state_report(root: &Path) -> anyhow::Result<belief_state::BeliefStateReport> {
+        belief_state::scan_project_belief_states(root)
+    }
+    // END_grace_engine_belief_state_report
 
     // START_CONTRACT_GraceEngine::refresh_project
     // PURPOSE: Sync knowledge graph and verification plan with code

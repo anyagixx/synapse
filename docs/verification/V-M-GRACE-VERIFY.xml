@@ -9,6 +9,7 @@
     <ASSERTION>Verification reports function-contract strictness according to the selected GRACE profile.</ASSERTION>
     <ASSERTION>Verification reports links-valid-types, links-targets-exist, links-no-dangling, and links-format checks.</ASSERTION>
     <ASSERTION>Verification reports structured-log-format while keeping LDD adoption optional until LOG markers exist.</ASSERTION>
+    <ASSERTION>Verification reports belief-state-exists while keeping existing legacy projects migratable during adoption.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

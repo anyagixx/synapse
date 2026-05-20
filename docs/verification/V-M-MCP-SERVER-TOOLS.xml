@@ -6,6 +6,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>tools/list documents GRACE profile arguments for verify_project and review_code.</ASSERTION>
+    <ASSERTION>tools/list exposes extract_belief_state with module_id and context schema.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

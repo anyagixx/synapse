@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS and structured LOG validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
-// DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
+// SCOPE: Verifier struct, typed LINKS, structured LOG and belief-state validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.12.0 — Added structured LOG format verification]
+// LAST_CHANGE: [v2.13.0 — Added observable belief state verification]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -398,6 +398,33 @@ impl Verifier {
                 format!(
                     "{} invalid structured LOG markers, duplicates={:?}, issues={:?}",
                     log_report.invalid_logs, log_report.duplicate_ids, log_report.issues
+                )
+            },
+        });
+
+        let belief_report = crate::grace::belief_state::scan_project_belief_states(root)?;
+        checks.push(CheckResult {
+            name: "belief-state-exists".into(),
+            passed: belief_report.passed(),
+            details: if belief_report.total_modules == 0 {
+                "No MODULE_CONTRACT modules found for belief state coverage".into()
+            } else if belief_report.invalid_states > 0 {
+                format!(
+                    "{} invalid BELIEF_STATE blocks: {:?}",
+                    belief_report.invalid_states, belief_report.issues
+                )
+            } else if belief_report.states_found == belief_report.total_modules {
+                format!(
+                    "Belief states cover all {} modules",
+                    belief_report.total_modules
+                )
+            } else {
+                format!(
+                    "{}/{} modules have belief states ({:.1}%); adoption pending for {} modules",
+                    belief_report.states_found,
+                    belief_report.total_modules,
+                    belief_report.coverage_pct,
+                    belief_report.missing_modules.len()
                 )
             },
         });

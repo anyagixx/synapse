@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.12.0 — Updated MCP capability count for analyze_logs]
+// LAST_CHANGE: [v2.13.0 — Updated MCP capability count for extract_belief_state]
 // END_CHANGE_SUMMARY
 
 use std::sync::{Mutex, OnceLock};
@@ -41,8 +41,8 @@ fn test_skill_registry_count() {
 fn test_capabilities_include_skills() {
     assert!(capabilities::COMMANDS.iter().any(|(n, _)| *n == "skills"));
     assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 15);
-    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 13);
-    assert_eq!(capabilities::MCP_TOOLS.len(), 28);
+    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 14);
+    assert_eq!(capabilities::MCP_TOOLS.len(), 29);
 }
 
 #[test]
@@ -69,6 +69,7 @@ fn test_skill_engine_executes_init() {
     assert!(tmp.path().join("docs/graph-index.xml").exists());
     assert!(tmp.path().join("docs/plan-index.xml").exists());
     assert!(tmp.path().join("docs/verification-index.xml").exists());
+    assert!(tmp.path().join("docs/belief-states").exists());
 
     std::env::set_current_dir(old).unwrap();
 }

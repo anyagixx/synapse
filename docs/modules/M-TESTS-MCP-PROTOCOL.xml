@@ -2,7 +2,7 @@
 <MODULE id="M-TESTS-MCP-PROTOCOL" type="INTEGRATION" status="active">
   <NAME>M-TESTS-MCP-PROTOCOL</NAME>
   <PURPOSE>MCP protocol tests — verify initialize, tools/list shape, stdio cleanliness, notification silence, and representative grace tool exposure</PURPOSE>
-  <SCOPE>Direct handler tests and binary stdio protocol behavior</SCOPE>
+  <SCOPE>Direct handler tests, 29-tool registry shape, and binary stdio protocol behavior</SCOPE>
   <FILES>
     <FILE>tests/mcp_protocol.rs</FILE>
   </FILES>

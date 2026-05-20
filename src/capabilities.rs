@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, typed LINKS/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, typed LINKS/belief-state/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.12.0 — Added analyze_logs MCP capability and structured LOG verify check]
+// LAST_CHANGE: [v2.13.0 — Added extract_belief_state MCP capability and belief-state verify check]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -50,7 +50,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("serve", "Start web dashboard"),
 ];
 
-pub const CORE_MCP_TOOL_COUNT: usize = 13;
+pub const CORE_MCP_TOOL_COUNT: usize = 14;
 pub const GRACE_SKILL_TOOL_COUNT: usize = 15;
 pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
 
@@ -142,6 +142,10 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "analyze_logs",
         "Analyze structured GRACE LOG files for LDD trajectory and anomalies",
     ),
+    (
+        "extract_belief_state",
+        "Create and validate an observable AI belief state artifact",
+    ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),
     (
@@ -232,6 +236,7 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "500-token-rule",
     "trace-assertions",
     "structured-log-format",
+    "belief-state-exists",
     "sharded-artifacts",
     "artifact-ref-integrity",
     "canonical-mygrace-drift",

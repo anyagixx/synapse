@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
 // PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
-// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout and project workflows
+// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, belief state, and project workflows
 // DEPENDS: M-CONFIG, M-GRACE-LAYOUT, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.4.0 — Added first functional skill runtime]
+// LAST_CHANGE: [v2.13.0 — Added belief state requirement to grace_execute guidance]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -127,11 +127,13 @@ impl SkillEngine {
                     .map(|results| results.iter().filter(|r| !r.passed).count())
                     .unwrap_or(0);
                 format!(
-                    "Execution guidance:\n- phase: {}\n- module: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read shard docs for {}\n2. inspect affected source files for {}\n3. implement smallest safe change for objective\n4. run verify_project\n5. if verify fails, switch to grace_fix",
+                    "Execution guidance:\n- phase: {}\n- module: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read shard docs for {}\n2. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n3. inspect affected source files for {}\n4. implement smallest safe change for objective\n5. run verify_project\n6. if verify fails, switch to grace_fix",
                     active_phase,
                     module,
                     string_arg(&request.arguments, "objective", "complete next bounded implementation step"),
                     failing,
+                    module,
+                    module,
                     module,
                     module,
                 )

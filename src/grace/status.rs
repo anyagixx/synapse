@@ -1,22 +1,23 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, semantic, verification, drift, token economy, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, print_report, active-phase display helpers
-// DEPENDS: M-GRACE-CONTRACT, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
+// PURPOSE: Project health collector — aggregates contracts, belief states, semantic, verification, drift, token economy, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, belief-state coverage, print_report, active-phase display helpers
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
 // START_MODULE_MAP
-// StatusReport — Full project health report
+// StatusReport — Full project health report with belief state coverage
 // TokenEconomy — Token usage statistics
 // SystemInfo — System metadata (version, paths)
 // StatusCollector — Collects and prints project health
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Print no-active-phase state consistently in status output]
+// LAST_CHANGE: [v2.13.0 — Added observable belief state coverage to status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
+use crate::grace::belief_state::BeliefStateReport;
 use crate::grace::contract::{ContractReport, ContractValidator};
 use crate::grace::layout::DocsLayout;
 use crate::grace::refresh::Refresher;
@@ -33,6 +34,7 @@ pub struct StatusReport {
     pub health: String,
     pub mygrace_issues: usize,
     pub contracts: ContractReport,
+    pub belief_state: BeliefStateReport,
     pub semantic: SemanticReport,
     pub verification: Vec<super::verify::VerificationResult>,
     pub drift: Option<super::refresh::RefreshReport>,
@@ -89,6 +91,7 @@ impl StatusCollector {
     // START_sc_collect
     pub async fn collect(root: &Path) -> anyhow::Result<StatusReport> {
         let contracts = ContractValidator::validate_project(root)?;
+        let belief_state = crate::grace::belief_state::scan_project_belief_states(root)?;
         let semantic = SemanticExtractor::scan_project(root)?;
         let verification = Verifier::verify_all(root).await?;
         let drift = Refresher::refresh(root).ok();
@@ -108,6 +111,20 @@ impl StatusCollector {
         }
         if contracts.invalid > 0 {
             next_actions.push(format!("Fix {} invalid contracts", contracts.invalid));
+        }
+        if belief_state.invalid_states > 0 {
+            next_actions.push(format!(
+                "Fix {} invalid BELIEF_STATE blocks",
+                belief_state.invalid_states
+            ));
+        } else if belief_state.total_modules > 0
+            && belief_state.states_found < belief_state.total_modules
+        {
+            next_actions.push(format!(
+                "Add belief states for {} modules ({:.1}% coverage)",
+                belief_state.missing_modules.len(),
+                belief_state.coverage_pct
+            ));
         }
         if !semantic.duplicate_name_blocks.is_empty() {
             next_actions.push(format!(
@@ -210,6 +227,7 @@ impl StatusCollector {
                 project_path: root.display().to_string(),
             },
             contracts,
+            belief_state,
             semantic,
             verification,
             drift,
@@ -283,6 +301,23 @@ impl StatusCollector {
         println!("║  With MODULE_MAP:       {:<12}║", with_map);
         println!("║  With CHANGE_SUMMARY:   {:<12}║", with_cs);
         println!("║  Function contracts:   {:<12}║", total_fn);
+        println!("╠══════════════════════════════════════╣");
+        println!("║ BELIEF STATE                         ║");
+        println!(
+            "║  Covered modules: {:<20}║",
+            format!(
+                "{}/{}",
+                report.belief_state.states_found, report.belief_state.total_modules
+            )
+        );
+        println!(
+            "║  Coverage:        {:<20}║",
+            format!("{:.1}%", report.belief_state.coverage_pct)
+        );
+        println!(
+            "║  Invalid states:  {:<20}║",
+            report.belief_state.invalid_states
+        );
         println!("╠══════════════════════════════════════╣");
         println!("║ SEMANTIC MARKUP                      ║");
         println!("║  Total blocks:    {:<19}║", report.semantic.total_blocks);

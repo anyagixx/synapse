@@ -4,6 +4,8 @@
     <COMMAND>cargo test --all-targets</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>DocsLayout creates docs/belief-states for observable belief state artifacts during initialization.</ASSERTION>
+  </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

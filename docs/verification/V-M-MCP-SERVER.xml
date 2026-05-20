@@ -15,6 +15,7 @@
     <ASSERTION>syn mcp public help remains stdio-only and does not expose HTTP or LSP flags before those transports are implemented.</ASSERTION>
     <ASSERTION>JSON-RPC notifications do not produce response objects.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes analyze_logs to the GRACE structured LOG analyzer.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes extract_belief_state to the GRACE belief-state artifact writer.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-12</PHASE_GATE>
 </VERIFICATION>

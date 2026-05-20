@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-BELIEF-STATE" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-BELIEF-STATE</NAME>
+  <PURPOSE>Observable AI belief state parser, validator, coverage scanner, and artifact writer</PURPOSE>
+  <SCOPE>BELIEF_STATE data model, XML-like parser, source/artifact scan, validation, and docs/belief-states storage</SCOPE>
+  <FILES>
+    <FILE>src/grace/belief_state.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-LAYOUT,M-INDEXER-WALKER</DEPENDS>
+  <LINKS>V-M-GRACE-BELIEF-STATE</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-BELIEF-STATE</VERIFICATION_REF>
+</MODULE>
