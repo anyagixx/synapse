@@ -7,13 +7,14 @@
 
 // START_MODULE_MAP
 // test_installer_diagnose_reports_supported_matrix - Diagnose mode reports Linux/macOS artifacts
+// test_installer_diagnose_reports_os_and_arch_failures - Diagnose mode reports independent platform failures
 // test_installer_unsupported_platform_guidance_is_actionable - Unsupported platform failure points to diagnostics
 // test_support_docs_document_diagnostics - Public support docs document diagnostic mode
 // test_support_docs_do_not_add_windows_install_claims - Support docs keep Windows packaging deferred
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added Phase 10 support readiness parity tests]
+// LAST_CHANGE: [v1.1.0 - Added Phase 11 precise platform diagnostic tests]
 // END_CHANGE_SUMMARY
 
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
@@ -46,6 +47,8 @@ fn test_installer_diagnose_reports_supported_matrix() {
         let stdout = String::from_utf8_lossy(&output.stdout);
         let markers = vec![
             "mode=diagnose".to_string(),
+            "os_status=ok".to_string(),
+            "arch_status=ok".to_string(),
             "platform_status=ok".to_string(),
             format!("artifact={artifact}"),
             "install_dir_status=".to_string(),
@@ -61,6 +64,33 @@ fn test_installer_diagnose_reports_supported_matrix() {
                 "diagnose output missing {marker}: {stdout}"
             );
         }
+    }
+}
+
+#[test]
+// START_CONTRACT_test_installer_diagnose_reports_os_and_arch_failures
+// PURPOSE: Verify diagnose mode reports unsupported OS and architecture independently.
+fn test_installer_diagnose_reports_os_and_arch_failures() {
+    let output = std::process::Command::new("sh")
+        .arg("install.sh")
+        .arg("--diagnose")
+        .env("SYN_INSTALL_UNAME_S", "Windows_NT")
+        .env("SYN_INSTALL_UNAME_M", "sparc")
+        .output()
+        .expect("install.sh diagnose should execute");
+
+    assert!(output.status.success(), "diagnose mode must not fail");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    for marker in [
+        "os_status=unsupported",
+        "arch_status=unsupported",
+        "platform_status=unsupported-os-and-arch",
+        "artifact=none",
+    ] {
+        assert!(
+            stdout.contains(marker),
+            "diagnose output missing {marker}: {stdout}"
+        );
     }
 }
 

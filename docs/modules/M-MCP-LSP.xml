@@ -2,11 +2,11 @@
 <MODULE id="M-MCP-LSP" type="INTEGRATION" status="active">
   <NAME>M-MCP-LSP</NAME>
   <PURPOSE>LSP client bridge — sends guarded textDocument/hover, go-to-definition, references to language servers</PURPOSE>
-  <SCOPE>LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, LSP protocol via stdio</SCOPE>
+  <SCOPE>LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, Unicode-safe error previews, LSP protocol via stdio</SCOPE>
   <FILES>
     <FILE>src/mcp/lsp.rs</FILE>
   </FILES>
-  <DEPENDS></DEPENDS>
+  <DEPENDS>M-UTILS</DEPENDS>
   <LINKS></LINKS>
   <VERIFICATION_REF>V-M-MCP-LSP</VERIFICATION_REF>
 </MODULE>

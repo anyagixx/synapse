@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-INSTALL
 # PURPOSE: Installer script — installs Synapse from GitHub release artifacts or cargo source fallback
-# SCOPE: Linux/macOS platform detection, safe release tarball download, SHA256 verification, local binary install, cargo fallback, dry-run mapping, support diagnostics, and post-install smoke check
+# SCOPE: Linux/macOS platform detection, safe release tarball download, SHA256 verification, local binary install, cargo fallback, dry-run mapping, precise support diagnostics, and post-install smoke check
 # DEPENDS: M-BUILD
 # LINKS: install.sh, .github/workflows/release.yml
 
@@ -24,7 +24,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.15.0 - Added Linux/macOS support diagnostics and actionable failure hints]
+# LAST_CHANGE: [v2.16.0 - Added precise OS and architecture diagnostic statuses]
 # END_CHANGE_SUMMARY
 
 set -eu
@@ -55,7 +55,7 @@ cleanup() {
 # START_usage
 usage() {
     cat <<'EOF'
-Usage: install.sh [version] [--dry-run] [--help] [--version]
+Usage: install.sh [version] [--dry-run] [--diagnose] [--help] [--version]
 
 Environment:
   SYN_INSTALL_DIR       Install directory override, for example $HOME/.local/bin
@@ -184,18 +184,30 @@ print_diagnostics() {
     uname_m="${SYN_INSTALL_UNAME_M:-$(uname -m)}"
     diag_os="unsupported"
     diag_arch="unsupported"
+    os_status="ok"
+    arch_status="ok"
     platform_status="ok"
 
     case "$uname_s" in
         Linux) diag_os="unknown-linux-gnu" ;;
         Darwin) diag_os="apple-darwin" ;;
-        *) platform_status="unsupported-os" ;;
+        *)
+            os_status="unsupported"
+            platform_status="unsupported-os"
+            ;;
     esac
 
     case "$uname_m" in
         x86_64|amd64) diag_arch="x86_64" ;;
         aarch64|arm64) diag_arch="aarch64" ;;
-        *) platform_status="unsupported-arch" ;;
+        *)
+            arch_status="unsupported"
+            if [ "$platform_status" = "unsupported-os" ]; then
+                platform_status="unsupported-os-and-arch"
+            else
+                platform_status="unsupported-arch"
+            fi
+            ;;
     esac
 
     install_dir="$(resolve_install_dir)"
@@ -214,6 +226,8 @@ print_diagnostics() {
     echo "version=${VERSION}"
     echo "host_os=${uname_s}"
     echo "host_arch=${uname_m}"
+    echo "os_status=${os_status}"
+    echo "arch_status=${arch_status}"
     echo "platform_status=${platform_status}"
     if [ "$platform_status" = "ok" ]; then
         echo "artifact=syn-${diag_arch}-${diag_os}.tar.gz"

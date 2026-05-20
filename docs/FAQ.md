@@ -50,10 +50,10 @@ Synapse works without GRACE (search, proxy, compression still function). But str
 ## Token Economy
 
 **How many tokens does Synapse save?**
-- Proxy: 60-90% on shell commands
+- Proxy: measured locally on proxied commands; noisy commands with built-in or project filters can save 60-90%
 - Caveman output: 65-75% on AI responses
 - Caveman input: ~46% on context files
-- Total: typically 70-85% overall
+- Total: depends on the command mix and configured filters
 
 **How do I check my savings?**
 ```bash

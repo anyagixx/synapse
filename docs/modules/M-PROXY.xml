@@ -2,7 +2,7 @@
 <MODULE id="M-PROXY" type="INTEGRATION" status="active">
   <NAME>M-PROXY</NAME>
   <PURPOSE>Proxy executor — intercepts shell commands, applies TOML filters, and reports token tracking degradation</PURPOSE>
-  <SCOPE>Proxy struct, FilterEngine integration, CommandRunner integration, token tracking with degraded-mode logging</SCOPE>
+  <SCOPE>Proxy struct, ProxyOutput status model, FilterEngine integration, CommandRunner integration, Unicode-safe passthrough truncation, token tracking with degraded-mode logging</SCOPE>
   <FILES>
     <FILE>src/proxy/mod.rs</FILE>
   </FILES>

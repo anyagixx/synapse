@@ -2,7 +2,7 @@
 // MODULE_ID: M-GRACE-FIX
 // PURPOSE: Debug/fix module — diagnoses issues via knowledge graph navigation and indexed search
 // SCOPE: Debugger struct, FixResult, diagnose via semantic search
-// DEPENDS: M-INDEXER-STORAGE
+// DEPENDS: M-INDEXER-STORAGE, M-UTILS
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — Use Unicode-safe truncation for suggested fix snippets]
 // END_CHANGE_SUMMARY
 
 use crate::indexer::storage::Storage;
@@ -77,7 +77,7 @@ impl Debugger {
                     b.path,
                     b.start_line,
                     b.name,
-                    truncate(&b.content, 200)
+                    crate::utils::truncate_chars(&b.content, 200)
                 )
             })
             .collect();
@@ -103,13 +103,5 @@ impl Debugger {
         })
     }
     // END_debugger_diagnose
-}
-
-fn truncate(s: &str, max: usize) -> String {
-    if s.len() <= max {
-        s.to_string()
-    } else {
-        format!("{}...", &s[..max])
-    }
 }
 // END_public_api

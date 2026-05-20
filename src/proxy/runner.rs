@@ -1,21 +1,30 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-RUNNER
-// PURPOSE: Command runner — executes shell commands and captures stdout/stderr
-// SCOPE: CommandRunner struct, execute via std::process::Command
+// PURPOSE: Command runner — executes shell commands and captures stdout/stderr with exit status
+// SCOPE: CommandRunner struct, CommandOutput status model, execute via std::process::Command
 // DEPENDS: N/A
 // LINKS: N/A
 
 // START_MODULE_MAP
+// CommandOutput — Captured command output plus success and exit status
 // CommandRunner — Executes a shell command and returns combined stdout/stderr
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — Preserve child process exit status for proxy callers]
 // END_CHANGE_SUMMARY
 
 use std::process::{Command, Stdio};
 
 // START_public_api
+
+// START_CommandOutput
+pub struct CommandOutput {
+    pub text: String,
+    pub status_code: i32,
+    pub success: bool,
+}
+// END_CommandOutput
 
 // START_CommandRunner
 pub struct CommandRunner {
@@ -42,11 +51,11 @@ impl CommandRunner {
     // END_runner_new
 
     // START_CONTRACT_CommandRunner::execute
-    // PURPOSE: Execute the command and return combined stdout/stderr
-    // OUTPUTS: { anyhow::Result<String> — command output }
+    // PURPOSE: Execute the command and return combined stdout/stderr plus exit status
+    // OUTPUTS: { anyhow::Result<CommandOutput> — command output and status }
     // SIDE_EFFECTS: spawns child process
     // START_runner_execute
-    pub fn execute(&self) -> anyhow::Result<String> {
+    pub fn execute(&self) -> anyhow::Result<CommandOutput> {
         let output = Command::new(&self.cmd)
             .args(&self.args)
             .stdout(Stdio::piped())
@@ -55,6 +64,8 @@ impl CommandRunner {
             .map_err(|e| anyhow::anyhow!("Failed to execute '{}': {}", self.cmd, e))?;
 
         let result = output.wait_with_output()?;
+        let status_code = result.status.code().unwrap_or(1);
+        let success = result.status.success();
 
         let mut text = String::new();
 
@@ -70,14 +81,18 @@ impl CommandRunner {
         }
 
         if text.is_empty() {
-            if result.status.success() {
+            if success {
                 text = "ok".into();
             } else {
-                text = format!("Exit code: {}", result.status.code().unwrap_or(-1));
+                text = format!("Exit code: {}", status_code);
             }
         }
 
-        Ok(text)
+        Ok(CommandOutput {
+            text,
+            status_code,
+            success,
+        })
     }
     // END_runner_execute
 }

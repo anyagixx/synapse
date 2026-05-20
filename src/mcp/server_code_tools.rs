@@ -2,7 +2,7 @@
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
 // PURPOSE: MCP handlers for code search, GraphRAG queries, signature views, and guarded LSP lookups
 // SCOPE: semantic_search, graphrag_query, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
-// DEPENDS: M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE
+// DEPENDS: M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Guarded GraphRAG lock errors in MCP code tools]
+// LAST_CHANGE: [v3.0.0 — Use Unicode-safe search result previews]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result};
@@ -47,11 +47,7 @@ pub(crate) async fn handle_search(
                     .iter()
                     .enumerate()
                     .map(|(i, r)| {
-                        let preview = if r.content.len() > 150 {
-                            format!("{}...", &r.content[..150])
-                        } else {
-                            r.content.clone()
-                        };
+                        let preview = crate::utils::truncate_chars(&r.content, 150);
                         format!(
                             "{}. {} ({}:{}-{})\n   {}",
                             i + 1,

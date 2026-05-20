@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-PROXY-RUNNER" type="INTEGRATION" status="active">
   <NAME>M-PROXY-RUNNER</NAME>
-  <PURPOSE>Command runner — executes shell commands and captures stdout/stderr</PURPOSE>
-  <SCOPE>CommandRunner struct, execute via std::process::Command</SCOPE>
+  <PURPOSE>Command runner — executes shell commands and captures stdout/stderr with exit status</PURPOSE>
+  <SCOPE>CommandRunner struct, CommandOutput status model, execute via std::process::Command</SCOPE>
   <FILES>
     <FILE>src/proxy/runner.rs</FILE>
   </FILES>

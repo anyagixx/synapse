@@ -9,7 +9,7 @@ curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh -o
 sh /tmp/synapse-install.sh --diagnose
 ```
 
-The report is local and no-write. It shows the selected release artifact, install directory status, required tools, checksum verifier availability, and source fallback prerequisites.
+The report is local and no-write. It shows OS and architecture support status, the selected release artifact, install directory status, required tools, checksum verifier availability, and source fallback prerequisites.
 
 If the install directory is not writable, use:
 

@@ -2,11 +2,11 @@
 <MODULE id="M-GRACE-FIX" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-FIX</NAME>
   <PURPOSE>Debug/fix module — diagnoses issues via knowledge graph navigation and indexed search</PURPOSE>
-  <SCOPE>Debugger struct, FixResult, diagnose via semantic search</SCOPE>
+  <SCOPE>Debugger struct, FixResult, diagnose via semantic search, Unicode-safe snippet previews</SCOPE>
   <FILES>
     <FILE>src/grace/fix.rs</FILE>
   </FILES>
-  <DEPENDS>M-INDEXER-STORAGE</DEPENDS>
+  <DEPENDS>M-INDEXER-STORAGE,M-UTILS</DEPENDS>
   <LINKS></LINKS>
   <VERIFICATION_REF>V-M-GRACE-FIX</VERIFICATION_REF>
 </MODULE>

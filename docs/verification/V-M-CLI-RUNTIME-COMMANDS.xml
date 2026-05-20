@@ -2,6 +2,8 @@
 <VERIFICATION id="V-M-CLI-RUNTIME-COMMANDS" module="M-CLI-RUNTIME-COMMANDS" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_preserves_nonzero_exit_status</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
     <COMMAND>cargo test --test reliability_test test_clean_init_doctor_accepts_default_config</COMMAND>
   </UNIT_TESTS>
@@ -9,6 +11,8 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>Doctor reports corrupted index storage as an index failure with a rebuild command.</ASSERTION>
     <ASSERTION>Doctor reports missing user config as valid built-in defaults after clean init.</ASSERTION>
+    <ASSERTION>ProxyCmd propagates wrapped command exit status after printing filtered output.</ASSERTION>
+    <ASSERTION>GainCmd supports --graph and renders tracked savings bars.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-7</PHASE_GATE>
 </VERIFICATION>

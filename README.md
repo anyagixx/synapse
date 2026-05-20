@@ -22,7 +22,7 @@
 
 Ты общаешься с AI через `opencode`. Synapse невидимо:
 - Даёт LLM **27 MCP-инструментов** для поиска, проверки и генерации кода
-- Авто-фильтрует вывод shell-команд (экономия 60-90% токенов)
+- Авто-фильтрует шумный вывод shell-команд; фактическую экономию показывает `syn gain`
 - **Принуждает GRACE методологию**: Phase 0, контракты, верификация, ревью
 - **Сам проходит собственные проверки**: `syn verify` → ALL PASS
 
@@ -209,6 +209,7 @@ my-project/
 | `syn serve` | Web дашборд |
 | `syn proxy -- <cmd>` | Ручной прокси |
 | `syn gain` | Статистика экономии |
+| `syn gain --graph` | Статистика экономии с ASCII-графом |
 | `syn skills list|show|run` | Локальный запуск и отладка 15 GRACE skills |
 | `syn ci verify|review|status` | CI-friendly strict outputs |
 

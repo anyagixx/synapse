@@ -1,26 +1,29 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure release-candidate automation remains a dry-run truth gate before publishing.
-// SCOPE: Validate RC workflow permissions, release metadata checks, installer matrix smoke, GitHub step-summary evidence, and CI integration.
+// SCOPE: Validate RC workflow permissions, candidate ref checkout, release metadata checks, fresh install smoke, installer matrix smoke, GitHub step-summary evidence, and CI integration.
 // DEPENDS: M-CI, M-INSTALL, M-CI-RELEASE-SMOKE
 // LINKS: scripts/release_candidate_dry_run.sh, .github/workflows/release-candidate.yml
 
 // START_MODULE_MAP
 // test_release_candidate_workflow_is_dry_run_only - Workflow must not publish releases
+// test_release_candidate_checks_out_candidate_ref - Workflow must checkout the requested candidate tag
 // test_release_candidate_script_checks_release_truth - Script must validate tag, notes, checksums, and installer mapping
+// test_release_candidate_fresh_install_evidence - Workflow must run public installer fresh smoke on Linux/macOS
 // test_ci_invokes_release_candidate_gate - Local CI must include the lightweight RC policy gate
 // test_release_candidate_script_executes_without_publishing - Script dry-run must pass with the package tag
 // test_release_candidate_step_summary_is_written - Script must write maintainer-readable evidence summary
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Added Phase 10 release candidate summary evidence tests]
+// LAST_CHANGE: [v1.2.0 - Added Phase 11 candidate-ref and fresh-install evidence tests]
 // END_CHANGE_SUMMARY
 
 const RELEASE_CANDIDATE_WORKFLOW: &str = include_str!("../.github/workflows/release-candidate.yml");
 const RELEASE_WORKFLOW: &str = include_str!("../.github/workflows/release.yml");
 const CI_SCRIPT: &str = include_str!("../scripts/ci.sh");
 const RELEASE_CANDIDATE_SCRIPT: &str = include_str!("../scripts/release_candidate_dry_run.sh");
+const FRESH_INSTALL_SCRIPT: &str = include_str!("../scripts/fresh_install_smoke.sh");
 
 #[test]
 // START_CONTRACT_test_release_candidate_workflow_is_dry_run_only
@@ -49,6 +52,21 @@ fn test_release_candidate_workflow_is_dry_run_only() {
             "release candidate workflow must not contain publishing marker {publishing_marker}"
         );
     }
+}
+
+#[test]
+// START_CONTRACT_test_release_candidate_checks_out_candidate_ref
+// PURPOSE: Verify release-candidate workflow validates the requested candidate ref, not the default branch.
+fn test_release_candidate_checks_out_candidate_ref() {
+    assert!(
+        RELEASE_CANDIDATE_WORKFLOW.contains("ref: ${{ inputs.version_tag }}"),
+        "release candidate workflow must checkout the requested candidate tag"
+    );
+    assert!(
+        RELEASE_CANDIDATE_WORKFLOW.contains("git rev-parse HEAD")
+            && RELEASE_CANDIDATE_SCRIPT.contains("candidate_commit="),
+        "release candidate evidence must include the checked-out commit SHA"
+    );
 }
 
 #[test]
@@ -88,6 +106,39 @@ fn test_release_candidate_script_checks_release_truth() {
                 && RELEASE_CANDIDATE_WORKFLOW.contains(artifact)
                 && RELEASE_WORKFLOW.contains(artifact),
             "release candidate, release workflow, and publishing workflow must agree on {artifact}"
+        );
+    }
+}
+
+#[test]
+// START_CONTRACT_test_release_candidate_fresh_install_evidence
+// PURPOSE: Verify release-candidate workflow captures public installer fresh-machine evidence for Linux/macOS.
+fn test_release_candidate_fresh_install_evidence() {
+    for marker in [
+        "fresh-install:",
+        "bash scripts/fresh_install_smoke.sh",
+        "SYN_INSTALL_SCRIPT_URL",
+        "raw.githubusercontent.com/anyagixx/synapse/${{ inputs.version_tag }}/install.sh",
+        "ubuntu-latest",
+        "macos-latest",
+        "Fresh install smoke",
+        "Install dir: temporary",
+    ] {
+        assert!(
+            RELEASE_CANDIDATE_WORKFLOW.contains(marker),
+            "release candidate workflow must declare fresh install marker {marker}"
+        );
+    }
+    for marker in [
+        "curl -fsSL",
+        "SYN_INSTALL_DIR",
+        "syn --version",
+        "syn --help",
+        "[CI][fresh_install_smoke][PASS]",
+    ] {
+        assert!(
+            FRESH_INSTALL_SCRIPT.contains(marker),
+            "fresh install script must validate {marker}"
         );
     }
 }
@@ -158,6 +209,7 @@ fn test_release_candidate_step_summary_is_written() {
 
     for marker in [
         "## Release candidate dry-run",
+        "Commit",
         "Cargo version",
         "SHA256SUMS aggregation and verification checked",
         "Installer matrix: Linux x86_64, Linux aarch64, macOS x86_64, macOS arm64",

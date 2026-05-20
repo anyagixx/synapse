@@ -1,18 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-UTILS
 // PURPOSE: Token estimation, ANSI stripping, savings formatting — utility functions
-// SCOPE: ANSI escape stripping, naive token estimation (chars/4), savings percentage formatting
+// SCOPE: ANSI escape stripping, Unicode-safe truncation, naive token estimation (chars/4), savings percentage formatting
 // DEPENDS: N/A
 // LINKS: N/A
 
 // START_MODULE_MAP
 // strip_ansi — Remove ANSI escape sequences from a string
+// truncate_chars — Truncate a string by Unicode scalar values without splitting UTF-8
 // estimate_tokens — Estimate token count as text length / 4
 // format_savings — Format token savings as percentage string
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.0 — ANSI stripping uses cached fallback instead of unwrap panic]
+// LAST_CHANGE: [v2.2.0 — Added Unicode-safe truncation helper for proxy and diagnostics]
 // END_CHANGE_SUMMARY
 
 use std::sync::OnceLock;
@@ -35,6 +36,22 @@ pub fn strip_ansi(s: &str) -> String {
 }
 // END_strip_ansi
 
+// START_CONTRACT_truncate_chars
+// PURPOSE: Truncate a string by character count without splitting UTF-8 code points
+// INPUTS: { s: &str — input string }, { max_chars: usize — maximum Unicode scalar values before ellipsis }
+// OUTPUTS: { String — original or truncated string with ellipsis }
+// START_truncate_chars
+pub fn truncate_chars(s: &str, max_chars: usize) -> String {
+    let mut chars = s.chars();
+    let truncated: String = chars.by_ref().take(max_chars).collect();
+    if chars.next().is_some() {
+        format!("{}...", truncated)
+    } else {
+        s.to_string()
+    }
+}
+// END_truncate_chars
+
 // START_CONTRACT_estimate_tokens
 // PURPOSE: Naive token estimation — text length divided by 4
 // INPUTS: { text: &str — text to estimate }
@@ -54,8 +71,23 @@ pub fn format_savings(input: u32, output: u32) -> String {
     if input == 0 {
         return "0%".into();
     }
-    let pct = ((input - output) as f64 / input as f64 * 100.0).round() as u32;
+    let pct = (input.saturating_sub(output) as f64 / input as f64 * 100.0).round() as u32;
     format!("{}%", pct.min(100))
 }
 // END_format_savings
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_truncate_chars_preserves_utf8_boundaries() {
+        let text = format!("{}😀x", "я".repeat(999));
+        let truncated = truncate_chars(&text, 1000);
+
+        assert!(truncated.ends_with("..."));
+        assert!(truncated.is_char_boundary(truncated.len()));
+        assert!(truncated.contains('😀'));
+    }
+}
 // END_public_api

@@ -2,11 +2,11 @@
 <MODULE id="M-MCP-SERVER" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER</NAME>
   <PURPOSE>MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization</PURPOSE>
-  <SCOPE>McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing, guarded index and GraphRAG preload</SCOPE>
+  <SCOPE>McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing, Unicode-safe trace previews, guarded index and GraphRAG preload</SCOPE>
   <FILES>
     <FILE>src/mcp/server.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG,M-GRAPHRAG,M-INDEXER,M-MCP-SERVER-CODE-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-MCP-SERVER-RESPONSE,M-MCP-SERVER-TOOLS</DEPENDS>
+  <DEPENDS>M-CONFIG,M-GRAPHRAG,M-INDEXER,M-MCP-SERVER-CODE-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-MCP-SERVER-RESPONSE,M-MCP-SERVER-TOOLS,M-UTILS</DEPENDS>
   <LINKS></LINKS>
   <VERIFICATION_REF>V-M-MCP-SERVER</VERIFICATION_REF>
 </MODULE>

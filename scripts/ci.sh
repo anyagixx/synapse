@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
 # PURPOSE: CI quality gate — runs Rust checks and MyGRACE truth gates in one reproducible entrypoint
-# SCOPE: Formatting, linting, runtime panic guard, tests, release tag guard, release-candidate dry-run, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
+# SCOPE: Formatting, linting, runtime panic guard, tests, isolated XDG data path, release tag guard, release-candidate dry-run, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
 # DEPENDS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
 # LINKS: .github/workflows/ci.yml, docs/verification-index.xml
 
@@ -14,7 +14,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.4.0 - Added release candidate dry-run policy gate]
+# LAST_CHANGE: [v1.5.0 - Isolated CI XDG data path for reproducible local gates]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_ci_gate
@@ -26,6 +26,7 @@
 set -euo pipefail
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$tmp_dir/xdg-data}"
 
 echo "[CI][run_ci_gate][FMT] Checking formatting"
 cargo fmt --all -- --check

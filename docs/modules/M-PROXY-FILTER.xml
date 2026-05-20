@@ -2,11 +2,11 @@
 <MODULE id="M-PROXY-FILTER" type="INTEGRATION" status="active">
   <NAME>M-PROXY-FILTER</NAME>
   <PURPOSE>TOML filter engine — applies regex-based output transformations from TOML filter definitions</PURPOSE>
-  <SCOPE>FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, 8-stage pipeline</SCOPE>
+  <SCOPE>FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, Unicode-safe truncation, 8-stage pipeline</SCOPE>
   <FILES>
     <FILE>src/proxy/toml_filter.rs</FILE>
   </FILES>
-  <DEPENDS></DEPENDS>
+  <DEPENDS>M-UTILS</DEPENDS>
   <LINKS>builtin_filters.toml,~/.config/synapse/filters.toml,.synapse/filters.toml</LINKS>
   <VERIFICATION_REF>V-M-PROXY-FILTER</VERIFICATION_REF>
 </MODULE>

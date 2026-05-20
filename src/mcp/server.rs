@@ -2,7 +2,7 @@
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
 // SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing, guarded index and GraphRAG preload
-// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS
+// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Preserved clean MCP stdio by suppressing notification responses]
+// LAST_CHANGE: [v3.1.0 — Use Unicode-safe tracing previews]
 // END_CHANGE_SUMMARY
 
 use super::{server_code_tools, server_grace_tools, server_response, server_tools};
@@ -77,10 +77,10 @@ impl McpServer {
                 continue;
             }
 
-            tracing::debug!("MCP << {}", &line[..line.len().min(200)]);
+            tracing::debug!("MCP << {}", crate::utils::truncate_chars(&line, 200));
             if let Some(response) = handler.handle_message(&line).await {
                 let msg = serde_json::to_string(&response)?;
-                tracing::debug!("MCP >> {}", &msg[..msg.len().min(200)]);
+                tracing::debug!("MCP >> {}", crate::utils::truncate_chars(&msg, 200));
 
                 let mut out = msg.into_bytes();
                 out.push(b'\n');

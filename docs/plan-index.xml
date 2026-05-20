@@ -13,6 +13,6 @@
     <PHASE id="Phase-8" path="docs/phases/Phase-8.xml" status="done" />
     <PHASE id="Phase-9" path="docs/phases/Phase-9.xml" status="done" />
     <PHASE id="Phase-10" path="docs/phases/Phase-10.xml" status="done" />
-    <PHASE id="Phase-11" path="docs/phases/Phase-11.xml" status="planned" />
+    <PHASE id="Phase-11" path="docs/phases/Phase-11.xml" status="active" />
   </PHASES>
 </PLAN_INDEX>

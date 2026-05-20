@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-LSP
 // PURPOSE: LSP client bridge — sends guarded textDocument/hover, go-to-definition, references to language servers
-// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, LSP protocol via stdio
-// DEPENDS: N/A
+// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, Unicode-safe error previews, LSP protocol via stdio
+// DEPENDS: M-UTILS
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Guarded LSP position and stdio pipe error paths]
+// LAST_CHANGE: [v3.0.0 — Use Unicode-safe LSP error previews]
 // END_CHANGE_SUMMARY
 
 use std::process::{Command, Stdio};
@@ -252,7 +252,7 @@ impl LspClient {
         }
         anyhow::bail!(
             "Failed to parse LSP response: {}",
-            &stdout[..200.min(stdout.len())]
+            crate::utils::truncate_chars(&stdout, 200)
         )
     }
 }

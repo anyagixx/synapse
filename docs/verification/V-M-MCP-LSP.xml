@@ -8,6 +8,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>LSP line zero is handled without unsigned underflow before request dispatch.</ASSERTION>
     <ASSERTION>Missing LSP stdin pipes return errors instead of unwrap panics.</ASSERTION>
+    <ASSERTION>LSP parse error previews use Unicode-safe truncation.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

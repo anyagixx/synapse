@@ -25,7 +25,7 @@ curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh -o
 sh /tmp/synapse-install.sh --diagnose
 ```
 
-The report shows the detected Linux/macOS artifact, install directory status, required tools, checksum verifier availability, and the source fallback prerequisites. Use `SYN_INSTALL_DIR="$HOME/.local/bin"` when the default install path is not writable.
+The report shows OS and architecture support status, the detected Linux/macOS artifact, install directory status, required tools, checksum verifier availability, and the source fallback prerequisites. Use `SYN_INSTALL_DIR="$HOME/.local/bin"` when the default install path is not writable.
 
 ## Supported Prebuilt Archives
 

@@ -96,6 +96,7 @@
     <REL source="M-CLI-CODE-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-CODE-COMMANDS" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-CLI-CODE-COMMANDS" target="M-GRAPHRAG" type="DEPENDS" />
+    <REL source="M-CLI-CODE-COMMANDS" target="M-UTILS" type="DEPENDS" />
     <REL source="M-CLI-GRACE-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-GRACE-COMMANDS" target="M-GRACE" type="DEPENDS" />
     <REL source="M-CLI-GRACE-COMMANDS" target="M-GRACE-REFRESH" type="DEPENDS" />
@@ -139,6 +140,7 @@
     <REL source="M-GRACE-CONTRACT" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-GRACE-EXPLAIN" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-GRACE-FIX" target="M-INDEXER-STORAGE" type="DEPENDS" />
+    <REL source="M-GRACE-FIX" target="M-UTILS" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY" target="M-GRACE-INVENTORY-ARTIFACTS" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY" target="M-GRACE-INVENTORY-TYPES" type="DEPENDS" />
@@ -208,10 +210,13 @@
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-GRACE-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-UTILS" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-GRAPHRAG" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-MCP-LSP" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-UTILS" type="DEPENDS" />
+    <REL source="M-MCP-LSP" target="M-UTILS" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-GRACE" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-COMPRESS" type="DEPENDS" />
@@ -226,6 +231,7 @@
     <REL source="M-PROXY" target="M-PROXY-RUNNER" type="DEPENDS" />
     <REL source="M-PROXY" target="M-PROXY-FILTER" type="DEPENDS" />
     <REL source="M-PROXY" target="M-UTILS" type="DEPENDS" />
+    <REL source="M-PROXY-FILTER" target="M-UTILS" type="DEPENDS" />
     <REL source="M-SKILLS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-SKILLS" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-SKILLS" target="M-SKILLS-ENGINE" type="DEPENDS" />
@@ -241,6 +247,8 @@
     <REL source="M-TESTS-INTEGRATION" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-GRACE" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-TESTS-INTEGRATION" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-TESTS-INTEGRATION" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-CLI" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-MCP" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-SKILLS" type="DEPENDS" />

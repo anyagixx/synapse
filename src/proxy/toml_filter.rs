@@ -2,7 +2,7 @@
 // MODULE_ID: M-PROXY-FILTER
 // PURPOSE: TOML filter engine — applies regex-based output transformations from TOML filter definitions
 // SCOPE: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, 8-stage pipeline
-// DEPENDS: N/A
+// DEPENDS: M-UTILS
 // LINKS: builtin_filters.toml, ~/.config/synapse/filters.toml, .synapse/filters.toml
 
 // START_MODULE_MAP
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.0 — ANSI stripping uses cached fallback instead of unwrap panic]
+// LAST_CHANGE: [v2.2.0 — Use Unicode-safe line truncation]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
@@ -228,8 +228,8 @@ impl FilterEngine {
             filtered
                 .iter()
                 .map(|line| {
-                    if line.len() > max_len {
-                        format!("{}...", &line[..max_len])
+                    if line.chars().count() > max_len {
+                        crate::utils::truncate_chars(line, max_len)
                     } else {
                         line.to_string()
                     }
@@ -383,6 +383,21 @@ mod tests {
         let result = engine.apply(&filter, "\x1b[31mred\x1b[0m");
 
         assert_eq!(result, "red");
+    }
+
+    #[test]
+    fn test_apply_truncate_lines_at_preserves_utf8_boundaries() {
+        let engine = FilterEngine::new();
+        let filter = FilterDef {
+            truncate_lines_at: Some(1000),
+            ..Default::default()
+        };
+        let output = format!("{}😀x", "я".repeat(999));
+        let result = engine.apply(&filter, &output);
+
+        assert!(result.ends_with("..."));
+        assert!(result.is_char_boundary(result.len()));
+        assert!(result.contains('😀'));
     }
 }
 // END_public_api

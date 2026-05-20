@@ -2,11 +2,11 @@
 <MODULE id="M-TESTS-INTEGRATION" type="UTILITY" status="active">
   <NAME>M-TESTS-INTEGRATION</NAME>
   <PURPOSE>End-to-end integration tests for Synapse CLI commands</PURPOSE>
-  <SCOPE>init, clean config bootstrap, tracking identity, index, search, verify, status, proxy, gain, doctor, hooks, compress</SCOPE>
+  <SCOPE>init, clean config bootstrap, tracking identity, index, search, verify, status, proxy exit status, Unicode proxy truncation, gain graph, doctor, hooks, compress</SCOPE>
   <FILES>
     <FILE>tests/integration_test.rs</FILE>
   </FILES>
-  <DEPENDS>M-CLI,M-INDEXER,M-GRACE,M-CONFIG</DEPENDS>
+  <DEPENDS>M-CLI,M-INDEXER,M-GRACE,M-CONFIG,M-PROXY,M-TRACKING</DEPENDS>
   <LINKS></LINKS>
   <VERIFICATION_REF>V-M-TESTS-INTEGRATION</VERIFICATION_REF>
 </MODULE>

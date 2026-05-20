@@ -2,7 +2,7 @@
 // MODULE_ID: M-CLI-CODE-COMMANDS
 // PURPOSE: CLI code navigation command handlers
 // SCOPE: SearchCmd, ViewCmd, GrepCmd, GraphRagCmd, HistoryCmd
-// DEPENDS: M-CONFIG, M-INDEXER, M-GRAPHRAG
+// DEPENDS: M-CONFIG, M-INDEXER, M-GRAPHRAG, M-UTILS
 // LINKS: docs/modules/M-CLI.xml
 
 // START_MODULE_MAP
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Extracted code navigation CLI handlers from M-CLI]
+// LAST_CHANGE: [v2.8.0 — Use Unicode-safe previews for search and grep output]
 // END_CHANGE_SUMMARY
 
 use super::{GraphRagCmd, GrepCmd, HistoryCmd, SearchCmd, ViewCmd};
@@ -45,11 +45,8 @@ impl SearchCmd {
             return Ok(());
         }
         for (i, r) in results.iter().enumerate() {
-            let preview = if r.content.len() > 120 {
-                format!("{}...", &r.content[..120].replace('\n', " "))
-            } else {
-                r.content.replace('\n', " ")
-            };
+            let normalized = r.content.replace('\n', " ");
+            let preview = crate::utils::truncate_chars(&normalized, 120);
             println!(
                 "{}. {}:{} ({} {}) score={:.1}\n   {}",
                 i + 1,
@@ -143,11 +140,8 @@ impl GrepCmd {
 
                 if kind_match || name_match || content_match {
                     found += 1;
-                    let preview = if block.content.len() > 200 {
-                        format!("{}...", &block.content[..200].replace('\n', " "))
-                    } else {
-                        block.content.replace('\n', " ")
-                    };
+                    let normalized = block.content.replace('\n', " ");
+                    let preview = crate::utils::truncate_chars(&normalized, 200);
                     println!(
                         "{}:{} — {} ({})",
                         file.path, block.start_line, block.name, block.kind

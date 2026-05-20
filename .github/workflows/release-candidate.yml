@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.version_tag }}
 
       - name: Install Rust
         run: |
@@ -34,6 +36,43 @@ jobs:
         env:
           SYN_RELEASE_TAG: ${{ inputs.version_tag }}
           SYN_RC_SKIP_SMOKE: "1"
+
+  fresh-install:
+    name: Fresh install ${{ matrix.os }}
+    needs: dry-run
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux
+            runner: ubuntu-latest
+          - os: macos
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.version_tag }}
+
+      - name: Run public installer fresh smoke
+        run: bash scripts/fresh_install_smoke.sh
+        env:
+          SYN_RELEASE_TAG: ${{ inputs.version_tag }}
+          SYN_INSTALL_SCRIPT_URL: https://raw.githubusercontent.com/anyagixx/synapse/${{ inputs.version_tag }}/install.sh
+
+      - name: Summarize fresh install evidence
+        if: always()
+        run: |
+          commit="$(git rev-parse HEAD)"
+          {
+            echo "## Fresh install smoke"
+            echo ""
+            echo "- OS: \`${{ matrix.os }}\`"
+            echo "- Ref: \`${{ inputs.version_tag }}\`"
+            echo "- Commit: \`${commit}\`"
+            echo "- Command: \`bash scripts/fresh_install_smoke.sh\`"
+            echo "- Install dir: temporary \`SYN_INSTALL_DIR\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   installer-smoke:
     name: Smoke ${{ matrix.target }}
@@ -57,6 +96,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.version_tag }}
 
       - name: Install Rust
         run: |
@@ -78,10 +119,12 @@ jobs:
       - name: Summarize smoke evidence
         if: always()
         run: |
+          commit="$(git rev-parse HEAD)"
           {
             echo "## Release candidate smoke"
             echo ""
             echo "- Target: \`${{ matrix.target }}\`"
             echo "- Artifact: \`${{ matrix.artifact }}\`"
+            echo "- Commit: \`${commit}\`"
             echo "- Command: \`bash scripts/release_install_smoke.sh\`"
           } >> "$GITHUB_STEP_SUMMARY"

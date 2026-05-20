@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Extracted command run implementations into sharded CLI modules]
+// LAST_CHANGE: [v2.8.0 — Added gain graph flag schema]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -166,7 +166,14 @@ pub struct GraphRagCmd {
 }
 // END_GraphRagCmd
 
-cmd_struct!(GainCmd, "View token savings analytics");
+// START_GainCmd
+#[derive(clap::Args)]
+#[command(about = "View token savings analytics")]
+pub struct GainCmd {
+    #[arg(long)]
+    pub graph: bool,
+}
+// END_GainCmd
 
 // START_HooksCmd
 #[derive(clap::Args)]

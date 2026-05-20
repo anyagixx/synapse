@@ -1,14 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, install docs, Linux/macOS release matrix, checksum integrity, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, verify check count, public docs, install docs, Linux/macOS release matrix, checksum integrity, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
 
 // START_MODULE_MAP
 // test_mcp_tool_count_matches_capabilities — MCP tool count check
 // test_command_count_matches_capabilities — Command count check
 // test_verify_checks_consistent — Verify check consistency
-// test_no_ghost_commands — No ghost commands or obsolete public URLs
+// test_no_ghost_commands — No ghost commands, unsupported flags, or obsolete public URLs
 // test_install_default_version_matches_package — Installer default tag check
 // test_install_docs_use_supported_url — Install documentation URL check
 // test_release_tag_version_guard_is_enforced — Release tag/version guard check
@@ -23,7 +23,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 - Added Phase 8 public-doc, release tag, and audit policy truth gates]
+// LAST_CHANGE: [v4.1.0 - Added support docs and command-flag parity checks]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -40,6 +40,7 @@ const COMMANDS_DOC: &str = include_str!("../docs/COMMANDS.md");
 const QUICKSTART: &str = include_str!("../docs/QUICKSTART.md");
 const FAQ: &str = include_str!("../docs/FAQ.md");
 const WORKFLOW_DOC: &str = include_str!("../docs/WORKFLOW.md");
+const SUPPORT_DOC: &str = include_str!("../docs/SUPPORT.md");
 const INSTALL_COMMAND: &str =
     "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh";
 const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
@@ -50,33 +51,31 @@ const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
 ];
 // START_CONTRACT_public_docs
 // PURPOSE: Return public docs whose shipped-command and install claims must stay truthful
-// OUTPUTS: { [(&str, &str); 6] — doc display names and contents }
-fn public_docs() -> [(&'static str, &'static str); 6] {
-    [
+// OUTPUTS: { Vec<(&str, &str)> — doc display names and contents }
+fn public_docs() -> Vec<(&'static str, &'static str)> {
+    vec![
         ("README.md", README),
         ("INSTALL.md", INSTALL_DOC),
         ("docs/COMMANDS.md", COMMANDS_DOC),
         ("docs/QUICKSTART.md", QUICKSTART),
         ("docs/FAQ.md", FAQ),
         ("docs/WORKFLOW.md", WORKFLOW_DOC),
+        ("docs/SUPPORT.md", SUPPORT_DOC),
     ]
 }
 
-// START_CONTRACT_documented_syn_commands
-// PURPOSE: Extract command tokens documented after `syn` in code spans and shell snippets
+// START_CONTRACT_documented_syn_invocations
+// PURPOSE: Extract documented `syn ...` invocations from code spans and shell snippets
 // INPUTS: { doc: &str — markdown document content }
-// OUTPUTS: { Vec<String> — command or global flag token following syn }
-fn documented_syn_commands(doc: &str) -> Vec<String> {
-    let mut tokens = Vec::new();
+// OUTPUTS: { Vec<Vec<String>> — tokens following syn for each invocation }
+fn documented_syn_invocations(doc: &str) -> Vec<Vec<String>> {
+    let mut invocations = Vec::new();
     for line in doc.lines() {
         let trimmed = line.trim_start().trim_start_matches("$ ").trim_start();
         if let Some(rest) = trimmed.strip_prefix("syn ") {
-            if let Some(token) = rest.split_whitespace().next() {
-                tokens.push(
-                    token
-                        .trim_matches(|c: char| "`|,.;:)".contains(c))
-                        .to_string(),
-                );
+            let tokens = invocation_tokens(rest);
+            if !tokens.is_empty() {
+                invocations.push(tokens);
             }
         }
     }
@@ -84,17 +83,44 @@ fn documented_syn_commands(doc: &str) -> Vec<String> {
         if idx % 2 == 1 {
             let trimmed = segment.trim();
             if let Some(rest) = trimmed.strip_prefix("syn ") {
-                if let Some(token) = rest.split_whitespace().next() {
-                    tokens.push(
-                        token
-                            .trim_matches(|c: char| "`|,.;:)".contains(c))
-                            .to_string(),
-                    );
+                let tokens = invocation_tokens(rest);
+                if !tokens.is_empty() {
+                    invocations.push(tokens);
                 }
             }
         }
     }
-    tokens
+    invocations
+}
+
+// START_CONTRACT_invocation_tokens
+// PURPOSE: Normalize one documented syn invocation into comparable tokens
+// INPUTS: { rest: &str — text after `syn ` }
+// OUTPUTS: { Vec<String> — trimmed invocation tokens }
+fn invocation_tokens(rest: &str) -> Vec<String> {
+    rest.split_whitespace()
+        .map(|token| {
+            token
+                .trim_matches(|c: char| "`|,.;:)".contains(c))
+                .to_string()
+        })
+        .filter(|token| !token.is_empty())
+        .collect()
+}
+
+// START_CONTRACT_allowed_flags_for_command
+// PURPOSE: Return supported documented flags for a CLI command
+// INPUTS: { command: &str — command token after syn }
+// OUTPUTS: { &'static [&'static str] — allowed flags }
+fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
+    match command {
+        "gain" => &["--graph"],
+        "index" => &["--watch", "--no-git"],
+        "proxy" => &["--"],
+        "refresh" => &["--fix"],
+        "review" => &["--mode"],
+        _ => &[],
+    }
 }
 
 #[test]
@@ -174,7 +200,8 @@ fn test_no_ghost_commands() {
         assert!(!name.is_empty(), "Empty command name");
     }
     for (doc_name, doc) in public_docs() {
-        for token in documented_syn_commands(doc) {
+        for invocation in documented_syn_invocations(doc) {
+            let token = &invocation[0];
             if token.starts_with('-') {
                 assert!(
                     allowed_global_flags.contains(&token.as_str()),
@@ -189,6 +216,18 @@ fn test_no_ghost_commands() {
                     doc_name,
                     token
                 );
+            }
+            if !token.starts_with('-') {
+                let allowed_flags = allowed_flags_for_command(token);
+                for arg in invocation.iter().skip(1).filter(|arg| arg.starts_with('-')) {
+                    assert!(
+                        allowed_flags.contains(&arg.as_str()),
+                        "{} documents unsupported flag syn {} {}",
+                        doc_name,
+                        token,
+                        arg
+                    );
+                }
             }
         }
         for snippet in forbidden {

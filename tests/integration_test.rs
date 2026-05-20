@@ -157,6 +157,122 @@ fn test_proxy_and_gain() {
     );
 }
 
+// START_CONTRACT_test_proxy_preserves_nonzero_exit_status
+// PURPOSE: Verify syn proxy exits with the wrapped command status instead of masking failures
+// SIDE_EFFECTS: runs a failing shell command through syn proxy
+// START_test_proxy_preserves_nonzero_exit_status
+#[test]
+fn test_proxy_preserves_nonzero_exit_status() {
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+
+    let out = Command::new(&syn)
+        .args(["proxy", "--", "sh", "-c", "printf failure >&2; exit 7"])
+        .output()
+        .unwrap();
+
+    assert_eq!(
+        out.status.code(),
+        Some(7),
+        "proxy must preserve wrapped command status"
+    );
+    let combined = format!(
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(combined.contains("failure"), "proxy output: {combined}");
+}
+// END_test_proxy_preserves_nonzero_exit_status
+
+// START_CONTRACT_test_proxy_unicode_passthrough_truncates_without_panic
+// PURPOSE: Verify proxy passthrough truncation does not split UTF-8 characters
+// SIDE_EFFECTS: runs printf through syn proxy
+// START_test_proxy_unicode_passthrough_truncates_without_panic
+#[test]
+fn test_proxy_unicode_passthrough_truncates_without_panic() {
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+    let payload = format!("{}😀x", "я".repeat(1999));
+
+    let out = Command::new(&syn)
+        .args(["proxy", "--", "printf", "%s"])
+        .arg(&payload)
+        .output()
+        .unwrap();
+
+    assert!(
+        out.status.success(),
+        "proxy should not panic on UTF-8 truncation: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("[output truncated at 2000 chars]"),
+        "proxy should report truncation: {stdout}"
+    );
+    assert!(
+        stdout.contains('😀'),
+        "proxy should keep valid UTF-8: {stdout}"
+    );
+}
+// END_test_proxy_unicode_passthrough_truncates_without_panic
+
+// START_CONTRACT_test_proxy_tracking_records_positive_savings_and_gain_graph
+// PURPOSE: Verify project-local proxy filters produce tracked savings and gain --graph renders them
+// SIDE_EFFECTS: creates isolated project filter and tracking DB, runs syn proxy/gain
+// START_test_proxy_tracking_records_positive_savings_and_gain_graph
+#[test]
+fn test_proxy_tracking_records_positive_savings_and_gain_graph() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+    let filter_dir = dir.path().join(".synapse");
+    std::fs::create_dir(&filter_dir).unwrap();
+    std::fs::write(
+        filter_dir.join("filters.toml"),
+        "[[filters]]\nmatch_command = \"printf\"\nmax_lines = 1\n",
+    )
+    .unwrap();
+    let noisy = (1..=80).map(|i| format!("line {i}\n")).collect::<String>();
+
+    let out = Command::new(&syn)
+        .args(["proxy", "--", "printf", "%s"])
+        .arg(&noisy)
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "proxy failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+
+    let out = Command::new(&syn)
+        .args(["gain", "--graph"])
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "gain --graph failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let saved = stdout
+        .lines()
+        .find(|line| line.contains("Tokens saved:"))
+        .and_then(|line| line.split_whitespace().last())
+        .and_then(|value| value.parse::<u64>().ok())
+        .unwrap_or(0);
+    assert!(saved > 0, "expected positive token savings: {stdout}");
+    assert!(
+        stdout.contains("Savings graph:") && stdout.contains('#'),
+        "gain --graph should render savings bars: {stdout}"
+    );
+}
+// END_test_proxy_tracking_records_positive_savings_and_gain_graph
+
 // START_CONTRACT_test_tracking_is_scoped_by_canonical_project_path
 // PURPOSE: Verify tracking stats do not mix projects that share the same directory basename
 // SIDE_EFFECTS: creates isolated temp project and XDG data directories, runs syn proxy/gain

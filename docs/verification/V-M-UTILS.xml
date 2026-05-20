@@ -2,10 +2,12 @@
 <VERIFICATION id="V-M-UTILS" module="M-UTILS" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test utils::tests::test_truncate_chars_preserves_utf8_boundaries --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Shared ANSI stripping utility uses cached fallback regex construction and does not unwrap.</ASSERTION>
+    <ASSERTION>Shared truncation utility preserves UTF-8 boundaries and appends an ellipsis only when text is shortened.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

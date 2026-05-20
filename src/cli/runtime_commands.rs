@@ -7,6 +7,7 @@
 
 // START_MODULE_MAP
 // GainCmd::run — Prints token savings
+// print_savings_graph — Prints ASCII token-savings bars for top commands
 // ProxyCmd::run — Runs proxied shell commands
 // CompressCmd::run — Compresses or restores files
 // McpCmd::run — Starts MCP server
@@ -17,11 +18,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Treat missing user config as valid built-in defaults during clean-machine doctor checks]
+// LAST_CHANGE: [v3.1.0 — Preserve proxy exit codes and add gain graph output]
 // END_CHANGE_SUMMARY
 
 use super::{CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, ServeCmd};
 use crate::config::Config;
+use std::io::Write;
 
 // START_public_api
 
@@ -54,10 +56,51 @@ impl GainCmd {
                 );
             }
         }
+        if self.graph {
+            print_savings_graph(&stats.top_commands);
+        }
         Ok(())
     }
     // END_gain_run
 }
+
+// START_CONTRACT_print_savings_graph
+// PURPOSE: Render token savings by command as compact ASCII bars
+// INPUTS: { items: &[TrackingCommandStat] — top tracked command savings }
+// OUTPUTS: { stdout graph lines }
+// SIDE_EFFECTS: writes to stdout
+// START_print_savings_graph
+fn print_savings_graph(items: &[crate::tracking::TrackingCommandStat]) {
+    if items.is_empty() {
+        return;
+    }
+    let max_saved = items
+        .iter()
+        .map(|item| item.saved_tokens)
+        .max()
+        .unwrap_or(0);
+    println!();
+    println!("Savings graph:");
+    for item in items {
+        let width = if max_saved == 0 {
+            0
+        } else {
+            ((item.saved_tokens as f64 / max_saved as f64) * 24.0).round() as usize
+        };
+        let visible_width = if item.saved_tokens > 0 {
+            width.max(1)
+        } else {
+            0
+        };
+        println!(
+            "  {:<16} | {:<24} {}",
+            item.command,
+            "#".repeat(visible_width),
+            item.saved_tokens
+        );
+    }
+}
+// END_print_savings_graph
 
 impl ProxyCmd {
     // START_CONTRACT_ProxyCmd::run
@@ -72,7 +115,14 @@ impl ProxyCmd {
         }
         let proxy = crate::proxy::Proxy::new(&config);
         let output = proxy.execute(&self.args).await?;
-        println!("{}", output);
+        {
+            let mut stdout = std::io::stdout().lock();
+            writeln!(stdout, "{}", output.text)?;
+            stdout.flush()?;
+        }
+        if !output.success {
+            std::process::exit(output.status_code);
+        }
         Ok(())
     }
     // END_proxy_run
