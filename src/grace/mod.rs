@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules and belief state reporting
-// DEPENDS: M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,9 +11,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Registered observable belief state module]
+// LAST_CHANGE: [v2.14.0 — Registered XML-like anchor normalization module]
 // END_CHANGE_SUMMARY
 
+pub mod anchor;
 pub mod belief_state;
 pub mod bootstrap;
 pub mod contract;
@@ -38,6 +39,7 @@ use contract::ContractValidator;
 use std::path::Path;
 use verify::Verifier;
 
+pub use anchor::normalize_anchor_syntax;
 pub use contract::{GraceProfile, ModuleContract};
 
 // START_public_api

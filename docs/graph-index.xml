@@ -16,6 +16,7 @@
     <MODULE id="M-CONFIG" path="docs/modules/M-CONFIG.xml" status="active" />
     <MODULE id="M-DASHBOARD" path="docs/modules/M-DASHBOARD.xml" status="active" />
     <MODULE id="M-GRACE" path="docs/modules/M-GRACE.xml" status="active" />
+    <MODULE id="M-GRACE-ANCHOR" path="docs/modules/M-GRACE-ANCHOR.xml" status="active" />
     <MODULE id="M-GRACE-BELIEF-STATE" path="docs/modules/M-GRACE-BELIEF-STATE.xml" status="active" />
     <MODULE id="M-GRACE-BOOTSTRAP" path="docs/modules/M-GRACE-BOOTSTRAP.xml" status="active" />
     <MODULE id="M-GRACE-CONTRACT" path="docs/modules/M-GRACE-CONTRACT.xml" status="active" />
@@ -124,9 +125,11 @@
     <REL source="M-DASHBOARD" target="M-GRAPHRAG" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-GRACE-ANCHOR" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-GRACE-BELIEF-STATE" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-BELIEF-STATE" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-BELIEF-STATE" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-ANCHOR" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-BOOTSTRAP" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-BELIEF-STATE" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-CONTRACT" type="DEPENDS" />
@@ -145,6 +148,7 @@
     <REL source="M-GRACE-BOOTSTRAP" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-BOOTSTRAP" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-BOOTSTRAP" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-GRACE-CONTRACT" target="M-GRACE-ANCHOR" type="DEPENDS" />
     <REL source="M-GRACE-CONTRACT" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-GRACE-EXPLAIN" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-GRACE-FIX" target="M-INDEXER-STORAGE" type="DEPENDS" />
@@ -161,12 +165,14 @@
     <REL source="M-GRACE-INVENTORY-VERIFICATION" target="M-GRACE-INVENTORY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY-VERIFICATION" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-REFRESH" target="M-GRACE-INVENTORY" type="DEPENDS" />
+    <REL source="M-GRACE-REVIEW" target="M-GRACE-ANCHOR" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-BELIEF-STATE" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-LOG" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-SEMANTIC" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-GRACE-SEMANTIC" target="M-GRACE-ANCHOR" type="DEPENDS" />
     <REL source="M-GRACE-SEMANTIC" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-GRACE-BELIEF-STATE" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-GRACE-CONTRACT" type="DEPENDS" />
@@ -175,6 +181,7 @@
     <REL source="M-GRACE-STATUS" target="M-GRACE-REFRESH" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-GRACE-VERIFY" target="M-GRACE-ANCHOR" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-BELIEF-STATE" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-INVENTORY" type="DEPENDS" />

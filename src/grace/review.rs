@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG and belief state review, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added observable belief state review section]
+// LAST_CHANGE: [v2.14.0 — Added anchor syntax consistency review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -117,6 +117,31 @@ impl Reviewer {
                         .iter()
                         .map(|b| format!("Duplicate: {} at {}", b.name, b.file_path)),
                 )
+                .collect(),
+        });
+
+        let anchor_report = crate::grace::anchor::anchor_syntax_report(root)?;
+        sections.push(ReviewSection {
+            name: "anchor-syntax".into(),
+            passed: true,
+            details: if anchor_report.has_mixed_syntax() {
+                format!(
+                    "{} files mix XML-like and START/END anchors",
+                    anchor_report.mixed_files.len()
+                )
+            } else {
+                format!(
+                    "legacy_files={} xml_files={} legacy_anchors={} xml_anchors={}",
+                    anchor_report.legacy_files,
+                    anchor_report.xml_files,
+                    anchor_report.legacy_anchor_count,
+                    anchor_report.xml_anchor_count
+                )
+            },
+            issues: anchor_report
+                .mixed_files
+                .iter()
+                .map(|path| format!("Mixed anchor syntax in {}", path))
                 .collect(),
         });
 

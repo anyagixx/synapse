@@ -9,6 +9,7 @@
     <COMMAND>cargo test grace::contract::tests::test_typed_links_parse_direction_type_and_description --lib</COMMAND>
     <COMMAND>cargo test grace::contract::tests::test_invalid_typed_link_type_is_reported --lib</COMMAND>
     <COMMAND>cargo test grace::contract::tests::test_link_validation_reports_dangling_module_target --lib</COMMAND>
+    <COMMAND>cargo test grace::contract::tests::test_scan_file_with_xml_like_contracts --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -18,6 +19,7 @@
     <ASSERTION>Lite profile allows small helper files to rely on module-level contracts.</ASSERTION>
     <ASSERTION>Typed LINKS preserve direction, relationship type, target, and description while old LINKS remain legacy depends links.</ASSERTION>
     <ASSERTION>Invalid typed LINKS relationship labels and dangling module targets are reported separately from generic contract validity.</ASSERTION>
+    <ASSERTION>XML-like MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, FUNCTION_CONTRACT, and LINKS anchors parse through normalization.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

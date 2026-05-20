@@ -114,6 +114,7 @@ syn doctor --deps
 `MODULE_ID` должен быть одним значением вроде `M-BOT`; связанные модули перечисляются в `DEPENDS` или typed `LINKS`.
 Новый формат `LINKS` поддерживает направление и тип связи, например `→ M-STORAGE (depends) — persistence` или `← V-M-BOT (verified_by) — tests`.
 Старый `LINKS: M-STORAGE, V-M-BOT` остаётся совместимым и трактуется как legacy `depends`.
+Semantic anchors теперь можно писать и в GRACE XML-like стиле (`// <BLOCK name="validate"> ... // </BLOCK>`); старый `START_/END_` синтаксис остаётся совместимым, а `anchor-syntax-consistent` показывает смешанные файлы как warning.
 
 ---
 
@@ -248,12 +249,12 @@ my-project/
 | Зависимости | 0 внешних системных (всё статически слинковано) |
 | MCP инструментов | **29** |
 | CLI команд | 19 |
-| Проверок verify | 18 |
+| Проверок verify | 19 |
 | GRACE workflow tools | 15 |
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
-| Тестов | **120** (cargo test --all-targets) |
+| Тестов | **127** (cargo test --all-targets) |
 | Контрактов в своём коде | **40/40** |
 | self-verify | **ALL PASS** |
 

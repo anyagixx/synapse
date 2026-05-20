@@ -21,6 +21,7 @@
   </SOURCE_GUIDE>
   <MODULE_REFS>
     <MODULE_REF id="M-GRACE" />
+    <MODULE_REF id="M-GRACE-ANCHOR" />
     <MODULE_REF id="M-GRACE-BELIEF-STATE" />
     <MODULE_REF id="M-GRACE-CONTRACT" />
     <MODULE_REF id="M-GRACE-SEMANTIC" />
@@ -52,7 +53,7 @@
     <rule-5>Keep legacy behavior compatible unless the guide explicitly makes a new check strict. Old LINKS and START/END anchors must keep working during migration.</rule-5>
   </EXECUTION_POLICY>
   <SPRINTS>
-    <sprint-1 name="P0 Foundation" status="pending">
+    <sprint-1 name="P0 Foundation" status="done">
       <step-1 section="1.5" status="done" priority="P0">
         <TITLE>Typed LINKS Format Upgrade</TITLE>
         <INTENT>Introduce typed, directional semantic links while preserving old comma-separated LINKS as backward-compatible warnings.</INTENT>
@@ -71,11 +72,11 @@
         <IMPLEMENTATION>Create M-GRACE-BELIEF-STATE module, docs/belief-states directory support, parser/validator, belief-state-exists verify check, status/review coverage, and extract_belief_state MCP handler.</IMPLEMENTATION>
         <VERIFY status="passed">Tests for valid belief state parsing, missing required field validation, storage artifact generation, MCP storage path, skills/MCP count parity, and belief-state verify/review/status coverage.</VERIFY>
       </step-3>
-      <step-4 section="4.1" status="pending" priority="P0">
+      <step-4 section="4.1" status="done" priority="P0">
         <TITLE>XML-like Anchor Syntax</TITLE>
         <INTENT>Support GRACE XML-like anchors alongside legacy START/END anchors through normalization and parser support.</INTENT>
         <IMPLEMENTATION>Extend semantic extractor and contract parser to recognize MODULE, BLOCK, METHOD, FUNCTION_CONTRACT, LOG, BELIEF_STATE, and LINKS XML-like anchors; add normalize_anchor_syntax; add anchor-syntax-consistent warning; update AGENTS.md.</IMPLEMENTATION>
-        <VERIFY>Tests for XML-like blocks, nested anchors, XML-like function contracts, mixed syntax warning, normalization, and legacy regression.</VERIFY>
+        <VERIFY status="passed">Tests for XML-like blocks, nested anchors, XML-like function contracts, mixed syntax warning, normalization, markdown-example skip, and legacy regression.</VERIFY>
       </step-4>
     </sprint-1>
     <sprint-2 name="P1 Core Artifacts" status="pending">
@@ -147,9 +148,9 @@
     <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 1 step-4 section 4.1 XML-like Anchor Syntax.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-SEMANTIC.xml, docs/modules/M-GRACE-CONTRACT.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.1-xml-anchor-syntax.md</SOURCE_SPEC>
+    <NEXT_ACTION>Begin Sprint 2 step-5 section 2.1 RequirementsAnalysis with AAG Notation.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-LAYOUT.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.1-requirements-analysis.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

@@ -144,6 +144,28 @@ def parse_date(value: str): ...
 CREATE TABLE users (...);
 ```
 
+### Semantic Markup Styles
+
+Both styles are valid. For new GRACE-heavy modules, prefer XML-like anchors because paired tags carry stronger structure in long contexts. Keep one style per file when practical; `anchor-syntax-consistent` reports mixed files as a warning.
+
+XML-like:
+
+```
+// <MODULE name="OrderService">
+//   <BLOCK name="stock-validation">
+//     ... code ...
+//   </BLOCK>
+// </MODULE>
+```
+
+Legacy START/END:
+
+```
+// START_stock-validation
+// ... code ...
+// END_stock-validation
+```
+
 ### Semantic Markup Rules
 
 1. **500-token granularity**: blocks should be ~500 TOKENS when they grow. Do not split tiny files or 20-line helpers just to satisfy a number.

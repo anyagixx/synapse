@@ -16,6 +16,7 @@
     <VERIFICATION id="V-M-CONFIG" module="M-CONFIG" path="docs/verification/V-M-CONFIG.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-DASHBOARD" module="M-DASHBOARD" path="docs/verification/V-M-DASHBOARD.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE" module="M-GRACE" path="docs/verification/V-M-GRACE.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-ANCHOR" module="M-GRACE-ANCHOR" path="docs/verification/V-M-GRACE-ANCHOR.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-BELIEF-STATE" module="M-GRACE-BELIEF-STATE" path="docs/verification/V-M-GRACE-BELIEF-STATE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-BOOTSTRAP" module="M-GRACE-BOOTSTRAP" path="docs/verification/V-M-GRACE-BOOTSTRAP.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-CONTRACT" module="M-GRACE-CONTRACT" path="docs/verification/V-M-GRACE-CONTRACT.xml" priority="normal" status="active" />

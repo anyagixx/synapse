@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG and belief-state validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
-// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added observable belief state verification]
+// LAST_CHANGE: [v2.14.0 — Added anchor syntax consistency verification]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -312,6 +312,29 @@ impl Verifier {
                 });
             }
         }
+
+        let anchor_report = crate::grace::anchor::anchor_syntax_report(root)?;
+        checks.push(CheckResult {
+            name: "anchor-syntax-consistent".into(),
+            passed: true,
+            details: if anchor_report.has_mixed_syntax() {
+                format!(
+                    "{} files mix XML-like and START/END anchors: {:?}",
+                    anchor_report.mixed_files.len(),
+                    anchor_report.mixed_files
+                )
+            } else if anchor_report.xml_anchor_count > 0 {
+                format!(
+                    "XML-like anchor style used consistently in {} files",
+                    anchor_report.xml_files
+                )
+            } else {
+                format!(
+                    "Legacy START/END anchor style used consistently in {} files",
+                    anchor_report.legacy_files
+                )
+            },
+        });
 
         // Check 500-token rule on XML artifacts (tokens ≈ chars/4)
         let templates = [

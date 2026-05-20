@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-CONTRACT
 // PURPOSE: MODULE_CONTRACT validator — scans source files for language-aware GRACE contract blocks and validates contracts plus typed LINKS
-// SCOPE: GraceProfile, TypedLink, ModuleContract, FunctionContract, ContractReport models, ContractValidator scan/validate/link-validation APIs
-// DEPENDS: M-INDEXER-WALKER
+// SCOPE: GraceProfile, TypedLink, ModuleContract, FunctionContract, ContractReport models, XML-like anchor normalization, ContractValidator scan/validate/link-validation APIs
+// DEPENDS: M-GRACE-ANCHOR, M-INDEXER-WALKER
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -12,11 +12,11 @@
 // FunctionContract — Parsed START_CONTRACT block for a function
 // ContractReport — Aggregate contract validation report
 // LinkValidationReport — Aggregate typed LINKS validation report
-// ContractValidator — Scans and validates GRACE contract blocks
+// ContractValidator — Scans and validates GRACE contract blocks after anchor syntax normalization
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Added typed LINKS parsing, legacy compatibility, and link validation reports]
+// LAST_CHANGE: [v2.13.0 — Added XML-like contract anchor support]
 // END_CHANGE_SUMMARY
 
 use std::collections::HashSet;
@@ -324,6 +324,8 @@ impl ContractValidator {
         profile: GraceProfile,
     ) -> ModuleContract {
         let file_path = path.to_string_lossy().to_string();
+        let normalized_content = crate::grace::anchor::normalize_anchor_syntax(content);
+        let scan_content = normalized_content.as_str();
         let mut mc = ModuleContract {
             file_path,
             module_id: None,
@@ -340,7 +342,7 @@ impl ContractValidator {
             errors: Vec::new(),
         };
 
-        let contract_block = Self::find_contract_block(content);
+        let contract_block = Self::find_contract_block(scan_content);
         let block = match contract_block {
             Some(b) => b,
             None => return mc,
@@ -349,15 +351,15 @@ impl ContractValidator {
         mc.has_contract = true;
 
         // Check for MODULE_MAP
-        mc.has_module_map = contains_metadata_marker(content, "START_MODULE_MAP")
-            || contains_metadata_marker(content, "MODULE_MAP");
+        mc.has_module_map = contains_metadata_marker(scan_content, "START_MODULE_MAP")
+            || contains_metadata_marker(scan_content, "MODULE_MAP");
 
         // Check for CHANGE_SUMMARY
-        mc.has_change_summary = contains_metadata_marker(content, "START_CHANGE_SUMMARY")
-            || contains_metadata_marker(content, "CHANGE_SUMMARY");
+        mc.has_change_summary = contains_metadata_marker(scan_content, "START_CHANGE_SUMMARY")
+            || contains_metadata_marker(scan_content, "CHANGE_SUMMARY");
 
         // Extract function contracts
-        mc.function_contracts = Self::extract_function_contracts(content);
+        mc.function_contracts = Self::extract_function_contracts(scan_content);
 
         let lines: Vec<String> = block
             .lines()
@@ -1025,6 +1027,43 @@ mod tests {
         assert_eq!(mc.function_contracts[0].outputs.len(), 1);
         assert_eq!(mc.function_contracts[0].side_effects.len(), 1);
         assert!(mc.valid);
+    }
+
+    #[test]
+    fn test_scan_file_with_xml_like_contracts() {
+        let code = concat!(
+            "// <MODULE_CONTRACT>\n",
+            "// MODULE_ID: M-XML\n",
+            "// PURPOSE: XML contract module\n",
+            "// SCOPE: XML-compatible contract parsing\n",
+            "// DEPENDS: M-GRACE-ANCHOR\n",
+            "// <LINKS>\n",
+            "//   → V-M-XML (verified_by) — tests\n",
+            "// </LINKS>\n",
+            "// </MODULE_CONTRACT>\n",
+            "// <MODULE_MAP>\n",
+            "// parse_xml — parses XML-like contract\n",
+            "// </MODULE_MAP>\n",
+            "// <CHANGE_SUMMARY>\n",
+            "// LAST_CHANGE: [v1.0.0 — XML anchors]\n",
+            "// </CHANGE_SUMMARY>\n",
+            "// <FUNCTION_CONTRACT name=\"parse_xml\">\n",
+            "// PURPOSE: Parse XML-like contract\n",
+            "// INPUTS: { content: &str }\n",
+            "// OUTPUTS: { bool }\n",
+            "// SIDE_EFFECTS: none\n",
+            "// </FUNCTION_CONTRACT>\n",
+            "fn parse_xml(_content: &str) -> bool { true }\n",
+        );
+        let mc = ContractValidator::scan_file(Path::new("src/xml.rs"), code);
+        assert!(mc.has_contract);
+        assert_eq!(mc.module_id.as_deref(), Some("M-XML"));
+        assert!(mc.has_module_map);
+        assert!(mc.has_change_summary);
+        assert_eq!(mc.function_contracts.len(), 1);
+        assert_eq!(mc.function_contracts[0].name, "parse_xml");
+        assert_eq!(mc.links.len(), 1);
+        assert!(!mc.links[0].legacy);
     }
 
     #[test]

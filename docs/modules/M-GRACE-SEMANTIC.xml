@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-SEMANTIC" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-SEMANTIC</NAME>
-  <PURPOSE>Semantic block scanner — extracts language-aware START_/END_ block pairs from source files</PURPOSE>
-  <SCOPE>SemanticExtractor, SemanticBlock, SemanticReport, extract_blocks, scan_project, comment marker normalization</SCOPE>
+  <PURPOSE>Semantic block scanner — extracts language-aware START_/END_ and XML-like anchor block pairs from source files</PURPOSE>
+  <SCOPE>SemanticExtractor, SemanticBlock, SemanticReport, extract_blocks, scan_project, comment marker normalization, XML-like anchor normalization</SCOPE>
   <FILES>
     <FILE>src/grace/semantic.rs</FILE>
   </FILES>
-  <DEPENDS>M-INDEXER-WALKER</DEPENDS>
+  <DEPENDS>M-GRACE-ANCHOR,M-INDEXER-WALKER</DEPENDS>
   <LINKS></LINKS>
   <VERIFICATION_REF>V-M-GRACE-SEMANTIC</VERIFICATION_REF>
 </MODULE>

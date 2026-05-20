@@ -5,11 +5,16 @@
     <COMMAND>cargo test grace::semantic::tests::test_extract_blocks_ignores_orphan_end_marker --lib</COMMAND>
     <COMMAND>cargo test grace::semantic::tests::test_extract_blocks_supports_sql_markers --lib</COMMAND>
     <COMMAND>cargo test grace::semantic::tests::test_extract_blocks_supports_html_markers --lib</COMMAND>
+    <COMMAND>cargo test grace::semantic::tests::test_extract_blocks_supports_xml_like_anchors --lib</COMMAND>
+    <COMMAND>cargo test grace::semantic::tests::test_extract_blocks_supports_nested_xml_like_anchors --lib</COMMAND>
+    <COMMAND>cargo test grace::semantic::tests::test_scan_project_skips_markdown_examples --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Semantic extraction ignores orphan END markers without stack unwrap panic paths.</ASSERTION>
     <ASSERTION>Semantic extraction recognizes SQL -- and HTML comment START/END marker syntax.</ASSERTION>
+    <ASSERTION>Semantic extraction recognizes XML-like BLOCK and nested MODULE/BLOCK anchors through normalization.</ASSERTION>
+    <ASSERTION>Project scan skips markdown documentation examples to avoid false duplicate anchor reports.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

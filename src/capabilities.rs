@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, typed LINKS/belief-state/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added extract_belief_state MCP capability and belief-state verify check]
+// LAST_CHANGE: [v2.14.0 — Added anchor-syntax-consistent verify check]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -233,6 +233,7 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "links-format",
     "semantic-blocks",
     "unique-block-names",
+    "anchor-syntax-consistent",
     "500-token-rule",
     "trace-assertions",
     "structured-log-format",

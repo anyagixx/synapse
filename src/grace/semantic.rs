@@ -1,18 +1,18 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-SEMANTIC
-// PURPOSE: Semantic block scanner — extracts language-aware START_/END_ block pairs from source files
-// SCOPE: SemanticExtractor, SemanticBlock, SemanticReport, extract_blocks, scan_project, comment marker normalization
-// DEPENDS: M-INDEXER-WALKER
+// PURPOSE: Semantic block scanner — extracts language-aware START_/END_ and XML-like anchor block pairs from source files
+// SCOPE: SemanticExtractor, SemanticBlock, SemanticReport, extract_blocks, scan_project, comment marker normalization, XML-like anchor normalization
+// DEPENDS: M-GRACE-ANCHOR, M-INDEXER-WALKER
 // LINKS: N/A
 
 // START_MODULE_MAP
 // SemanticBlock — A single START/END block with name, location, content, closure status
 // SemanticReport — Aggregate semantic markup report across project
-// SemanticExtractor — Scans project for semantic block markers
+// SemanticExtractor — Scans project for semantic block markers after anchor syntax normalization
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Added language-aware semantic markers for Python, SQL, and block comments]
+// LAST_CHANGE: [v2.13.0 — Added XML-like anchor syntax support]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
@@ -66,7 +66,7 @@ impl SemanticExtractor {
     // END_se_new
 
     // START_CONTRACT_SemanticExtractor::extract_blocks
-    // PURPOSE: Extract all START_/END_ block pairs from a single file
+    // PURPOSE: Extract all START_/END_ and XML-like block pairs from a single file
     // INPUTS: { path: &Path }, { content: &str }
     // OUTPUTS: { Vec<SemanticBlock> }
     // START_se_extract_blocks
@@ -74,7 +74,8 @@ impl SemanticExtractor {
         let file_path = path.to_string_lossy().to_string();
         let mut blocks = Vec::new();
         let mut stack: Vec<(String, usize)> = Vec::new(); // name, start_line
-        let lines: Vec<&str> = content.lines().collect();
+        let normalized = crate::grace::anchor::normalize_anchor_syntax(content);
+        let lines: Vec<&str> = normalized.lines().collect();
 
         for (i, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
@@ -141,6 +142,9 @@ impl SemanticExtractor {
         report.total_files = files.len();
 
         for file in &files {
+            if file.language == "markdown" {
+                continue;
+            }
             let full_path = root.join(&file.path);
             if let Ok(content) = std::fs::read_to_string(&full_path) {
                 let blocks = Self::extract_blocks(&full_path, &content);
@@ -268,6 +272,62 @@ mod tests {
         assert_eq!(blocks.len(), 1);
         assert_eq!(blocks[0].name, "content");
         assert!(blocks[0].is_closed);
+    }
+
+    #[test]
+    fn test_extract_blocks_supports_xml_like_anchors() {
+        let blocks = SemanticExtractor::extract_blocks(
+            Path::new("src/order.rs"),
+            concat!(
+                "// <BLOCK name=\"stock-validation\">\n",
+                "let valid = true;\n",
+                "// </BLOCK>\n",
+            ),
+        );
+
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(blocks[0].name, "stock-validation");
+        assert!(blocks[0].is_closed);
+    }
+
+    #[test]
+    fn test_extract_blocks_supports_nested_xml_like_anchors() {
+        let blocks = SemanticExtractor::extract_blocks(
+            Path::new("src/order.rs"),
+            concat!(
+                "// <MODULE name=\"OrderService\">\n",
+                "// <BLOCK name=\"stock-validation\">\n",
+                "let valid = true;\n",
+                "// </BLOCK>\n",
+                "// </MODULE>\n",
+            ),
+        );
+
+        assert_eq!(blocks.len(), 2);
+        assert!(blocks.iter().any(|block| block.name == "stock-validation"));
+        assert!(blocks
+            .iter()
+            .any(|block| block.name == "MODULE_OrderService"));
+    }
+
+    #[test]
+    fn test_scan_project_skips_markdown_examples() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::write(
+            dir.path().join("README.md"),
+            concat!(
+                "```rust\n",
+                "// <BLOCK name=\"same\">\n",
+                "// </BLOCK>\n",
+                "// START_same\n",
+                "// END_same\n",
+                "```\n",
+            ),
+        )
+        .expect("write markdown");
+        let report = SemanticExtractor::scan_project(dir.path()).expect("scan");
+        assert!(report.blocks.is_empty());
+        assert!(report.duplicate_name_blocks.is_empty());
     }
 }
 // END_public_api
