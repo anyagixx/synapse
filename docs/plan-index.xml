@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PLAN_INDEX>
-  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY><ACTIVE_PHASE>Phase-11</ACTIVE_PHASE></META>
+  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY><ACTIVE_PHASE>none</ACTIVE_PHASE></META>
   <PHASES>
     <PHASE id="Phase-0" path="docs/phases/Phase-0.xml" status="done" />
     <PHASE id="Phase-1" path="docs/phases/Phase-1.xml" status="done" />
@@ -14,5 +14,6 @@
     <PHASE id="Phase-9" path="docs/phases/Phase-9.xml" status="done" />
     <PHASE id="Phase-10" path="docs/phases/Phase-10.xml" status="done" />
     <PHASE id="Phase-11" path="docs/phases/Phase-11.xml" status="done" />
+    <PHASE id="Phase-12" path="docs/phases/Phase-12.xml" status="done" />
   </PHASES>
 </PLAN_INDEX>

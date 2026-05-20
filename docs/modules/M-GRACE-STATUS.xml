@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-STATUS" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-STATUS</NAME>
-  <PURPOSE>Project health collector — aggregates contracts, semantic, verification, drift, token economy, system info</PURPOSE>
-  <SCOPE>StatusCollector, StatusReport, TokenEconomy, SystemInfo, print_report</SCOPE>
+  <PURPOSE>Project health collector — aggregates contracts, semantic, verification, drift, token economy, phase state, and system info</PURPOSE>
+  <SCOPE>StatusCollector, StatusReport, TokenEconomy, SystemInfo, print_report, and active-phase display that reports no active phase when all indexed phase shards are done</SCOPE>
   <FILES>
     <FILE>src/grace/status.rs</FILE>
   </FILES>

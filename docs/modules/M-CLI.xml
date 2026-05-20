@@ -2,7 +2,7 @@
 <MODULE id="M-CLI" type="ENTRY_POINT" status="active">
   <NAME>M-CLI</NAME>
   <PURPOSE>CLI schema facade — clap-powered top-level parser, command enum, and command argument structs</PURPOSE>
-  <SCOPE>SynCli, Command enum, command argument structs including gain --graph, CI action enum</SCOPE>
+  <SCOPE>SynCli, Command enum, command argument structs including gain --graph, stdio-only mcp command, and CI action enum</SCOPE>
   <FILES>
     <FILE>src/cli.rs</FILE>
   </FILES>

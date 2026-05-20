@@ -13,6 +13,7 @@
     <ASSERTION>Doctor reports missing user config as valid built-in defaults after clean init.</ASSERTION>
     <ASSERTION>ProxyCmd propagates wrapped command exit status after printing filtered output.</ASSERTION>
     <ASSERTION>GainCmd supports --graph and renders tracked savings bars.</ASSERTION>
+    <ASSERTION>McpCmd starts the stdio MCP server only; HTTP/LSP options are not public flags until implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7</PHASE_GATE>
+  <PHASE_GATE>Phase-12</PHASE_GATE>
 </VERIFICATION>

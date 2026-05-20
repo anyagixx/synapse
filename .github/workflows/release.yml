@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Install Rust
         run: |
@@ -55,6 +57,8 @@ jobs:
             runner: macos-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Install Rust
         run: |
@@ -69,6 +73,11 @@ jobs:
 
       - name: Verify release tag matches Cargo version
         run: bash scripts/release_version_guard.sh
+        env:
+          SYN_RELEASE_TAG: ${{ github.ref_name }}
+
+      - name: Verify release tag points at this commit
+        run: bash scripts/release_freshness_guard.sh
         env:
           SYN_RELEASE_TAG: ${{ github.ref_name }}
 

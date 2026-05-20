@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.4.0 (2026-05-20)
+
+- Prepared first public Linux/macOS release candidate after Phase 11 hardening
+- Bumped release line beyond `v2.3.5` so post-release fixes are not hidden behind a stale installer tag
+- Added release freshness guard for stale tag detection in local, CI, release-candidate, and release workflows
+- Added commit-pinned fresh-install smoke and a default main source fallback for the short pre-tag release-candidate window
+- Kept package metadata publishable by using Cargo package `synapse-agent` while preserving the `syn` binary and library crate
+- Removed unimplemented public MCP HTTP/LSP flags until those transports are real
+- Clarified privacy and token-savings claims in public documentation
+
 ## 2.3.0 (2026-05-16)
 
 - Capabilities registry (`src/capabilities.rs`) — single source of truth

@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Preserve proxy exit codes and add gain graph output]
+// LAST_CHANGE: [v3.2.0 — Keep public MCP command stdio-only until HTTP transport exists]
 // END_CHANGE_SUMMARY
 
 use super::{CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, ServeCmd};
@@ -152,19 +152,14 @@ impl CompressCmd {
 
 impl McpCmd {
     // START_CONTRACT_McpCmd::run
-    // PURPOSE: Start MCP server over stdio or HTTP stub mode
+    // PURPOSE: Start MCP server over stdio
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: starts MCP server loop
     // START_mcp_run
     pub async fn run(&self, config: Config) -> anyhow::Result<()> {
         let server = crate::mcp::server::McpServer::new(config);
-        if self.http {
-            let bind = self.bind.as_deref().unwrap_or("127.0.0.1:3100");
-            server.start_http(bind).await
-        } else {
-            server.start_stdio().await
-        }
+        server.start_stdio().await
     }
     // END_mcp_run
 }

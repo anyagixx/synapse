@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VERIFICATION id="V-M-CI-RELEASE-SMOKE" module="M-CI-RELEASE-SMOKE" priority="normal" status="active">
   <UNIT_TESTS>
-    <COMMAND>SYN_RELEASE_TAG=v2.3.5 bash scripts/release_version_guard.sh</COMMAND>
+    <COMMAND>SYN_RELEASE_TAG=v2.4.0 bash scripts/release_version_guard.sh</COMMAND>
+    <COMMAND>SYN_RELEASE_TAG=v2.4.0 bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>cargo test --test docs_parity</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
     <MARKER>[CI][release_version_guard][VALIDATE]</MARKER>
     <MARKER>[CI][release_version_guard][PASS]</MARKER>
+    <MARKER>[CI][release_freshness_guard][CHECK]</MARKER>
+    <MARKER>[CI][release_freshness_guard][PASS]</MARKER>
     <MARKER>[CI][release_install_smoke][BUILD]</MARKER>
     <MARKER>[CI][release_install_smoke][PACKAGE]</MARKER>
     <MARKER>[CI][release_install_smoke][CHECKSUM]</MARKER>
@@ -15,7 +18,8 @@
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Release version guard rejects tags that differ from v&lt;Cargo.toml package.version&gt; before release packaging.</ASSERTION>
+    <ASSERTION>Release freshness guard rejects stale already-published tags and requires exact tag checkout in release context.</ASSERTION>
     <ASSERTION>Release smoke builds with locked dependencies, packages installer-facing Linux/macOS target tarballs, verifies checksum sidecars, extracts artifacts, and asserts packaged syn --version equals Cargo.toml package.version on runnable host targets.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-8</PHASE_GATE>
+  <PHASE_GATE>Phase-12</PHASE_GATE>
 </VERIFICATION>

@@ -2,10 +2,11 @@
 <MODULE id="M-CI" type="CORE_LOGIC" status="active">
   <NAME>M-CI</NAME>
   <PURPOSE>CI quality gate — runs Rust checks, release truth gates, security audit, release-candidate dry-runs, and MyGRACE truth gates in reproducible entrypoints</PURPOSE>
-  <SCOPE>Formatting, linting, runtime panic guard, tests with isolated XDG data path, Linux/macOS hosted platform tests, push-time public fresh-install smoke, release tag guard, release-candidate dry-run policy and GitHub Step Summary evidence, public fresh-install smoke, Linux/macOS release/install smoke matrix, strict cargo audit warning policy, Node 24-ready workflow actions, shell-based Rust toolchain setup, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
+  <SCOPE>Formatting, linting, runtime panic guard, tests with isolated XDG data path, Linux/macOS hosted platform tests, push-time public fresh-install smoke pinned to the workflow commit, release tag/version guard, release freshness guard, release-candidate dry-run policy and GitHub Step Summary evidence, public fresh-install smoke, Linux/macOS release/install smoke matrix, strict cargo audit warning policy, Node 24-ready workflow actions, shell-based Rust toolchain setup, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
   <FILES>
     <FILE>scripts/ci.sh</FILE>
     <FILE>scripts/fresh_install_smoke.sh</FILE>
+    <FILE>scripts/release_freshness_guard.sh</FILE>
     <FILE>scripts/release_candidate_dry_run.sh</FILE>
     <FILE>.github/workflows/ci.yml</FILE>
     <FILE>.github/workflows/release-candidate.yml</FILE>

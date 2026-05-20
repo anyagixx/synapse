@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, semantic, verification, drift, token economy, system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, print_report
+// PURPOSE: Project health collector — aggregates contracts, semantic, verification, drift, token economy, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, print_report, active-phase display helpers
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.5.0 — Added explicit MyGRACE health derived from canonical drift]
+// LAST_CHANGE: [v2.8.0 — Print no-active-phase state consistently in status output]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -162,14 +162,9 @@ impl StatusCollector {
             );
         }
 
-        let active_phase = regex::Regex::new(r#"<ACTIVE_PHASE>([^<]+)</ACTIVE_PHASE>"#)
-            .ok()
-            .and_then(|re| re.captures(&plan_index).map(|c| c[1].to_string()))
-            .unwrap_or_else(|| "unknown".into());
-
         next_actions.push(format!(
-            "Active phase: {} | shard coverage: graph={} plan={} verification={} modules={} phases={} verifications={}",
-            active_phase,
+            "{} | shard coverage: graph={} plan={} verification={} modules={} phases={} verifications={}",
+            active_phase_label(&plan_index),
             u8::from(layout.graph_index_path().exists()),
             u8::from(layout.plan_index_path().exists()),
             u8::from(layout.verification_index_path().exists()),
@@ -242,13 +237,8 @@ impl StatusCollector {
             .map(|it| it.filter_map(|e| e.ok()).count())
             .unwrap_or(0);
         let active_phase = std::fs::read_to_string(layout.plan_index_path())
-            .ok()
-            .and_then(|content| {
-                regex::Regex::new(r#"<ACTIVE_PHASE>([^<]+)</ACTIVE_PHASE>"#)
-                    .ok()
-                    .and_then(|re| re.captures(&content).map(|c| c[1].to_string()))
-            })
-            .unwrap_or_else(|| "unknown".into());
+            .map(|content| active_phase_table_value(&content))
+            .unwrap_or_else(|_| "unknown".into());
 
         println!("╔══════════════════════════════════════╗");
         println!("║       Synapse Project Health        ║");
@@ -367,5 +357,83 @@ impl StatusCollector {
         }
     }
     // END_sc_print_report
+}
+
+// START_CONTRACT_active_phase_label
+// PURPOSE: Format active phase status for next-action output without reviving completed phases.
+// INPUTS: { plan_index: &str — plan-index.xml content }
+// OUTPUTS: { String — active phase or no-active-phase label }
+// START_active_phase_label
+fn active_phase_label(plan_index: &str) -> String {
+    match active_phase_display_value(plan_index).as_str() {
+        "none" | "unknown" => "No active phase".into(),
+        phase => format!("Active phase: {}", phase),
+    }
+}
+// END_active_phase_label
+
+// START_CONTRACT_active_phase_table_value
+// PURPOSE: Format active phase status for the status table without showing a completed phase as active.
+// INPUTS: { plan_index: &str — plan-index.xml content }
+// OUTPUTS: { String — active phase id or no-active-phase label }
+// START_active_phase_table_value
+fn active_phase_table_value(plan_index: &str) -> String {
+    match active_phase_display_value(plan_index).as_str() {
+        "none" | "unknown" => "No active phase".into(),
+        phase => phase.into(),
+    }
+}
+// END_active_phase_table_value
+
+// START_CONTRACT_active_phase_display_value
+// PURPOSE: Return ACTIVE_PHASE only when its plan-index entry is not done.
+// INPUTS: { plan_index: &str — plan-index.xml content }
+// OUTPUTS: { String — active phase id, none, or unknown }
+// START_active_phase_display_value
+fn active_phase_display_value(plan_index: &str) -> String {
+    let active = regex::Regex::new(r#"<ACTIVE_PHASE>([^<]+)</ACTIVE_PHASE>"#)
+        .ok()
+        .and_then(|re| re.captures(plan_index).map(|c| c[1].to_string()))
+        .unwrap_or_else(|| "unknown".into());
+    if active == "unknown" || active == "none" {
+        return active;
+    }
+    let active_entry = format!(
+        r#"<PHASE\s+id="{}"[^>]*status="([^"]+)""#,
+        regex::escape(&active)
+    );
+    match regex::Regex::new(&active_entry)
+        .ok()
+        .and_then(|re| re.captures(plan_index).map(|c| c[1].to_string()))
+        .as_deref()
+    {
+        Some("done") => "none".into(),
+        Some(_) => active,
+        None => active,
+    }
+}
+// END_active_phase_display_value
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_test_active_phase_display_value_hides_completed_phase
+    // PURPOSE: Verify status does not report a completed ACTIVE_PHASE as active work.
+    // OUTPUTS: { () }
+    // START_test_active_phase_display_value_hides_completed_phase
+    #[test]
+    fn test_active_phase_display_value_hides_completed_phase() {
+        let plan = r#"<PLAN_INDEX>
+  <META><ACTIVE_PHASE>Phase-11</ACTIVE_PHASE></META>
+  <PHASES>
+    <PHASE id="Phase-11" path="docs/phases/Phase-11.xml" status="done" />
+  </PHASES>
+</PLAN_INDEX>"#;
+        assert_eq!(active_phase_display_value(plan), "none");
+        assert_eq!(active_phase_label(plan), "No active phase");
+        assert_eq!(active_phase_table_value(plan), "No active phase");
+    }
+    // END_test_active_phase_display_value_hides_completed_phase
 }
 // END_public_api

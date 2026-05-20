@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Preserve completed Phase-1 module refs when later phases are active]
+// LAST_CHANGE: [v3.0.0 — Preserve no-active-phase state when all phase shards are done]
 // END_CHANGE_SUMMARY
 
 use crate::grace::inventory_types::CodeModule;
@@ -122,15 +122,25 @@ fn active_phase(layout: &DocsLayout, phases: &[String]) -> String {
     let existing = std::fs::read_to_string(layout.plan_index_path())
         .ok()
         .and_then(|content| tag_value(&content, "ACTIVE_PHASE"));
-    existing
-        .filter(|phase| phases.iter().any(|candidate| candidate == phase))
-        .unwrap_or_else(|| {
-            if phases.iter().any(|phase| phase == "Phase-2") {
-                "Phase-2".into()
-            } else {
-                "Phase-1".into()
-            }
+    if existing.as_deref() == Some("none") {
+        return "none".into();
+    }
+    if let Some(phase) = existing.filter(|phase| phases.iter().any(|candidate| candidate == phase))
+    {
+        if phase_status(layout, &phase).as_deref() != Some("done") {
+            return phase;
+        }
+    }
+    phases
+        .iter()
+        .find(|phase| {
+            matches!(
+                phase_status(layout, phase).as_deref(),
+                Some("active") | Some("planned")
+            )
         })
+        .cloned()
+        .unwrap_or_else(|| "none".into())
 }
 
 fn phase_status(layout: &DocsLayout, phase: &str) -> Option<String> {
@@ -220,4 +230,34 @@ mod tests {
         assert!(!phase_one.contains("<MODULE_REF id=\"M-NEW\" />"));
     }
     // END_test_write_phase_one_preserves_done_history_when_phase_three_active
+
+    // START_CONTRACT_test_write_phase_index_preserves_no_active_phase
+    // PURPOSE: Verify refresh keeps ACTIVE_PHASE none when all phase shards are done.
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: writes temporary MyGRACE plan shards
+    // START_test_write_phase_index_preserves_no_active_phase
+    #[test]
+    fn test_write_phase_index_preserves_no_active_phase() {
+        let dir = tempfile::tempdir().unwrap();
+        let layout = DocsLayout::new(dir.path());
+        std::fs::create_dir_all(layout.phases_dir()).unwrap();
+        std::fs::write(
+            layout.plan_index_path(),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PLAN_INDEX>\n  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY><ACTIVE_PHASE>none</ACTIVE_PHASE></META>\n  <PHASES>\n    <PHASE id=\"Phase-11\" path=\"docs/phases/Phase-11.xml\" status=\"done\" />\n  </PHASES>\n</PLAN_INDEX>\n",
+        )
+        .unwrap();
+        std::fs::write(
+            layout.phases_dir().join("Phase-11.xml"),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<PHASE id=\"Phase-11\" status=\"done\"></PHASE>\n",
+        )
+        .unwrap();
+
+        write_phase_index(&layout).unwrap();
+
+        let plan_index = std::fs::read_to_string(layout.plan_index_path()).unwrap();
+        assert!(plan_index.contains("<ACTIVE_PHASE>none</ACTIVE_PHASE>"));
+        assert!(plan_index.contains("status=\"done\""));
+        assert!(!plan_index.contains("status=\"active\""));
+    }
+    // END_test_write_phase_index_preserves_no_active_phase
 }

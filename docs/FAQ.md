@@ -29,7 +29,7 @@ Prebuilt release artifacts:
 - macOS x86_64
 - macOS arm64
 
-Source fallback via Cargo remains available on Linux/macOS when a matching prebuilt artifact cannot be downloaded.
+Source fallback via Cargo remains available on Linux/macOS when a matching prebuilt artifact cannot be downloaded. Before a newly bumped default tag is published, the default installer can build the repository `main` branch instead of failing on the pending tag.
 Windows packaging is planned later and is not part of the current Linux/macOS release matrix.
 
 **How do I diagnose install failures?**
@@ -50,10 +50,7 @@ Synapse works without GRACE (search, proxy, compression still function). But str
 ## Token Economy
 
 **How many tokens does Synapse save?**
-- Proxy: measured locally on proxied commands; noisy commands with built-in or project filters can save 60-90%
-- Caveman output: 65-75% on AI responses
-- Caveman input: ~46% on context files
-- Total: depends on the command mix and configured filters
+Savings are measured locally from commands routed through `syn proxy`. The exact number depends on the command mix, built-in filters, and project-local filters.
 
 **How do I check my savings?**
 ```bash
@@ -64,7 +61,7 @@ syn gain --graph
 ## Privacy
 
 **Is my code sent anywhere?**
-No. Everything runs locally. Embedding/LLM calls only go to external APIs if you configure them (Voyage, OpenAI, etc.). No code is sent to Synapse servers.
+Synapse has no telemetry upload path and does not send code to Synapse servers. When you use OpenCode or another AI client, prompts and code snippets may be sent to the AI provider configured in that client.
 
 **What does telemetry collect?**
 Synapse currently has no telemetry upload path. Token savings are tracked locally for `syn gain`.

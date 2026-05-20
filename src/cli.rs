@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Added gain graph flag schema]
+// LAST_CHANGE: [v2.9.0 — Removed unimplemented MCP HTTP/LSP flags from public CLI]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -245,14 +245,7 @@ pub struct CompressCmd {
 // START_McpCmd
 #[derive(clap::Args)]
 #[command(about = "Start MCP server")]
-pub struct McpCmd {
-    #[arg(long)]
-    pub http: bool,
-    #[arg(long)]
-    pub bind: Option<String>,
-    #[arg(long)]
-    pub with_lsp: Option<String>,
-}
+pub struct McpCmd {}
 // END_McpCmd
 
 // START_ConfigCmd

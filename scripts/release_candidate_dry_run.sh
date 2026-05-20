@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
 # PURPOSE: Release candidate dry-run gate validates release metadata and installer truth before publishing.
-# SCOPE: Tag/version guard, checked-out candidate SHA evidence, generated release notes policy, checksum aggregation policy, Linux/macOS installer dry-run mapping, GitHub step-summary evidence, and optional local release smoke.
+# SCOPE: Tag/version and freshness guards, checked-out candidate SHA evidence, generated release notes policy, checksum aggregation policy, Linux/macOS installer dry-run mapping, GitHub step-summary evidence, and optional local release smoke.
 # DEPENDS: M-CI-RELEASE-SMOKE, M-INSTALL, M-TESTS-PARITY
 # LINKS: .github/workflows/release-candidate.yml, .github/workflows/release.yml, scripts/release_version_guard.sh, scripts/release_install_smoke.sh
 
@@ -17,7 +17,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.2.0 - Added candidate commit evidence to release-candidate summary]
+# LAST_CHANGE: [v1.3.0 - Added release freshness guard to release-candidate policy]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_candidate_dry_run
@@ -147,6 +147,9 @@ candidate_commit="$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || echo unkno
 
 echo "[CI][release_candidate][TAG] Validating ${release_tag}"
 (cd "$repo_root" && SYN_RELEASE_TAG="$release_tag" bash scripts/release_version_guard.sh)
+
+echo "[CI][release_candidate][FRESHNESS] Validating ${release_tag}"
+(cd "$repo_root" && SYN_RELEASE_TAG="$release_tag" bash scripts/release_freshness_guard.sh)
 
 echo "[CI][release_candidate][WORKFLOW] Checking release metadata policy"
 check_release_workflow_truth

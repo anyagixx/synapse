@@ -8,7 +8,7 @@
 // START_MODULE_MAP
 // test_release_candidate_workflow_is_dry_run_only - Workflow must not publish releases
 // test_release_candidate_checks_out_candidate_ref - Workflow must checkout the requested candidate tag
-// test_release_candidate_script_checks_release_truth - Script must validate tag, notes, checksums, and installer mapping
+// test_release_candidate_script_checks_release_truth - Script must validate tag, freshness, notes, checksums, and installer mapping
 // test_release_candidate_fresh_install_evidence - Workflow must run public installer fresh smoke on Linux/macOS
 // test_ci_invokes_release_candidate_gate - Local CI must include the lightweight RC policy gate
 // test_release_candidate_script_executes_without_publishing - Script dry-run must pass with the package tag
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 - Added Phase 11 candidate-ref and fresh-install evidence tests]
+// LAST_CHANGE: [v1.3.0 - Added release freshness policy checks]
 // END_CHANGE_SUMMARY
 
 const RELEASE_CANDIDATE_WORKFLOW: &str = include_str!("../.github/workflows/release-candidate.yml");
@@ -83,6 +83,8 @@ fn test_release_candidate_script_checks_release_truth() {
     );
     for marker in [
         "generate_release_notes: true",
+        "scripts/release_freshness_guard.sh",
+        "[CI][release_candidate][FRESHNESS]",
         "sort -k2 > dist/SHA256SUMS",
         "sha256sum -c SHA256SUMS",
         "SYN_INSTALL_UNAME_S",
@@ -119,6 +121,7 @@ fn test_release_candidate_fresh_install_evidence() {
         "bash scripts/fresh_install_smoke.sh",
         "SYN_INSTALL_SCRIPT_URL",
         "raw.githubusercontent.com/anyagixx/synapse/${{ inputs.version_tag }}/install.sh",
+        "fetch-depth: 0",
         "ubuntu-latest",
         "macos-latest",
         "Fresh install smoke",

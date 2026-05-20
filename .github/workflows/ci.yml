@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: Install Rust
         run: |
           for attempt in 1 2 3; do
@@ -78,6 +80,7 @@ jobs:
         run: bash scripts/fresh_install_smoke.sh
         env:
           SYN_INSTALL_SCRIPT_URL: https://raw.githubusercontent.com/anyagixx/synapse/${{ github.sha }}/install.sh
+          SYN_INSTALL_SOURCE_REF: ${{ github.sha }}
       - name: Summarize fresh install evidence
         if: always()
         run: |

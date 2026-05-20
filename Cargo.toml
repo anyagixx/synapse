@@ -1,13 +1,23 @@
 [package]
-name = "syn"
-version = "2.3.5"
+name = "synapse-agent"
+version = "2.4.0"
 edition = "2021"
-description = "Unified AI Agent Engineering Platform"
+description = "Local MyGRACE agent engineering toolkit for OpenCode"
 authors = ["Synapse Contributors"]
 license = "Apache-2.0"
 repository = "https://github.com/anyagixx/synapse"
-homepage = "https://synapse.dev"
+homepage = "https://github.com/anyagixx/synapse"
 readme = "README.md"
+keywords = ["ai", "agents", "mygrace", "mcp", "developer-tools"]
+categories = ["command-line-utilities", "development-tools"]
+
+[lib]
+name = "syn"
+path = "src/lib.rs"
+
+[[bin]]
+name = "syn"
+path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }

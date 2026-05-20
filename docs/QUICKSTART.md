@@ -85,5 +85,4 @@ Every module has contracts and tests. Mistakes are caught automatically.
 If something slips through, use `grace_fix` through OpenCode or `syn skills run`.
 
 **Is my code safe?**
-Yes. All data stays on your computer. Synapse runs locally.
-No code is sent to external servers (unless you choose cloud embedding).
+Synapse runs locally and has no telemetry upload path. Your AI client may still send prompts or selected code context to whichever model provider you configure.

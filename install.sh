@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-INSTALL
 # PURPOSE: Installer script — installs Synapse from GitHub release artifacts or cargo source fallback
-# SCOPE: Linux/macOS platform detection, safe release tarball download, SHA256 verification, local binary install, cargo fallback, dry-run mapping, precise support diagnostics, and post-install smoke check
+# SCOPE: Linux/macOS platform detection, safe release tarball download, SHA256 verification, local binary install, cargo tag/source-ref/main fallback, dry-run mapping, precise support diagnostics, and post-install smoke check
 # DEPENDS: M-BUILD
 # LINKS: install.sh, .github/workflows/release.yml
 
@@ -18,18 +18,21 @@
 # verify_release_checksum — Verifies the release tarball against SHA256SUMS
 # install_binary — Copies a built or extracted syn binary to the target install directory
 # install_from_release — Downloads and installs a matching GitHub release artifact
-# install_from_source — Builds Synapse from the selected Git tag and installs the binary
+# remote_tag_available — Checks whether the selected release tag exists upstream
+# install_from_source — Builds Synapse from the selected Git tag, CI source ref, or default main fallback and installs the binary
 # verify_install — Confirms the installed binary executes
 # main — Detects platform and installs syn
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.16.0 - Added precise OS and architecture diagnostic statuses]
+# LAST_CHANGE: [v2.18.0 - Added default main fallback for pre-tag release-candidate installs]
 # END_CHANGE_SUMMARY
 
 set -eu
 
-VERSION="v2.3.5"
+DEFAULT_VERSION="v2.4.0"
+VERSION="$DEFAULT_VERSION"
+VERSION_EXPLICIT="0"
 MODE="install"
 ARCH="x86_64"
 OS="unknown-linux-gnu"
@@ -61,6 +64,7 @@ Environment:
   SYN_INSTALL_DIR       Install directory override, for example $HOME/.local/bin
   SYN_INSTALL_UNAME_S   Test override for uname -s mapping
   SYN_INSTALL_UNAME_M   Test override for uname -m mapping
+  SYN_INSTALL_SOURCE_REF CI/test override for source fallback commit ref
 
 Supported prebuilt artifacts:
   syn-x86_64-unknown-linux-gnu.tar.gz
@@ -75,9 +79,9 @@ EOF
 # END_usage
 
 # START_CONTRACT_parse_args
-# PURPOSE: Parse installer flags while preserving optional release tag input
+# PURPOSE: Parse installer flags while preserving optional release tag input.
 # INPUTS: { "$@": shell arguments }
-# OUTPUTS: { VERSION and MODE variables }
+# OUTPUTS: { VERSION, VERSION_EXPLICIT, and MODE variables }
 # SIDE_EFFECTS: may print usage/version and exit
 # START_parse_args
 parse_args() {
@@ -99,6 +103,7 @@ parse_args() {
                 ;;
             v*)
                 VERSION="$1"
+                VERSION_EXPLICIT="1"
                 ;;
             *)
                 echo "Unknown argument: $1"
@@ -337,6 +342,18 @@ install_binary() {
 }
 # END_install_binary
 
+# START_CONTRACT_remote_tag_available
+# PURPOSE: Check whether the selected release tag exists upstream before using tagged source fallback.
+# INPUTS: { $1: tag - release tag such as v2.4.0 }
+# OUTPUTS: { exit code 0 - tag exists, nonzero - tag unavailable }
+# SIDE_EFFECTS: reads remote git refs
+# START_remote_tag_available
+remote_tag_available() {
+    tag="$1"
+    git ls-remote --exit-code --tags https://github.com/anyagixx/synapse "refs/tags/${tag}" >/dev/null 2>&1
+}
+# END_remote_tag_available
+
 # START_CONTRACT_install_from_release
 # PURPOSE: Download and install the release artifact for the detected platform
 # OUTPUTS: { exit code 0 - release artifact installed, nonzero - release path unavailable }
@@ -377,7 +394,7 @@ install_from_release() {
 # END_install_from_release
 
 # START_CONTRACT_install_from_source
-# PURPOSE: Build and install Synapse from the selected Git tag when no release artifact is available
+# PURPOSE: Build and install Synapse from the selected Git tag, CI source ref, or default main fallback when no release artifact is available
 # OUTPUTS: { installed syn binary or nonzero exit }
 # SIDE_EFFECTS: invokes cargo install under TMP_DIR and copies resulting binary
 # START_install_from_source
@@ -389,7 +406,20 @@ install_from_source() {
     }
     command -v git >/dev/null 2>&1 || { echo "git not installed; required for cargo install --git. Run: sh install.sh --diagnose"; exit 1; }
 
-    cargo install --locked --git https://github.com/anyagixx/synapse --tag "${VERSION}" --root "$TMP_DIR/cargo-root"
+    if [ -n "${SYN_INSTALL_SOURCE_REF:-}" ]; then
+        echo "Building Synapse from source ref ${SYN_INSTALL_SOURCE_REF}..."
+        cargo install --locked --git https://github.com/anyagixx/synapse --rev "${SYN_INSTALL_SOURCE_REF}" --root "$TMP_DIR/cargo-root"
+    elif remote_tag_available "$VERSION"; then
+        echo "Building Synapse from release tag ${VERSION}..."
+        cargo install --locked --git https://github.com/anyagixx/synapse --tag "${VERSION}" --root "$TMP_DIR/cargo-root"
+    elif [ "$VERSION_EXPLICIT" = "0" ]; then
+        echo "Release tag ${VERSION} is not published yet; building default main branch."
+        cargo install --locked --git https://github.com/anyagixx/synapse --branch main --root "$TMP_DIR/cargo-root"
+    else
+        echo "Requested release tag ${VERSION} is unavailable. Choose a published tag or omit the version to install the default branch."
+        echo "Run: sh install.sh --diagnose"
+        exit 1
+    fi
     install_binary "$TMP_DIR/cargo-root/bin/syn"
 }
 # END_install_from_source

@@ -14,7 +14,7 @@ Without sudo:
 curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
-The installer downloads a matching release tarball when available, verifies `SHA256SUMS`, installs `syn`, and then runs `syn --version`. If a matching archive is unavailable, it falls back to a locked Cargo install from the selected Git tag.
+The installer downloads a matching release tarball when available, verifies `SHA256SUMS`, installs `syn`, and then runs `syn --version`. If a matching archive is unavailable, it falls back to a locked Cargo install from the selected Git tag. During the short pre-tag release-candidate window, the default installer can build the repository `main` branch instead of failing on a not-yet-published tag.
 
 ## Diagnostics
 
@@ -49,8 +49,10 @@ make install
 For a specific release tag:
 
 ```bash
-cargo install --locked --git https://github.com/anyagixx/synapse --tag v2.3.5
+cargo install --locked --git https://github.com/anyagixx/synapse --tag v2.4.0
 ```
+
+The Cargo package name is `synapse-agent`, but the installed binary remains `syn`.
 
 ## Verify
 

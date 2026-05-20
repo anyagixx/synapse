@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, public docs, install docs, Linux/macOS release matrix, checksum integrity, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, verify check count, public docs, install docs, Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
 
 // START_MODULE_MAP
@@ -9,7 +9,8 @@
 // test_command_count_matches_capabilities — Command count check
 // test_verify_checks_consistent — Verify check consistency
 // test_no_ghost_commands — No ghost commands, unsupported flags, or obsolete public URLs
-// test_install_default_version_matches_package — Installer default tag check
+// test_package_metadata_preserves_syn_binary_without_crates_conflict — Package metadata check
+// test_install_default_version_matches_package — Installer default tag, source-ref fallback, and pre-tag main fallback check
 // test_install_docs_use_supported_url — Install documentation URL check
 // test_release_tag_version_guard_is_enforced — Release tag/version guard check
 // test_release_artifact_matches_installer — Release artifact naming check
@@ -20,17 +21,20 @@
 // test_release_policy_gates_are_explicit — Release notes and audit policy check
 // test_release_matrix_declares_linux_macos_targets — Linux/macOS release matrix check
 // test_ci_declares_fresh_install_evidence — Hosted CI fresh install evidence check
+// test_mcp_help_hides_unimplemented_flags — MCP CLI truth check
 // test_installer_dry_run_maps_linux_macos_artifacts — Installer dry-run mapping check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.2.0 - Added hosted CI fresh-install evidence gate]
+// LAST_CHANGE: [v4.4.0 - Added installer pre-tag fallback parity]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
 
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
+const CARGO_TOML: &str = include_str!("../Cargo.toml");
 const CI_SCRIPT: &str = include_str!("../scripts/ci.sh");
+const RELEASE_FRESHNESS_GUARD: &str = include_str!("../scripts/release_freshness_guard.sh");
 const RELEASE_SMOKE_SCRIPT: &str = include_str!("../scripts/release_install_smoke.sh");
 const CI_WORKFLOW: &str = include_str!("../.github/workflows/ci.yml");
 const RELEASE_WORKFLOW: &str = include_str!("../.github/workflows/release.yml");
@@ -243,21 +247,45 @@ fn test_no_ghost_commands() {
 }
 
 #[test]
+// START_CONTRACT_test_package_metadata_preserves_syn_binary_without_crates_conflict
+// PURPOSE: Verify Cargo package metadata avoids crates.io `syn` conflict while preserving the installed binary name
+fn test_package_metadata_preserves_syn_binary_without_crates_conflict() {
+    assert!(
+        CARGO_TOML.contains("name = \"synapse-agent\""),
+        "Cargo package name must avoid crates.io syn parser conflict"
+    );
+    assert!(
+        CARGO_TOML.contains("[lib]\nname = \"syn\"")
+            && CARGO_TOML.contains("[[bin]]\nname = \"syn\""),
+        "library crate and installed binary must remain named syn"
+    );
+    assert!(
+        CARGO_TOML.contains("homepage = \"https://github.com/anyagixx/synapse\""),
+        "package homepage must not point at parked domains"
+    );
+}
+
+#[test]
 // START_CONTRACT_test_install_default_version_matches_package
 // PURPOSE: Verify install.sh defaults to the current Cargo package tag
 fn test_install_default_version_matches_package() {
-    let expected_default = format!("VERSION=\"v{}\"", env!("CARGO_PKG_VERSION"));
+    let expected_default = format!("DEFAULT_VERSION=\"v{}\"", env!("CARGO_PKG_VERSION"));
     assert!(
         INSTALL_SCRIPT.contains(&expected_default),
         "install.sh must default to {}",
         expected_default
     );
-    assert!(
-        INSTALL_SCRIPT.contains(
-            "cargo install --locked --git https://github.com/anyagixx/synapse --tag \"${VERSION}\""
-        ),
-        "install.sh must keep source fallback locked and pinned to the selected release tag"
-    );
+    for marker in [
+        "cargo install --locked --git https://github.com/anyagixx/synapse --tag \"${VERSION}\"",
+        "cargo install --locked --git https://github.com/anyagixx/synapse --rev \"${SYN_INSTALL_SOURCE_REF}\"",
+        "cargo install --locked --git https://github.com/anyagixx/synapse --branch main",
+        "remote_tag_available \"$VERSION\"",
+    ] {
+        assert!(
+            INSTALL_SCRIPT.contains(marker),
+            "install.sh must keep locked source fallback marker {marker}"
+        );
+    }
 }
 
 #[test]
@@ -295,6 +323,33 @@ fn test_release_tag_version_guard_is_enforced() {
         RELEASE_VERSION_GUARD.contains("expected_tag=\"v${cargo_version}\"")
             && RELEASE_VERSION_GUARD.contains("SYN_RELEASE_TAG"),
         "release version guard must compare selected tag to Cargo.toml version"
+    );
+}
+
+#[test]
+// START_CONTRACT_test_release_freshness_guard_blocks_stale_tags
+// PURPOSE: Verify release gates detect when Cargo version points to a stale already-published tag
+fn test_release_freshness_guard_blocks_stale_tags() {
+    for marker in [
+        "release_freshness_guard.sh",
+        "[CI][run_ci_gate][RELEASE_FRESHNESS]",
+        "[CI][release_freshness_guard][PASS]",
+        "Bump Cargo.toml/install.sh version before release work continues.",
+    ] {
+        assert!(
+            CI_SCRIPT.contains(marker) || RELEASE_FRESHNESS_GUARD.contains(marker),
+            "release freshness guard marker missing: {marker}"
+        );
+    }
+    let output = std::process::Command::new("bash")
+        .arg("scripts/release_freshness_guard.sh")
+        .output()
+        .expect("release freshness guard should execute");
+    assert!(
+        output.status.success(),
+        "release freshness guard failed\nstdout:\n{}\nstderr:\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
     );
 }
 
@@ -513,6 +568,7 @@ fn test_ci_declares_fresh_install_evidence() {
         "github.event_name == 'push'",
         "bash scripts/fresh_install_smoke.sh",
         "raw.githubusercontent.com/anyagixx/synapse/${{ github.sha }}/install.sh",
+        "SYN_INSTALL_SOURCE_REF",
         "ubuntu-latest",
         "macos-latest",
         "Fresh install smoke",
@@ -521,6 +577,24 @@ fn test_ci_declares_fresh_install_evidence() {
         assert!(
             CI_WORKFLOW.contains(marker),
             "CI workflow must declare hosted fresh install marker {marker}"
+        );
+    }
+}
+
+#[test]
+// START_CONTRACT_test_mcp_help_hides_unimplemented_flags
+// PURPOSE: Verify public MCP help does not expose HTTP or LSP flags before those transports are implemented
+fn test_mcp_help_hides_unimplemented_flags() {
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_syn"))
+        .args(["mcp", "--help"])
+        .output()
+        .expect("syn mcp --help should execute");
+    assert!(output.status.success(), "syn mcp --help failed");
+    let help = String::from_utf8_lossy(&output.stdout);
+    for forbidden in ["--http", "--bind", "--with-lsp"] {
+        assert!(
+            !help.contains(forbidden),
+            "syn mcp help must not expose unimplemented flag {forbidden}: {help}"
         );
     }
 }

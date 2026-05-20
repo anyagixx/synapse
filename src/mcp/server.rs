@@ -6,7 +6,7 @@
 // LINKS: N/A
 
 // START_MODULE_MAP
-// McpServer — MCP server entry point (stdio and HTTP stubs)
+// McpServer — MCP stdio server entry point
 // discover_project_count — Counts probable child projects for multi-root mode
 // SynapseHandler — MCP message router and initialization state
 // preload_index_storage — Loads index storage without panicking on poisoned locks
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Use Unicode-safe tracing previews]
+// LAST_CHANGE: [v3.2.0 — Removed unused HTTP stub from public MCP path]
 // END_CHANGE_SUMMARY
 
 use super::{server_code_tools, server_grace_tools, server_response, server_tools};
@@ -91,20 +91,6 @@ impl McpServer {
         Ok(())
     }
     // END_mcp_server_start_stdio
-
-    // START_CONTRACT_McpServer::start_http
-    // PURPOSE: HTTP MCP server stub — delegates to stdio for now
-    // INPUTS: { bind: &str }
-    // OUTPUTS: { anyhow::Result<()> }
-    // START_mcp_server_start_http
-    pub async fn start_http(self, bind: &str) -> anyhow::Result<()> {
-        tracing::info!(
-            "MCP HTTP not yet implemented. Use: socat tcp-l:{} exec:syn mcp",
-            bind
-        );
-        self.start_stdio().await
-    }
-    // END_mcp_server_start_http
 }
 
 // START_CONTRACT_discover_project_count

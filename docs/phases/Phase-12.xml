@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-12" status="done">
+  <NAME>Public Release Truth Readiness</NAME>
+  <GOAL>Prepare the first public Linux/macOS release candidate by closing stale-version, package identity, installer fallback, MCP flag truth, no-active-phase, public-doc, license, and readiness-evidence gaps</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-GRACE-STATUS" />
+    <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <PLANNED_WORK>
+    <step-1 module="M-BUILD" status="done">Bump the release line to v2.4.0, avoid the crates.io syn package-name conflict, preserve the syn binary/library names, and point package metadata at the real repository.</step-1>
+    <step-2 module="M-INSTALL" status="done">Keep release artifact install as the preferred path while adding locked source fallback for CI source refs, existing release tags, and default pre-tag main builds.</step-2>
+    <step-3 module="M-CI" status="done">Add release freshness gates and pin hosted fresh-install smoke to the workflow commit through SYN_INSTALL_SOURCE_REF.</step-3>
+    <step-4 module="M-CLI" status="done">Remove unimplemented MCP HTTP/LSP flags from public help and keep syn mcp stdio-only.</step-4>
+    <step-5 module="M-GRACE-STATUS" status="done">Report no active phase when all phase shards are done, and preserve that state during refresh.</step-5>
+    <step-6 module="M-TESTS-PARITY" status="done">Expand parity tests for package identity, release freshness, installer fallback, commit-pinned fresh install, and MCP help truth.</step-6>
+    <step-7 module="M-TESTS-PARITY" status="done">Clarify public privacy/token-savings claims, ship full Apache-2.0 license text, and update changelog/readiness evidence.</step-7>
+  </PLANNED_WORK>
+  <ACCEPTANCE>
+    <CHECK status="passed">Cargo package is synapse-agent while lib/bin remain syn; installer default is v2.4.0.</CHECK>
+    <CHECK status="passed">Release freshness guard blocks stale tags and exact tag drift before release publishing.</CHECK>
+    <CHECK status="passed">Fresh install CI uses the workflow commit source ref instead of silently reinstalling an older tag.</CHECK>
+    <CHECK status="passed">Default installer does not fail in the pre-tag release-candidate window; it can build main when the default tag is pending.</CHECK>
+    <CHECK status="passed">syn mcp public help exposes no HTTP, bind, or LSP flags until those transports exist.</CHECK>
+    <CHECK status="passed">MyGRACE status and refresh preserve a true no-active-phase state after all phase shards are done.</CHECK>
+    <CHECK status="passed">Public docs no longer claim unmeasured token-saving percentages or imply Synapse sends no data through configured AI providers.</CHECK>
+  </ACCEPTANCE>
+  <LOCAL_GATE>
+    cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; bash scripts/ci.sh; refresh --json drift=0; verify --ci; review --mode full --ci
+  </LOCAL_GATE>
+  <HOSTED_GATE>
+    Required before publishing the public release tag: push this commit, wait for GitHub CI fresh-install Linux/macOS source-ref smoke to pass, then create v2.4.0 and wait for the release workflow to pass on the exact tag.
+  </HOSTED_GATE>
+</PHASE>

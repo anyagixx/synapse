@@ -5,6 +5,7 @@
     <COMMAND>python3 scripts/ci_runtime_guard.py --self-test</COMMAND>
     <COMMAND>python3 scripts/ci_runtime_guard.py</COMMAND>
     <COMMAND>cargo audit --deny warnings</COMMAND>
+    <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>SYN_RC_SKIP_SMOKE=1 bash scripts/release_candidate_dry_run.sh</COMMAND>
     <COMMAND>cargo test --test release_candidate</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
@@ -13,10 +14,12 @@
   <REQUIRED_LOG_MARKERS>
     <MARKER>[CI][run_ci_gate][RUNTIME_GUARD]</MARKER>
     <MARKER>[CI][run_ci_gate][RELEASE_VERSION]</MARKER>
+    <MARKER>[CI][run_ci_gate][RELEASE_FRESHNESS]</MARKER>
     <MARKER>[CI][run_ci_gate][RELEASE_CANDIDATE]</MARKER>
     <MARKER>[CI][run_ci_gate][RELEASE_SMOKE]</MARKER>
     <MARKER>[CI][release_candidate][PASS]</MARKER>
     <MARKER>[CI][release_candidate][SUMMARY]</MARKER>
+    <MARKER>[CI][release_freshness_guard][PASS]</MARKER>
     <MARKER>[CI][fresh_install_smoke][PASS]</MARKER>
     <MARKER>[CI][runtime_guard][SCAN]</MARKER>
   </REQUIRED_LOG_MARKERS>
@@ -24,7 +27,8 @@
     <ASSERTION>CI blocks production .unwrap(), .expect(), panic!, todo!, and unimplemented! markers outside test-only Rust blocks.</ASSERTION>
     <ASSERTION>CI isolates XDG_DATA_HOME under its temporary directory when no caller-provided value exists.</ASSERTION>
     <ASSERTION>CI validates the Linux/macOS release matrix tarball layout, checksum sidecars, and packaged binary execution before release.</ASSERTION>
-    <ASSERTION>Push CI captures hosted Linux/macOS fresh-install evidence through the public raw installer URL and temporary SYN_INSTALL_DIR.</ASSERTION>
+    <ASSERTION>Push CI captures hosted Linux/macOS fresh-install evidence through the public raw installer URL pinned to the workflow commit, SYN_INSTALL_SOURCE_REF, and temporary SYN_INSTALL_DIR.</ASSERTION>
+    <ASSERTION>Release freshness guard fails when Cargo.toml points at an already-published tag that does not match HEAD, and requires exact tag checkout in release tag context.</ASSERTION>
     <ASSERTION>Release workflow rejects tag/version mismatches and publishes generated release notes.</ASSERTION>
     <ASSERTION>Release-candidate workflow checks out the requested candidate ref, validates tag/version policy, generated release notes, checksum aggregation, installer dry-run mapping, fresh Linux/macOS installer smoke, and Linux/macOS release smoke without write permissions or release publishing actions.</ASSERTION>
     <ASSERTION>Release-candidate dry-run writes GitHub Step Summary evidence for tag, commit, Cargo version, checksum policy, installer matrix, smoke status, and non-publishing status.</ASSERTION>
@@ -33,5 +37,5 @@
     <ASSERTION>CI and release workflows pin Node 24-ready action majors for checkout, artifact upload, and GitHub release publishing; release artifact download uses GitHub CLI to avoid Node runtime deprecation noise.</ASSERTION>
     <ASSERTION>CI and release workflows install Rust through retrying rustup shell steps to avoid third-party Node runtime deprecation noise and absorb transient network lookup failures; hosted main CI run 26120689647 completed successfully without Node/deprecation log markers.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-11</PHASE_GATE>
+  <PHASE_GATE>Phase-12</PHASE_GATE>
 </VERIFICATION>
