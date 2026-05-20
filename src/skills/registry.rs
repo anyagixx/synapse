@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Documented generate_requirements MCP capability]
+// LAST_CHANGE: [v2.16.0 — Documented generate_technology MCP capability]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -275,6 +275,10 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     (
         "generate_requirements",
         "Generate and validate a complete RequirementsAnalysis artifact",
+    ),
+    (
+        "generate_technology",
+        "Generate and validate a complete exact-version Technology artifact",
     ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),

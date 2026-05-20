@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
-// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state storage, and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes, requirements template, and shard dirs
-// DEPENDS: M-GRACE-REQUIREMENTS
+// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state storage, requirements/technology templates, and bootstraps templates
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state indexes, requirements and technology templates, and shard dirs
+// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Added full RequirementsAnalysis template generation]
+// LAST_CHANGE: [v2.16.0 — Added full Technology template generation]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -229,15 +229,9 @@ impl DocsLayout {
             "standard",
         );
         self.write_if_missing(&self.docs_dir().join("requirements.xml"), &requirements)?;
-        self.write_if_missing(
-            &self.docs_dir().join("technology.xml"),
-            r#"<?xml version="1.0" encoding="UTF-8"?>
-<TECHNOLOGY>
-  <STACK><LANGUAGE>rust</LANGUAGE><FRAMEWORK></FRAMEWORK><DATABASE></DATABASE></STACK>
-  <TOOLS><TOOL purpose="build">cargo</TOOL><TOOL purpose="test">cargo test</TOOL></TOOLS>
-</TECHNOLOGY>
-"#,
-        )?;
+        let technology =
+            crate::grace::technology::technology_template("my-project", &[], "2026-05-20");
+        self.write_if_missing(&self.docs_dir().join("technology.xml"), &technology)?;
         self.write_if_missing(
             &self.docs_dir().join("development-plan.xml"),
             r#"<?xml version="1.0" encoding="UTF-8"?>

@@ -1,5 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TECHNOLOGY>
-  <STACK><LANGUAGE>rust</LANGUAGE><FRAMEWORK></FRAMEWORK><DATABASE></DATABASE></STACK>
-  <TOOLS><TOOL purpose="build">cargo</TOOL><TOOL purpose="test">cargo test</TOOL></TOOLS>
-</TECHNOLOGY>
+<Technology project="Synapse" version="1.0" updated="2026-05-20">
+  <Stack>
+    <Language name="Rust" version="1.95.0">
+      <Runtime name="native-binary" version="1.95.0" />
+      <PackageManager name="Cargo" version="1.95.0" />
+    </Language>
+    <Framework name="Axum" version="0.7.9">
+      <Purpose>HTTP dashboard and API server for Synapse local tooling</Purpose>
+      <Documentation>https://docs.rs/axum/0.7/axum/</Documentation>
+      <Installation>cargo add axum@0.7.9</Installation>
+    </Framework>
+    <Database name="SQLite" version="3.45.0">
+      <Driver name="rusqlite" version="0.31.0" />
+    </Database>
+    <Testing name="cargo test" version="1.95.0">
+      <Purpose>Rust unit, integration, protocol, release, and support tests</Purpose>
+      <Configuration>Cargo.toml</Configuration>
+      <Library name="tempfile" version="3.27.0" />
+    </Testing>
+    <Libraries>
+      <Dependency ecosystem="rust" name="anyhow" version="1.0.102" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="axum" version="0.7.9" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="chrono" version="0.4.44" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="clap" version="4.6.1" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="ignore" version="0.4.25" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="notify" version="8.2.0" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="regex" version="1.12.3" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="rusqlite" version="0.31.0" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="serde" version="1.0.228" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="serde_json" version="1.0.149" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="tokio" version="1.52.3" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="toml" version="0.8.23" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="tower-http" version="0.5.2" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="tracing" version="0.1.44" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="tree-sitter" version="0.24.7" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="uuid" version="1.23.1" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="walkdir" version="2.5.0" source="Cargo.toml/Cargo.lock" exact="true" />
+    </Libraries>
+  </Stack>
+  <DependencyMatrix>
+    <CompatibilityCheck id="CHECK-001">
+      <ComponentA>Axum 0.7.9</ComponentA>
+      <ComponentB>Tokio 1.52.3</ComponentB>
+      <Status>compatible</Status>
+      <Note>Axum 0.7 runs on Tokio 1.x for async HTTP serving.</Note>
+      <VerifiedAt>2026-05-20</VerifiedAt>
+    </CompatibilityCheck>
+    <CompatibilityCheck id="CHECK-002">
+      <ComponentA>rusqlite 0.31.0</ComponentA>
+      <ComponentB>SQLite 3.45.0</ComponentB>
+      <Status>compatible</Status>
+      <Note>rusqlite is built with the bundled SQLite feature in Cargo.toml.</Note>
+      <VerifiedAt>2026-05-20</VerifiedAt>
+    </CompatibilityCheck>
+    <CompatibilityCheck id="CHECK-003">
+      <ComponentA>Cargo.toml semver ranges</ComponentA>
+      <ComponentB>Cargo.lock exact versions</ComponentB>
+      <Status>compatible</Status>
+      <Note>Cargo.lock pins exact versions for code generation despite broad manifest ranges.</Note>
+      <VerifiedAt>2026-05-20</VerifiedAt>
+    </CompatibilityCheck>
+  </DependencyMatrix>
+  <KnownIssues>
+    <Issue id="KI-001" component="AllPinnedDependencies" version="1.0.0">
+      <Description>No unresolved known issues for the pinned versions in this Technology artifact.</Description>
+      <Workaround>When a dependency is changed, update this section with version-specific notes before code generation.</Workaround>
+    </Issue>
+  </KnownIssues>
+  <DevOps>
+    <CI name="GitHub Actions">
+      <Config>.github/workflows/ci.yml</Config>
+      <RustVersion>1.95.0</RustVersion>
+    </CI>
+    <Container name="none" version="1.0.0">
+      <BaseImage>not-used</BaseImage>
+      <Dockerfile>not-used</Dockerfile>
+    </Container>
+  </DevOps>
+</Technology>

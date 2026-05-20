@@ -8,6 +8,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>Grace module graph includes the preservation-aware inventory verification writer.</ASSERTION>
     <ASSERTION>GraceEngine exposes requirements_report for RequirementsAnalysis validation.</ASSERTION>
+    <ASSERTION>GraceEngine exposes technology_report for exact-version Technology validation.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

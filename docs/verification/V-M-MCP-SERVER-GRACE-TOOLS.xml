@@ -7,6 +7,7 @@
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_analyze_logs_returns_report --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_extract_belief_state_writes_artifact --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_requirements_writes_valid_artifact --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_technology_writes_valid_artifact --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -15,6 +16,7 @@
     <ASSERTION>MCP analyze_logs reads a structured LOG file and returns an XML LogAnalysisReport.</ASSERTION>
     <ASSERTION>MCP extract_belief_state writes a validated docs/belief-states artifact.</ASSERTION>
     <ASSERTION>MCP generate_requirements writes a validated docs/requirements.xml RequirementsAnalysis artifact.</ASSERTION>
+    <ASSERTION>MCP generate_technology writes a validated docs/technology.xml Technology artifact.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

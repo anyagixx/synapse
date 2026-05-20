@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Added RequirementsAnalysis completeness verification]
+// LAST_CHANGE: [v2.16.0 — Added Technology exact-version verification]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -487,6 +487,51 @@ impl Verifier {
             } else {
                 format!("RequirementsAnalysis errors: {:?}", requirements.errors)
             },
+        });
+
+        let technology = crate::grace::technology::validate_technology(root)?;
+        checks.push(CheckResult {
+            name: "technology-language-defined".into(),
+            passed: technology.has_language_defined(),
+            details: format!(
+                "{} language entries parsed from Technology",
+                technology.languages.len()
+            ),
+        });
+        checks.push(CheckResult {
+            name: "technology-dependencies-compatible".into(),
+            passed: technology.dependencies_compatible(),
+            details: if technology.dependencies_compatible() {
+                format!(
+                    "{} compatibility checks passed",
+                    technology.compatibility_checks.len()
+                )
+            } else {
+                format!(
+                    "Technology incompatibilities: {:?}",
+                    technology.incompatible_checks
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "technology-no-version-guessing".into(),
+            passed: technology.has_no_version_guessing(),
+            details: if technology.has_no_version_guessing() {
+                format!(
+                    "{} versioned components use exact versions",
+                    technology.components.len()
+                )
+            } else {
+                format!(
+                    "Technology version issues: {:?}",
+                    technology.missing_versions
+                )
+            },
+        });
+        checks.push(CheckResult {
+            name: "technology-known-issues".into(),
+            passed: technology.has_known_issues(),
+            details: format!("{} known issue entries documented", technology.known_issues),
         });
 
         let passed = checks.iter().all(|c| c.passed);

@@ -1,7 +1,7 @@
 # Synapse
 
 > **AI Agent Engineering Platform — works transparently through OpenCode CLI**
-> *30 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
+> *31 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
 
 ---
 
@@ -13,7 +13,7 @@
          ┌─────────────┼─────────────┐
          ▼             ▼             ▼
     MCP Tools       Plugin       AGENTS.md
-  (30 инструментов)  (proxy,      (GRACE
+  (31 инструментов)  (proxy,      (GRACE
                      GRACE)       конституция)
          │
          ▼
@@ -21,7 +21,7 @@
 ```
 
 Ты общаешься с AI через `opencode`. Synapse невидимо:
-- Даёт LLM **30 MCP-инструментов** для поиска, проверки и генерации кода
+- Даёт LLM **31 MCP-инструмент** для поиска, проверки и генерации кода
 - Авто-фильтрует шумный вывод shell-команд; фактическую экономию показывает `syn gain`
 - **Принуждает GRACE методологию**: Phase 0, контракты, верификация, ревью
 - **Сам проходит собственные проверки**: `syn verify` → ALL PASS
@@ -36,7 +36,7 @@
 
 Synapse решает это так:
 - хранит архитектуру в **sharded GRACE artifacts**
-- даёт OpenCode **30 MCP tools**
+- даёт OpenCode **31 MCP tools**
 - даёт **15 workflow tools** для init/plan/execute/review/fix/status
 - режет shell noise через proxy
 - навязывает verify/review discipline прямо в цикле работы
@@ -98,7 +98,7 @@ cd synapse && make install
 ```bash
 mkdir my-project && cd my-project
 syn init          # 1 сек: интеграция с OpenCode
-opencode          # LLM видит 30 MCP инструментов + sharded Phase 0 gate
+opencode          # LLM видит 31 MCP инструмент + sharded Phase 0 gate
 # LLM: "Что ты хочешь построить?"
 # Ты:  "Приложение для заметок с поиском"
 ```
@@ -135,9 +135,9 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 
 ---
 
-## 30 MCP Tools
+## 31 MCP Tools
 
-### 15 Core tools
+### 16 Core tools
 
 | Инструмент | Назначение |
 |-----------|-----------|
@@ -150,6 +150,7 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 | `analyze_logs` | LDD-анализ structured LOG trajectory/anomaly/compare |
 | `extract_belief_state` | Создание и валидация docs/belief-states перед кодогенерацией |
 | `generate_requirements` | Создание и валидация полного `docs/requirements.xml` с AAG use cases |
+| `generate_technology` | Создание и валидация полного `docs/technology.xml` с exact versions и compatibility matrix |
 | `token_savings` | Статистика экономии токенов |
 | `compress_text` | Сжатие текста (3 уровня) |
 | `refresh_project` | Синхронизация графа и плана с кодом |
@@ -197,7 +198,7 @@ my-project/
 │   ├── verification/
 │   │   └── V-M-CORE.xml
 │   ├── requirements.xml          ← RequirementsAnalysis + AAG use cases
-│   ├── technology.xml            ← compatibility layer
+│   ├── technology.xml            ← exact versions + compatibility matrix
 │   ├── development-plan.xml      ← compatibility layer
 │   ├── verification-plan.xml     ← compatibility layer
 │   └── knowledge-graph.xml       ← compatibility layer
@@ -238,7 +239,7 @@ my-project/
 | **Octocode** | AST-индексация (5 языков) + fallback (14), BM25 + векторный + гибридный поиск |
 | **RTK Proxy** | 30+ TOML-фильтров, 8-стадийный пайплайн, авто-прокси через плагин |
 | **Caveman** | 3 уровня сжатия (lite/full/ultra) |
-| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 30 MCP tools, 15 workflow tools, 3 режима ревью |
+| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 31 MCP tools, 15 workflow tools, 3 режима ревью |
 
 ---
 
@@ -248,14 +249,14 @@ my-project/
 |---------|----------|
 | Бинарник | ~13 MB release |
 | Зависимости | 0 внешних системных (всё статически слинковано) |
-| MCP инструментов | **30** |
+| MCP инструментов | **31** |
 | CLI команд | 19 |
-| Проверок verify | 23 |
+| Проверок verify | 27 |
 | GRACE workflow tools | 15 |
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
-| Тестов | **131** (cargo test --all-targets) |
+| Тестов | **136** (cargo test --all-targets) |
 | Контрактов в своём коде | **40/40** |
 | self-verify | **ALL PASS** |
 

@@ -31,6 +31,7 @@
     <MODULE_REF id="M-GRACE-REFRESH" />
     <MODULE_REF id="M-GRACE-LAYOUT" />
     <MODULE_REF id="M-GRACE-REQUIREMENTS" />
+    <MODULE_REF id="M-GRACE-TECHNOLOGY" />
     <MODULE_REF id="M-GRACE-INVENTORY" />
     <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
     <MODULE_REF id="M-GRAPHRAG" />
@@ -87,11 +88,11 @@
         <IMPLEMENTATION>Create requirements parser/validator, full init template, generate_requirements MCP handler, requirements-* verify checks, and status/review coverage.</IMPLEMENTATION>
         <VERIFY status="passed">Tests for RequirementsAnalysis template completeness, generated artifact validation, incomplete section failures, section-scoped AAG extraction, glossary/entity matching, MCP generation, verify checks, review/status coverage, and capability count parity.</VERIFY>
       </step-5>
-      <step-6 section="2.2" status="pending" priority="P1">
+      <step-6 section="2.2" status="done" priority="P1">
         <TITLE>Technology Stack Version Pinning</TITLE>
         <INTENT>Make technology.xml exact, version-pinned, compatibility-aware, and detectable from project dependency files.</INTENT>
         <IMPLEMENTATION>Create technology parser, dependency detector, compatibility checks, full init template, generate_technology MCP handler, and technology-* verify checks.</IMPLEMENTATION>
-        <VERIFY>Tests for Cargo detection, exact version validation, latest/blank rejection, known issues section, and incompatible matrix detection.</VERIFY>
+        <VERIFY status="passed">Tests for Technology template completeness, legacy stub failure, Cargo lock exact-version detection, generated artifact validation, generate_technology MCP output, technology-* verify checks, and review/status coverage.</VERIFY>
       </step-6>
       <step-7 section="2.3" status="pending" priority="P1">
         <TITLE>DevelopmentPlan DataFlows and GenerationOrder</TITLE>
@@ -149,9 +150,9 @@
     <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 2 step-6 section 2.2 Technology Stack Version Pinning.</NEXT_ACTION>
+    <NEXT_ACTION>Begin Sprint 2 step-7 section 2.3 DevelopmentPlan DataFlows and GenerationOrder.</NEXT_ACTION>
     <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-LAYOUT.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.2-technology-stack.md</SOURCE_SPEC>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.3-development-plan.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

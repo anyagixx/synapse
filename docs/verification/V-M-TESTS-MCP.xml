@@ -5,7 +5,7 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>MCP skill tests assert 15 core tools, 30 total MCP tools, and docs/belief-states initialization.</ASSERTION>
+    <ASSERTION>MCP skill tests assert 16 core tools, 31 total MCP tools, and docs/belief-states initialization.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

@@ -9,6 +9,7 @@
     <ASSERTION>Status output reports no active phase when plan-index ACTIVE_PHASE points at a completed phase shard.</ASSERTION>
     <ASSERTION>Status JSON and text output include belief state coverage and invalid belief state counts.</ASSERTION>
     <ASSERTION>Status JSON and text output include RequirementsAnalysis entity/use-case counts and validity.</ASSERTION>
+    <ASSERTION>Status JSON and text output include Technology component/compatibility counts and validity.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-12</PHASE_GATE>
 </VERIFICATION>

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Added RequirementsAnalysis review section]
+// LAST_CHANGE: [v2.16.0 — Added Technology review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -242,6 +242,21 @@ impl Reviewer {
                 requirements.glossary_terms.len()
             ),
             issues: requirements.errors,
+        });
+
+        let technology = crate::grace::technology::validate_technology(root)?;
+        sections.push(ReviewSection {
+            name: "technology-stack".into(),
+            passed: technology.valid,
+            details: format!(
+                "languages={} components={} compatibility_checks={} known_issues={} detected_dependencies={}",
+                technology.languages.len(),
+                technology.components.len(),
+                technology.compatibility_checks.len(),
+                technology.known_issues,
+                technology.detected_dependencies.len()
+            ),
+            issues: technology.errors,
         });
 
         let passed = sections.iter().all(|s| s.passed);

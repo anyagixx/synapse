@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, log analysis, belief extraction, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
-// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
+// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, log analysis, belief extraction, compression, tracking, and skills
+// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
@@ -12,6 +12,7 @@
 // handle_analyze_logs — Runs structured LOG trajectory/anomaly/compare analysis
 // handle_extract_belief_state — Stores observable AI belief state scaffold for a module
 // handle_generate_requirements — Generates and validates docs/requirements.xml with AAG notation
+// handle_generate_technology — Generates and validates docs/technology.xml with exact versions
 // handle_gain — Returns token savings stats
 // handle_compress — Compresses input text
 // handle_refresh — Reports or fixes MyGRACE drift
@@ -22,7 +23,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Added generate_requirements MCP handler]
+// LAST_CHANGE: [v2.16.0 — Added generate_technology MCP handler]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
@@ -322,6 +323,62 @@ pub(crate) async fn handle_generate_requirements(
     }
 }
 // END_handle_generate_requirements
+
+// START_CONTRACT_handle_generate_technology
+// PURPOSE: Generate and validate a complete Technology artifact from detected dependency manifests
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: writes docs/technology.xml
+// START_handle_generate_technology
+pub(crate) async fn handle_generate_technology(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let detect_existing = args["detect_existing"].as_bool().unwrap_or(true);
+    let compatibility_check = args["compatibility_check"].as_bool().unwrap_or(true);
+    let base = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+    let project_path = args["project_path"].as_str().unwrap_or(".").trim();
+    let requested = PathBuf::from(project_path);
+    let root = if requested.is_absolute() {
+        requested
+    } else {
+        base.join(requested)
+    };
+
+    match crate::grace::technology::generate_technology_file(
+        &root,
+        detect_existing,
+        compatibility_check,
+    ) {
+        Ok(report) => {
+            let text = format!(
+                "<TechnologyGeneration valid=\"{}\">\n  <Path>{}</Path>\n  <Languages>{}</Languages>\n  <Components>{}</Components>\n  <CompatibilityChecks>{}</CompatibilityChecks>\n  <KnownIssues>{}</KnownIssues>\n  <DetectedDependencies>{}</DetectedDependencies>\n</TechnologyGeneration>",
+                report.valid,
+                report.path,
+                report.languages.len(),
+                report.components.len(),
+                report.compatibility_checks.len(),
+                report.known_issues,
+                report.detected_dependencies.len(),
+            );
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        Err(e) => error(id, -32603, format!("Technology generation error: {}", e)),
+    }
+}
+// END_handle_generate_technology
 
 // START_CONTRACT_handle_gain
 // PURPOSE: Execute token_savings and return tracking statistics
@@ -699,6 +756,31 @@ mod tests {
         assert!(dir.path().join("docs/requirements.xml").exists());
     }
     // END_test_handle_generate_requirements_writes_valid_artifact
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_generate_technology_writes_valid_artifact
+    // PURPOSE: Verify generate_technology writes a valid Technology artifact
+    // START_test_handle_generate_technology_writes_valid_artifact
+    async fn test_handle_generate_technology_writes_valid_artifact() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let response = handle_generate_technology(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "project_path": ".",
+                "detect_existing": false,
+                "compatibility_check": true,
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("<TechnologyGeneration valid=\"true\""));
+        assert!(dir.path().join("docs/technology.xml").exists());
+    }
+    // END_test_handle_generate_technology_writes_valid_artifact
 }
 
 // END_public_api

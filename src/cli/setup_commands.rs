@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.4.0 — Updated install summary for 30 MCP tools]
+// LAST_CHANGE: [v3.5.0 — Updated install summary for 31 MCP tools]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
@@ -95,7 +95,7 @@ impl InitCmd {
         println!();
         println!("What was created:");
         println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
-        println!("  opencode.jsonc              — MCP auto-start (30 tools: 15 core + 15 GRACE)");
+        println!("  opencode.jsonc              — MCP auto-start (31 tools: 16 core + 15 GRACE)");
         println!(
             "  docs/                        — Sharded architecture layout + compatibility XML docs"
         );

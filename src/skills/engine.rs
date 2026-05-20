@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
 // PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
-// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, belief state, and project workflows
-// DEPENDS: M-CONFIG, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-SKILLS-REGISTRY, M-SKILLS-TYPES
+// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, belief state, and project workflows
+// DEPENDS: M-CONFIG, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Added RequirementsAnalysis awareness to grace_plan guidance]
+// LAST_CHANGE: [v2.16.0 — Added Technology awareness to grace_plan guidance]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -87,6 +87,8 @@ impl SkillEngine {
                 let status = StatusCollector::collect(&self.context.root).await.ok();
                 let requirements =
                     crate::grace::requirements::validate_requirements(&self.context.root).ok();
+                let technology =
+                    crate::grace::technology::validate_technology(&self.context.root).ok();
                 let active_phase = read_active_phase(&layout).unwrap_or_else(|| "Phase-0".into());
                 let drift_hint = refresh
                     .as_ref()
@@ -107,12 +109,24 @@ impl SkillEngine {
                         )
                     })
                     .unwrap_or_else(|| "no requirements report available".into());
+                let technology_hint = technology
+                    .as_ref()
+                    .map(|t| {
+                        format!(
+                            "components={}, compatibility_checks={}, valid={}",
+                            t.components.len(),
+                            t.compatibility_checks.len(),
+                            t.valid
+                        )
+                    })
+                    .unwrap_or_else(|| "no technology report available".into());
                 format!(
-                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. confirm module boundaries in docs/modules/\n3. confirm phase order in docs/phases/\n4. confirm verification coverage in docs/verification/\n5. implement only next bounded module step",
+                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nTechnology: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. read docs/technology.xml and confirm exact pinned versions plus compatibility checks\n3. confirm module boundaries in docs/modules/\n4. confirm phase order in docs/phases/\n5. confirm verification coverage in docs/verification/\n6. implement only next bounded module step",
                     active_phase,
                     string_arg(&request.arguments, "goal", "Define architecture and delivery plan"),
                     string_arg(&request.arguments, "constraints", "none provided"),
                     requirements_hint,
+                    technology_hint,
                     drift_hint,
                     next_hint,
                 )

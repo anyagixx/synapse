@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-TECHNOLOGY" module="M-GRACE-TECHNOLOGY" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test grace::technology --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_technology_writes_valid_artifact --lib</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Generated technology.xml validates as Technology with exact Language, Runtime, PackageManager, component versions, DependencyMatrix, KnownIssues, and DevOps sections.</ASSERTION>
+    <ASSERTION>Legacy TECHNOLOGY stubs and latest/range/wildcard version guesses fail validation.</ASSERTION>
+    <ASSERTION>Dependency detection uses Cargo.lock exact versions when Cargo.toml contains broad semver ranges.</ASSERTION>
+    <ASSERTION>generate_technology writes docs/technology.xml and returns section counts through MCP.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

@@ -1,19 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, requirements, belief states, semantic, verification, drift, token economy, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements and belief-state coverage, print_report, active-phase display helpers
-// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-REQUIREMENTS, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
+// PURPOSE: Project health collector — aggregates contracts, requirements, technology, belief states, semantic, verification, drift, token economy, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology and belief-state coverage, print_report, active-phase display helpers
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
 // START_MODULE_MAP
-// StatusReport — Full project health report with belief state coverage
+// StatusReport — Full project health report with requirements, technology, and belief state coverage
 // TokenEconomy — Token usage statistics
 // SystemInfo — System metadata (version, paths)
 // StatusCollector — Collects and prints project health
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Added RequirementsAnalysis coverage to status]
+// LAST_CHANGE: [v2.16.0 — Added Technology stack coverage to status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -23,6 +23,7 @@ use crate::grace::layout::DocsLayout;
 use crate::grace::refresh::Refresher;
 use crate::grace::requirements::RequirementsReport;
 use crate::grace::semantic::{SemanticExtractor, SemanticReport};
+use crate::grace::technology::TechnologyReport;
 use crate::grace::verify::Verifier;
 use crate::tracking::Tracker;
 use std::path::Path;
@@ -36,6 +37,7 @@ pub struct StatusReport {
     pub mygrace_issues: usize,
     pub contracts: ContractReport,
     pub requirements: RequirementsReport,
+    pub technology: TechnologyReport,
     pub belief_state: BeliefStateReport,
     pub semantic: SemanticReport,
     pub verification: Vec<super::verify::VerificationResult>,
@@ -94,6 +96,7 @@ impl StatusCollector {
     pub async fn collect(root: &Path) -> anyhow::Result<StatusReport> {
         let contracts = ContractValidator::validate_project(root)?;
         let requirements = crate::grace::requirements::validate_requirements(root)?;
+        let technology = crate::grace::technology::validate_technology(root)?;
         let belief_state = crate::grace::belief_state::scan_project_belief_states(root)?;
         let semantic = SemanticExtractor::scan_project(root)?;
         let verification = Verifier::verify_all(root).await?;
@@ -119,6 +122,12 @@ impl StatusCollector {
             next_actions.push(format!(
                 "Complete RequirementsAnalysis: {} issues",
                 requirements.errors.len()
+            ));
+        }
+        if !technology.valid {
+            next_actions.push(format!(
+                "Complete Technology stack: {} issues",
+                technology.errors.len()
             ));
         }
         if belief_state.invalid_states > 0 {
@@ -237,6 +246,7 @@ impl StatusCollector {
             },
             contracts,
             requirements,
+            technology,
             belief_state,
             semantic,
             verification,
@@ -322,6 +332,17 @@ impl StatusCollector {
             report.requirements.use_cases.len()
         );
         println!("║  Valid:          {:<20}║", report.requirements.valid);
+        println!("╠══════════════════════════════════════╣");
+        println!("║ TECHNOLOGY                           ║");
+        println!(
+            "║  Components:     {:<20}║",
+            report.technology.components.len()
+        );
+        println!(
+            "║  Compatibility:  {:<20}║",
+            report.technology.compatibility_checks.len()
+        );
+        println!("║  Valid:          {:<20}║", report.technology.valid);
         println!("╠══════════════════════════════════════╣");
         println!("║ BELIEF STATE                         ║");
         println!(

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles and requirements generation
+// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles and requirements/technology generation
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Added generate_requirements MCP tool schema]
+// LAST_CHANGE: [v2.16.0 — Added generate_technology MCP tool schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -126,6 +126,18 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                     "detail_level": { "type": "string", "description": "quick | standard | detailed", "default": "standard" }
                 },
                 "required": ["project_description"]
+            }
+        }),
+        serde_json::json!({
+            "name": "generate_technology",
+            "description": "Generate and validate a complete Technology.xml artifact with exact versions and compatibility checks.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_path": { "type": "string", "description": "Project path to scan", "default": "." },
+                    "detect_existing": { "type": "boolean", "description": "Scan dependency manifests such as Cargo.toml, package.json, requirements.txt, and go.mod", "default": true },
+                    "compatibility_check": { "type": "boolean", "description": "Emit compatibility matrix checks", "default": true }
+                }
             }
         }),
         serde_json::json!({

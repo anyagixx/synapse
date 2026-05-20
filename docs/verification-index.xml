@@ -34,6 +34,7 @@
     <VERIFICATION id="V-M-GRACE-REVIEW" module="M-GRACE-REVIEW" path="docs/verification/V-M-GRACE-REVIEW.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-SEMANTIC" module="M-GRACE-SEMANTIC" path="docs/verification/V-M-GRACE-SEMANTIC.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-STATUS" module="M-GRACE-STATUS" path="docs/verification/V-M-GRACE-STATUS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-TECHNOLOGY" module="M-GRACE-TECHNOLOGY" path="docs/verification/V-M-GRACE-TECHNOLOGY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-VERIFY" module="M-GRACE-VERIFY" path="docs/verification/V-M-GRACE-VERIFY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-VERIFY-PHASE" module="M-GRACE-VERIFY-PHASE" path="docs/verification/V-M-GRACE-VERIFY-PHASE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-VERIFY-TYPES" module="M-GRACE-VERIFY-TYPES" path="docs/verification/V-M-GRACE-VERIFY-TYPES.xml" priority="normal" status="active" />
