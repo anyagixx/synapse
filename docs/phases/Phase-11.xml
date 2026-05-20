@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-11" status="active">
+<PHASE id="Phase-11" status="done">
   <NAME>Product Truth Hardening</NAME>
   <GOAL>Close proxy transparency, Unicode safety, public claim parity, fresh installer evidence automation, release-candidate traceability, and support diagnostic gaps before the next public release</GOAL>
   <MODULE_REFS>
@@ -32,9 +32,12 @@
     <CHECK status="passed">Installer diagnostics report OS and architecture support independently</CHECK>
     <CHECK status="passed">Release-candidate workflow checks out the requested candidate ref and records commit evidence</CHECK>
     <CHECK status="passed">Fresh-install Linux/macOS evidence workflow exists before the next public release</CHECK>
-    <CHECK status="pending-hosted-run">Hosted fresh-install workflow run must be captured before publishing the next public release</CHECK>
+    <CHECK status="passed">Hosted fresh-install workflow evidence captured in GitHub CI run 26143369696: linux job 76893339171 and macos job 76893339148 completed successfully</CHECK>
   </ACCEPTANCE>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets with writable XDG_DATA_HOME; cargo clippy --all-targets --all-features -- -D warnings; scripts/ci.sh; refresh --json drift=0; verify --ci; review --mode full --ci
   </LOCAL_GATE>
+  <HOSTED_GATE>
+    GitHub CI run 26143369696 at commit bc2ec39267670317e1c3a6f8e9bca4462dc8b728 captured push-time public fresh-install smoke evidence for Linux ubuntu-latest job 76893339171 and macOS macos-latest job 76893339148.
+  </HOSTED_GATE>
 </PHASE>

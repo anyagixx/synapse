@@ -33,5 +33,5 @@
     <ASSERTION>CI and release workflows pin Node 24-ready action majors for checkout, artifact upload, and GitHub release publishing; release artifact download uses GitHub CLI to avoid Node runtime deprecation noise.</ASSERTION>
     <ASSERTION>CI and release workflows install Rust through retrying rustup shell steps to avoid third-party Node runtime deprecation noise and absorb transient network lookup failures; hosted main CI run 26120689647 completed successfully without Node/deprecation log markers.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-10</PHASE_GATE>
+  <PHASE_GATE>Phase-11</PHASE_GATE>
 </VERIFICATION>

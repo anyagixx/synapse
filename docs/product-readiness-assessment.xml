@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-20" status="current">
   <DATE>2026-05-20</DATE>
-  <PHASE_GATE>Phase-11 local implementation gate passed; hosted fresh-install evidence still required before next public release</PHASE_GATE>
-  <SUMMARY>Synapse is now a stronger developer-tool beta with critical proxy transparency fixed, Unicode-safe truncation across user-facing preview paths, gain --graph implemented, stricter public-doc command/flag parity, precise installer diagnostics, candidate-ref release workflow traceability, and fresh Linux/macOS install evidence automation. Remaining readiness risk is concentrated in executing hosted fresh-install evidence, deferred Windows packaging, and broader external adoption feedback.</SUMMARY>
+  <PHASE_GATE>Phase-11 implementation gate passed locally and hosted Linux/macOS fresh-install evidence was captured on 2026-05-20</PHASE_GATE>
+  <SUMMARY>Synapse is now a stronger developer-tool beta with critical proxy transparency fixed, Unicode-safe truncation across user-facing preview paths, gain --graph implemented, stricter public-doc command/flag parity, precise installer diagnostics, candidate-ref release workflow traceability, and hosted Linux/macOS fresh-install evidence. Remaining readiness risk is concentrated in deferred Windows packaging and broader external adoption feedback.</SUMMARY>
   <SCORES>
-    <OVERALL_READINESS>9.5/10</OVERALL_READINESS>
+    <OVERALL_READINESS>9.6/10</OVERALL_READINESS>
     <MYGRACE_TRUTH>9.6/10</MYGRACE_TRUTH>
     <PROXY_TRANSPARENCY>9.7/10</PROXY_TRANSPARENCY>
     <UNICODE_RUNTIME_SAFETY>9.6/10</UNICODE_RUNTIME_SAFETY>
     <TOKEN_ECONOMY_TRUTH>9.2/10</TOKEN_ECONOMY_TRUTH>
-    <RELEASE_INSTALL_TRUTH>9.6/10</RELEASE_INSTALL_TRUTH>
+    <RELEASE_INSTALL_TRUTH>9.8/10</RELEASE_INSTALL_TRUTH>
     <SCORE_RELEASE_CANDIDATE_DISCIPLINE>9.8/10</SCORE_RELEASE_CANDIDATE_DISCIPLINE>
     <SUPPORT_DIAGNOSTICS_READINESS>9.6/10</SUPPORT_DIAGNOSTICS_READINESS>
     <PROTOCOL_BOOTSTRAP_RELIABILITY>9.2/10</PROTOCOL_BOOTSTRAP_RELIABILITY>
-    <GENERAL_USER_INSTALL_READINESS>9.4/10</GENERAL_USER_INSTALL_READINESS>
+    <GENERAL_USER_INSTALL_READINESS>9.6/10</GENERAL_USER_INSTALL_READINESS>
   </SCORES>
   <EVIDENCE>
-    <MYGRACE_DRIFT>0 canonical drift across 70 code modules, graph shards, and verification shards; 75/75 contracted files and 322 function contracts after Phase-11 changes</MYGRACE_DRIFT>
+    <MYGRACE_DRIFT>0 canonical drift across 70 code modules, graph shards, and verification shards; 75/75 contracted files and 323 function contracts after Phase-11 changes</MYGRACE_DRIFT>
     <CI_GATE>Full scripts/ci.sh gate passes, including fmt, clippy, runtime guard, 93 tests, release candidate policy, release smoke, verify, review, refresh, and status</CI_GATE>
     <PHASE11_GATE>Local Phase-11 gates passed: cargo fmt --all, cargo test --all-targets with writable XDG_DATA_HOME, cargo clippy --all-targets --all-features -- -D warnings, scripts/ci.sh, refresh --json drift=0, verify --ci, and review --mode full --ci</PHASE11_GATE>
     <PROXY_TRANSPARENCY>syn proxy now preserves wrapped command exit status; regression tests cover nonzero exit propagation, Unicode passthrough truncation, positive token savings, and gain --graph output</PROXY_TRANSPARENCY>
@@ -24,6 +24,7 @@
     <TOKEN_ECONOMY_TRUTH>Public token-economy claims now point users to measured local syn gain output; tests prove project-local filters can produce positive tracked savings and graph output</TOKEN_ECONOMY_TRUTH>
     <RELEASE_SMOKE>GitHub release run 26120421918 built Linux x86_64, Linux aarch64, macOS x86_64, and macOS arm64 artifacts, aggregated SHA256SUMS, and published v2.3.5 through Node 24-ready release actions and CLI artifact download</RELEASE_SMOKE>
     <INSTALLER_TRUTH>Public main installer installed v2.3.5 from the Linux x86_64 release artifact with SHA256 verification; installer maps Linux/macOS x86_64 and arm64 hosts to declared prebuilt artifacts and keeps cargo source fallback</INSTALLER_TRUTH>
+    <HOSTED_FRESH_INSTALL>GitHub CI run 26143369696 at commit bc2ec39267670317e1c3a6f8e9bca4462dc8b728 captured push-time public fresh-install smoke evidence: linux ubuntu-latest job 76893339171 and macos macos-latest job 76893339148 completed successfully using the public raw installer URL and temporary SYN_INSTALL_DIR</HOSTED_FRESH_INSTALL>
     <ACTIONS_RUNTIME>Hosted main CI run 26120689647 and release run 26120421918 completed with no Node.js 20, DEP0040, DEP0005, or deprecation log markers</ACTIONS_RUNTIME>
     <PHASE7_GATE>Local Phase-7 hardening gate passed: 74 tests, clippy -D warnings, runtime guard, release smoke, verify --ci, review --mode full, refresh drift=0, and scripts/ci.sh</PHASE7_GATE>
     <PHASE8_GATE>Local Phase-8 gates passed: docs parity, release tag guard, release smoke with packaged version assertion, cargo audit --deny warnings, all-target tests, clippy -D warnings, refresh drift=0, and verify --ci</PHASE8_GATE>
@@ -41,9 +42,8 @@
   <RESIDUAL_RISKS>
     <RISK_WINDOWS_DEFERRED>Windows prebuilt install remains intentionally deferred beyond Phase-5</RISK_WINDOWS_DEFERRED>
     <RISK_NON_DEVELOPER_INSTALL>Non-Linux/macOS users still require source fallback or future platform artifacts</RISK_NON_DEVELOPER_INSTALL>
-    <RISK_HOSTED_FRESH_INSTALL_EVIDENCE>Fresh-install workflow automation exists, but a hosted Linux/macOS run must still be captured before the next public release</RISK_HOSTED_FRESH_INSTALL_EVIDENCE>
     <RISK_EXTERNAL_ADOPTION_EVIDENCE>Real user feedback still needs to be collected across more environments</RISK_EXTERNAL_ADOPTION_EVIDENCE>
     <RISK_TEST_FILE_SIZE_TARGET>tests/docs_parity.rs and tests/integration_test.rs exceed the 500-line Phase-2 maintainability target while remaining under the hard 1300-line gate</RISK_TEST_FILE_SIZE_TARGET>
   </RESIDUAL_RISKS>
-  <NEXT_PHASE>Capture hosted fresh-install workflow evidence and external adoption feedback before the next public release</NEXT_PHASE>
+  <NEXT_PHASE>Collect external adoption feedback across more Linux/macOS environments and schedule deferred Windows packaging separately</NEXT_PHASE>
 </PRODUCT_READINESS_ASSESSMENT>
