@@ -1,21 +1,21 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, contracts, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, scoped_gate, wave_audit, full_integrity
+// PURPOSE: GRACE integrity review — checks semantic markup, profile-aware contracts, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, review_with_profile, scoped_gate, wave_audit, full_integrity
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
 // ReviewReport — Full review report with sections
 // ReviewSection — Single review section with issues list
-// Reviewer — GRACE integrity reviewer with scoped, wave-audit, and full modes
+// Reviewer — GRACE integrity reviewer with scoped, wave-audit, full modes, and strictness profiles
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.6.0 — Shard reference regex returns explicit errors instead of unwrap panics]
+// LAST_CHANGE: [v2.7.0 — Added profile-aware contract review gates]
 // END_CHANGE_SUMMARY
 
-use crate::grace::contract::ContractValidator;
+use crate::grace::contract::{ContractValidator, GraceProfile};
 use crate::grace::inventory::MyGraceInventory;
 use crate::grace::layout::DocsLayout;
 use crate::grace::semantic::SemanticExtractor;
@@ -68,16 +68,33 @@ impl Reviewer {
     // OUTPUTS: { anyhow::Result<ReviewReport> }
     // START_reviewer_review
     pub fn review(root: &Path, mode: &str) -> anyhow::Result<ReviewReport> {
-        match mode {
-            "scoped" => Self::scoped_gate(root),
-            "wave-audit" => Self::wave_audit(root),
-            "full" => Self::full_integrity(root),
-            _ => Self::scoped_gate(root),
-        }
+        Self::review_with_profile(root, mode, GraceProfile::Strict)
     }
     // END_reviewer_review
 
-    fn scoped_gate(root: &Path) -> anyhow::Result<ReviewReport> {
+    // START_CONTRACT_Reviewer::review_with_profile
+    // PURPOSE: Run GRACE integrity review with the selected strictness profile
+    // INPUTS: { root: &Path }, { mode: &str — scoped|wave-audit|full }, { profile: GraceProfile }
+    // OUTPUTS: { anyhow::Result<ReviewReport> }
+    // START_reviewer_review_with_profile
+    pub fn review_with_profile(
+        root: &Path,
+        mode: &str,
+        profile: GraceProfile,
+    ) -> anyhow::Result<ReviewReport> {
+        match mode {
+            "scoped" => Self::scoped_gate_with_profile(root, profile),
+            "wave-audit" => Self::wave_audit_with_profile(root, profile),
+            "full" => Self::full_integrity_with_profile(root, profile),
+            _ => Self::scoped_gate_with_profile(root, profile),
+        }
+    }
+    // END_reviewer_review_with_profile
+
+    fn scoped_gate_with_profile(
+        root: &Path,
+        profile: GraceProfile,
+    ) -> anyhow::Result<ReviewReport> {
         let mut sections = Vec::new();
 
         // 1. Semantic markup integrity
@@ -104,11 +121,16 @@ impl Reviewer {
         });
 
         // 2. Contract compliance
-        let report = ContractValidator::validate_project(root)?;
+        let report = ContractValidator::validate_project_with_profile(root, profile)?;
         sections.push(ReviewSection {
             name: "contract-compliance".into(),
             passed: report.invalid == 0,
-            details: format!("{}/{} valid contracts", report.valid, report.with_contract),
+            details: format!(
+                "{}/{} valid contracts under {} profile",
+                report.valid,
+                report.with_contract,
+                profile.as_str()
+            ),
             issues: report
                 .contracts
                 .iter()
@@ -125,11 +147,11 @@ impl Reviewer {
         })
     }
 
-    fn wave_audit(root: &Path) -> anyhow::Result<ReviewReport> {
-        let mut sections = Self::scoped_gate(root)?.sections;
+    fn wave_audit_with_profile(root: &Path, profile: GraceProfile) -> anyhow::Result<ReviewReport> {
+        let mut sections = Self::scoped_gate_with_profile(root, profile)?.sections;
 
         // Cross-module import/dependency check
-        let report = ContractValidator::validate_project(root)?;
+        let report = ContractValidator::validate_project_with_profile(root, profile)?;
         let mut dep_issues = Vec::new();
         for c in &report.contracts {
             if !c.has_contract {
@@ -184,8 +206,11 @@ impl Reviewer {
         })
     }
 
-    fn full_integrity(root: &Path) -> anyhow::Result<ReviewReport> {
-        let mut sections = Self::scoped_gate(root)?.sections;
+    fn full_integrity_with_profile(
+        root: &Path,
+        profile: GraceProfile,
+    ) -> anyhow::Result<ReviewReport> {
+        let mut sections = Self::scoped_gate_with_profile(root, profile)?.sections;
 
         // 3. Verification integrity
         let layout = DocsLayout::new(root);

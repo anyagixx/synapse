@@ -1,25 +1,26 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-GRACE-COMMANDS
 // PURPOSE: CLI MyGRACE command handlers
-// SCOPE: VerifyCmd, ReviewCmd, StatusCmd, RefreshCmd, SkillsCmd
+// SCOPE: VerifyCmd, ReviewCmd, StatusCmd, RefreshCmd, SkillsCmd, GRACE profile parsing
 // DEPENDS: M-CONFIG, M-GRACE, M-GRACE-REFRESH, M-GRACE-REVIEW, M-GRACE-STATUS, M-SKILLS
 // LINKS: docs/modules/M-CLI.xml
 
 // START_MODULE_MAP
-// VerifyCmd::run — Runs MyGRACE verification
-// ReviewCmd::run — Runs MyGRACE review
+// VerifyCmd::run — Runs MyGRACE verification with optional strictness profile
+// ReviewCmd::run — Runs MyGRACE review with optional strictness profile
 // StatusCmd::run — Prints MyGRACE status
 // RefreshCmd::run — Reports or fixes MyGRACE drift
 // SkillsCmd::run — Lists, shows, or runs MyGRACE skills
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Extracted MyGRACE CLI handlers from M-CLI]
+// LAST_CHANGE: [v2.10.0 — Added --profile support for verify and review]
 // END_CHANGE_SUMMARY
 
 use super::{RefreshCmd, ReviewCmd, SkillsCmd, StatusCmd, VerifyCmd};
 use crate::config::Config;
 use crate::grace::bootstrap::resolve_module_scope;
+use crate::grace::GraceProfile;
 
 // START_public_api
 
@@ -31,7 +32,9 @@ impl VerifyCmd {
     // START_verify_run
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
-        let mut results = crate::grace::GraceEngine::verify_project(&root).await?;
+        let profile = parse_grace_profile(&self.profile)?;
+        let mut results =
+            crate::grace::GraceEngine::verify_project_with_profile(&root, profile).await?;
         if let Some(module) = self.r#mod.as_deref() {
             let scope = resolve_module_scope(&root, module);
             if !scope.is_empty() {
@@ -72,7 +75,7 @@ impl VerifyCmd {
         if !all_pass {
             anyhow::bail!("Verification failed. Fix issues above and re-run.");
         }
-        println!("All checks passed.");
+        println!("All checks passed under {} profile.", profile.as_str());
         Ok(())
     }
     // END_verify_run
@@ -87,7 +90,8 @@ impl ReviewCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         let mode = self.mode.as_deref().unwrap_or("scoped");
-        let report = crate::grace::review::Reviewer::review(&root, mode)?;
+        let profile = parse_grace_profile(&self.profile)?;
+        let report = crate::grace::review::Reviewer::review_with_profile(&root, mode, profile)?;
         let mut sections = report.sections.clone();
         if let Some(module) = self.r#mod.as_deref() {
             let scope = resolve_module_scope(&root, module);
@@ -115,7 +119,11 @@ impl ReviewCmd {
             anyhow::bail!("Review found issues.");
         }
 
-        println!("=== GRACE Integrity Review ({}) ===", report.mode);
+        println!(
+            "=== GRACE Integrity Review ({}, profile={}) ===",
+            report.mode,
+            profile.as_str()
+        );
         for s in &report.sections {
             let status = if s.passed { "✓" } else { "✗" };
             println!("{} {} — {}", status, s.name, s.details);
@@ -132,6 +140,21 @@ impl ReviewCmd {
     }
     // END_review_run
 }
+
+// START_CONTRACT_parse_grace_profile
+// PURPOSE: Parse a CLI GRACE profile and return an actionable error for unsupported names
+// INPUTS: { profile: &str — lite|balanced|strict }
+// OUTPUTS: { anyhow::Result<GraceProfile> }
+// START_parse_grace_profile
+fn parse_grace_profile(profile: &str) -> anyhow::Result<GraceProfile> {
+    GraceProfile::from_name(profile).ok_or_else(|| {
+        anyhow::anyhow!(
+            "Unsupported GRACE profile '{}'. Use one of: lite, balanced, strict.",
+            profile
+        )
+    })
+}
+// END_parse_grace_profile
 
 impl StatusCmd {
     // START_CONTRACT_StatusCmd::run

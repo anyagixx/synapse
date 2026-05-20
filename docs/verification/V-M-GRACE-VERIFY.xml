@@ -6,6 +6,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Verification regex initialization returns explicit anyhow errors instead of panicking.</ASSERTION>
+    <ASSERTION>Verification reports function-contract strictness according to the selected GRACE profile.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

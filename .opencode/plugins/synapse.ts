@@ -52,7 +52,9 @@ If primary sharded artifacts are missing:
 
 ### PHASE 1+ — IMPLEMENTATION
 - Every source file STARTS with MODULE_CONTRACT
-- Every function wrapped in START_/END_ blocks
+- Use native comment syntax for markers: // for Rust/TS/JS, # for Python/shell, -- for SQL
+- MODULE_ID is one id only; related modules belong in DEPENDS/LINKS
+- Strict profile wraps functions in contracts; lite/balanced profiles reserve function contracts for public or risky behavior
 - After each module: call verify_project
 - After each phase: call review_code
 - Use grace_* tools for workflow-level planning, execution, lint, review, refresh, and status

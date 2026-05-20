@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
-// PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health and clean-bootstrap reporting
-// SCOPE: GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, clean config fallback diagnostics, index storage diagnostics, ServeCmd
-// DEPENDS: M-CONFIG, M-TRACKING, M-PROXY, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE
+// PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting
+// SCOPE: GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// DEPENDS: M-CONFIG, M-TRACKING, M-PROXY, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS: docs/modules/M-CLI.xml
 
 // START_MODULE_MAP
@@ -13,17 +13,20 @@
 // McpCmd::run — Starts MCP server
 // ConfigCmd::run — Prints or opens config
 // HooksCmd::run — Manages hook installation
-// DoctorCmd::run — Runs setup diagnostics
+// DoctorCmd::run — Runs setup and dependency diagnostics
+// check_project_dependencies — Checks Python dependency readiness when manifests are present
 // ServeCmd::run — Starts dashboard
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Keep public MCP command stdio-only until HTTP transport exists]
+// LAST_CHANGE: [v3.3.0 — Added Python dependency diagnostics to syn doctor]
 // END_CHANGE_SUMMARY
 
 use super::{CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, ServeCmd};
 use crate::config::Config;
 use std::io::Write;
+use std::path::Path;
+use std::process::{Command, Stdio};
 
 // START_public_api
 
@@ -215,7 +218,7 @@ impl HooksCmd {
 
 impl DoctorCmd {
     // START_CONTRACT_DoctorCmd::run
-    // PURPOSE: Run local setup diagnostics for config, index, hooks, docs, parsers, tracking, and sources
+    // PURPOSE: Run local setup diagnostics for config, index, hooks, docs, parsers, tracking, sources, and dependencies
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
     // START_doctor_run
@@ -354,6 +357,8 @@ impl DoctorCmd {
             "no source files in project"
         );
 
+        issues += check_project_dependencies(&root, self.deps)?;
+
         println!();
         if issues == 0 {
             println!("{}", "Synapse is ready! All checks passed.".green().bold());
@@ -382,6 +387,235 @@ impl DoctorCmd {
     // END_doctor_run
 }
 
+// START_CONTRACT_check_project_dependencies
+// PURPOSE: Check Python dependency readiness when dependency manifests are present or explicitly requested
+// INPUTS: { root: &Path — project root }, { force: bool — run even without a manifest }
+// OUTPUTS: { anyhow::Result<u32> — number of dependency issues }
+// SIDE_EFFECTS: runs local python/pip probes and prints diagnostic lines
+// START_check_project_dependencies
+fn check_project_dependencies(root: &Path, force: bool) -> anyhow::Result<u32> {
+    let requirements_path = root.join("requirements.txt");
+    let pyproject_path = root.join("pyproject.toml");
+    let has_requirements = requirements_path.exists();
+    let has_pyproject = pyproject_path.exists();
+    let has_python_files = crate::indexer::walker::Walker::new(root)
+        .walk()
+        .iter()
+        .any(|file| file.language == "python");
+
+    if !force && !has_requirements && !has_pyproject {
+        return Ok(0);
+    }
+
+    println!();
+    println!("Dependency checks:");
+
+    let mut issues = 0u32;
+    let Some(python) = find_python_command() else {
+        print_doctor_fail(
+            "python",
+            "python3/python not found — install Python before running dependency checks",
+        );
+        return Ok(1);
+    };
+    print_doctor_pass("python", &format!("{} available", python));
+
+    let pip_available = command_success(&python, &["-m", "pip", "--version"]);
+    if has_requirements || has_pyproject || force {
+        if pip_available {
+            print_doctor_pass("pip", "python -m pip available");
+        } else {
+            print_doctor_fail("pip", "python -m pip unavailable");
+            issues += 1;
+        }
+    }
+
+    if has_requirements && pip_available {
+        let content = std::fs::read_to_string(&requirements_path)?;
+        let imports = parse_requirement_imports(&content);
+        let missing: Vec<String> = imports
+            .iter()
+            .filter(|import_name| !python_import_available(&python, import_name))
+            .cloned()
+            .collect();
+        if missing.is_empty() {
+            print_doctor_pass(
+                "requirements",
+                &format!("{} import checks passed", imports.len()),
+            );
+        } else {
+            print_doctor_fail(
+                "requirements",
+                &format!(
+                    "{} missing imports: {}. Run `{} -m pip install -r requirements.txt`",
+                    missing.len(),
+                    missing
+                        .iter()
+                        .take(5)
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    python
+                ),
+            );
+            issues += 1;
+        }
+    } else if has_pyproject && pip_available {
+        if command_success(&python, &["-m", "pip", "check"]) {
+            print_doctor_pass("pyproject", "pip environment has no broken requirements");
+        } else {
+            print_doctor_fail(
+                "pyproject",
+                "pip check found broken requirements — run `python -m pip install -e .` or `uv sync`",
+            );
+            issues += 1;
+        }
+    } else if force && has_python_files {
+        print_doctor_pass(
+            "python dependencies",
+            "Python files found but no requirements.txt or pyproject.toml; manifest audit skipped",
+        );
+    }
+
+    Ok(issues)
+}
+// END_check_project_dependencies
+
+// START_CONTRACT_find_python_command
+// PURPOSE: Locate an executable Python command for dependency diagnostics
+// OUTPUTS: { Option<String> — python command name }
+// START_find_python_command
+fn find_python_command() -> Option<String> {
+    ["python3", "python"]
+        .iter()
+        .find(|candidate| command_success(candidate, &["--version"]))
+        .map(|candidate| candidate.to_string())
+}
+// END_find_python_command
+
+// START_CONTRACT_command_success
+// PURPOSE: Run a local command probe and return whether it exited successfully
+// INPUTS: { program: &str }, { args: &[&str] }
+// OUTPUTS: { bool }
+// START_command_success
+fn command_success(program: &str, args: &[&str]) -> bool {
+    Command::new(program)
+        .args(args)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+// END_command_success
+
+// START_CONTRACT_python_import_available
+// PURPOSE: Check whether a Python import target is importable in the current environment
+// INPUTS: { python: &str — python command }, { import_name: &str — import module name }
+// OUTPUTS: { bool }
+// START_python_import_available
+fn python_import_available(python: &str, import_name: &str) -> bool {
+    Command::new(python)
+        .args([
+            "-c",
+            "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec(sys.argv[1]) else 1)",
+            import_name,
+        ])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+// END_python_import_available
+
+// START_CONTRACT_parse_requirement_imports
+// PURPOSE: Convert simple requirements.txt entries to best-effort Python import names
+// INPUTS: { content: &str — requirements.txt content }
+// OUTPUTS: { Vec<String> — import names to probe }
+// START_parse_requirement_imports
+fn parse_requirement_imports(content: &str) -> Vec<String> {
+    content
+        .lines()
+        .filter_map(parse_requirement_import)
+        .collect()
+}
+// END_parse_requirement_imports
+
+// START_CONTRACT_parse_requirement_import
+// PURPOSE: Parse one requirements.txt line into a best-effort import name
+// INPUTS: { line: &str — raw requirement line }
+// OUTPUTS: { Option<String> }
+// START_parse_requirement_import
+fn parse_requirement_import(line: &str) -> Option<String> {
+    let clean = line.split('#').next()?.trim();
+    if clean.is_empty()
+        || clean.starts_with('-')
+        || clean.starts_with("git+")
+        || clean.contains("://")
+        || clean.starts_with('.')
+    {
+        return None;
+    }
+    let package = clean
+        .split(['=', '<', '>', '!', '~', '[', ';'])
+        .next()?
+        .trim();
+    if package.is_empty() {
+        None
+    } else {
+        Some(python_import_name(package))
+    }
+}
+// END_parse_requirement_import
+
+// START_CONTRACT_python_import_name
+// PURPOSE: Map common package distribution names to their import module names
+// INPUTS: { package: &str — distribution package name }
+// OUTPUTS: { String — import module candidate }
+// START_python_import_name
+fn python_import_name(package: &str) -> String {
+    match package.to_ascii_lowercase().as_str() {
+        "beautifulsoup4" => "bs4".into(),
+        "pillow" => "PIL".into(),
+        "pyyaml" => "yaml".into(),
+        "python-dotenv" => "dotenv".into(),
+        "python-telegram-bot" => "telegram".into(),
+        _ => package.replace('-', "_"),
+    }
+}
+// END_python_import_name
+
+// START_CONTRACT_print_doctor_pass
+// PURPOSE: Print a standardized PASS diagnostic line outside the DoctorCmd macro scope
+// INPUTS: { label: &str }, { message: &str }
+// OUTPUTS: { stdout line }
+// START_print_doctor_pass
+fn print_doctor_pass(label: &str, message: &str) {
+    use colored::Colorize;
+    println!(
+        "  {} {}",
+        "PASS".green().bold(),
+        format!("{} — {}", label, message).green()
+    );
+}
+// END_print_doctor_pass
+
+// START_CONTRACT_print_doctor_fail
+// PURPOSE: Print a standardized FAIL diagnostic line outside the DoctorCmd macro scope
+// INPUTS: { label: &str }, { message: &str }
+// OUTPUTS: { stdout line }
+// START_print_doctor_fail
+fn print_doctor_fail(label: &str, message: &str) {
+    use colored::Colorize;
+    println!(
+        "  {} {}",
+        "FAIL".red().bold(),
+        format!("{} — {}", label, message).red()
+    );
+}
+// END_print_doctor_fail
+
 impl ServeCmd {
     // START_CONTRACT_ServeCmd::run
     // PURPOSE: Start the web dashboard
@@ -393,6 +627,31 @@ impl ServeCmd {
         crate::dashboard::start_dashboard(&self.bind).await
     }
     // END_serve_run
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    // START_CONTRACT_test_parse_requirement_imports_skips_non_packages
+    // PURPOSE: Verify dependency diagnostics parse simple requirements without following nested or remote specs
+    // START_test_parse_requirement_imports_skips_non_packages
+    fn test_parse_requirement_imports_skips_non_packages() {
+        let imports = parse_requirement_imports(
+            "requests==2.32.0\n-r dev.txt\ngit+https://example/repo.git\npython-dotenv>=1\nbeautifulsoup4\n",
+        );
+
+        assert_eq!(
+            imports,
+            vec![
+                "requests".to_string(),
+                "dotenv".to_string(),
+                "bs4".to_string()
+            ]
+        );
+    }
+    // END_test_parse_requirement_imports_skips_non_packages
 }
 
 // END_public_api

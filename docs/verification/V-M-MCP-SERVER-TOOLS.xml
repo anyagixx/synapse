@@ -4,6 +4,8 @@
     <COMMAND>cargo test --all-targets</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>tools/list documents GRACE profile arguments for verify_project and review_code.</ASSERTION>
+  </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1</PHASE_GATE>
 </VERIFICATION>

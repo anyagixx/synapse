@@ -2,7 +2,7 @@
 <MODULE id="M-MCP-SERVER-GRACE-TOOLS" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER-GRACE-TOOLS</NAME>
   <PURPOSE>MCP handlers for MyGRACE verification, review, status, refresh, compression, tracking, and skills</PURPOSE>
-  <SCOPE>verify_project, review_code, project_status, token_savings, compress_text, refresh_project, suggest_contract, grace_* handlers</SCOPE>
+  <SCOPE>profile-aware verify_project/review_code, project_status, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers</SCOPE>
   <FILES>
     <FILE>src/mcp/server_grace_tools.rs</FILE>
   </FILES>

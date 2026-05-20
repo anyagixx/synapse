@@ -7,6 +7,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>CLI schema accepts gain --graph as a supported documented flag.</ASSERTION>
+    <ASSERTION>CLI schema accepts verify/review --profile and doctor --deps as documented flags.</ASSERTION>
     <ASSERTION>CLI schema exposes syn mcp as stdio-only until HTTP/LSP transport flags are implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-12</PHASE_GATE>

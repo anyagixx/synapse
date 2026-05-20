@@ -2,7 +2,7 @@
 <MODULE id="M-CLI-GRACE-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-GRACE-COMMANDS</NAME>
   <PURPOSE>CLI MyGRACE command handlers</PURPOSE>
-  <SCOPE>VerifyCmd, ReviewCmd, StatusCmd, RefreshCmd, SkillsCmd</SCOPE>
+  <SCOPE>VerifyCmd, ReviewCmd, StatusCmd, RefreshCmd, SkillsCmd, GRACE profile parsing</SCOPE>
   <FILES>
     <FILE>src/cli/grace_commands.rs</FILE>
   </FILES>

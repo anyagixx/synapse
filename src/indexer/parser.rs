@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-PARSER
-// PURPOSE: Tree-sitter AST parser — extracts code blocks (functions, structs, classes) with fallback
-// SCOPE: ParserEngine, CodeBlock, tree-sitter parsing for Rust/Python/JS/TS/Go, regex fallback
+// PURPOSE: Tree-sitter AST parser — extracts code blocks (functions, structs, classes, SQL DDL) with fallback
+// SCOPE: ParserEngine, CodeBlock, tree-sitter parsing for Rust/Python/JS/TS/Go, SQL-aware fallback
 // DEPENDS: N/A (tree-sitter grammars loaded at runtime)
 // LINKS: N/A
 
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — GRACE markup added]
+// LAST_CHANGE: [v2.1.0 — Added SQL DDL fallback patterns]
 // END_CHANGE_SUMMARY
 
 use tree_sitter::{Language, Parser};
@@ -219,6 +219,15 @@ fn fallback_parse(code: &str) -> Vec<CodeBlock> {
         ("function ", "bash_function"),
         // Lua
         ("local function ", "local_function"),
+        // SQL
+        ("CREATE TABLE ", "sql_table"),
+        ("create table ", "sql_table"),
+        ("CREATE VIEW ", "sql_view"),
+        ("create view ", "sql_view"),
+        ("CREATE INDEX ", "sql_index"),
+        ("create index ", "sql_index"),
+        ("CREATE FUNCTION ", "sql_function"),
+        ("create function ", "sql_function"),
         // CSS/SCSS
         (".", "css_selector"),
         ("#", "css_id"),
@@ -304,6 +313,8 @@ fn basic_fallback(code: &str) -> Vec<CodeBlock> {
         ("export class ", "class"),
         ("func ", "function"),
         ("public class ", "class"),
+        ("CREATE TABLE ", "sql_table"),
+        ("create table ", "sql_table"),
     ];
     for (i, line) in code.lines().enumerate() {
         let trimmed = line.trim();

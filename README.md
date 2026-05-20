@@ -103,6 +103,16 @@ opencode          # LLM видит 27 MCP инструментов + sharded Pha
 # Ты:  "Приложение для заметок с поиском"
 ```
 
+Для небольших Python/SQL ботов не нужно вручную ломать синтаксис комментариев: `suggest_contract` и валидатор используют `#` для Python/shell, `--` для SQL и `//` для Rust/TS/JS. Если проект маленький и function contracts на каждый helper создают шум, запускай проверки с профилем:
+
+```bash
+syn verify --profile lite
+syn review --profile balanced
+syn doctor --deps
+```
+
+`MODULE_ID` должен быть одним значением вроде `M-BOT`; связанные модули перечисляются в `DEPENDS` или `LINKS`.
+
 ---
 
 ## Phase 0 — Архитектура перед кодом

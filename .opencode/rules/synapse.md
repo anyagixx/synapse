@@ -88,6 +88,9 @@ Compatibility docs may also exist under `docs/*.xml`, but sharded indexes are pr
 
 ### Every source file MUST have this structure:
 
+Use the file's native comment syntax: Rust/TypeScript/JavaScript `//`, Python/shell `#`, SQL `--`.
+`MODULE_ID` is exactly one id (`M-XXX`); put related modules in `DEPENDS` or `LINKS`, never as comma-separated `MODULE_ID` values.
+
 ```
 // MODULE_CONTRACT
 // MODULE_ID: M-XXX
@@ -110,8 +113,11 @@ Compatibility docs may also exist under `docs/*.xml`, but sharded indexes are pr
 // END_public_api
 ```
 
-### Every function MUST have a contract:
+### Function contracts
 
+Strict profile requires function contracts for functions. For small bots, scripts, migrations, and helpers, use `profile=lite` or `profile=balanced`; then module-level contracts are enough for small/non-critical files and function contracts are reserved for public or risky behavior.
+
+Rust/TypeScript example:
 ```
 // START_CONTRACT_create_note
 // PURPOSE: Create a new note and persist to storage
@@ -124,9 +130,23 @@ pub fn create_note(title: &str, content: &str) -> Note { ... }
 // END_create_note
 ```
 
+Python and SQL use the same markers with native comments:
+
+```python
+# START_CONTRACT_parse_date
+# PURPOSE: Parse a user-provided date
+def parse_date(value: str): ...
+```
+
+```sql
+-- START_CONTRACT_create_users
+-- PURPOSE: Create the users table
+CREATE TABLE users (...);
+```
+
 ### Semantic Markup Rules
 
-1. **500-token granularity**: blocks should be ~500 TOKENS (not lines). If larger, split into sub-blocks.
+1. **500-token granularity**: blocks should be ~500 TOKENS when they grow. Do not split tiny files or 20-line helpers just to satisfy a number.
 2. **Unique block names**: every START_X/END_X pair must have a unique name within the file.
 3. **Names describe WHAT, not HOW**: use `VALIDATE_INPUT` not `checkIfNullAndTrim`.
 4. **Paired markers**: every START_X must have END_X. No orphans.

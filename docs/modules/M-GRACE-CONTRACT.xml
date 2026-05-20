@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-CONTRACT" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-CONTRACT</NAME>
-  <PURPOSE>MODULE_CONTRACT validator — scans source files for GRACE contract blocks and validates them</PURPOSE>
-  <SCOPE>ModuleContract, FunctionContract, ContractReport models, ContractValidator with scan_file and validate_project</SCOPE>
+  <PURPOSE>MODULE_CONTRACT validator — scans source files for language-aware GRACE contract blocks and validates them</PURPOSE>
+  <SCOPE>GraceProfile, ModuleContract, FunctionContract, ContractReport models, ContractValidator with scan_file, scan_file_with_profile, validate_project, and validate_project_with_profile</SCOPE>
   <FILES>
     <FILE>src/grace/contract.rs</FILE>
   </FILES>

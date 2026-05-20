@@ -8,6 +8,7 @@ This page lists shipped CLI commands only.
 |---------|-------------|
 | `syn init` | Install OpenCode MCP config, plugin, rules, and MyGRACE starter artifacts |
 | `syn doctor` | Run local setup diagnostics |
+| `syn doctor --deps` | Include Python/pip and requirements dependency diagnostics |
 | `syn hooks install` | Install Synapse hooks for supported agents |
 | `syn hooks status` | Show hook installation status |
 
@@ -29,7 +30,9 @@ This page lists shipped CLI commands only.
 | Command | Description |
 |---------|-------------|
 | `syn verify` | Run MyGRACE verification |
+| `syn verify --profile lite` | Run MyGRACE verification with lightweight function-contract requirements |
 | `syn review` | Run MyGRACE integrity review |
+| `syn review --profile balanced` | Run MyGRACE review with balanced contract strictness |
 | `syn refresh` | Report canonical artifact drift |
 | `syn refresh --fix` | Rewrite canonical MyGRACE artifacts from source contracts |
 | `syn status` | Show project health |

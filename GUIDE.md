@@ -37,7 +37,7 @@ AI дальше делает всё сама:
 3. Заполняет `docs/development-plan.xml` — модули и фазы
 4. Заполняет `docs/verification-plan.xml` — как проверять
 5. Заполняет `docs/knowledge-graph.xml` — связи модулей
-6. **Только потом** пишет код с MODULE_CONTRACT и START_/END_ блоками
+6. **Только потом** пишет код с MODULE_CONTRACT и START_/END_ блоками, используя синтаксис комментариев языка
 7. После каждого модуля: `verify_project` → fix → re-verify
 8. В конце: `review_code` + `refresh_project`
 
@@ -92,9 +92,12 @@ AI **не может писать код** пока не созданы все 5
 
 ```bash
 syn doctor         # 10 проверок — всё настроено?
+syn doctor --deps  # Проверить Python/pip/requirements
 syn index --watch  # Авто-переиндексация
 syn status         # Здоровье проекта
-syn verify         # Проверка контрактов и структуры
+syn verify         # Проверка контрактов и структуры (strict)
+syn verify --profile lite      # Для маленьких ботов/скриптов
+syn review --profile balanced  # Меньше шума по helper-функциям
 syn refresh        # Синхронизация artifacts
 syn gain           # Токены сэкономлены
 syn serve          # Web дашборд (http://127.0.0.1:3100)
@@ -107,6 +110,8 @@ syn serve          # Web дашборд (http://127.0.0.1:3100)
 ```bash
 syn doctor    # Покажет какая из 10 проверок FAIL
 ```
+
+Для Python проектов `syn doctor --deps` дополнительно проверит `python`, `pip` и простые импорты из `requirements.txt`.
 
 ---
 

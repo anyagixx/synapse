@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, command argument structs, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS
 // LINKS: Cargo.toml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Removed unimplemented MCP HTTP/LSP flags from public CLI]
+// LAST_CHANGE: [v2.10.0 — Added GRACE profile flags and doctor dependency audit flag]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -118,6 +118,8 @@ pub struct VerifyCmd {
     pub level: Option<String>,
     #[arg(long = "mod")]
     pub r#mod: Option<String>,
+    #[arg(long, default_value = "strict")]
+    pub profile: String,
     #[arg(long)]
     pub json: bool,
     #[arg(long)]
@@ -133,6 +135,8 @@ pub struct ReviewCmd {
     pub mode: Option<String>,
     #[arg(long = "mod")]
     pub r#mod: Option<String>,
+    #[arg(long, default_value = "strict")]
+    pub profile: String,
     #[arg(long)]
     pub json: bool,
     #[arg(long)]
@@ -260,7 +264,10 @@ pub struct ConfigCmd {
 // START_DoctorCmd
 #[derive(clap::Args)]
 #[command(about = "Run diagnostic checks on the Synapse setup")]
-pub struct DoctorCmd;
+pub struct DoctorCmd {
+    #[arg(long)]
+    pub deps: bool,
+}
 // END_DoctorCmd
 
 // START_RefreshCmd

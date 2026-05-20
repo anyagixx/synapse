@@ -1,26 +1,29 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
 // PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, compression, tracking, and skills
-// SCOPE: verify_project, review_code, project_status, token_savings, compress_text, refresh_project, suggest_contract, grace_* handlers
+// SCOPE: profile-aware verify_project/review_code, project_status, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
 // DEPENDS: M-GRACE, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
-// handle_verify — Runs MyGRACE verification and formats failure packets
-// handle_review — Runs MyGRACE review
+// handle_verify — Runs profile-aware MyGRACE verification and formats failure packets
+// handle_review — Runs profile-aware MyGRACE review
 // handle_status — Returns project status JSON
 // handle_gain — Returns token savings stats
 // handle_compress — Compresses input text
 // handle_refresh — Reports or fixes MyGRACE drift
-// handle_suggest_contract — Generates a MODULE_CONTRACT template
+// handle_suggest_contract — Generates a language-aware MODULE_CONTRACT template
+// comment_prefix_for_language — Maps language names to contract comment prefixes
+// module_id_from_name — Builds one canonical MODULE_ID from a free-form name
 // handle_grace_skill — Delegates grace_* MCP tools to SkillEngine
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Extracted MyGRACE-oriented MCP handlers from M-MCP-SERVER]
+// LAST_CHANGE: [v2.3.0 — Added profiles and language-aware contract suggestions]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
+use crate::grace::GraceProfile;
 use crate::skills::{SkillEngine, SkillRequest};
 
 // START_public_api
@@ -39,7 +42,11 @@ pub(crate) async fn handle_verify(
         Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
     };
     let level = args["level"].as_str().unwrap_or("all");
-    match crate::grace::GraceEngine::verify_project(&root).await {
+    let profile = match parse_grace_profile_arg(args) {
+        Ok(profile) => profile,
+        Err(message) => return error(id, -32602, message),
+    };
+    match crate::grace::GraceEngine::verify_project_with_profile(&root, profile).await {
         Ok(results) => {
             let filtered: Vec<_> = if level == "all" {
                 results
@@ -75,6 +82,7 @@ pub(crate) async fn handle_verify(
                     ));
                 }
             }
+            text.push_str(&format!("\nProfile: {}\n", profile.as_str()));
             result(
                 id,
                 serde_json::json!({
@@ -102,9 +110,17 @@ pub(crate) async fn handle_review(
         Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
     };
     let mode = args["mode"].as_str().unwrap_or("scoped");
-    match crate::grace::review::Reviewer::review(&root, mode) {
+    let profile = match parse_grace_profile_arg(args) {
+        Ok(profile) => profile,
+        Err(message) => return error(id, -32602, message),
+    };
+    match crate::grace::review::Reviewer::review_with_profile(&root, mode, profile) {
         Ok(report) => {
-            let mut text = format!("=== GRACE Review ({}) ===\n", report.mode);
+            let mut text = format!(
+                "=== GRACE Review ({}, profile={}) ===\n",
+                report.mode,
+                profile.as_str()
+            );
             for s in &report.sections {
                 let status = if s.passed { "✓" } else { "✗" };
                 text.push_str(&format!("{} {} — {}\n", status, s.name, s.details));
@@ -294,11 +310,8 @@ pub(crate) async fn handle_suggest_contract(
     let name = args["module_name"].as_str().unwrap_or("module");
     let purpose = args["purpose"].as_str().unwrap_or("TBD");
     let lang = args["language"].as_str().unwrap_or("rust");
-    let comment = match lang {
-        "py" => "#",
-        _ => "//",
-    };
-    let module_id = format!("M-{}", name.to_uppercase().replace(' ', "_"));
+    let comment = comment_prefix_for_language(lang);
+    let module_id = module_id_from_name(name);
     let text = format!(
         "{c} MODULE_CONTRACT\n{c} MODULE_ID: {id}\n{c} PURPOSE: {p}\n{c} SCOPE: {n}\n{c} DEPENDS:\n{c} LINKS:\n\n{c} START_MODULE_MAP\n{c} END_MODULE_MAP\n\n{c} START_CHANGE_SUMMARY\n{c} LAST_CHANGE: [v1.0.0 — Initial implementation]\n{c} END_CHANGE_SUMMARY\n\n{c} START_public_api\n{c} END_public_api",
         c = comment, id = module_id, p = purpose, n = name
@@ -312,6 +325,71 @@ pub(crate) async fn handle_suggest_contract(
     )
 }
 // END_handle_suggest_contract
+
+// START_CONTRACT_parse_grace_profile_arg
+// PURPOSE: Parse an optional MCP GRACE profile argument
+// INPUTS: { args: &serde_json::Value — tool arguments }
+// OUTPUTS: { Result<GraceProfile, String> }
+// START_parse_grace_profile_arg
+fn parse_grace_profile_arg(args: &serde_json::Value) -> Result<GraceProfile, String> {
+    let profile = args["profile"].as_str().unwrap_or("strict");
+    GraceProfile::from_name(profile).ok_or_else(|| {
+        format!(
+            "Unsupported GRACE profile '{}'. Use one of: lite, balanced, strict.",
+            profile
+        )
+    })
+}
+// END_parse_grace_profile_arg
+
+// START_CONTRACT_comment_prefix_for_language
+// PURPOSE: Select the correct line comment prefix for generated contract templates
+// INPUTS: { language: &str — language name or extension }
+// OUTPUTS: { &'static str }
+// START_comment_prefix_for_language
+fn comment_prefix_for_language(language: &str) -> &'static str {
+    match language.trim().to_ascii_lowercase().as_str() {
+        "py" | "python" | "sh" | "bash" | "zsh" | "rb" | "ruby" | "yaml" | "yml" => "#",
+        "sql" | "postgres" | "postgresql" | "mysql" | "sqlite" => "--",
+        _ => "//",
+    }
+}
+// END_comment_prefix_for_language
+
+// START_CONTRACT_module_id_from_name
+// PURPOSE: Build one canonical MODULE_ID from free-form module input without comma aggregation
+// INPUTS: { name: &str — requested module name }
+// OUTPUTS: { String — M- prefixed id with uppercase letters, digits, and hyphens }
+// START_module_id_from_name
+fn module_id_from_name(name: &str) -> String {
+    let source = name
+        .split(',')
+        .next()
+        .unwrap_or(name)
+        .trim()
+        .trim_start_matches("M-")
+        .trim_start_matches("m-");
+    let mut body = String::new();
+    let mut last_dash = false;
+    for ch in source.chars() {
+        if ch.is_ascii_alphanumeric() {
+            body.push(ch.to_ascii_uppercase());
+            last_dash = false;
+        } else if !last_dash && !body.is_empty() {
+            body.push('-');
+            last_dash = true;
+        }
+    }
+    while body.ends_with('-') {
+        body.pop();
+    }
+    if body.is_empty() {
+        "M-MODULE".into()
+    } else {
+        format!("M-{}", body)
+    }
+}
+// END_module_id_from_name
 
 // START_CONTRACT_handle_grace_skill
 // PURPOSE: Execute a registered grace_* skill through SkillEngine and return title/body text
@@ -335,5 +413,34 @@ pub(crate) async fn handle_grace_skill(
     }
 }
 // END_handle_grace_skill
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    // START_CONTRACT_test_comment_prefix_for_python_and_sql
+    // PURPOSE: Verify contract suggestions use executable comment syntax for Python and SQL
+    // START_test_comment_prefix_for_python_and_sql
+    fn test_comment_prefix_for_python_and_sql() {
+        assert_eq!(comment_prefix_for_language("python"), "#");
+        assert_eq!(comment_prefix_for_language("sql"), "--");
+        assert_eq!(comment_prefix_for_language("rust"), "//");
+    }
+    // END_test_comment_prefix_for_python_and_sql
+
+    #[test]
+    // START_CONTRACT_test_module_id_from_name_removes_commas
+    // PURPOSE: Verify generated MODULE_ID values do not aggregate comma-separated module names
+    // START_test_module_id_from_name_removes_commas
+    fn test_module_id_from_name_removes_commas() {
+        assert_eq!(
+            module_id_from_name("M-STORAGE, M-BOT, M-SCHEDULER"),
+            "M-STORAGE"
+        );
+        assert_eq!(module_id_from_name("date parser"), "M-DATE-PARSER");
+    }
+    // END_test_module_id_from_name_removes_commas
+}
 
 // END_public_api

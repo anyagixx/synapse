@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-WALKER
 // PURPOSE: File system walker — discovers source files with configurable .gitignore and .synignore handling
-// SCOPE: Walker struct, file discovery with language detection, gitignore toggle, ignore rules
+// SCOPE: Walker struct, file discovery with language detection including SQL, gitignore toggle, ignore rules
 // DEPENDS: N/A
 // LINKS: .gitignore, .synignore
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.0 — Added explicit gitignore toggle for syn index --no-git]
+// LAST_CHANGE: [v2.2.0 — Added SQL discovery for MyGRACE language-aware contracts]
 // END_CHANGE_SUMMARY
 
 use ignore::WalkBuilder;
@@ -132,6 +132,7 @@ fn detect_language(path: &Path) -> Option<String> {
         "sh" | "bash" | "zsh" => Some("bash".into()),
         "json" => Some("json".into()),
         "css" | "scss" => Some("css".into()),
+        "sql" => Some("sql".into()),
         "lua" => Some("lua".into()),
         "md" => Some("markdown".into()),
         "svelte" => Some("svelte".into()),

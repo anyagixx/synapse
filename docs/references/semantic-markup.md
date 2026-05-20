@@ -2,6 +2,8 @@
 
 **Markers are not comments — they are load-bearing structure.** Verification tools and navigation depend on them.
 
+Use the native comment prefix for the file: `//` in Rust/TypeScript/JavaScript, `#` in Python/shell, and `--` in SQL. HTML/XML-style `<!-- START_name -->` markers are also recognized.
+
 ## Module-Level Markup
 
 ```
@@ -42,7 +44,7 @@ pub fn fnName(...) { ... }
 
 ## Granularity Rules
 
-1. **~500 tokens per block** (chars/4 estimate). Not lines — tokens.
+1. **~500 tokens per block when a block grows** (chars/4 estimate). Do not split tiny files or short helpers just to hit a number.
 2. **Unique names per file** — no duplicate START_X/END_X within a file.
 3. **Names describe WHAT, not HOW** — `VALIDATE_INPUT` not `checkIfNullAndTrim`.
 4. **Paired always** — every START_X must have END_X. No orphans.

@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-20-PHASE-12" status="current">
+<PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-20-V2-5-0" status="current">
   <DATE>2026-05-20</DATE>
-  <PHASE_GATE>Phase-12 local gate passed for the v2.4.0 Linux/macOS public release candidate; hosted push CI and final tag release workflow remain required before publishing the public release.</PHASE_GATE>
-  <SUMMARY>Synapse is now a release-candidate quality developer tool for Linux/macOS. Phase-12 closed the stale-release truth gap by bumping the product line to v2.4.0, adding stale-tag freshness gates, pinning fresh-install CI to the workflow commit, avoiding the crates.io syn package-name conflict while preserving the syn binary, removing unimplemented MCP HTTP/LSP flags, preserving a true no-active-phase MyGRACE state, clarifying public privacy/token-savings claims, and shipping the full Apache-2.0 license text.</SUMMARY>
+  <PHASE_GATE>v2.5.0 local gate prepared for a Linux/macOS feedback release; hosted push CI and final tag release workflow remain required before publishing the release.</PHASE_GATE>
+  <SUMMARY>Synapse is now a release-candidate quality developer tool for Linux/macOS with feedback-driven MyGRACE ergonomics. v2.5.0 adds language-aware contract parsing and suggestions for Python and SQL, profile-aware verify/review modes for small projects, MODULE_ID validation for comma-separated mistakes, Python dependency diagnostics in doctor, and updated user-facing docs.</SUMMARY>
   <SCORES>
-    <OVERALL_READINESS>9.5/10</OVERALL_READINESS>
-    <RELEASE_CANDIDATE_READINESS>9.7/10</RELEASE_CANDIDATE_READINESS>
+    <OVERALL_READINESS>9.6/10</OVERALL_READINESS>
+    <RELEASE_CANDIDATE_READINESS>9.8/10</RELEASE_CANDIDATE_READINESS>
     <MYGRACE_TRUTH>9.8/10</MYGRACE_TRUTH>
     <RELEASE_INSTALL_TRUTH>9.3/10</RELEASE_INSTALL_TRUTH>
     <LINUX_MACOS_INSTALL_READINESS>9.6/10</LINUX_MACOS_INSTALL_READINESS>
-    <PUBLIC_DOC_TRUTH>9.7/10</PUBLIC_DOC_TRUTH>
-    <CLI_CAPABILITY_TRUTH>9.7/10</CLI_CAPABILITY_TRUTH>
-    <SUPPORT_DIAGNOSTICS_READINESS>9.6/10</SUPPORT_DIAGNOSTICS_READINESS>
+    <PUBLIC_DOC_TRUTH>9.8/10</PUBLIC_DOC_TRUTH>
+    <CLI_CAPABILITY_TRUTH>9.8/10</CLI_CAPABILITY_TRUTH>
+    <SUPPORT_DIAGNOSTICS_READINESS>9.7/10</SUPPORT_DIAGNOSTICS_READINESS>
     <PROTOCOL_BOOTSTRAP_RELIABILITY>9.2/10</PROTOCOL_BOOTSTRAP_RELIABILITY>
   </SCORES>
   <EVIDENCE>
-    <MYGRACE_DRIFT>0 canonical drift across 70 code modules, graph shards, and verification shards; 76/76 contracted files, 335 function contracts, and 586 closed semantic blocks after Phase-12 changes.</MYGRACE_DRIFT>
-    <LOCAL_CI_GATE>scripts/ci.sh passed locally on 2026-05-20: cargo fmt --check, clippy -D warnings, runtime panic guard, 99 tests, release version guard, release freshness guard, release-candidate dry-run, release/install smoke, verify --ci, review --mode full --ci, refresh --json, and status --json.</LOCAL_CI_GATE>
-    <RELEASE_VERSION_TRUTH>Cargo.toml and install.sh now target v2.4.0. scripts/release_freshness_guard.sh passes only because v2.4.0 is not yet published; if a matching tag exists but does not point at HEAD, release work fails with a required version-bump message.</RELEASE_VERSION_TRUTH>
+    <MYGRACE_DRIFT>0 canonical drift across 70 code modules, graph shards, and verification shards; 76/76 contracted files, 368 function contracts, and 622 closed semantic blocks after v2.5.0 changes.</MYGRACE_DRIFT>
+    <LOCAL_CI_GATE>scripts/ci.sh passed locally on 2026-05-20: cargo fmt --check, clippy -D warnings, runtime panic guard, 107 tests, release version guard, release freshness guard, release-candidate dry-run, release/install smoke, verify --ci, review --mode full --ci, refresh --json, and status --json.</LOCAL_CI_GATE>
+    <RELEASE_VERSION_TRUTH>Cargo.toml and install.sh now target v2.5.0. scripts/release_freshness_guard.sh passes only if v2.5.0 is unpublished or points at HEAD; if a matching tag exists but does not point at HEAD, release work fails with a required version-bump message.</RELEASE_VERSION_TRUTH>
     <INSTALLER_TRUTH>The installer still prefers signed-off release artifacts plus SHA256SUMS verification. Source fallback is now explicit: SYN_INSTALL_SOURCE_REF for hosted fresh-install smoke, selected Git tag when available, and default main branch only during the pre-tag release-candidate window.</INSTALLER_TRUTH>
     <FRESH_INSTALL_TRUTH>Push CI fresh-install smoke uses raw.githubusercontent.com at the exact workflow commit plus SYN_INSTALL_SOURCE_REF, preventing a current-HEAD smoke job from silently installing an older release tag.</FRESH_INSTALL_TRUTH>
     <PACKAGE_TRUTH>The Cargo package is synapse-agent to avoid the crates.io syn parser conflict; the public binary and library crate remain syn.</PACKAGE_TRUTH>
-    <MCP_CLI_TRUTH>syn mcp is public stdio-only. The CLI no longer exposes --http, --bind, or --with-lsp before those transports are implemented.</MCP_CLI_TRUTH>
+    <MCP_CLI_TRUTH>syn mcp is public stdio-only. verify_project/review_code and syn verify/review now expose profile-aware strictness without changing the strict CI default.</MCP_CLI_TRUTH>
     <NO_ACTIVE_PHASE_TRUTH>docs/plan-index.xml now has ACTIVE_PHASE none after all phase shards are done; status and refresh preserve that state instead of reporting a completed phase as active.</NO_ACTIVE_PHASE_TRUTH>
     <DOC_TRUTH>Public README, INSTALL, COMMANDS, FAQ, QUICKSTART, WORKFLOW, and SUPPORT docs are guarded against ghost CLI commands, unsupported flags, unsupported installer URLs, obsolete release paths, unsupported Windows install claims, unmeasured token-savings percentages, and misleading privacy wording.</DOC_TRUTH>
     <LICENSE_TRUTH>LICENSE now contains the full Apache License 2.0 text instead of a short placeholder.</LICENSE_TRUTH>
     <SUPPORT_DIAGNOSTICS>install.sh --diagnose reports independent OS and architecture support status, Linux/macOS artifact mapping, install directory status, tool availability, checksum verifier status, Windows packaging deferral, and SYN_INSTALL_DIR guidance.</SUPPORT_DIAGNOSTICS>
   </EVIDENCE>
   <RESIDUAL_RISKS>
-    <RISK_V240_TAG_PENDING>The v2.4.0 public release is not complete until this commit is pushed, hosted GitHub CI passes, tag v2.4.0 is created at the verified commit, and the release workflow publishes Linux/macOS artifacts plus SHA256SUMS.</RISK_V240_TAG_PENDING>
+    <RISK_V250_TAG_PENDING>The v2.5.0 public release is not complete until this commit is pushed, hosted GitHub CI passes, tag v2.5.0 is created at the verified commit, and the release workflow publishes Linux/macOS artifacts plus SHA256SUMS.</RISK_V250_TAG_PENDING>
     <RISK_WINDOWS_DEFERRED>Windows prebuilt install remains intentionally deferred and is not part of the first Linux/macOS public release scope.</RISK_WINDOWS_DEFERRED>
     <RISK_EXTERNAL_ADOPTION_EVIDENCE>Real user feedback still needs to be collected across more Linux/macOS environments after the public release.</RISK_EXTERNAL_ADOPTION_EVIDENCE>
     <RISK_TEST_FILE_SIZE_TARGET>tests/docs_parity.rs and tests/integration_test.rs exceed the 500-line Phase-2 maintainability target while remaining under the hard 1300-line gate.</RISK_TEST_FILE_SIZE_TARGET>
   </RESIDUAL_RISKS>
-  <NEXT_PHASE>Push the Phase-12 commit, wait for hosted Linux/macOS CI, then create the v2.4.0 tag at that commit and verify the release workflow before announcing the public release.</NEXT_PHASE>
+  <NEXT_PHASE>Push the v2.5.0 commit, wait for hosted Linux/macOS CI, then create the v2.5.0 tag at that commit and verify the release workflow before announcing the feedback release.</NEXT_PHASE>
 </PRODUCT_READINESS_ASSESSMENT>

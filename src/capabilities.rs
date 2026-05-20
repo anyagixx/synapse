@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, verify check list, review mode list, supported platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.6.0 — Added function contract for capability count API]
+// LAST_CHANGE: [v2.7.0 — Documented profile-aware verify/review and doctor dependency capabilities]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -29,8 +29,8 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("index", "Index codebase for semantic search"),
     ("search", "Semantic code search"),
     ("view", "View file signatures"),
-    ("verify", "Run GRACE verification suite"),
-    ("review", "GRACE integrity review"),
+    ("verify", "Run profile-aware GRACE verification suite"),
+    ("review", "Profile-aware GRACE integrity review"),
     ("status", "Project health report"),
     ("proxy", "Run command through token-saving proxy"),
     ("gain", "View token savings analytics"),
@@ -39,7 +39,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("config", "Manage configuration"),
     ("graphrag", "Query the code knowledge graph"),
     ("hooks", "Manage Synapse hooks for AI agents"),
-    ("doctor", "Run diagnostic checks"),
+    ("doctor", "Run diagnostic and dependency checks"),
     ("refresh", "Report or fix canonical MyGRACE artifact drift"),
     ("skills", "List and run GRACE workflow skills"),
     (
@@ -129,8 +129,11 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "View function and class signatures in a file",
     ),
     ("graphrag_query", "Query the code knowledge graph"),
-    ("verify_project", "Run GRACE verification checks"),
-    ("review_code", "Run GRACE integrity review"),
+    (
+        "verify_project",
+        "Run profile-aware GRACE verification checks",
+    ),
+    ("review_code", "Run profile-aware GRACE integrity review"),
     ("project_status", "Full project health report"),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),
@@ -138,7 +141,10 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "refresh_project",
         "Report or fix canonical MyGRACE artifact drift",
     ),
-    ("suggest_contract", "Generate a MODULE_CONTRACT template"),
+    (
+        "suggest_contract",
+        "Generate a language-aware MODULE_CONTRACT template",
+    ),
     ("lsp_hover", "Get type/signature information via LSP"),
     ("lsp_references", "Find all references to a symbol via LSP"),
     (

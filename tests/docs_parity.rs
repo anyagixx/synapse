@@ -121,9 +121,11 @@ fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
     match command {
         "gain" => &["--graph"],
         "index" => &["--watch", "--no-git"],
+        "doctor" => &["--deps"],
         "proxy" => &["--"],
         "refresh" => &["--fix"],
-        "review" => &["--mode"],
+        "review" => &["--mode", "--profile"],
+        "verify" => &["--profile"],
         _ => &[],
     }
 }

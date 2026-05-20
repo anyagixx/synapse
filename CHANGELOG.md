@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.5.0 (2026-05-20)
+
+- Added language-aware MyGRACE contract parsing and suggestions for Python `#`, SQL `--`, and block/HTML markers
+- Added `lite`, `balanced`, and `strict` GRACE profiles for `syn verify`, `syn review`, `verify_project`, and `review_code`
+- Added MODULE_ID validation so comma-separated ids are reported as contract errors instead of becoming one broken module id
+- Added Python dependency diagnostics through `syn doctor --deps`
+- Added SQL discovery and SQL DDL fallback parsing
+- Updated README, GUIDE, AGENTS, OpenCode rules, and reference docs for profiles and native comment syntax
+
 ## 2.4.0 (2026-05-20)
 
 - Prepared first public Linux/macOS release candidate after Phase 11 hardening

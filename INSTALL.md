@@ -49,7 +49,7 @@ make install
 For a specific release tag:
 
 ```bash
-cargo install --locked --git https://github.com/anyagixx/synapse --tag v2.4.0
+cargo install --locked --git https://github.com/anyagixx/synapse --tag v2.5.0
 ```
 
 The Cargo package name is `synapse-agent`, but the installed binary remains `syn`.

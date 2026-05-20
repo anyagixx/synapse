@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: Release candidate tag, for example v2.4.0
+        description: Release candidate tag, for example v2.5.0
         required: true
         type: string
 

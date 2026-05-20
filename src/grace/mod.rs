@@ -1,17 +1,17 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
 // PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh)
-// SCOPE: Module declarations, GraceEngine struct, delegation to sub-modules
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules
 // DEPENDS: M-GRACE-BOOTSTRAP, M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
-// ModuleContract — Re-export from contract module
+// ModuleContract and GraceProfile — Re-exports from contract module
 // GraceEngine — Facade for all GRACE methodology operations
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Added inventory verification artifact writer module]
+// LAST_CHANGE: [v2.10.0 — Exposed profile-aware verify/review facade methods]
 // END_CHANGE_SUMMARY
 
 pub mod bootstrap;
@@ -36,7 +36,7 @@ use contract::ContractValidator;
 use std::path::Path;
 use verify::Verifier;
 
-pub use contract::ModuleContract;
+pub use contract::{GraceProfile, ModuleContract};
 
 // START_public_api
 
@@ -64,6 +64,19 @@ impl GraceEngine {
     }
     // END_grace_engine_verify_project
 
+    // START_CONTRACT_GraceEngine::verify_project_with_profile
+    // PURPOSE: Run all verification levels using a selected GRACE strictness profile
+    // INPUTS: { root: &Path — project root }, { profile: GraceProfile }
+    // OUTPUTS: { anyhow::Result<Vec<VerificationResult>> }
+    // START_grace_engine_verify_project_with_profile
+    pub async fn verify_project_with_profile(
+        root: &Path,
+        profile: GraceProfile,
+    ) -> anyhow::Result<Vec<verify::VerificationResult>> {
+        Verifier::verify_all_with_profile(root, profile).await
+    }
+    // END_grace_engine_verify_project_with_profile
+
     // START_CONTRACT_GraceEngine::review_project
     // PURPOSE: Run GRACE integrity review
     // INPUTS: { root: &Path }, { mode: &str — scoped|wave-audit|full }
@@ -73,6 +86,20 @@ impl GraceEngine {
         review::Reviewer::review(root, mode)
     }
     // END_grace_engine_review_project
+
+    // START_CONTRACT_GraceEngine::review_project_with_profile
+    // PURPOSE: Run GRACE integrity review with selected strictness profile
+    // INPUTS: { root: &Path }, { mode: &str — scoped|wave-audit|full }, { profile: GraceProfile }
+    // OUTPUTS: { anyhow::Result<ReviewReport> }
+    // START_grace_engine_review_project_with_profile
+    pub async fn review_project_with_profile(
+        root: &Path,
+        mode: &str,
+        profile: GraceProfile,
+    ) -> anyhow::Result<review::ReviewReport> {
+        review::Reviewer::review_with_profile(root, mode, profile)
+    }
+    // END_grace_engine_review_project_with_profile
 
     // START_CONTRACT_GraceEngine::contract_report
     // PURPOSE: Validate MODULE_CONTRACT blocks across all source files

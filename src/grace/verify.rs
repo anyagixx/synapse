@@ -1,21 +1,21 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
-// PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for GRACE compliance
-// SCOPE: Verifier struct, verify_all, verify_module_local, verify_wave, delegated verify_phase
+// PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
+// SCOPE: Verifier struct, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-INVENTORY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
-// Verifier — Runs 3-level GRACE verification
+// Verifier — Runs 3-level GRACE verification with strict or lightweight profiles
 // VerificationResult — Re-exported per-level verification result
 // CheckResult — Re-exported single verification check result
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Built-in verification regexes return explicit errors instead of unwrap panics]
+// LAST_CHANGE: [v2.10.0 — Added profile-aware verification for lightweight projects]
 // END_CHANGE_SUMMARY
 
-use crate::grace::contract::ContractValidator;
+use crate::grace::contract::{ContractValidator, GraceProfile};
 use crate::grace::inventory::MyGraceInventory;
 use crate::grace::layout::DocsLayout;
 use crate::grace::semantic::SemanticExtractor;
@@ -51,15 +51,28 @@ impl Verifier {
     // OUTPUTS: { anyhow::Result<Vec<VerificationResult>> }
     // START_verifier_verify_all
     pub async fn verify_all(root: &Path) -> anyhow::Result<Vec<VerificationResult>> {
+        Self::verify_all_with_profile(root, GraceProfile::Strict).await
+    }
+    // END_verifier_verify_all
+
+    // START_CONTRACT_Verifier::verify_all_with_profile
+    // PURPOSE: Run all verification levels using a selected GRACE strictness profile
+    // INPUTS: { root: &Path — project root }, { profile: GraceProfile }
+    // OUTPUTS: { anyhow::Result<Vec<VerificationResult>> }
+    // START_verifier_verify_all_with_profile
+    pub async fn verify_all_with_profile(
+        root: &Path,
+        profile: GraceProfile,
+    ) -> anyhow::Result<Vec<VerificationResult>> {
         let mut results = Vec::new();
 
-        results.push(Self::verify_module_local(root).await?);
+        results.push(Self::verify_module_local_with_profile(root, profile).await?);
         results.push(Self::verify_wave(root).await?);
         results.push(Self::verify_phase(root).await?);
 
         Ok(results)
     }
-    // END_verifier_verify_all
+    // END_verifier_verify_all_with_profile
 
     // START_CONTRACT_Verifier::verify_module_local
     // PURPOSE: Level 1 — per-module checks (contracts, semantic, 500-token, traces)
@@ -67,6 +80,19 @@ impl Verifier {
     // OUTPUTS: { anyhow::Result<VerificationResult> }
     // START_verifier_verify_module_local
     pub async fn verify_module_local(root: &Path) -> anyhow::Result<VerificationResult> {
+        Self::verify_module_local_with_profile(root, GraceProfile::Strict).await
+    }
+    // END_verifier_verify_module_local
+
+    // START_CONTRACT_Verifier::verify_module_local_with_profile
+    // PURPOSE: Level 1 module checks using the selected GRACE strictness profile
+    // INPUTS: { root: &Path }, { profile: GraceProfile }
+    // OUTPUTS: { anyhow::Result<VerificationResult> }
+    // START_verifier_verify_module_local_with_profile
+    pub async fn verify_module_local_with_profile(
+        root: &Path,
+        profile: GraceProfile,
+    ) -> anyhow::Result<VerificationResult> {
         let mut checks = Vec::new();
 
         // Check sharded artifact model
@@ -101,7 +127,7 @@ impl Verifier {
         });
 
         // Check contracts
-        let report = ContractValidator::validate_project(root)?;
+        let report = ContractValidator::validate_project_with_profile(root, profile)?;
         checks.push(CheckResult {
             name: "contract-exists".into(),
             passed: report.with_contract > 0,
@@ -122,7 +148,7 @@ impl Verifier {
                 name: "contract-valid".into(),
                 passed: invalid.is_empty(),
                 details: if invalid.is_empty() {
-                    "All contracts have valid PURPOSE".into()
+                    "All contracts have valid PURPOSE and MODULE_ID".into()
                 } else {
                     format!("{} contracts have errors: {:?}", invalid.len(), invalid)
                 },
@@ -178,11 +204,20 @@ impl Verifier {
                 .sum();
             checks.push(CheckResult {
                 name: "function-contracts".into(),
-                passed: total_fn > 0,
+                passed: total_fn > 0 || profile != GraceProfile::Strict,
                 details: if total_fn > 0 {
-                    format!("{} function contracts found", total_fn)
-                } else {
+                    format!(
+                        "{} function contracts found under {} profile",
+                        total_fn,
+                        profile.as_str()
+                    )
+                } else if profile == GraceProfile::Strict {
                     "No function contracts (START_CONTRACT_name)".into()
+                } else {
+                    format!(
+                        "No function contracts found; {} profile allows module-level contracts for small/non-critical helpers",
+                        profile.as_str()
+                    )
                 },
             });
         }
@@ -253,7 +288,10 @@ impl Verifier {
             name: "500-token-rule".into(),
             passed: passing,
             details: if details.is_empty() {
-                "All artifacts within ~500 token limit".into()
+                format!(
+                    "Architecture artifacts within profile-aware size guidance ({})",
+                    profile.as_str()
+                )
             } else {
                 details.join("; ")
             },
@@ -302,7 +340,7 @@ impl Verifier {
             checks,
         })
     }
-    // END_verifier_verify_module_local
+    // END_verifier_verify_module_local_with_profile
 
     // START_CONTRACT_Verifier::verify_wave
     // PURPOSE: Level 2 — cross-module checks (knowledge graph, development plan)

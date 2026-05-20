@@ -1,11 +1,12 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-CONTRACT
-// PURPOSE: MODULE_CONTRACT validator — scans source files for GRACE contract blocks and validates them
-// SCOPE: ModuleContract, FunctionContract, ContractReport models, ContractValidator with scan_file and validate_project
+// PURPOSE: MODULE_CONTRACT validator — scans source files for language-aware GRACE contract blocks and validates them
+// SCOPE: GraceProfile, ModuleContract, FunctionContract, ContractReport models, ContractValidator with scan_file, scan_file_with_profile, validate_project, and validate_project_with_profile
 // DEPENDS: M-INDEXER-WALKER
 // LINKS: N/A
 
 // START_MODULE_MAP
+// GraceProfile — Verification strictness profile for contract-heavy or lightweight projects
 // ModuleContract — Parsed MODULE_CONTRACT block from a source file
 // FunctionContract — Parsed START_CONTRACT block for a function
 // ContractReport — Aggregate contract validation report
@@ -13,12 +14,80 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Function contract marker parsing no longer depends on runtime regex unwrap]
+// LAST_CHANGE: [v2.10.0 — Added language-aware markers, MODULE_ID validation, and GRACE profiles]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
 
 // START_public_api
+
+// START_GraceProfile
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub enum GraceProfile {
+    Lite,
+    Balanced,
+    Strict,
+}
+// END_GraceProfile
+
+impl GraceProfile {
+    // START_CONTRACT_GraceProfile::from_name
+    // PURPOSE: Parse a user-facing GRACE profile name
+    // INPUTS: { name: &str — lite|balanced|strict profile name }
+    // OUTPUTS: { Option<GraceProfile> }
+    // START_grace_profile_from_name
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name.trim().to_ascii_lowercase().as_str() {
+            "lite" | "light" => Some(Self::Lite),
+            "balanced" | "standard" | "default" => Some(Self::Balanced),
+            "strict" => Some(Self::Strict),
+            _ => None,
+        }
+    }
+    // END_grace_profile_from_name
+
+    // START_CONTRACT_GraceProfile::as_str
+    // PURPOSE: Return a stable lowercase profile label for CLI and report output
+    // OUTPUTS: { &'static str }
+    // START_grace_profile_as_str
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Lite => "lite",
+            Self::Balanced => "balanced",
+            Self::Strict => "strict",
+        }
+    }
+    // END_grace_profile_as_str
+
+    // START_CONTRACT_GraceProfile::requires_function_contracts_for_file
+    // PURPOSE: Decide whether a file must declare START_CONTRACT markers under this profile
+    // INPUTS: { path: &Path — source path }, { content: &str — source text }
+    // OUTPUTS: { bool }
+    // START_grace_profile_requires_function_contracts_for_file
+    pub fn requires_function_contracts_for_file(self, path: &Path, content: &str) -> bool {
+        match self {
+            Self::Strict => true,
+            Self::Lite => false,
+            Self::Balanced => {
+                let meaningful_lines = content
+                    .lines()
+                    .filter(|line| {
+                        let trimmed = line.trim();
+                        !trimmed.is_empty() && normalize_comment_line(trimmed).is_none()
+                    })
+                    .count();
+                let ext = path
+                    .extension()
+                    .and_then(|ext| ext.to_str())
+                    .unwrap_or_default();
+                meaningful_lines >= 120
+                    || matches!(ext, "rs" | "ts" | "tsx" | "go" | "java")
+                        && content.contains("pub ")
+            }
+        }
+    }
+    // END_grace_profile_requires_function_contracts_for_file
+}
 
 // START_ModuleContract
 #[derive(Debug, Clone, serde::Serialize)]
@@ -88,6 +157,20 @@ impl ContractValidator {
     // OUTPUTS: { ModuleContract — parsed contract (may be invalid) }
     // START_cv_scan_file
     pub fn scan_file(path: &Path, content: &str) -> ModuleContract {
+        Self::scan_file_with_profile(path, content, GraceProfile::Strict)
+    }
+    // END_cv_scan_file
+
+    // START_CONTRACT_ContractValidator::scan_file_with_profile
+    // PURPOSE: Scan one source file using the selected GRACE strictness profile
+    // INPUTS: { path: &Path — file path }, { content: &str — file content }, { profile: GraceProfile }
+    // OUTPUTS: { ModuleContract — parsed contract with profile-aware errors }
+    // START_cv_scan_file_with_profile
+    pub fn scan_file_with_profile(
+        path: &Path,
+        content: &str,
+        profile: GraceProfile,
+    ) -> ModuleContract {
         let file_path = path.to_string_lossy().to_string();
         let mut mc = ModuleContract {
             file_path,
@@ -113,81 +196,103 @@ impl ContractValidator {
         mc.has_contract = true;
 
         // Check for MODULE_MAP
-        mc.has_module_map =
-            content.contains("// START_MODULE_MAP") || content.contains("# START_MODULE_MAP");
+        mc.has_module_map = contains_metadata_marker(content, "START_MODULE_MAP")
+            || contains_metadata_marker(content, "MODULE_MAP");
 
         // Check for CHANGE_SUMMARY
-        mc.has_change_summary = content.contains("// START_CHANGE_SUMMARY")
-            || content.contains("# START_CHANGE_SUMMARY");
+        mc.has_change_summary = contains_metadata_marker(content, "START_CHANGE_SUMMARY")
+            || contains_metadata_marker(content, "CHANGE_SUMMARY");
 
         // Extract function contracts
         mc.function_contracts = Self::extract_function_contracts(content);
 
         let lines: Vec<&str> = block.lines().collect();
         for line in &lines {
-            let trimmed = line.trim();
-            if trimmed.starts_with("//") || trimmed.starts_with("#") {
-                let val = trimmed
-                    .trim_start_matches('/')
-                    .trim_start_matches('#')
-                    .trim();
-                Self::parse_field(&mut mc, val);
-            }
-            if trimmed.starts_with('*') {
-                let val = trimmed.trim_start_matches('*').trim();
-                Self::parse_field(&mut mc, val);
+            if let Some(val) = normalize_comment_line(line.trim()) {
+                Self::parse_field(&mut mc, &val);
             }
         }
 
-        mc.valid = mc.purpose.is_some();
+        let mut header_valid = true;
         if mc.purpose.is_none() {
             mc.errors.push("Missing PURPOSE in MODULE_CONTRACT".into());
+            header_valid = false;
         }
+        match mc.module_id.as_deref() {
+            Some(module_id) if is_valid_module_id(module_id) => {}
+            Some(module_id) if module_id.contains(',') => {
+                mc.errors.push(format!(
+                    "Invalid MODULE_ID '{}': declare exactly one module id; move related modules to DEPENDS or LINKS",
+                    module_id
+                ));
+                header_valid = false;
+            }
+            Some(module_id) => {
+                mc.errors.push(format!(
+                    "Invalid MODULE_ID '{}': expected M- followed by uppercase letters, digits, or hyphens",
+                    module_id
+                ));
+                header_valid = false;
+            }
+            None => {
+                mc.errors
+                    .push("Missing MODULE_ID in MODULE_CONTRACT".into());
+                header_valid = false;
+            }
+        }
+        mc.valid = header_valid;
         if !mc.has_module_map {
             mc.errors.push("Missing MODULE_MAP".into());
         }
         if !mc.has_change_summary {
             mc.errors.push("Missing CHANGE_SUMMARY".into());
         }
-        if mc.function_contracts.is_empty() {
+        if mc.function_contracts.is_empty()
+            && profile.requires_function_contracts_for_file(path, content)
+        {
             mc.errors
                 .push("Missing function contracts (START_CONTRACT_name)".into());
         }
         mc
     }
-    // END_cv_scan_file
+    // END_cv_scan_file_with_profile
 
     fn extract_function_contracts(content: &str) -> Vec<FunctionContract> {
         let mut contracts = Vec::new();
-        extract_contracts_style(content, "//", &mut contracts);
-        extract_contracts_style(content, "#", &mut contracts);
+        extract_contracts_style(content, &mut contracts);
         contracts
     }
 
     fn find_contract_block(content: &str) -> Option<String> {
-        let start_marker = content
-            .find("// MODULE_CONTRACT")
-            .or_else(|| content.find("# MODULE_CONTRACT"))?;
-        let block_start = content[..start_marker]
-            .rfind('\n')
-            .map(|i| i + 1)
-            .unwrap_or(0);
-        let mut block_end = start_marker;
-        let after_marker = &content[start_marker..];
-        for line in after_marker.lines() {
+        let mut found = false;
+        let mut block = Vec::new();
+        for line in content.lines() {
             let trimmed = line.trim();
+            if !found {
+                if normalize_comment_line(trimmed)
+                    .as_deref()
+                    .map(is_module_contract_marker)
+                    .unwrap_or(false)
+                {
+                    found = true;
+                    block.push(line);
+                }
+                continue;
+            }
             if is_metadata_boundary(trimmed) {
                 break;
             }
-            if trimmed.starts_with("//") || trimmed.starts_with('#') || trimmed.starts_with('*') {
-                block_end += line.len() + 1;
-            } else if trimmed.is_empty() {
-                block_end += line.len() + 1;
+            if normalize_comment_line(trimmed).is_some() || trimmed.is_empty() {
+                block.push(line);
             } else {
                 break;
             }
         }
-        Some(content[block_start..block_end.min(content.len())].to_string())
+        if found {
+            Some(block.join("\n"))
+        } else {
+            None
+        }
     }
 
     fn parse_field(mc: &mut ModuleContract, val: &str) {
@@ -218,13 +323,26 @@ impl ContractValidator {
     // OUTPUTS: { anyhow::Result<ContractReport> }
     // START_cv_validate_project
     pub fn validate_project(root: &Path) -> anyhow::Result<ContractReport> {
+        Self::validate_project_with_profile(root, GraceProfile::Strict)
+    }
+    // END_cv_validate_project
+
+    // START_CONTRACT_ContractValidator::validate_project_with_profile
+    // PURPOSE: Validate all source files using a profile-aware contract strictness policy
+    // INPUTS: { root: &Path — project root }, { profile: GraceProfile }
+    // OUTPUTS: { anyhow::Result<ContractReport> }
+    // START_cv_validate_project_with_profile
+    pub fn validate_project_with_profile(
+        root: &Path,
+        profile: GraceProfile,
+    ) -> anyhow::Result<ContractReport> {
         let mut contracts = Vec::new();
         let walker = crate::indexer::walker::Walker::new(root);
         let files = walker.walk();
 
         let source_extensions = [
             "rs", "py", "ts", "tsx", "js", "jsx", "go", "rb", "java", "php", "cpp", "hpp", "c",
-            "h", "css", "scss", "lua", "sh", "bash", "zsh", "svelte",
+            "h", "css", "scss", "lua", "sh", "bash", "zsh", "svelte", "sql",
         ];
         for file in &files {
             let ext = std::path::Path::new(&file.path)
@@ -236,7 +354,7 @@ impl ContractValidator {
             }
             let full_path = root.join(&file.path);
             if let Ok(content) = std::fs::read_to_string(&full_path) {
-                let mc = Self::scan_file(&full_path, &content);
+                let mc = Self::scan_file_with_profile(&full_path, &content, profile);
                 contracts.push(mc);
             }
         }
@@ -254,7 +372,7 @@ impl ContractValidator {
             contracts,
         })
     }
-    // END_cv_validate_project
+    // END_cv_validate_project_with_profile
 }
 
 // START_CONTRACT_is_metadata_boundary
@@ -263,24 +381,23 @@ impl ContractValidator {
 // OUTPUTS: { bool }
 // START_is_metadata_boundary
 fn is_metadata_boundary(trimmed: &str) -> bool {
-    let marker = trimmed
-        .trim_start_matches('/')
-        .trim_start_matches('#')
-        .trim_start_matches('*')
-        .trim();
+    let Some(marker) = normalize_comment_line(trimmed) else {
+        return false;
+    };
     marker.starts_with("START_MODULE_MAP")
+        || marker == "MODULE_MAP"
         || marker.starts_with("START_CHANGE_SUMMARY")
+        || marker == "CHANGE_SUMMARY"
         || marker.starts_with("START_CONTRACT_")
+        || marker.starts_with("START_CONTRACT:")
 }
 // END_is_metadata_boundary
 
-fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<FunctionContract>) {
-    let alt_prefix = if prefix == "//" { "#" } else { "//" };
-    let marker = format!("{prefix} START_CONTRACT_");
+fn extract_contracts_style(content: &str, contracts: &mut Vec<FunctionContract>) {
     let lines: Vec<&str> = content.lines().collect();
 
     for (idx, line) in lines.iter().enumerate() {
-        let Some(name) = extract_contract_marker_name(line, &marker) else {
+        let Some(name) = extract_contract_marker_name(line) else {
             continue;
         };
         if contracts.iter().any(|c| c.name == name) {
@@ -301,15 +418,13 @@ fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<Func
             if trimmed.is_empty() {
                 continue;
             }
-            if !(trimmed.starts_with(prefix) || trimmed.starts_with(alt_prefix)) {
+            let Some(t) = normalize_comment_line(trimmed) else {
                 break;
-            }
-
-            let t = trimmed
-                .trim_start_matches(prefix)
-                .trim_start_matches(alt_prefix)
-                .trim();
-            if t.starts_with("START_") && !t.starts_with("START_CONTRACT_") {
+            };
+            if t.starts_with("START_")
+                && !t.starts_with("START_CONTRACT_")
+                && !t.starts_with("START_CONTRACT:")
+            {
                 break;
             }
             if let Some(p) = t.strip_prefix("PURPOSE:") {
@@ -346,14 +461,20 @@ fn extract_contracts_style(content: &str, prefix: &str, contracts: &mut Vec<Func
 
 // START_CONTRACT_extract_contract_marker_name
 // PURPOSE: Extract a function contract name from a START_CONTRACT marker without regex construction
-// INPUTS: { line: &str — source line }, { marker: &str — comment prefix plus START_CONTRACT_ marker }
+// INPUTS: { line: &str — source line }
 // OUTPUTS: { Option<String> — parsed marker name when present and valid }
 // START_extract_contract_marker_name
-fn extract_contract_marker_name(line: &str, marker: &str) -> Option<String> {
-    let rest = line.trim_start().strip_prefix(marker)?;
+fn extract_contract_marker_name(line: &str) -> Option<String> {
+    let marker = normalize_comment_line(line.trim())?;
+    let rest = marker
+        .strip_prefix("START_CONTRACT_")
+        .or_else(|| marker.strip_prefix("START_CONTRACT:"))?
+        .trim_start();
     let name: String = rest
         .chars()
-        .take_while(|ch| ch.is_ascii_alphanumeric() || *ch == '_' || *ch == ':')
+        .take_while(|ch| {
+            ch.is_ascii_alphanumeric() || *ch == '_' || *ch == ':' || *ch == '-' || *ch == '.'
+        })
         .collect();
     if name.is_empty() {
         None
@@ -362,6 +483,86 @@ fn extract_contract_marker_name(line: &str, marker: &str) -> Option<String> {
     }
 }
 // END_extract_contract_marker_name
+
+// START_CONTRACT_normalize_comment_line
+// PURPOSE: Strip a supported language comment prefix from one metadata line
+// INPUTS: { trimmed: &str — source line without surrounding whitespace }
+// OUTPUTS: { Option<String> — marker text without comment syntax }
+// START_normalize_comment_line
+fn normalize_comment_line(trimmed: &str) -> Option<String> {
+    let value = if let Some(rest) = trimmed.strip_prefix("//") {
+        rest
+    } else if let Some(rest) = trimmed.strip_prefix('#') {
+        rest
+    } else if let Some(rest) = trimmed.strip_prefix("--") {
+        rest
+    } else if let Some(rest) = trimmed.strip_prefix("/*") {
+        rest
+    } else if let Some(rest) = trimmed.strip_prefix('*') {
+        rest
+    } else {
+        trimmed.strip_prefix("<!--")?
+    };
+    let marker = value
+        .trim()
+        .trim_end_matches("*/")
+        .trim_end_matches("-->")
+        .trim();
+    Some(canonical_marker_text(marker))
+}
+// END_normalize_comment_line
+
+// START_CONTRACT_canonical_marker_text
+// PURPOSE: Normalize decorative GRACE markers such as === MODULE_CONTRACT ===
+// INPUTS: { marker: &str — raw marker text after comment prefix stripping }
+// OUTPUTS: { String }
+// START_canonical_marker_text
+fn canonical_marker_text(marker: &str) -> String {
+    marker.trim().trim_matches('=').trim().to_string()
+}
+// END_canonical_marker_text
+
+// START_CONTRACT_contains_metadata_marker
+// PURPOSE: Check whether source content contains a language-aware metadata marker
+// INPUTS: { content: &str }, { marker: &str }
+// OUTPUTS: { bool }
+// START_contains_metadata_marker
+fn contains_metadata_marker(content: &str, marker: &str) -> bool {
+    content.lines().any(|line| {
+        normalize_comment_line(line.trim())
+            .as_deref()
+            .map(|candidate| candidate == marker)
+            .unwrap_or(false)
+    })
+}
+// END_contains_metadata_marker
+
+// START_CONTRACT_is_module_contract_marker
+// PURPOSE: Detect supported MODULE_CONTRACT opening markers
+// INPUTS: { marker: &str — normalized marker text }
+// OUTPUTS: { bool }
+// START_is_module_contract_marker
+fn is_module_contract_marker(marker: &str) -> bool {
+    marker == "MODULE_CONTRACT"
+}
+// END_is_module_contract_marker
+
+// START_CONTRACT_is_valid_module_id
+// PURPOSE: Validate a canonical single MyGRACE module id
+// INPUTS: { module_id: &str — parsed MODULE_ID value }
+// OUTPUTS: { bool }
+// START_is_valid_module_id
+fn is_valid_module_id(module_id: &str) -> bool {
+    let Some(rest) = module_id.strip_prefix("M-") else {
+        return false;
+    };
+    !rest.is_empty()
+        && !module_id.contains(',')
+        && rest
+            .chars()
+            .all(|ch| ch.is_ascii_uppercase() || ch.is_ascii_digit() || ch == '-')
+}
+// END_is_valid_module_id
 
 #[cfg(test)]
 mod tests {
@@ -438,6 +639,48 @@ mod tests {
 
         assert_eq!(mc.function_contracts.len(), 1);
         assert_eq!(mc.function_contracts[0].name, "alpha");
+    }
+
+    #[test]
+    fn test_extract_contracts_sql_comment_style() {
+        let code = "-- MODULE_CONTRACT\n-- MODULE_ID: M-SQL\n-- PURPOSE: SQL schema\n-- SCOPE: Tables\n-- DEPENDS: M-STORAGE\n-- LINKS: docs/modules/M-SQL.xml\n\n-- START_MODULE_MAP\n-- users — table\n-- END_MODULE_MAP\n\n-- START_CHANGE_SUMMARY\n-- LAST_CHANGE: [v1.0.0 — Initial]\n-- END_CHANGE_SUMMARY\n\n-- START_CONTRACT_create_users\n-- PURPOSE: Create users table\n-- OUTPUTS: { table — users }\n-- START_create_users\nCREATE TABLE users(id INTEGER PRIMARY KEY);\n-- END_create_users";
+        let mc = ContractValidator::scan_file(Path::new("schema.sql"), code);
+
+        assert!(mc.has_contract);
+        assert_eq!(mc.module_id.as_deref(), Some("M-SQL"));
+        assert_eq!(mc.function_contracts.len(), 1);
+        assert_eq!(mc.function_contracts[0].name, "create_users");
+        assert!(mc.valid);
+    }
+
+    #[test]
+    fn test_module_id_with_commas_is_invalid() {
+        let code = "# MODULE_CONTRACT\n# MODULE_ID: M-STORAGE, M-BOT, M-SCHEDULER\n# PURPOSE: Bot module\n# START_MODULE_MAP\n# END_MODULE_MAP\n# START_CHANGE_SUMMARY\n# END_CHANGE_SUMMARY";
+        let mc = ContractValidator::scan_file_with_profile(
+            Path::new("bot.py"),
+            code,
+            GraceProfile::Lite,
+        );
+
+        assert!(mc.has_contract);
+        assert!(!mc.valid);
+        assert!(mc.errors.iter().any(|error| error.contains("exactly one")));
+    }
+
+    #[test]
+    fn test_lite_profile_allows_small_helper_without_function_contracts() {
+        let code = "# MODULE_CONTRACT\n# MODULE_ID: M-HELPER\n# PURPOSE: Small helper\n# START_MODULE_MAP\n# parse_date — parse\n# END_MODULE_MAP\n# START_CHANGE_SUMMARY\n# LAST_CHANGE: [v1.0.0 — Initial]\n# END_CHANGE_SUMMARY\n\ndef parse_date(value):\n    return value";
+        let mc = ContractValidator::scan_file_with_profile(
+            Path::new("date_parser.py"),
+            code,
+            GraceProfile::Lite,
+        );
+
+        assert!(mc.valid);
+        assert!(mc
+            .errors
+            .iter()
+            .all(|error| !error.contains("Missing function contracts")));
     }
 }
 // END_public_api

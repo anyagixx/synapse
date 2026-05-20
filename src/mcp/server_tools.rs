@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list
+// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Extracted tools/list definitions from M-MCP-SERVER]
+// LAST_CHANGE: [v2.3.0 — Documented GRACE profile arguments for verify/review tools]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -63,21 +63,23 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
         }),
         serde_json::json!({
             "name": "verify_project",
-            "description": "Run GRACE verification checks (module-local, wave, phase). Returns pass/fail status with details.",
+            "description": "Run GRACE verification checks (module-local, wave, phase). Returns pass/fail status with details. Use profile=lite|balanced|strict to tune contract strictness.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "level": { "type": "string", "description": "Verification level: module-local | wave | phase | all" }
+                    "level": { "type": "string", "description": "Verification level: module-local | wave | phase | all" },
+                    "profile": { "type": "string", "description": "Strictness profile: lite | balanced | strict" }
                 }
             }
         }),
         serde_json::json!({
             "name": "review_code",
-            "description": "Run GRACE integrity review — checks semantic markup, contracts, naming, sensitive data. Returns issues list.",
+            "description": "Run GRACE integrity review — checks semantic markup, contracts, naming, sensitive data. Returns issues list. Use profile=lite|balanced|strict for small projects.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "mode": { "type": "string", "description": "Review mode: scoped | full" }
+                    "mode": { "type": "string", "description": "Review mode: scoped | wave-audit | full" },
+                    "profile": { "type": "string", "description": "Strictness profile: lite | balanced | strict" }
                 }
             }
         }),
@@ -115,13 +117,13 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
         }),
         serde_json::json!({
             "name": "suggest_contract",
-            "description": "Generate a MODULE_CONTRACT template for a new module. Provide module name and purpose.",
+            "description": "Generate a language-aware MODULE_CONTRACT template for a new module. Provide module name, purpose, and optional language.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
                     "module_name": { "type": "string", "description": "Module name (e.g. 'auth')" },
                     "purpose": { "type": "string", "description": "What the module does" },
-                    "language": { "type": "string", "description": "Language: rust | python | ts | go" }
+                    "language": { "type": "string", "description": "Language or extension: rust | python | sql | ts | go" }
                 },
                 "required": ["module_name", "purpose"]
             }

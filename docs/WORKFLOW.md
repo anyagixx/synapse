@@ -24,7 +24,7 @@ Primary artifacts:
 
 ## 2. Plan To Architecture
 
-The AI reads the indexes first, then loads only the relevant phase or module shard. Each governed source file must carry `MODULE_CONTRACT`, `MODULE_MAP`, `CHANGE_SUMMARY`, function contracts, and semantic blocks.
+The AI reads the indexes first, then loads only the relevant phase or module shard. Each governed source file must carry `MODULE_CONTRACT`, `MODULE_MAP`, `CHANGE_SUMMARY`, and semantic blocks using the language's native comments (`//`, `#`, or `--`). Strict profile requires function contracts broadly; `lite` and `balanced` profiles reserve them for public or risky behavior in small projects.
 
 ## 3. Implementation
 
@@ -42,6 +42,7 @@ Run verification before declaring work done:
 
 ```bash
 syn verify
+syn verify --profile lite
 syn ci verify
 ```
 
@@ -54,6 +55,7 @@ Run integrity review after verification:
 ```bash
 syn review
 syn review --mode full
+syn review --profile balanced
 syn ci review
 ```
 

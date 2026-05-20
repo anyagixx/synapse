@@ -6,11 +6,13 @@
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
     <COMMAND>cargo test --test reliability_test test_clean_init_doctor_accepts_default_config</COMMAND>
+    <COMMAND>cargo test cli::runtime_commands::tests::test_parse_requirement_imports_skips_non_packages --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Doctor reports corrupted index storage as an index failure with a rebuild command.</ASSERTION>
     <ASSERTION>Doctor reports missing user config as valid built-in defaults after clean init.</ASSERTION>
+    <ASSERTION>Doctor dependency diagnostics parse requirements.txt package names without following nested or remote specs.</ASSERTION>
     <ASSERTION>ProxyCmd propagates wrapped command exit status after printing filtered output.</ASSERTION>
     <ASSERTION>GainCmd supports --graph and renders tracked savings bars.</ASSERTION>
     <ASSERTION>McpCmd starts the stdio MCP server only; HTTP/LSP options are not public flags until implemented.</ASSERTION>

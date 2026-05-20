@@ -3,10 +3,16 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test grace::contract::tests::test_extract_function_contract_name_stops_at_marker_suffix --lib</COMMAND>
+    <COMMAND>cargo test grace::contract::tests::test_extract_contracts_sql_comment_style --lib</COMMAND>
+    <COMMAND>cargo test grace::contract::tests::test_module_id_with_commas_is_invalid --lib</COMMAND>
+    <COMMAND>cargo test grace::contract::tests::test_lite_profile_allows_small_helper_without_function_contracts --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Function contract marker parsing is string-based and does not construct runtime regexes with unwrap.</ASSERTION>
+    <ASSERTION>Contract parsing supports Python # and SQL -- markers without producing invalid source templates.</ASSERTION>
+    <ASSERTION>MODULE_ID accepts exactly one canonical M-XXX id and reports comma-separated ids as invalid.</ASSERTION>
+    <ASSERTION>Lite profile allows small helper files to rely on module-level contracts.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

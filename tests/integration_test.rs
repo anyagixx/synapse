@@ -3,6 +3,22 @@
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
 // SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, proxy, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-CONFIG
+// LINKS: docs/verification/V-M-CLI.xml
+
+// START_MODULE_MAP
+// test_clean_config_bootstrap_commands_do_not_require_config_file — Verifies clean config bootstrap behavior
+// test_init_and_index — Verifies init, index, search, verify, and status
+// test_proxy_and_gain — Verifies proxy execution and token savings output
+// test_doctor_and_hooks — Verifies setup diagnostics and hook status
+// test_scoped_and_json_cli — Verifies scoped JSON GRACE gates
+// test_init_from_existing — Verifies existing repository bootstrap
+// test_ci_commands — Verifies CI command aliases
+// test_compress_roundtrip — Verifies compression restore behavior
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.10.0 — Added explicit integration test module map and change summary]
+// END_CHANGE_SUMMARY
 
 use std::process::Command;
 

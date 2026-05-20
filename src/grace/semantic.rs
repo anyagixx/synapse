@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-SEMANTIC
-// PURPOSE: Semantic block scanner — extracts START_/END_ block pairs from source files
-// SCOPE: SemanticExtractor, SemanticBlock, SemanticReport, extract_blocks, scan_project
+// PURPOSE: Semantic block scanner — extracts language-aware START_/END_ block pairs from source files
+// SCOPE: SemanticExtractor, SemanticBlock, SemanticReport, extract_blocks, scan_project, comment marker normalization
 // DEPENDS: M-INDEXER-WALKER
 // LINKS: N/A
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.0 — Orphan END markers no longer rely on stack unwrap behavior]
+// LAST_CHANGE: [v2.2.0 — Added language-aware semantic markers for Python, SQL, and block comments]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
@@ -80,25 +80,17 @@ impl SemanticExtractor {
             let trimmed = line.trim();
             let line_num = i + 1;
 
-            // START_BLOCK_NAME — skip CONTRACT_ markers (they pair with actual START)
-            if let Some(name) = trimmed
-                .strip_prefix("// START_")
-                .or_else(|| trimmed.strip_prefix("# START_"))
-                .or_else(|| trimmed.strip_prefix("/* START_"))
-                .or_else(|| trimmed.strip_prefix("* START_"))
-            {
-                let name = name.trim().trim_end_matches("*/").trim().to_string();
-                if !name.is_empty() && !name.starts_with("CONTRACT_") {
+            // START_BLOCK_NAME — skip CONTRACT markers (they pair with actual START)
+            if let Some(name) = semantic_marker_name(trimmed, "START_") {
+                if !name.is_empty() && !name.starts_with("CONTRACT") {
                     stack.push((name, line_num));
                 }
             }
 
             // END_BLOCK_NAME or END_NAME — skip CONTRACT_ markers
-            let is_end = (trimmed.starts_with("// END_")
-                || trimmed.starts_with("# END_")
-                || trimmed.starts_with("/* END_")
-                || trimmed.starts_with("* END_"))
-                && !trimmed.contains("END_CONTRACT_");
+            let is_end = semantic_marker_name(trimmed, "END_")
+                .map(|name| !name.starts_with("CONTRACT"))
+                .unwrap_or(false);
 
             if is_end {
                 let Some((name, start_line)) = stack.pop() else {
@@ -186,6 +178,60 @@ impl SemanticExtractor {
     // END_se_scan_project
 }
 
+// START_CONTRACT_semantic_marker_name
+// PURPOSE: Extract a START_ or END_ semantic marker name from a language-aware comment line
+// INPUTS: { trimmed: &str — source line without surrounding whitespace }, { prefix: &str — START_ or END_ }
+// OUTPUTS: { Option<String> }
+// START_semantic_marker_name
+fn semantic_marker_name(trimmed: &str, prefix: &str) -> Option<String> {
+    let marker = normalize_comment_line(trimmed)?;
+    let rest = marker.strip_prefix(prefix)?;
+    let name = rest
+        .trim()
+        .trim_end_matches("*/")
+        .trim_end_matches("-->")
+        .trim()
+        .to_string();
+    if name.is_empty() {
+        None
+    } else {
+        Some(name)
+    }
+}
+// END_semantic_marker_name
+
+// START_CONTRACT_normalize_comment_line
+// PURPOSE: Strip supported language comment syntax from one semantic marker line
+// INPUTS: { trimmed: &str — source line without surrounding whitespace }
+// OUTPUTS: { Option<String> }
+// START_normalize_comment_line
+fn normalize_comment_line(trimmed: &str) -> Option<String> {
+    let value = if let Some(rest) = trimmed.strip_prefix("//") {
+        rest
+    } else if let Some(rest) = trimmed.strip_prefix('#') {
+        rest
+    } else if let Some(rest) = trimmed.strip_prefix("--") {
+        rest
+    } else if let Some(rest) = trimmed.strip_prefix("/*") {
+        rest
+    } else if let Some(rest) = trimmed.strip_prefix('*') {
+        rest
+    } else {
+        trimmed.strip_prefix("<!--")?
+    };
+    Some(
+        value
+            .trim()
+            .trim_end_matches("*/")
+            .trim_end_matches("-->")
+            .trim()
+            .trim_matches('=')
+            .trim()
+            .to_string(),
+    )
+}
+// END_normalize_comment_line
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -198,6 +244,30 @@ mod tests {
         );
 
         assert!(blocks.is_empty());
+    }
+
+    #[test]
+    fn test_extract_blocks_supports_sql_markers() {
+        let blocks = SemanticExtractor::extract_blocks(
+            Path::new("schema.sql"),
+            "-- START_create_users\nCREATE TABLE users(id INTEGER);\n-- END_create_users\n",
+        );
+
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(blocks[0].name, "create_users");
+        assert!(blocks[0].is_closed);
+    }
+
+    #[test]
+    fn test_extract_blocks_supports_html_markers() {
+        let blocks = SemanticExtractor::extract_blocks(
+            Path::new("template.html"),
+            "<!-- START_content -->\n<section></section>\n<!-- END_content -->\n",
+        );
+
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(blocks[0].name, "content");
+        assert!(blocks[0].is_closed);
     }
 }
 // END_public_api
