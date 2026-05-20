@@ -17,7 +17,7 @@
   </SCORES>
   <EVIDENCE>
     <MYGRACE_DRIFT>0 canonical drift across 70 code modules, graph shards, and verification shards; 75/75 contracted files and 323 function contracts after Phase-11 changes</MYGRACE_DRIFT>
-    <CI_GATE>Full scripts/ci.sh gate passes, including fmt, clippy, runtime guard, 93 tests, release candidate policy, release smoke, verify, review, refresh, and status</CI_GATE>
+    <CI_GATE>Full scripts/ci.sh gate passes, including fmt, clippy, runtime guard, 94 tests, release candidate policy, release smoke, verify, review, refresh, and status</CI_GATE>
     <PHASE11_GATE>Local Phase-11 gates passed: cargo fmt --all, cargo test --all-targets with writable XDG_DATA_HOME, cargo clippy --all-targets --all-features -- -D warnings, scripts/ci.sh, refresh --json drift=0, verify --ci, and review --mode full --ci</PHASE11_GATE>
     <PROXY_TRANSPARENCY>syn proxy now preserves wrapped command exit status; regression tests cover nonzero exit propagation, Unicode passthrough truncation, positive token savings, and gain --graph output</PROXY_TRANSPARENCY>
     <UNICODE_TRUNCATION>Shared truncate_chars utility is used by proxy passthrough, TOML filters, GRACE fix snippets, CLI search/grep previews, MCP search/trace previews, and LSP parse-error previews</UNICODE_TRUNCATION>
