@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-TESTING" module="M-GRACE-TESTING" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test testing --all-targets</COMMAND>
+    <COMMAND>cargo test handle_run_test_guide --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[Testing][run_test_guide][GUIDE]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Markdown testing guides parse prerequisites, steps, expected behavior, and data capture sections.</ASSERTION>
+    <ASSERTION>run_test_guide writes docs/tests/results summaries and XML failure reports with LOG evidence when deviations are detected.</ASSERTION>
+    <ASSERTION>submit_test_report highlights LOG refs for developer-agent handoff.</ASSERTION>
+    <ASSERTION>MCP run_test_guide and submit_test_report handlers return machine-readable summaries.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

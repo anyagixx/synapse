@@ -13,12 +13,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Removed non-canonical M-ALL pseudo link]
+// LAST_CHANGE: [v2.12.0 — Exposed embedded agent console module]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_public_api
 // PURPOSE: Expose crate modules and compile-time metadata constants
 // OUTPUTS: { public module namespace }, { VERSION }, { NAME }
+pub mod agent_console;
 pub mod capabilities;
 pub mod cli;
 pub mod compress;

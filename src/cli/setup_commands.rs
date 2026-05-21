@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-SETUP-COMMANDS
 // PURPOSE: CLI setup and indexing command handlers with guarded index storage status reporting and safe OpenCode config merge
-// SCOPE: InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts, gitignore toggle, OpenCode MCP merge
+// SCOPE: InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts, gitignore toggle, OpenCode MCP merge, current MCP tool summary
 // DEPENDS: M-CONFIG, M-GRACE-BOOTSTRAP, M-GRACE-LAYOUT, M-INDEXER, M-HOOKS
 // LINKS: docs/modules/M-CLI.xml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.8.0 — Updated install summary for 34 MCP tools]
+// LAST_CHANGE: [v3.9.0 — Updated install summary for 36 MCP tools]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
@@ -95,7 +95,7 @@ impl InitCmd {
         println!();
         println!("What was created:");
         println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
-        println!("  opencode.jsonc              — MCP auto-start (34 tools: 19 core + 15 GRACE)");
+        println!("  opencode.jsonc              — MCP auto-start (36 tools: 21 core + 15 GRACE)");
         println!(
             "  docs/                        — Sharded architecture layout + compatibility XML docs"
         );

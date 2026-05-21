@@ -12,6 +12,7 @@
     <ASSERTION>tools/list exposes generate_development_plan with from_requirements, data_flow_analysis, and generation_order schema.</ASSERTION>
     <ASSERTION>tools/list exposes mental_test_run with module_id, mental_test_id, and step_by_step schema.</ASSERTION>
     <ASSERTION>tools/list exposes traceability_report with scope, target, and direction schema.</ASSERTION>
+    <ASSERTION>tools/list exposes run_test_guide and submit_test_report schemas for tester-agent workflows.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>

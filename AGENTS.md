@@ -74,6 +74,7 @@ Compatibility docs may also exist under `docs/*.xml`, but sharded indexes are pr
 `docs/requirements.xml` must be a complete `<RequirementsAnalysis>` artifact with Goals, DomainModel entities, Actors, AAG UseCases (`Actor` + `Action` + `Goal`), NonFunctionalRequirements, Constraints, and Glossary before implementation starts. Use `generate_requirements` when it is missing or still a stub.
 `docs/technology.xml` must be a complete `<Technology>` artifact with exact Language/Runtime/PackageManager versions, versioned dependencies, DependencyMatrix compatibility checks, KnownIssues, and DevOps notes. Use `generate_technology` when versions are missing, blank, `latest`, wildcard, or range-only.
 `docs/development-plan.xml` must be a complete `<DevelopmentPlan>` artifact with ArchitectureGraph, DataFlows, GenerationOrder, MentalTests, NonHumanPatterns, and ContractGuidelines. Use `generate_development_plan` when DataFlows, GenerationOrder, MentalTests, or NonHumanPatterns are missing. Use `mental_test_run` before code generation for critical or complex modules.
+Agent-based testing uses natural-language guides under `docs/tests/guides/` and tester-agent reports under `docs/tests/results/`. Testing guides are Markdown, not code: `## Test: ...`, `### Steps`, `### Expected Behavior`, and `### Data to Capture`. Use `run_test_guide` after a module is code-complete and `submit_test_report` when a failure XML contains LOG evidence for the developer agent.
 
 ### Phase 0 STOP Gates
 - If `docs/graph-index.xml` is missing → **STOP. Ask user what to build.**
@@ -292,6 +293,9 @@ Phase Gate: Call verify_project (phase level) + review_code (full)
 | `generate_technology` | Create complete Technology with exact versions and compatibility checks |
 | `generate_development_plan` | Create complete DevelopmentPlan with DataFlows, GenerationOrder, and MentalTests |
 | `mental_test_run` | Run a DevelopmentPlan MentalTest and persist trace evidence before code generation |
+| `traceability_report` | Generate requirement/use-case to code/LOG traceability matrix |
+| `run_test_guide` | Run a natural-language tester-agent guide and persist summary/failure artifacts |
+| `submit_test_report` | Submit tester-agent XML failure report with LOG refs to developer |
 | `suggest_contract` | Generate MODULE_CONTRACT template for new modules |
 | `project_status` | Overall health: contracts, markup, verification, token economy |
 | `token_savings` | Cost tracking — commands, tokens saved, estimated $ saved |

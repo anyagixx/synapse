@@ -5,7 +5,8 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>MCP skill tests assert 19 core tools, 34 total MCP tools, and docs/belief-states plus docs/mental-tests/traceability initialization.</ASSERTION>
+    <ASSERTION>MCP skill tests assert 21 core tools, 36 total MCP tools, and docs/belief-states, docs/mental-tests, and docs/tests initialization.</ASSERTION>
+    <ASSERTION>grace_setup_subagents output includes Tester Agent with run_test_guide and submit_test_report tools.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>

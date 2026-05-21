@@ -5,14 +5,14 @@
 // DEPENDS: M-MCP-SERVER, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
-// test_initialize_then_list_tools — MCP handler lists all 34 tools after initialize
+// test_initialize_then_list_tools — MCP handler lists all 36 tools after initialize
 // test_tools_list_contains_grace_and_core_tools — Tool list contains representative core and grace tools
 // test_tools_call_grace_status_returns_text — Representative grace tool call returns MCP content envelope
 // test_stdio_keeps_logs_off_stdout_and_notifications_silent — Binary stdio emits only request responses on stdout
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Updated MCP tool count for traceability_report]
+// LAST_CHANGE: [v2.20.0 — Updated MCP tool count for agent-based testing tools]
 // END_CHANGE_SUMMARY
 
 use std::io::Write;
@@ -36,7 +36,7 @@ async fn test_initialize_then_list_tools() {
         .await
         .expect("tools/list request should produce a response");
     let tools = list["result"]["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 34);
+    assert_eq!(tools.len(), 36);
 }
 
 #[tokio::test]

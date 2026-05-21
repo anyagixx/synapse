@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, and traceability_report, guarded index and GraphRAG preload
+// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, and submit_test_report, guarded index and GraphRAG preload
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
 // LINKS: N/A
 
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.9.0 — Routed traceability_report MCP tool]
+// LAST_CHANGE: [v3.10.0 — Routed agent-based testing MCP tools]
 // END_CHANGE_SUMMARY
 
 use super::{server_code_tools, server_grace_tools, server_response, server_tools};
@@ -262,6 +262,10 @@ impl SynapseHandler {
                     "mental_test_run" => server_grace_tools::handle_mental_test_run(id, args).await,
                     "traceability_report" => {
                         server_grace_tools::handle_traceability_report(id, args).await
+                    }
+                    "run_test_guide" => server_grace_tools::handle_run_test_guide(id, args).await,
+                    "submit_test_report" => {
+                        server_grace_tools::handle_submit_test_report(id, args).await
                     }
                     "token_savings" => server_grace_tools::handle_gain(id, args).await,
                     "compress_text" => server_grace_tools::handle_compress(id, args).await,

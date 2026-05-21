@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
 // PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
-// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, traceability, belief state, and project workflows
-// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
+// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, traceability, tester-agent workflow, belief state, and project workflows
+// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Added traceability guidance to status and execution skills]
+// LAST_CHANGE: [v2.20.0 — Added tester-agent guidance to multiagent, setup, and fix skills]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -232,7 +232,7 @@ impl SkillEngine {
                 )
             }
             "grace_multiagent_execute" => format!(
-                "Multi-agent execution split:\n- phase: {}\n- modules: {}\n- policy: {}\n\nSuggested roles:\n- planner\n- implementer\n- reviewer\n- verifier\n- fixer\n\nConstraint: one worker per module boundary unless dependencies force sequence.",
+                "Multi-agent execution split:\n- phase: {}\n- modules: {}\n- policy: {}\n\nSuggested roles:\n- planner\n- implementer\n- tester\n- reviewer\n- verifier\n- fixer\n\nTester workflow:\n1. read docs/tests/guides/\n2. run run_test_guide against the app or mock console\n3. submit_test_report when failures include LOG evidence\n\nConstraint: one worker per module boundary unless dependencies force sequence.",
                 string_arg(&request.arguments, "phase", "active phase"),
                 string_arg(&request.arguments, "modules", "derived from active plan phase"),
                 string_arg(&request.arguments, "execution_policy", "one worker per module"),
@@ -262,7 +262,7 @@ impl SkillEngine {
                     .map(|r| r.not_in_verification.len())
                     .unwrap_or(0);
                 format!(
-                    "Fix workflow:\n- issue: {}\n- module hint: {}\n- graph drift: {}\n- verification drift: {}\n\nDebug path:\n1. identify failing module or contract\n2. run or add a MentalTest that reproduces the expected fix behavior\n3. inspect shard docs for module hint or active module\n4. inspect source files and graph refs\n5. patch smallest cause, not symptoms\n6. run verify_project and review_code before done",
+                    "Fix workflow:\n- issue: {}\n- module hint: {}\n- graph drift: {}\n- verification drift: {}\n\nDebug path:\n1. identify failing module or contract\n2. inspect any docs/tests/results failure report and LOG evidence refs\n3. run or add a MentalTest that reproduces the expected fix behavior\n4. inspect shard docs for module hint or active module\n5. inspect source files and graph refs\n6. patch smallest cause, not symptoms\n7. run run_test_guide if a guide exists, then verify_project and review_code before done",
                     string_arg(&request.arguments, "issue", "unspecified issue"),
                     module_hint,
                     missing_graph,
@@ -292,7 +292,7 @@ impl SkillEngine {
                 string_arg(&request.arguments, "topic", "general workflow"),
             ),
             "grace_setup_subagents" => format!(
-                "Recommended subagent setup for {}:\n- planner\n- implementer\n- reviewer\n- verifier\n- fixer\n\nRoles input: {}\n\nPolicy: planner owns architecture, implementer owns one module, reviewer/verifier gate completion, fixer handles failures.",
+                "Recommended subagent setup for {}:\n- planner\n- implementer\n- tester\n- reviewer\n- verifier\n- fixer\n\nTester Agent:\n- role: natural-language test executor\n- tools: run_test_guide, submit_test_report, analyze_logs, semantic_search\n- knowledge: docs/tests/guides/, application API, structured LOG format\n- workflow: run guide, capture logs, submit XML failure report, hand evidence to developer\n\nRoles input: {}\n\nPolicy: planner owns architecture, implementer owns one module, tester owns guide execution and failure reports, reviewer/verifier gate completion, fixer handles failures.",
                 string_arg(&request.arguments, "platform", "opencode"),
                 string_arg(&request.arguments, "roles", "default GRACE roles"),
             ),

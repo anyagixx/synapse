@@ -136,7 +136,7 @@ fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
 fn test_mcp_tool_count_matches_capabilities() {
     let expected = capabilities::MCP_TOOLS.len();
     assert_eq!(expected, capabilities::TOTAL_MCP_TOOL_COUNT);
-    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 19);
+    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 21);
     assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 15);
     assert_eq!(capabilities::skill_defs_count(), 15);
     assert!(!capabilities::MCP_TOOLS.is_empty(), "MCP tools list empty");

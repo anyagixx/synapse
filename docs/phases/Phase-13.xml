@@ -20,6 +20,8 @@
     <roadmap path="/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.3-roadmap.md" />
   </SOURCE_GUIDE>
   <MODULE_REFS>
+    <MODULE_REF id="M-AGENT-CONSOLE" />
+    <MODULE_REF id="M-AGENT-CONSOLE-TOOLS" />
     <MODULE_REF id="M-GRACE" />
     <MODULE_REF id="M-GRACE-ANCHOR" />
     <MODULE_REF id="M-GRACE-BELIEF-STATE" />
@@ -36,6 +38,7 @@
     <MODULE_REF id="M-GRACE-MENTAL-TEST" />
     <MODULE_REF id="M-GRACE-TRACEABILITY" />
     <MODULE_REF id="M-GRACE-NON-HUMAN-PATTERNS" />
+    <MODULE_REF id="M-GRACE-TESTING" />
     <MODULE_REF id="M-GRACE-INVENTORY" />
     <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
     <MODULE_REF id="M-GRAPHRAG" />
@@ -111,24 +114,24 @@
         <VERIFY status="passed">Tests for MentalTest parsing, pass/fail blocking, missing critical target coverage, trace persistence, mental_test_run MCP output, MCP parity, and full verify/review gates.</VERIFY>
       </step-8>
     </sprint-2>
-    <sprint-3 name="P2 Advanced Core" status="active">
+    <sprint-3 name="P2 Advanced Core" status="done">
       <step-9 section="1.6" status="done" priority="P2">
         <TITLE>End-to-End Traceability</TITLE>
         <INTENT>Build bidirectional traceability from requirement and use case through module, function, code block, verification, and LOG entry.</INTENT>
         <IMPLEMENTATION>Create M-GRACE-TRACEABILITY with TraceabilityChain/TraceabilityReport, docs/traceability-index.xml skeleton/generator, traceability_report MCP handler, traceability-* verify checks, review/status scoring, and traceability guidance in skills/capabilities/docs.</IMPLEMENTATION>
-        <VERIFY status="passed">Tests for complete chain coverage, untraced function gap, dangling trace link, index writing, traceability_report MCP output, 34-tool MCP parity, refresh drift, verify --ci, and review --mode full --ci.</VERIFY>
+        <VERIFY status="passed">Tests for complete chain coverage, untraced function gap, dangling trace link, index writing, traceability_report MCP output, MCP parity, refresh drift, verify --ci, and review --mode full --ci.</VERIFY>
       </step-9>
       <step-10 section="1.3" status="done" priority="P2">
         <TITLE>Non-Human Programming Patterns</TITLE>
         <INTENT>Enforce AI-deterministic coding patterns: explicit typing, explicit flow, explicit null handling, no magic values, and deterministic iteration.</INTENT>
         <IMPLEMENTATION>Create M-GRACE-NON-HUMAN-PATTERNS with cached regex detectors, string-literal-safe explicit-flow analysis, profile-aware severity, verify/review/status/capabilities integration, and DevelopmentPlan NonHumanPatterns templates for all five rules.</IMPLEMENTATION>
-        <VERIFY status="passed">Eight unit tests for anti-pattern detection, lite/balanced/strict profile behavior, clean examples, detector string-literal safety, full verify --ci, review --mode full --ci, refresh, clippy, and 159-test suite.</VERIFY>
+        <VERIFY status="passed">Eight unit tests for anti-pattern detection, lite/balanced/strict profile behavior, clean examples, detector string-literal safety, full verify --ci, review --mode full --ci, refresh, clippy, and full cargo test suite.</VERIFY>
       </step-10>
-      <step-11 section="3.1" status="pending" priority="P2">
+      <step-11 section="3.1" status="done" priority="P2">
         <TITLE>Agent-Based Testing</TITLE>
         <INTENT>Add natural-language testing guides, tester-agent failure reports, and an embedded agent console for tool-based application testing.</INTENT>
-        <IMPLEMENTATION>Create agent_console module, grace testing module, docs/tests layout, run_test_guide and submit_test_report MCP handlers, tester subagent skill updates, and AGENTS.md protocol documentation.</IMPLEMENTATION>
-        <VERIFY>Tests for Markdown guide parsing, pass report, failure XML report with LOG evidence, console tool registration, and tester agent configuration output.</VERIFY>
+        <IMPLEMENTATION>Create M-AGENT-CONSOLE and M-GRACE-TESTING; add docs/tests/guides/results layout, Markdown TestGuide parser, deterministic run_test_guide summary/failure XML workflow, submit_test_report LOG-ref handoff, MCP handlers/schemas, capabilities parity, tester subagent skill guidance, and AGENTS/OpenCode protocol documentation.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for Markdown guide parsing, pass summary, failure XML with LOG evidence, submit report handoff, custom and built-in console tool registration, MCP run_test_guide/submit_test_report handlers, tester agent configuration output, 36-tool MCP parity, refresh, verify --ci, review --mode full --ci, clippy, and 167-test suite.</VERIFY>
       </step-11>
     </sprint-3>
     <sprint-4 name="P3 Integration and Polish" status="pending">
@@ -163,9 +166,9 @@
     </improvement-1>
   </ROADMAP_IMPROVEMENTS>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 3 step-11 section 3.1 Agent-Based Testing.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml, docs/modules/M-SKILLS-REGISTRY.xml, docs/modules/M-SKILLS-ENGINE.xml, docs/modules/M-CAPABILITIES.xml, docs/modules/M-TESTS-MCP.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-3-advanced-mechanics/3.1-agent-based-testing.md</SOURCE_SPEC>
+    <NEXT_ACTION>Begin Sprint 4 step-12 section 3.2 Cascade Update Engine.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-REFRESH.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml, docs/modules/M-CAPABILITIES.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-3-advanced-mechanics/3.2-cascade-update-engine.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

@@ -2,6 +2,8 @@
 <VERIFICATION_INDEX>
   <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY></META>
   <VERIFICATIONS>
+    <VERIFICATION id="V-M-AGENT-CONSOLE" module="M-AGENT-CONSOLE" path="docs/verification/V-M-AGENT-CONSOLE.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-AGENT-CONSOLE-TOOLS" module="M-AGENT-CONSOLE-TOOLS" path="docs/verification/V-M-AGENT-CONSOLE-TOOLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-BUILD" module="M-BUILD" path="docs/verification/V-M-BUILD.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CAPABILITIES" module="M-CAPABILITIES" path="docs/verification/V-M-CAPABILITIES.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CI" module="M-CI" path="docs/verification/V-M-CI.xml" priority="normal" status="active" />
@@ -38,6 +40,7 @@
     <VERIFICATION id="V-M-GRACE-SEMANTIC" module="M-GRACE-SEMANTIC" path="docs/verification/V-M-GRACE-SEMANTIC.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-STATUS" module="M-GRACE-STATUS" path="docs/verification/V-M-GRACE-STATUS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-TECHNOLOGY" module="M-GRACE-TECHNOLOGY" path="docs/verification/V-M-GRACE-TECHNOLOGY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-TESTING" module="M-GRACE-TESTING" path="docs/verification/V-M-GRACE-TESTING.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-TRACEABILITY" module="M-GRACE-TRACEABILITY" path="docs/verification/V-M-GRACE-TRACEABILITY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-VERIFY" module="M-GRACE-VERIFY" path="docs/verification/V-M-GRACE-VERIFY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-VERIFY-PHASE" module="M-GRACE-VERIFY-PHASE" path="docs/verification/V-M-GRACE-VERIFY-PHASE.xml" priority="normal" status="active" />

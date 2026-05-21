@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-AGENT-CONSOLE-TOOLS" type="INTEGRATION" status="active">
+  <NAME>M-AGENT-CONSOLE-TOOLS</NAME>
+  <PURPOSE>Built-in embedded tester-agent console tools for logs, actions, state, read-only database queries, and endpoint calls</PURPOSE>
+  <SCOPE>ToolHandler trait, BuiltinToolHandler enum, built-in tool factory, deterministic placeholder execution semantics</SCOPE>
+  <FILES>
+    <FILE>src/agent_console/tools.rs</FILE>
+  </FILES>
+  <DEPENDS>N/A</DEPENDS>
+  <LINKS>docs/verification/V-M-AGENT-CONSOLE-TOOLS.xml</LINKS>
+  <VERIFICATION_REF>V-M-AGENT-CONSOLE-TOOLS</VERIFICATION_REF>
+</MODULE>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles, requirements/technology/development-plan generation, and traceability reporting
+// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles, requirements/technology/development-plan generation, traceability reporting, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Added traceability_report MCP tool schema]
+// LAST_CHANGE: [v2.20.0 — Added agent-based testing MCP tool schemas]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -175,6 +175,33 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                     "target": { "type": "string", "description": "Required for module or requirement scope, such as M-ORDER or REQ-001" },
                     "direction": { "type": "string", "description": "up | down", "default": "up" }
                 }
+            }
+        }),
+        serde_json::json!({
+            "name": "run_test_guide",
+            "description": "Run a natural-language GRACE testing guide and persist tester-agent summary/failure artifacts.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "guide_path": { "type": "string", "description": "Path to docs/tests/guides/*.md" },
+                    "application_url": { "type": "string", "description": "Application URL or mock://pass|mock://fail", "default": "mock://pass" },
+                    "agent_console_url": { "type": "string", "description": "Optional embedded agent console URL" },
+                    "collect_logs": { "type": "boolean", "description": "Collect LOG evidence placeholders", "default": true },
+                    "output_report": { "type": "boolean", "description": "Write XML failure report when deviations are found", "default": true }
+                },
+                "required": ["guide_path"]
+            }
+        }),
+        serde_json::json!({
+            "name": "submit_test_report",
+            "description": "Submit a tester-agent XML failure report to the developer agent and highlight LOG evidence refs.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "report": { "type": "string", "description": "Path to a docs/tests/results/* failure XML report" },
+                    "to": { "type": "string", "description": "Recipient agent name", "default": "developer" }
+                },
+                "required": ["report"]
             }
         }),
         serde_json::json!({

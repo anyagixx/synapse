@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-AGENT-CONSOLE" type="INTEGRATION" status="active">
+  <NAME>M-AGENT-CONSOLE</NAME>
+  <PURPOSE>Embedded tester-agent console facade with deterministic tool registry for application-level GRACE testing</PURPOSE>
+  <SCOPE>AgentConsole registry, ToolHandler trait export, built-in test tool registration, tool lookup, and request routing</SCOPE>
+  <FILES>
+    <FILE>src/agent_console/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-AGENT-CONSOLE-TOOLS</DEPENDS>
+  <LINKS>docs/tests/index.xml,docs/verification/V-M-AGENT-CONSOLE.xml</LINKS>
+  <VERIFICATION_REF>V-M-AGENT-CONSOLE</VERIFICATION_REF>
+</MODULE>

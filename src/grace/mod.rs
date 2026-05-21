@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability, non-human patterns)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability/non-human pattern reporting, and anchor normalization export
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability, non-human patterns, agent-based testing)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability/non-human pattern/testing reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-TESTING, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.20.0 — Registered NonHumanPatterns module]
+// LAST_CHANGE: [v2.21.0 — Registered agent-based testing module]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
@@ -36,6 +36,7 @@ pub mod review;
 pub mod semantic;
 pub mod status;
 pub mod technology;
+pub mod testing;
 pub mod traceability;
 pub mod verify;
 pub mod verify_phase;
@@ -205,6 +206,44 @@ impl GraceEngine {
         non_human_patterns::check_project_patterns(root, profile)
     }
     // END_grace_engine_non_human_pattern_report
+
+    // START_CONTRACT_GraceEngine::run_test_guide
+    // PURPOSE: Run a natural-language tester-agent guide and persist summary/failure artifacts
+    // INPUTS: { root: &Path }, { guide_path: &str }, { application_url: &str }, { agent_console_url: Option<&str> }, { collect_logs: bool }, { output_report: bool }
+    // OUTPUTS: { anyhow::Result<TestGuideRun> }
+    // START_grace_engine_run_test_guide
+    pub fn run_test_guide(
+        root: &Path,
+        guide_path: &str,
+        application_url: &str,
+        agent_console_url: Option<&str>,
+        collect_logs: bool,
+        output_report: bool,
+    ) -> anyhow::Result<testing::TestGuideRun> {
+        testing::run_test_guide(
+            root,
+            guide_path,
+            application_url,
+            agent_console_url,
+            collect_logs,
+            output_report,
+        )
+    }
+    // END_grace_engine_run_test_guide
+
+    // START_CONTRACT_GraceEngine::submit_test_report
+    // PURPOSE: Deliver a tester-agent XML failure report summary to a developer-agent recipient
+    // INPUTS: { root: &Path }, { report_path: &str }, { to: &str }
+    // OUTPUTS: { anyhow::Result<TestReportSubmission> }
+    // START_grace_engine_submit_test_report
+    pub fn submit_test_report(
+        root: &Path,
+        report_path: &str,
+        to: &str,
+    ) -> anyhow::Result<testing::TestReportSubmission> {
+        testing::submit_test_report(root, report_path, to)
+    }
+    // END_grace_engine_submit_test_report
 
     // START_CONTRACT_GraceEngine::run_mental_test
     // PURPOSE: Run one MentalTest by module and id, persisting a trace artifact

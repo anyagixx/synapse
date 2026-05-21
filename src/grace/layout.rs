@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
-// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state, mental-test, and traceability storage, requirements/technology/development-plan templates, and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability indexes, requirements, technology, and development-plan templates, and shard dirs
-// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY
+// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state, mental-test, traceability, and test-guide storage, requirements/technology/development-plan templates, and bootstraps templates
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability/test-guide indexes, requirements, technology, and development-plan templates, and shard dirs
+// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Added traceability index path and skeleton]
+// LAST_CHANGE: [v2.20.0 — Added docs/tests guide and result paths]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -92,6 +92,42 @@ impl DocsLayout {
     }
     // END_docs_layout_mental_tests_dir
 
+    // START_CONTRACT_DocsLayout::tests_dir
+    // PURPOSE: Return agent-based testing directory path
+    // OUTPUTS: { PathBuf — docs/tests directory }
+    // START_docs_layout_tests_dir
+    pub fn tests_dir(&self) -> PathBuf {
+        self.docs_dir().join("tests")
+    }
+    // END_docs_layout_tests_dir
+
+    // START_CONTRACT_DocsLayout::tests_guides_dir
+    // PURPOSE: Return natural-language test guide directory path
+    // OUTPUTS: { PathBuf — docs/tests/guides directory }
+    // START_docs_layout_tests_guides_dir
+    pub fn tests_guides_dir(&self) -> PathBuf {
+        self.tests_dir().join("guides")
+    }
+    // END_docs_layout_tests_guides_dir
+
+    // START_CONTRACT_DocsLayout::tests_results_dir
+    // PURPOSE: Return tester-agent result directory path
+    // OUTPUTS: { PathBuf — docs/tests/results directory }
+    // START_docs_layout_tests_results_dir
+    pub fn tests_results_dir(&self) -> PathBuf {
+        self.tests_dir().join("results")
+    }
+    // END_docs_layout_tests_results_dir
+
+    // START_CONTRACT_DocsLayout::tests_index_path
+    // PURPOSE: Return agent-based testing index path
+    // OUTPUTS: { PathBuf — docs/tests/index.xml path }
+    // START_docs_layout_tests_index_path
+    pub fn tests_index_path(&self) -> PathBuf {
+        self.tests_dir().join("index.xml")
+    }
+    // END_docs_layout_tests_index_path
+
     // START_CONTRACT_DocsLayout::graph_index_path
     // PURPOSE: Return graph index path
     // OUTPUTS: { PathBuf — docs/graph-index.xml path }
@@ -140,6 +176,8 @@ impl DocsLayout {
         std::fs::create_dir_all(self.verification_dir())?;
         std::fs::create_dir_all(self.belief_states_dir())?;
         std::fs::create_dir_all(self.mental_tests_dir())?;
+        std::fs::create_dir_all(self.tests_guides_dir())?;
+        std::fs::create_dir_all(self.tests_results_dir())?;
 
         self.write_if_missing(
             &self.graph_index_path(),
@@ -259,6 +297,10 @@ impl DocsLayout {
         )?;
         let traceability_index = crate::grace::traceability::traceability_index_template();
         self.write_if_missing(&self.traceability_index_path(), &traceability_index)?;
+        self.write_if_missing(
+            &self.tests_index_path(),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<TEST_INDEX>\n  <RUNS></RUNS>\n</TEST_INDEX>\n",
+        )?;
         self.write_if_missing(
             &self.docs_dir().join("verification-plan.xml"),
             r#"<?xml version="1.0" encoding="UTF-8"?>

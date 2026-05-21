@@ -7,9 +7,10 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>DocsLayout creates docs/belief-states for observable belief state artifacts during initialization.</ASSERTION>
     <ASSERTION>DocsLayout creates docs/mental-tests for MentalTest trace artifacts during initialization.</ASSERTION>
+    <ASSERTION>DocsLayout creates docs/tests/guides, docs/tests/results, and docs/tests/index.xml for agent-based testing artifacts.</ASSERTION>
     <ASSERTION>DocsLayout initializes docs/requirements.xml with a complete RequirementsAnalysis template instead of a stub.</ASSERTION>
     <ASSERTION>DocsLayout initializes docs/technology.xml with exact versions, DependencyMatrix, KnownIssues, and DevOps sections instead of a stub.</ASSERTION>
     <ASSERTION>DocsLayout initializes docs/development-plan.xml with DataFlows, GenerationOrder, MentalTests, NonHumanPatterns, and ContractGuidelines instead of a stub.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>

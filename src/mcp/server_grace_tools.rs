@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, log analysis, belief extraction, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
-// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
+// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, log analysis, belief extraction, compression, tracking, and skills
+// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, submit_test_report, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
@@ -16,6 +16,8 @@
 // handle_generate_development_plan — Generates and validates docs/development-plan.xml with DataFlows and GenerationOrder
 // handle_mental_test_run — Runs one DevelopmentPlan MentalTest and persists trace output
 // handle_traceability_report — Builds end-to-end traceability matrix and updates docs/traceability-index.xml
+// handle_run_test_guide — Runs a natural-language tester-agent guide and persists report artifacts
+// handle_submit_test_report — Delivers a tester-agent failure report summary to a developer-agent recipient
 // handle_gain — Returns token savings stats
 // handle_compress — Compresses input text
 // handle_refresh — Reports or fixes MyGRACE drift
@@ -26,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Added traceability_report MCP handler]
+// LAST_CHANGE: [v2.20.0 — Added agent-based testing MCP handlers]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
@@ -560,6 +562,100 @@ pub(crate) async fn handle_traceability_report(
     }
 }
 // END_handle_traceability_report
+
+// START_CONTRACT_handle_run_test_guide
+// PURPOSE: Run a natural-language testing guide and return tester-agent summary
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: writes docs/tests/results/run-*/summary.json and optional failure XML
+// START_handle_run_test_guide
+pub(crate) async fn handle_run_test_guide(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let guide_path = match args["guide_path"].as_str() {
+        Some(value) if !value.trim().is_empty() => value.trim(),
+        _ => return error(id, -32602, "Missing 'guide_path' parameter"),
+    };
+    let application_url = args["application_url"]
+        .as_str()
+        .unwrap_or("mock://pass")
+        .trim();
+    let agent_console_url = args["agent_console_url"]
+        .as_str()
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+    let collect_logs = args["collect_logs"].as_bool().unwrap_or(true);
+    let output_report = args["output_report"].as_bool().unwrap_or(true);
+    let root = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+    match crate::grace::testing::run_test_guide(
+        &root,
+        guide_path,
+        application_url,
+        agent_console_url,
+        collect_logs,
+        output_report,
+    ) {
+        Ok(report) => {
+            let text = serde_json::to_string_pretty(&report).unwrap_or_default();
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        Err(e) => error(id, -32603, format!("Test guide error: {}", e)),
+    }
+}
+// END_handle_run_test_guide
+
+// START_CONTRACT_handle_submit_test_report
+// PURPOSE: Submit a tester-agent failure report to a developer-agent recipient
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_handle_submit_test_report
+pub(crate) async fn handle_submit_test_report(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let report_path = match args["report"]
+        .as_str()
+        .or_else(|| args["report_path"].as_str())
+    {
+        Some(value) if !value.trim().is_empty() => value.trim(),
+        _ => return error(id, -32602, "Missing 'report' parameter"),
+    };
+    let to = args["to"].as_str().unwrap_or("developer").trim();
+    let root = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+    match crate::grace::testing::submit_test_report(&root, report_path, to) {
+        Ok(report) => {
+            let text = serde_json::to_string_pretty(&report).unwrap_or_default();
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        Err(e) => error(id, -32603, format!("Submit test report error: {}", e)),
+    }
+}
+// END_handle_submit_test_report
 
 // START_CONTRACT_handle_gain
 // PURPOSE: Execute token_savings and return tracking statistics
@@ -1102,6 +1198,83 @@ mod tests {
         assert!(dir.path().join("docs/traceability-index.xml").exists());
     }
     // END_test_handle_traceability_report_writes_index
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_run_test_guide_writes_summary
+    // PURPOSE: Verify run_test_guide parses Markdown and writes tester-agent summary artifacts
+    // START_test_handle_run_test_guide_writes_summary
+    async fn test_handle_run_test_guide_writes_summary() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let guide_dir = dir.path().join("docs/tests/guides");
+        std::fs::create_dir_all(&guide_dir).expect("guides");
+        std::fs::write(
+            guide_dir.join("sample.md"),
+            concat!(
+                "# Testing Guide: MCP Sample\n\n",
+                "## Test: Happy Path\n\n",
+                "### Steps\n1. Execute action\n\n",
+                "### Expected Behavior\n- Action succeeds\n\n",
+                "### Data to Capture\n- LOG output\n",
+            ),
+        )
+        .expect("guide");
+
+        let response = handle_run_test_guide(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "guide_path": "docs/tests/guides/sample.md",
+                "application_url": "mock://pass",
+                "collect_logs": true,
+                "output_report": true,
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("\"passed\": true"));
+        assert!(dir.path().join("docs/tests/index.xml").exists());
+    }
+    // END_test_handle_run_test_guide_writes_summary
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_submit_test_report_highlights_log_refs
+    // PURPOSE: Verify submit_test_report returns LOG evidence refs for developer handoff
+    // START_test_handle_submit_test_report_highlights_log_refs
+    async fn test_handle_submit_test_report_highlights_log_refs() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let report_dir = dir.path().join("docs/tests/results/run-1");
+        std::fs::create_dir_all(&report_dir).expect("results");
+        std::fs::write(
+            report_dir.join("failure.xml"),
+            concat!(
+                "<TestFailureReport><Test name=\"Sample\">",
+                "<Actual>Observed mismatch</Actual>",
+                "<LogEvidence><LOG ref=\"sample-001\"><Actual>failed</Actual></LOG></LogEvidence>",
+                "</Test></TestFailureReport>",
+            ),
+        )
+        .expect("report");
+
+        let response = handle_submit_test_report(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "report": "docs/tests/results/run-1/failure.xml",
+                "to": "developer",
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("\"has_log_evidence\": true"));
+        assert!(text.contains("sample-001"));
+    }
+    // END_test_handle_submit_test_report_highlights_log_refs
 }
 
 // END_public_api

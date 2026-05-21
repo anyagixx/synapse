@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-REGISTRY
 // PURPOSE: Skill registry — declares 15 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
-// SCOPE: Skill metadata constants, built-in MCP tool descriptions, and lookup helpers
+// SCOPE: Skill metadata constants, built-in MCP tool descriptions including tester-agent tools, and lookup helpers
 // DEPENDS: M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Documented traceability_report MCP capability]
+// LAST_CHANGE: [v2.20.0 — Documented agent-based testing MCP capabilities]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -229,7 +229,7 @@ pub const SKILL_DEFS: &[SkillDef] = &[
     SkillDef {
         name: "grace_setup_subagents",
         description:
-            "Recommend planner, implementer, reviewer, verifier, and fixer subagent setup.",
+            "Recommend planner, implementer, tester, reviewer, verifier, and fixer subagent setup.",
         args: SUBAGENT_ARGS,
     },
     SkillDef {
@@ -291,6 +291,14 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     (
         "traceability_report",
         "Generate an end-to-end traceability matrix and gap report",
+    ),
+    (
+        "run_test_guide",
+        "Run a natural-language testing guide and persist tester-agent reports",
+    ),
+    (
+        "submit_test_report",
+        "Submit a tester-agent XML failure report to the developer agent",
     ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),

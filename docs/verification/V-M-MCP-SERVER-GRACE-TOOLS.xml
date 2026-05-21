@@ -11,6 +11,8 @@
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_development_plan_writes_artifact --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_mental_test_run_writes_trace --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_traceability_report_writes_index --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_run_test_guide_writes_summary --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_submit_test_report_highlights_log_refs --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -23,6 +25,8 @@
     <ASSERTION>MCP generate_development_plan writes a validated docs/development-plan.xml DevelopmentPlan artifact with DataFlows and GenerationOrder.</ASSERTION>
     <ASSERTION>MCP mental_test_run writes docs/mental-tests trace output and returns a MentalTestRun report.</ASSERTION>
     <ASSERTION>MCP traceability_report writes docs/traceability-index.xml and returns a scoped TraceabilityReport.</ASSERTION>
+    <ASSERTION>MCP run_test_guide writes docs/tests result summaries and returns a tester-agent run report.</ASSERTION>
+    <ASSERTION>MCP submit_test_report highlights LOG evidence refs for developer-agent handoff.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>
