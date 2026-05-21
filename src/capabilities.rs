@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Added traceability_report MCP capability and checks]
+// LAST_CHANGE: [v2.20.0 — Added non-human programming pattern checks]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -280,6 +280,11 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "traceability-code-traced",
     "traceability-logs-traced",
     "traceability-no-dangling",
+    "non-human-explicit-typing",
+    "non-human-explicit-flow",
+    "non-human-explicit-null",
+    "non-human-no-magic-values",
+    "non-human-deterministic-iter",
     "sharded-artifacts",
     "artifact-ref-integrity",
     "canonical-mygrace-drift",

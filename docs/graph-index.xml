@@ -31,6 +31,7 @@
     <MODULE id="M-GRACE-LAYOUT" path="docs/modules/M-GRACE-LAYOUT.xml" status="active" />
     <MODULE id="M-GRACE-LOG" path="docs/modules/M-GRACE-LOG.xml" status="active" />
     <MODULE id="M-GRACE-MENTAL-TEST" path="docs/modules/M-GRACE-MENTAL-TEST.xml" status="active" />
+    <MODULE id="M-GRACE-NON-HUMAN-PATTERNS" path="docs/modules/M-GRACE-NON-HUMAN-PATTERNS.xml" status="active" />
     <MODULE id="M-GRACE-REFRESH" path="docs/modules/M-GRACE-REFRESH.xml" status="active" />
     <MODULE id="M-GRACE-REQUIREMENTS" path="docs/modules/M-GRACE-REQUIREMENTS.xml" status="active" />
     <MODULE id="M-GRACE-REVIEW" path="docs/modules/M-GRACE-REVIEW.xml" status="active" />
@@ -141,6 +142,7 @@
     <REL source="M-GRACE" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-NON-HUMAN-PATTERNS" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-INVENTORY-ARTIFACTS" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-INVENTORY-PLAN" type="DEPENDS" />
@@ -181,6 +183,8 @@
     <REL source="M-GRACE-LAYOUT" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
     <REL source="M-GRACE-MENTAL-TEST" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-MENTAL-TEST" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
+    <REL source="M-GRACE-NON-HUMAN-PATTERNS" target="M-GRACE-CONTRACT" type="DEPENDS" />
+    <REL source="M-GRACE-NON-HUMAN-PATTERNS" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-GRACE-TRACEABILITY" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-TRACEABILITY" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-TRACEABILITY" target="M-GRACE-LOG" type="DEPENDS" />
@@ -195,6 +199,7 @@
     <REL source="M-GRACE-REVIEW" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
+    <REL source="M-GRACE-REVIEW" target="M-GRACE-NON-HUMAN-PATTERNS" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-LOG" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-REQUIREMENTS" type="DEPENDS" />
@@ -208,6 +213,7 @@
     <REL source="M-GRACE-STATUS" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
+    <REL source="M-GRACE-STATUS" target="M-GRACE-NON-HUMAN-PATTERNS" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-GRACE-REQUIREMENTS" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-GRACE-TECHNOLOGY" type="DEPENDS" />
     <REL source="M-GRACE-STATUS" target="M-GRACE-SEMANTIC" type="DEPENDS" />
@@ -221,6 +227,7 @@
     <REL source="M-GRACE-VERIFY" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
+    <REL source="M-GRACE-VERIFY" target="M-GRACE-NON-HUMAN-PATTERNS" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-LOG" type="DEPENDS" />
     <REL source="M-GRACE-VERIFY" target="M-GRACE-REQUIREMENTS" type="DEPENDS" />

@@ -115,6 +115,7 @@ syn doctor --deps
 Новый формат `LINKS` поддерживает направление и тип связи, например `→ M-STORAGE (depends) — persistence` или `← V-M-BOT (verified_by) — tests`.
 Старый `LINKS: M-STORAGE, V-M-BOT` остаётся совместимым и трактуется как legacy `depends`.
 Semantic anchors теперь можно писать и в GRACE XML-like стиле (`// <BLOCK name="validate"> ... // </BLOCK>`); старый `START_/END_` синтаксис остаётся совместимым, а `anchor-syntax-consistent` показывает смешанные файлы как warning.
+`syn verify` также проверяет non-human programming patterns: explicit typing, explicit flow, explicit null handling, отсутствие magic values и deterministic iteration. В `lite/balanced` это помогает без шума мигрировать маленькие проекты, в `strict` блокируются только реально рискованные паттерны.
 
 ---
 
@@ -204,7 +205,7 @@ my-project/
 │   ├── mental-tests/            ← MentalTest traces
 │   ├── requirements.xml          ← RequirementsAnalysis + AAG use cases
 │   ├── technology.xml            ← exact versions + compatibility matrix
-│   ├── development-plan.xml      ← DataFlows + GenerationOrder + MentalTests
+│   ├── development-plan.xml      ← DataFlows + GenerationOrder + MentalTests + NonHumanPatterns
 │   ├── verification-plan.xml     ← compatibility layer
 │   └── knowledge-graph.xml       ← compatibility layer
 └── .opencode/
@@ -256,13 +257,13 @@ my-project/
 | Зависимости | 0 внешних системных (всё статически слинковано) |
 | MCP инструментов | **34** |
 | CLI команд | 19 |
-| Проверок verify | 41 |
+| Проверок verify | 46 |
 | GRACE workflow tools | 15 |
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
-| Тестов | **151** (cargo test --all-targets) |
-| Контрактов в своём коде | **84/84** |
+| Тестов | **159** (cargo test --all-targets) |
+| Контрактов в своём коде | **85/85** |
 | self-verify | **ALL PASS** |
 
 ## License

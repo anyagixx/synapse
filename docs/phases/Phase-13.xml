@@ -35,6 +35,7 @@
     <MODULE_REF id="M-GRACE-DEVELOPMENT-PLAN" />
     <MODULE_REF id="M-GRACE-MENTAL-TEST" />
     <MODULE_REF id="M-GRACE-TRACEABILITY" />
+    <MODULE_REF id="M-GRACE-NON-HUMAN-PATTERNS" />
     <MODULE_REF id="M-GRACE-INVENTORY" />
     <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
     <MODULE_REF id="M-GRAPHRAG" />
@@ -117,11 +118,11 @@
         <IMPLEMENTATION>Create M-GRACE-TRACEABILITY with TraceabilityChain/TraceabilityReport, docs/traceability-index.xml skeleton/generator, traceability_report MCP handler, traceability-* verify checks, review/status scoring, and traceability guidance in skills/capabilities/docs.</IMPLEMENTATION>
         <VERIFY status="passed">Tests for complete chain coverage, untraced function gap, dangling trace link, index writing, traceability_report MCP output, 34-tool MCP parity, refresh drift, verify --ci, and review --mode full --ci.</VERIFY>
       </step-9>
-      <step-10 section="1.3" status="pending" priority="P2">
+      <step-10 section="1.3" status="done" priority="P2">
         <TITLE>Non-Human Programming Patterns</TITLE>
         <INTENT>Enforce AI-deterministic coding patterns: explicit typing, explicit flow, explicit null handling, no magic values, and deterministic iteration.</INTENT>
-        <IMPLEMENTATION>Create non_human_patterns checker with profile-aware severities; integrate verify, review, status, capabilities, and contract validation.</IMPLEMENTATION>
-        <VERIFY>Tests for each anti-pattern, profile behavior lite/balanced/strict, clean examples, and real-module score reporting.</VERIFY>
+        <IMPLEMENTATION>Create M-GRACE-NON-HUMAN-PATTERNS with cached regex detectors, string-literal-safe explicit-flow analysis, profile-aware severity, verify/review/status/capabilities integration, and DevelopmentPlan NonHumanPatterns templates for all five rules.</IMPLEMENTATION>
+        <VERIFY status="passed">Eight unit tests for anti-pattern detection, lite/balanced/strict profile behavior, clean examples, detector string-literal safety, full verify --ci, review --mode full --ci, refresh, clippy, and 159-test suite.</VERIFY>
       </step-10>
       <step-11 section="3.1" status="pending" priority="P2">
         <TITLE>Agent-Based Testing</TITLE>
@@ -162,9 +163,9 @@
     </improvement-1>
   </ROADMAP_IMPROVEMENTS>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 3 step-10 section 1.3 Non-Human Programming Patterns.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-CAPABILITIES.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.3-non-human-patterns.md</SOURCE_SPEC>
+    <NEXT_ACTION>Begin Sprint 3 step-11 section 3.1 Agent-Based Testing.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml, docs/modules/M-SKILLS-REGISTRY.xml, docs/modules/M-SKILLS-ENGINE.xml, docs/modules/M-CAPABILITIES.xml, docs/modules/M-TESTS-MCP.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-3-advanced-mechanics/3.1-agent-based-testing.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

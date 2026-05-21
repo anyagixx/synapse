@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-NON-HUMAN-PATTERNS" module="M-GRACE-NON-HUMAN-PATTERNS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test non_human_patterns --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Checker detects explicit flow, explicit null handling, no magic values, deterministic iteration, and explicit typing anti-patterns with stable check names.</ASSERTION>
+    <ASSERTION>Lite, balanced, and strict profiles select expected patterns and severities while preserving migration-friendly warnings for advisory checks.</ASSERTION>
+    <ASSERTION>verify, review, status, capabilities, and DevelopmentPlan templates expose all five non-human pattern rules.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

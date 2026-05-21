@@ -12,6 +12,7 @@
     <ASSERTION>Status JSON and text output include Technology component/compatibility counts and validity.</ASSERTION>
     <ASSERTION>Status JSON and text output include DevelopmentPlan DataFlow, GenerationOrder, and completed module counts.</ASSERTION>
     <ASSERTION>Status JSON and text output include MentalTests total, passed, failed, and required target counts.</ASSERTION>
+    <ASSERTION>Status JSON and text output include non-human pattern score, files scanned, error count, and warning count.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-12</PHASE_GATE>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>

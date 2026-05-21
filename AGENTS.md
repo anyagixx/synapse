@@ -73,7 +73,7 @@ Create files in this exact order:
 Compatibility docs may also exist under `docs/*.xml`, but sharded indexes are primary source of truth.
 `docs/requirements.xml` must be a complete `<RequirementsAnalysis>` artifact with Goals, DomainModel entities, Actors, AAG UseCases (`Actor` + `Action` + `Goal`), NonFunctionalRequirements, Constraints, and Glossary before implementation starts. Use `generate_requirements` when it is missing or still a stub.
 `docs/technology.xml` must be a complete `<Technology>` artifact with exact Language/Runtime/PackageManager versions, versioned dependencies, DependencyMatrix compatibility checks, KnownIssues, and DevOps notes. Use `generate_technology` when versions are missing, blank, `latest`, wildcard, or range-only.
-`docs/development-plan.xml` must be a complete `<DevelopmentPlan>` artifact with ArchitectureGraph, DataFlows, GenerationOrder, MentalTests, NonHumanPatterns, and ContractGuidelines. Use `generate_development_plan` when DataFlows, GenerationOrder, or MentalTests are missing. Use `mental_test_run` before code generation for critical or complex modules.
+`docs/development-plan.xml` must be a complete `<DevelopmentPlan>` artifact with ArchitectureGraph, DataFlows, GenerationOrder, MentalTests, NonHumanPatterns, and ContractGuidelines. Use `generate_development_plan` when DataFlows, GenerationOrder, MentalTests, or NonHumanPatterns are missing. Use `mental_test_run` before code generation for critical or complex modules.
 
 ### Phase 0 STOP Gates
 - If `docs/graph-index.xml` is missing → **STOP. Ask user what to build.**

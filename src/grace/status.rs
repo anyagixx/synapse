@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, mental tests, traceability, belief states, semantic, verification, drift, token economy, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology/development-plan/mental-test/traceability and belief-state coverage, print_report, active-phase display helpers
-// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
+// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, mental tests, traceability, non-human patterns, belief states, semantic, verification, drift, token economy, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology/development-plan/mental-test/traceability/non-human pattern and belief-state coverage, print_report, active-phase display helpers
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
 // START_MODULE_MAP
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Added traceability score to status]
+// LAST_CHANGE: [v2.20.0 — Added non-human pattern score to status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -22,6 +22,7 @@ use crate::grace::contract::{ContractReport, ContractValidator};
 use crate::grace::development_plan::DevelopmentPlanReport;
 use crate::grace::layout::DocsLayout;
 use crate::grace::mental_test::MentalTestReport;
+use crate::grace::non_human_patterns::NonHumanPatternProjectReport;
 use crate::grace::refresh::Refresher;
 use crate::grace::requirements::RequirementsReport;
 use crate::grace::semantic::{SemanticExtractor, SemanticReport};
@@ -44,6 +45,7 @@ pub struct StatusReport {
     pub development_plan: DevelopmentPlanReport,
     pub mental_tests: MentalTestReport,
     pub traceability: TraceabilityReport,
+    pub non_human_patterns: NonHumanPatternProjectReport,
     pub belief_state: BeliefStateReport,
     pub semantic: SemanticReport,
     pub verification: Vec<super::verify::VerificationResult>,
@@ -106,6 +108,10 @@ impl StatusCollector {
         let development_plan = crate::grace::development_plan::validate_development_plan(root)?;
         let mental_tests = crate::grace::mental_test::scan_project_mental_tests(root)?;
         let traceability = crate::grace::traceability::scan_project_traceability(root)?;
+        let non_human_patterns = crate::grace::non_human_patterns::check_project_patterns(
+            root,
+            crate::grace::GraceProfile::Strict,
+        )?;
         let belief_state = crate::grace::belief_state::scan_project_belief_states(root)?;
         let semantic = SemanticExtractor::scan_project(root)?;
         let verification = Verifier::verify_all(root).await?;
@@ -184,6 +190,17 @@ impl StatusCollector {
         }
         if !traceability.no_dangling_gate() {
             next_actions.push("Fix dangling traceability links".into());
+        }
+        if non_human_patterns.error_violations > 0 {
+            next_actions.push(format!(
+                "Fix {} blocking non-human pattern violations",
+                non_human_patterns.error_violations
+            ));
+        } else if non_human_patterns.warning_violations > 0 {
+            next_actions.push(format!(
+                "Review {} advisory non-human pattern warnings",
+                non_human_patterns.warning_violations
+            ));
         }
         if belief_state.invalid_states > 0 {
             next_actions.push(format!(
@@ -305,6 +322,7 @@ impl StatusCollector {
             development_plan,
             mental_tests,
             traceability,
+            non_human_patterns,
             belief_state,
             semantic,
             verification,
@@ -449,6 +467,24 @@ impl StatusCollector {
         println!(
             "║  Enforcement:    {:<20}║",
             report.traceability.enforcement_mode
+        );
+        println!("╠══════════════════════════════════════╣");
+        println!("║ NON-HUMAN PATTERNS                  ║");
+        println!(
+            "║  Score:          {:<20}║",
+            format!("{:.1}%", report.non_human_patterns.score * 100.0)
+        );
+        println!(
+            "║  Files scanned:  {:<20}║",
+            report.non_human_patterns.files_scanned
+        );
+        println!(
+            "║  Errors:         {:<20}║",
+            report.non_human_patterns.error_violations
+        );
+        println!(
+            "║  Warnings:       {:<20}║",
+            report.non_human_patterns.warning_violations
         );
         println!("╠══════════════════════════════════════╣");
         println!("║ BELIEF STATE                         ║");

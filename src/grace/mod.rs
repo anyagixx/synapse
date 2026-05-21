@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability reporting, and anchor normalization export
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability, non-human patterns)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability/non-human pattern reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Registered Traceability module]
+// LAST_CHANGE: [v2.20.0 — Registered NonHumanPatterns module]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
@@ -29,6 +29,7 @@ pub mod inventory_verification;
 pub mod layout;
 pub mod log;
 pub mod mental_test;
+pub mod non_human_patterns;
 pub mod refresh;
 pub mod requirements;
 pub mod review;
@@ -191,6 +192,19 @@ impl GraceEngine {
         traceability::scan_project_traceability(root)
     }
     // END_grace_engine_traceability_report
+
+    // START_CONTRACT_GraceEngine::non_human_pattern_report
+    // PURPOSE: Scan project source for profile-aware non-human programming pattern violations
+    // INPUTS: { root: &Path }, { profile: GraceProfile }
+    // OUTPUTS: { anyhow::Result<NonHumanPatternProjectReport> }
+    // START_grace_engine_non_human_pattern_report
+    pub fn non_human_pattern_report(
+        root: &Path,
+        profile: GraceProfile,
+    ) -> anyhow::Result<non_human_patterns::NonHumanPatternProjectReport> {
+        non_human_patterns::check_project_patterns(root, profile)
+    }
+    // END_grace_engine_non_human_pattern_report
 
     // START_CONTRACT_GraceEngine::run_mental_test
     // PURPOSE: Run one MentalTest by module and id, persisting a trace artifact

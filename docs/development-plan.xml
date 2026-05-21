@@ -174,9 +174,16 @@
       <Rule>All type conversions must use explicit cast/parse syntax.</Rule>
       <Languages>rust, typescript, go, java</Languages>
     </Pattern>
-    <Pattern name="ExplicitReturns" severity="error">
-      <Rule>Business logic returns Result-like values instead of hidden exception paths.</Rule>
+    <Pattern name="ExplicitFlow" severity="error">
+      <Rule>Business logic returns Result-like values instead of unwrap, panic, or broad exception paths.</Rule>
       <Languages>rust, typescript, go</Languages>
+    </Pattern>
+    <Pattern name="ExplicitNullHandling" severity="error">
+      <Rule>Nullable values must be resolved through explicit branches instead of long optional or null-coalescing chains.</Rule>
+      <Languages>typescript, javascript, kotlin, swift</Languages>
+    </Pattern>
+    <Pattern name="NoMagicValues" severity="warning">
+      <Rule>Thresholds, durations, and long user-visible strings must be named constants or explicit artifacts.</Rule>
     </Pattern>
     <Pattern name="DeterministicIteration" severity="warning">
       <Rule>Hash-based collection iteration must be sorted before user-visible output.</Rule>

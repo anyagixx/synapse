@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-DEVELOPMENT-PLAN
 // PURPOSE: DevelopmentPlan parser, validator, and generator for GRACE Stage 3 DataFlows and GenerationOrder artifacts
-// SCOPE: DevelopmentPlanReport, DataFlow, GenerationModule, template generation, contract-derived file generation, MentalTests template inclusion, file validation, generation order topology, contract coverage
+// SCOPE: DevelopmentPlanReport, DataFlow, GenerationModule, template generation, contract-derived file generation, MentalTests and NonHumanPatterns template inclusion, file validation, generation order topology, contract coverage
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-MENTAL-TEST
 // LINKS:
 //   → V-M-GRACE-DEVELOPMENT-PLAN (verified_by) — DevelopmentPlan parser, validator, and generator tests
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 — Include MentalTests section in generated DevelopmentPlan]
+// LAST_CHANGE: [v1.3.0 — Expanded generated NonHumanPatterns to all five deterministic coding rules]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -181,9 +181,16 @@ pub fn development_plan_template(project_name: &str, modules: &[String]) -> Stri
       <Rule>All type conversions must use explicit cast/parse syntax.</Rule>
       <Languages>rust, typescript, go, java</Languages>
     </Pattern>
-    <Pattern name="ExplicitReturns" severity="error">
-      <Rule>Business logic returns Result-like values instead of hidden exception paths.</Rule>
+    <Pattern name="ExplicitFlow" severity="error">
+      <Rule>Business logic returns Result-like values instead of unwrap, panic, or broad exception paths.</Rule>
       <Languages>rust, typescript, go</Languages>
+    </Pattern>
+    <Pattern name="ExplicitNullHandling" severity="error">
+      <Rule>Nullable values must be resolved through explicit branches instead of long optional or null-coalescing chains.</Rule>
+      <Languages>typescript, javascript, kotlin, swift</Languages>
+    </Pattern>
+    <Pattern name="NoMagicValues" severity="warning">
+      <Rule>Thresholds, durations, and long user-visible strings must be named constants or explicit artifacts.</Rule>
     </Pattern>
     <Pattern name="DeterministicIteration" severity="warning">
       <Rule>Hash-based collection iteration must be sorted before user-visible output.</Rule>
@@ -632,8 +639,17 @@ fn contract_based_development_plan(
     <Pattern name="ExplicitTyping" severity="error">
       <Rule>All public contracts must declare explicit inputs and outputs.</Rule>
     </Pattern>
-    <Pattern name="DeterministicExecution" severity="warning">
-      <Rule>Generation order must be stable across repeated refreshes.</Rule>
+    <Pattern name="ExplicitFlow" severity="error">
+      <Rule>Implementation code must expose fallible control flow through Result/Option-style branches.</Rule>
+    </Pattern>
+    <Pattern name="ExplicitNullHandling" severity="error">
+      <Rule>Nullable data must be handled with explicit branch points before field access.</Rule>
+    </Pattern>
+    <Pattern name="NoMagicValues" severity="warning">
+      <Rule>Inline thresholds and durations must be promoted to named constants.</Rule>
+    </Pattern>
+    <Pattern name="DeterministicIteration" severity="warning">
+      <Rule>Collection iteration and generation order must be stable across repeated refreshes.</Rule>
     </Pattern>
   </NonHumanPatterns>
   <ContractGuidelines>

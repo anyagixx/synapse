@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests, traceability and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests, traceability, non-human patterns and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Added end-to-end traceability verification gates]
+// LAST_CHANGE: [v2.20.0 — Added non-human programming pattern verification gates]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -730,6 +730,44 @@ impl Verifier {
                 format!("{} dangling traceability links detected", dangling)
             },
         });
+
+        let patterns = crate::grace::non_human_patterns::check_project_patterns(root, profile)?;
+        for check_name in [
+            "non-human-explicit-typing",
+            "non-human-explicit-flow",
+            "non-human-explicit-null",
+            "non-human-no-magic-values",
+            "non-human-deterministic-iter",
+        ] {
+            let enabled = patterns
+                .patterns_checked
+                .iter()
+                .any(|check| check.pattern_name == check_name);
+            let pattern_violations = patterns.pattern_violations(check_name);
+            let errors = pattern_violations
+                .iter()
+                .filter(|violation| violation.severity.is_error())
+                .count();
+            let warnings = pattern_violations.len().saturating_sub(errors);
+            checks.push(CheckResult {
+                name: check_name.into(),
+                passed: !enabled || errors == 0,
+                details: if enabled {
+                    format!(
+                        "profile={} errors={} warnings={} score={:.1}%",
+                        patterns.profile,
+                        errors,
+                        warnings,
+                        patterns.score * 100.0
+                    )
+                } else {
+                    format!(
+                        "profile={} does not enforce {}; check skipped",
+                        patterns.profile, check_name
+                    )
+                },
+            });
+        }
 
         let passed = checks.iter().all(|c| c.passed);
         Ok(VerificationResult {

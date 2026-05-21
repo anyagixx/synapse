@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-NON-HUMAN-PATTERNS" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-NON-HUMAN-PATTERNS</NAME>
+  <PURPOSE>Non-human programming pattern checker for AI-deterministic code: explicit typing, explicit flow, explicit null handling, no magic values, and deterministic iteration</PURPOSE>
+  <SCOPE>ViolationSeverity, PatternCheck, PatternViolation, NonHumanPatternReport, NonHumanPatternProjectReport, profile-aware project scan, and single-file content scan</SCOPE>
+  <FILES>
+    <FILE>src/grace/non_human_patterns.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-INDEXER-WALKER</DEPENDS>
+  <LINKS>docs/development-plan.xml,docs/verification/V-M-GRACE-NON-HUMAN-PATTERNS.xml,NFR-002</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-NON-HUMAN-PATTERNS</VERIFICATION_REF>
+</MODULE>

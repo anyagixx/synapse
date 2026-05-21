@@ -15,6 +15,7 @@
     <ASSERTION>Verification reports technology-language-defined, technology-dependencies-compatible, technology-no-version-guessing, and technology-known-issues.</ASSERTION>
     <ASSERTION>Verification reports dataflow-* and genorder-* checks for DevelopmentPlan.</ASSERTION>
     <ASSERTION>Verification reports mental-tests-defined, mental-tests-passed, and mental-test-no-drift checks.</ASSERTION>
+    <ASSERTION>Verification reports all five non-human pattern checks with profile-aware severity and migration-friendly details.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-3</PHASE_GATE>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>

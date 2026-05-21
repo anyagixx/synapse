@@ -14,6 +14,7 @@
     <ASSERTION>Scoped and full review include Technology stack completeness counts and errors.</ASSERTION>
     <ASSERTION>Scoped and full review include DevelopmentPlan DataFlow and GenerationOrder completeness counts and errors.</ASSERTION>
     <ASSERTION>Scoped and full review include MentalTests pass/fail, missing critical target, and drift issues.</ASSERTION>
+    <ASSERTION>Scoped and full review include non-human pattern score, blocking errors, advisory warnings, and representative source locations.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-3</PHASE_GATE>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>

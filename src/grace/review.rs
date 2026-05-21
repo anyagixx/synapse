@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, traceability, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, traceability, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, traceability, non-human patterns, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, traceability, non-human patterns, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.19.0 — Added traceability review section]
+// LAST_CHANGE: [v2.20.0 — Added non-human patterns review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -331,6 +331,42 @@ impl Reviewer {
                 traceability.enforcement_mode
             ),
             issues: trace_issues,
+        });
+
+        let patterns = crate::grace::non_human_patterns::check_project_patterns(root, profile)?;
+        let mut pattern_issues: Vec<String> = patterns
+            .violations
+            .iter()
+            .take(40)
+            .map(|violation| {
+                format!(
+                    "{}:{} [{}] {} — {}",
+                    violation.file_path,
+                    violation.line,
+                    violation.pattern,
+                    violation.message,
+                    violation.code
+                )
+            })
+            .collect();
+        if patterns.violations.len() > pattern_issues.len() {
+            pattern_issues.push(format!(
+                "{} additional non-human pattern violations omitted",
+                patterns.violations.len() - pattern_issues.len()
+            ));
+        }
+        sections.push(ReviewSection {
+            name: "non-human-patterns".into(),
+            passed: patterns.error_violations == 0,
+            details: format!(
+                "score={:.1}% files={} errors={} warnings={} profile={}",
+                patterns.score * 100.0,
+                patterns.files_scanned,
+                patterns.error_violations,
+                patterns.warning_violations,
+                patterns.profile
+            ),
+            issues: pattern_issues,
         });
 
         let passed = sections.iter().all(|s| s.passed);
