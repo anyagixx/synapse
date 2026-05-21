@@ -152,6 +152,15 @@
     <CHECK status="pending">Synapse self-verifies against the new checks without regressing legacy projects that use comma-separated LINKS or START/END anchors.</CHECK>
     <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
+  <ROADMAP_IMPROVEMENTS>
+    <improvement-1 id="TRACEABILITY-ADOPTION" status="planned" priority="P1">
+      <TITLE>Raise Traceability From Advisory To Strict</TITLE>
+      <OBSERVED>After section 1.6, traceability enforcement is advisory and the self-report shows low initial coverage because most existing function contracts predate requirement/use-case links.</OBSERVED>
+      <TARGET>Move from measured advisory gaps to strict traceability: key modules and public functions link to UC-* or NFR/REQ-* targets, structured LOG entries carry TRACEABILITY fields, and docs/traceability-index.xml can run with enforcement="strict".</TARGET>
+      <IMPLEMENTATION>Map UC-001, UC-002, and NFR-* to CLI/MCP/GRACE modules; add typed LINKS to public function contracts in high-value modules first; add LOG TRACEABILITY evidence for critical flows; then switch traceability-index enforcement to strict after verify/review remain green.</IMPLEMENTATION>
+      <VERIFY>traceability_report score rises materially, untraced public API gaps trend down, traceability-requirements-implemented and traceability-code-traced pass under strict mode, and review_code no longer treats traceability as adoption-only debt.</VERIFY>
+    </improvement-1>
+  </ROADMAP_IMPROVEMENTS>
   <RESUME_POINTER>
     <NEXT_ACTION>Begin Sprint 3 step-10 section 1.3 Non-Human Programming Patterns.</NEXT_ACTION>
     <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-VERIFY.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-CAPABILITIES.xml</READ_FIRST>
