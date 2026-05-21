@@ -34,5 +34,5 @@
       <VERIFY>bash scripts/ci.sh passed with 185 tests, release/install smoke, verify --ci, review --mode full --ci, refresh --json, and status --json.</VERIFY>
     </step-4>
   </STEPS>
-  <RESUME_POINTER>Phase-16 release-candidate gates passed locally. Next action: commit, push main, tag v2.5.2, and publish only after hosted gates pass.</RESUME_POINTER>
+  <RESUME_POINTER>Phase-16 is released as v2.5.2. Main CI run 26219487071, release workflow run 26219725566, and public-tag fresh install smoke passed.</RESUME_POINTER>
 </PHASE>

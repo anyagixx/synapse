@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-21-V2-5-2-PHASE-16" status="current">
   <DATE>2026-05-21</DATE>
-  <PHASE_GATE>v2.5.1 public Linux/macOS feedback release remains the latest published release; the local v2.5.2 development line has completed Phase-16 traceability/LDD/maintainability polish and is ready for release-candidate gates.</PHASE_GATE>
-  <SUMMARY>Synapse is now a public Linux/macOS feedback-release developer tool with feedback-driven MyGRACE ergonomics. Phase-16 raises the v2.5.2 line to strict 100.0% traceability, full belief-state baseline coverage, zero canonical drift, zero strict non-human warnings, and lower MCP GRACE handler size pressure.</SUMMARY>
+  <PHASE_GATE>v2.5.2 is the latest published Linux/macOS feedback release; Phase-16 traceability/LDD/maintainability polish is released after hosted main and release gates passed.</PHASE_GATE>
+  <SUMMARY>Synapse is now a public Linux/macOS feedback-release developer tool with feedback-driven MyGRACE ergonomics. v2.5.2 ships strict 100.0% traceability, full belief-state baseline coverage, zero canonical drift, zero strict non-human warnings, and lower MCP GRACE handler size pressure.</SUMMARY>
   <SCORES>
     <OVERALL_READINESS>9.8/10</OVERALL_READINESS>
-    <RELEASE_CANDIDATE_READINESS>10.0/10</RELEASE_CANDIDATE_READINESS>
+    <PUBLIC_RELEASE_READINESS>10.0/10</PUBLIC_RELEASE_READINESS>
     <MYGRACE_TRUTH>10.0/10</MYGRACE_TRUTH>
     <RELEASE_INSTALL_TRUTH>9.8/10</RELEASE_INSTALL_TRUTH>
     <LINUX_MACOS_INSTALL_READINESS>9.8/10</LINUX_MACOS_INSTALL_READINESS>
@@ -17,10 +17,10 @@
   <EVIDENCE>
     <MYGRACE_DRIFT>0 canonical drift across 85 code modules, graph shards, and verification shards; 94/94 contracted files, 649 function contracts, and 1002 closed semantic blocks after Phase-16.</MYGRACE_DRIFT>
     <LOCAL_CI_GATE>scripts/ci.sh passed locally on 2026-05-21: cargo fmt --check, clippy -D warnings, runtime panic guard, 185 tests, release version guard, release freshness guard, release-candidate dry-run, release/install smoke, verify --ci, review --mode full --ci, refresh --json, and status --json.</LOCAL_CI_GATE>
-    <HOSTED_CI_GATE>GitHub Actions run 26157234065 passed on main after commit 820fc7ed336b4ab2fc262f2239d05077ae2b1821, including Linux/macOS platform tests, MyGRACE gate, security audit, fresh-install smoke, and release-smoke matrix.</HOSTED_CI_GATE>
-    <RELEASE_VERSION_TRUTH>Tag v2.5.1 is published at the verified release line, and the release workflow generated Linux/macOS artifacts plus SHA256SUMS. The main development line targets v2.5.2, with release freshness guards expected to treat v2.5.2 as unpublished until the Phase-16 release commit is pushed and tagged.</RELEASE_VERSION_TRUTH>
+    <HOSTED_CI_GATE>GitHub Actions run 26219487071 passed on main after commit 38b203a54bbad0d44d54595df7b1d12162250438, including Linux/macOS platform tests, MyGRACE gate, security audit, fresh-install smoke, and release-smoke matrix.</HOSTED_CI_GATE>
+    <RELEASE_VERSION_TRUTH>Tag v2.5.2 is published at commit 38b203a54bbad0d44d54595df7b1d12162250438, and release workflow run 26219725566 generated Linux/macOS artifacts plus SHA256SUMS.</RELEASE_VERSION_TRUTH>
     <INSTALLER_TRUTH>The installer still prefers signed-off release artifacts plus SHA256SUMS verification. Source fallback is now explicit: SYN_INSTALL_SOURCE_REF for hosted fresh-install smoke, selected Git tag when available, and default main branch only during the pre-tag release-candidate window.</INSTALLER_TRUTH>
-    <FRESH_INSTALL_TRUTH>Push CI fresh-install smoke uses raw.githubusercontent.com at the exact workflow commit plus SYN_INSTALL_SOURCE_REF, preventing a current-HEAD smoke job from silently installing an older release tag. A post-release public-tag smoke also passed against https://raw.githubusercontent.com/anyagixx/synapse/v2.5.1/install.sh and installed syn 2.5.1 from the release artifact.</FRESH_INSTALL_TRUTH>
+    <FRESH_INSTALL_TRUTH>Push CI fresh-install smoke uses raw.githubusercontent.com at the exact workflow commit plus SYN_INSTALL_SOURCE_REF, preventing a current-HEAD smoke job from silently installing an older release tag. A post-release public-tag smoke passed against https://raw.githubusercontent.com/anyagixx/synapse/v2.5.2/install.sh and installed syn 2.5.2 from the release artifact with SHA256 verification.</FRESH_INSTALL_TRUTH>
     <PACKAGE_TRUTH>The Cargo package is synapse-agent to avoid the crates.io syn parser conflict; the public binary and library crate remain syn.</PACKAGE_TRUTH>
     <MCP_CLI_TRUTH>syn mcp is public stdio-only. verify_project/review_code and syn verify/review now expose profile-aware strictness without changing the strict CI default.</MCP_CLI_TRUTH>
     <NO_ACTIVE_PHASE_TRUTH>docs/plan-index.xml now has ACTIVE_PHASE none after all phase shards are done; status and refresh preserve that state instead of reporting a completed phase as active.</NO_ACTIVE_PHASE_TRUTH>
@@ -33,5 +33,5 @@
     <RISK_EXTERNAL_ADOPTION_EVIDENCE>Real user feedback still needs to be collected across more Linux/macOS environments after the public release.</RISK_EXTERNAL_ADOPTION_EVIDENCE>
     <RISK_TEST_FILE_SIZE_TARGET>tests/docs_parity.rs and tests/integration_test.rs exceed the 500-line Phase-2 maintainability target while remaining under the hard 1300-line gate.</RISK_TEST_FILE_SIZE_TARGET>
   </RESIDUAL_RISKS>
-  <NEXT_PHASE>Commit the Phase-16 v2.5.2 release-candidate line, push main, tag and publish v2.5.2 when hosted gates pass, collect Linux/macOS user feedback, and defer Windows packaging to a later dedicated release line.</NEXT_PHASE>
+  <NEXT_PHASE>Collect Linux/macOS user feedback from v2.5.2, continue reducing large test/handler files, and defer Windows packaging to a later dedicated release line.</NEXT_PHASE>
 </PRODUCT_READINESS_ASSESSMENT>
