@@ -9,7 +9,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Docs parity tests require capability counts to match the 23 core / 38 total MCP tool registry.</ASSERTION>
-    <ASSERTION>Docs parity tests block ghost CLI commands, unimplemented MCP flags, unsupported command flags, unsupported installer URLs, obsolete synapse-ai release paths, and unsupported Windows install claims across README, INSTALL, COMMANDS, FAQ, QUICKSTART, WORKFLOW, and SUPPORT.</ASSERTION>
+    <ASSERTION>Docs parity tests block ghost CLI commands, unimplemented MCP flags, unsupported command flags, unsupported installer URLs, obsolete synapse-ai release paths, unsupported Windows install claims, and public docs that drift from the latest published release installer URL across README, INSTALL, COMMANDS, FAQ, QUICKSTART, WORKFLOW, and SUPPORT.</ASSERTION>
     <ASSERTION>Docs parity tests require package metadata to avoid the crates.io syn parser conflict while preserving syn binary/library names.</ASSERTION>
     <ASSERTION>Docs parity tests require installer dry-run mapping, release workflow artifacts, checksum aggregation, tag/version/freshness guards, generated release notes, strict cargo audit warnings, pre-tag source fallback, and release smoke artifact naming to describe the same Linux/macOS release matrix.</ASSERTION>
     <ASSERTION>Docs parity tests require push CI to declare Linux/macOS public-installer fresh install evidence pinned to SYN_INSTALL_SOURCE_REF.</ASSERTION>

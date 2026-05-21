@@ -26,7 +26,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.4.0 - Added installer pre-tag fallback parity]
+// LAST_CHANGE: [v4.5.0 - Guard public docs to the latest published release installer]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -47,7 +47,7 @@ const FAQ: &str = include_str!("../docs/FAQ.md");
 const WORKFLOW_DOC: &str = include_str!("../docs/WORKFLOW.md");
 const SUPPORT_DOC: &str = include_str!("../docs/SUPPORT.md");
 const INSTALL_COMMAND: &str =
-    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh | sh";
+    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.5.2/install.sh | sh";
 const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
     "syn-x86_64-unknown-linux-gnu.tar.gz",
     "syn-aarch64-unknown-linux-gnu.tar.gz",
