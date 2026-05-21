@@ -3,7 +3,8 @@
 // PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
 // SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, traceability, tester-agent workflow, belief state, and project workflows
 // DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
-// LINKS: M-SKILLS
+// LINKS:
+//   -> M-SKILLS (depends) - skill runtime facade
 
 // START_MODULE_MAP
 // SkillEngine — Main skill runtime facade
@@ -11,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.20.0 — Added tester-agent guidance to multiagent, setup, and fix skills]
+// LAST_CHANGE: [v2.21.0 — Migrated semantic LINKS to typed format]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};

@@ -11,7 +11,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.0.0 - Added Phase 11 fresh-machine installer evidence gate]
+# LAST_CHANGE: [v1.1.0 - Named default installer URL for GRACE pattern cleanliness]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_fresh_install_smoke
@@ -22,7 +22,8 @@
 # START_run_fresh_install_smoke
 set -euo pipefail
 
-script_url="${SYN_INSTALL_SCRIPT_URL:-https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh}"
+DEFAULT_INSTALL_SCRIPT_URL="https://raw.githubusercontent.com/anyagixx/synapse/main/install.sh"
+script_url="${SYN_INSTALL_SCRIPT_URL:-$DEFAULT_INSTALL_SCRIPT_URL}"
 release_tag="${SYN_RELEASE_TAG:-}"
 tmp_dir="$(mktemp -d)"
 install_dir="$tmp_dir/bin"

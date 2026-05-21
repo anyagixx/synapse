@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TESTS-PARITY" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Ensure public docs, install scripts, release workflows, package metadata, and code claims match product capabilities
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
+      - PROCESSING: Implement only the declared scope while preserving dependencies: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
+      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+    Critical invariants:
+      - Scope remains bounded to: Compare MCP capability counts including cascade_impact, cascade_execute, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, and submit_test_report, CLI command and flag truth, public install URLs, Linux/macOS release artifact matrix, checksum integrity, release tag/version/freshness policy, release-candidate dry-run policy and summary evidence, public fresh-install smoke evidence pinned to commit source refs, install support diagnostics, pre-tag source fallback, generated release notes, strict cargo audit policy, platform support claims, package naming truth, and release smoke coverage
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
+    Complexity_areas: artifact drift, backward compatibility, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - verify_project, review_code, and relevant unit tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
+    - Incomplete module artifacts can make the first belief state too generic
+</BELIEF_STATE>

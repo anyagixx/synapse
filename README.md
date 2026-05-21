@@ -273,13 +273,16 @@ Dashboard routes exposed by `syn serve`:
 | Зависимости | 0 внешних системных (всё статически слинковано) |
 | MCP инструментов | **38** |
 | CLI команд | 19 |
-| Проверок verify | 47 |
+| Проверок verify | 55 |
 | GRACE workflow tools | 15 |
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
-| Тестов | **181** (cargo test --all-targets) |
+| Тестов | **184** (cargo test --all-targets) |
 | Контрактов в своём коде | **91/91** |
+| Belief-state coverage | **85/85** |
+| Traceability | **strict, 99.1%** |
+| Non-human warnings | **0** |
 | self-verify | **ALL PASS** |
 
 ## License

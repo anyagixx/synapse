@@ -14,10 +14,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Added full RequirementsAnalysis parser, validator, and generator]
+// LAST_CHANGE: [v1.1.0 - Named generated project name length threshold]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;
+
+const GENERATED_PROJECT_NAME_MAX_CHARS: usize = 32;
 
 // START_public_api
 
@@ -436,7 +438,7 @@ fn project_name_from_description(description: &str) -> String {
         } else {
             capitalize = true;
         }
-        if out.len() >= 32 {
+        if out.len() >= GENERATED_PROJECT_NAME_MAX_CHARS {
             break;
         }
     }

@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Rebuild full index snapshots so deleted files are purged from search]
+// LAST_CHANGE: [v3.2.0 - Named index size and signature preview thresholds]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
@@ -27,6 +27,9 @@ use crate::config::Config;
 use std::path::Path;
 use std::sync::RwLock;
 use storage::Storage;
+
+const MAX_INDEXABLE_FILE_BYTES: usize = 100_000;
+const SIGNATURE_CONTENT_PREVIEW_LIMIT: usize = 200;
 
 // START_public_api
 
@@ -139,7 +142,7 @@ impl Indexer {
                 Err(_) => continue,
             };
 
-            if code.len() > 100_000 {
+            if code.len() > MAX_INDEXABLE_FILE_BYTES {
                 tracing::debug!("Skipping large file: {} ({} bytes)", file.path, code.len());
                 continue;
             }
@@ -293,7 +296,7 @@ impl Indexer {
         Ok(blocks
             .iter()
             .map(|b| {
-                if b.content.len() > 200 {
+                if b.content.len() > SIGNATURE_CONTENT_PREVIEW_LIMIT {
                     format!(
                         "{}:{} — {} ({} lines)",
                         b.name,

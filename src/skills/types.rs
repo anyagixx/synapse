@@ -3,7 +3,8 @@
 // PURPOSE: Skill runtime types — metadata, schemas, requests, responses, and execution context
 // SCOPE: SkillDef, SkillArg, SkillRequest, SkillResponse, SkillContext
 // DEPENDS: M-CONFIG
-// LINKS: M-SKILLS
+// LINKS:
+//   -> M-SKILLS (depends) - skill runtime facade
 
 // START_MODULE_MAP
 // SkillDef — Static definition of a callable skill tool
@@ -12,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.4.0 — Added skill runtime type system]
+// LAST_CHANGE: [v2.5.0 — Migrated semantic LINKS to typed format]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;

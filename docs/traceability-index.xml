@@ -1,30 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TRACEABILITY_INDEX enforcement="advisory">
+<TRACEABILITY_INDEX enforcement="strict">
   <META>
     <MODEL>mygrace-sharded</MODEL>
     <PRIMARY>true</PRIMARY>
     <GENERATED_BY>M-GRACE-TRACEABILITY</GENERATED_BY>
   </META>
-  <SUMMARY requirements="3" use_cases="2" traced_modules="1" traced_functions="0" traced_logs="1" score="0.006" />
-  <ENFORCEMENT mode="advisory">Traceability gaps are reported before strict rollout.</ENFORCEMENT>
+  <SUMMARY requirements="3" use_cases="2" traced_modules="85" traced_functions="642" traced_logs="1" score="0.991" />
+  <ENFORCEMENT mode="strict">Traceability gaps fail verification.</ENFORCEMENT>
   <REQUIREMENTS>
+    <REQUIREMENT id="NFR-001">
+      <IMPLEMENTED_BY total="82" shown="10">
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE" type="module" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::run_release_version_guard" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::read_cargo_version" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::run_release_install_smoke" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::checksum_generate" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::checksum_verify" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RUNTIME-GUARD" type="module" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RUNTIME-GUARD::main" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RUNTIME-GUARD::collect_violations" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RUNTIME-GUARD::production_rust_files" type="function" relationship="traced_by" />
+        <TRUNCATED remaining="72" />
+      </IMPLEMENTED_BY>
+    </REQUIREMENT>
     <REQUIREMENT id="NFR-002">
-      <IMPLEMENTED_BY>
-        <ARTIFACT ref="M-GRACE-TRACEABILITY" type="module" relationship="implemented_by" />
+      <IMPLEMENTED_BY total="433" shown="10">
+        <ARTIFACT ref="M-MCP-SERVER" type="module" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER::McpServer::new" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER::McpServer::start_stdio" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER::discover_project_count" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER::SynapseHandler::new" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER::SynapseHandler::handle_message" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER::preload_index_storage" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER::build_graphrag" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER-GRACE-TOOLS" type="module" relationship="traced_by" />
+        <ARTIFACT ref="M-MCP-SERVER-GRACE-TOOLS::handle_verify" type="function" relationship="traced_by" />
+        <TRUNCATED remaining="423" />
+      </IMPLEMENTED_BY>
+    </REQUIREMENT>
+    <REQUIREMENT id="NFR-003">
+      <IMPLEMENTED_BY total="186" shown="10">
+        <ARTIFACT ref="M-DASHBOARD" type="module" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::start_dashboard" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::shutdown_signal" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::index_html" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::health" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::belief_states_html" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::belief_state_detail_html" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::mental_tests_html" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::traceability_html" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::cascade_preview_html" type="function" relationship="traced_by" />
+        <TRUNCATED remaining="176" />
       </IMPLEMENTED_BY>
     </REQUIREMENT>
   </REQUIREMENTS>
   <USE_CASES>
+    <USE_CASE id="UC-001">
+      <IMPLEMENTED_BY total="26" shown="10">
+        <ARTIFACT ref="M-HOOKS" type="module" relationship="implemented_by" />
+        <ARTIFACT ref="M-HOOKS::merge_synapse_mcp_config" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-HOOKS::strip_jsonc_comments" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-HOOKS::strip_trailing_commas" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-HOOKS::HookManager::new" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-HOOKS::HookManager::install" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-HOOKS::HookManager::uninstall" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-HOOKS::HookManager::status" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-GRACE-CASCADE::place_order" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MAIN" type="module" relationship="implemented_by" />
+        <TRUNCATED remaining="16" />
+      </IMPLEMENTED_BY>
+    </USE_CASE>
     <USE_CASE id="UC-002">
-      <IMPLEMENTED_BY>
-        <ARTIFACT ref="M-GRACE-TRACEABILITY" type="module" relationship="implemented_by" />
+      <IMPLEMENTED_BY total="404" shown="10">
+        <ARTIFACT ref="M-MCP-SERVER" type="module" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER::McpServer::new" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER::McpServer::start_stdio" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER::discover_project_count" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER::SynapseHandler::new" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER::SynapseHandler::handle_message" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER::preload_index_storage" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER::build_graphrag" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER-GRACE-TOOLS" type="module" relationship="implemented_by" />
+        <ARTIFACT ref="M-MCP-SERVER-GRACE-TOOLS::handle_verify" type="function" relationship="implemented_by" />
+        <TRUNCATED remaining="394" />
       </IMPLEMENTED_BY>
     </USE_CASE>
   </USE_CASES>
   <GAPS>
-    <GAP type="requirement_not_implemented" id="NFR-001">Requirement has no implementing module, function, verification, or LOG trace.</GAP>
-    <GAP type="requirement_not_implemented" id="NFR-003">Requirement has no implementing module, function, verification, or LOG trace.</GAP>
-    <GAP type="use_case_not_implemented" id="UC-001">Use case has no implementing module, function, verification, or LOG trace.</GAP>
-    <GAP type="function_not_traced" id="summary">Most existing function contracts predate end-to-end traceability and are reported in advisory mode until the strict rollout.</GAP>
   </GAPS>
 </TRACEABILITY_INDEX>

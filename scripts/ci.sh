@@ -15,14 +15,20 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.6.0 - Added release freshness guard before candidate validation]
+# LAST_CHANGE: [v1.7.0 - Migrated semantic LINKS to typed format]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_ci_gate
 # PURPOSE: Execute the full quality gate expected by CI and maintainers
 # OUTPUTS: { exit code 0 — all checks passed }
 # SIDE_EFFECTS: invokes cargo, Python guard, release version guard, release candidate dry-run, release smoke, and syn verification commands; writes build artifacts under target/
-# LINKS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
+# LINKS:
+#   -> M-CI-RUNTIME-GUARD (depends) - production panic guard
+#   -> M-CI-RELEASE-SMOKE (depends) - release policy gates
+#   -> M-GRACE-VERIFY (depends) - verification gate
+#   -> M-GRACE-REVIEW (depends) - integrity review gate
+#   -> M-GRACE-REFRESH (depends) - canonical drift gate
+#   -> M-GRACE-STATUS (depends) - status gate
 # START_run_ci_gate
 set -euo pipefail
 tmp_dir="$(mktemp -d)"

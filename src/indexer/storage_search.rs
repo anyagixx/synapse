@@ -13,11 +13,16 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.1 — Depends on extracted StoredBlock type module]
+// LAST_CHANGE: [v2.2.0 - Named scoring thresholds and n-gram dimensions]
 // END_CHANGE_SUMMARY
 
 use super::storage_types::StoredBlock;
 use std::collections::HashMap;
+
+const MIN_QUERY_WORD_CHARS: usize = 2;
+const MIN_NGRAM_CHARS: usize = 3;
+const SHORT_BLOCK_TOKEN_BONUS_LIMIT: f64 = 500.0;
+const SHORT_BLOCK_TOKEN_BONUS_DIVISOR: f64 = 1000.0;
 
 // START_public_api
 
@@ -53,7 +58,7 @@ pub(crate) fn score_block(block: &StoredBlock, query_lower: &str, query_words: &
     let avg_block_len = 200.0_f64;
 
     for word in query_words {
-        if word.is_empty() || word.len() < 2 {
+        if word.is_empty() || word.len() < MIN_QUERY_WORD_CHARS {
             continue;
         }
         let word_tokens = tokenize(word);
@@ -92,7 +97,7 @@ pub(crate) fn score_block(block: &StoredBlock, query_lower: &str, query_words: &
                 }
             }
 
-            if wt.len() >= 3 {
+            if wt.len() >= MIN_NGRAM_CHARS {
                 let ngram_matches = content_lower.matches(wt).count() as f64;
                 if ngram_matches > 0.0 {
                     score += ngram_matches * 0.3;
@@ -109,8 +114,10 @@ pub(crate) fn score_block(block: &StoredBlock, query_lower: &str, query_words: &
     if content_lower.contains(query_lower) {
         score += 4.0;
     }
-    if total_content_tokens < 500.0 && score > 0.0 {
-        score *= 1.0 + (500.0 - total_content_tokens).max(0.0) / 1000.0;
+    if total_content_tokens < SHORT_BLOCK_TOKEN_BONUS_LIMIT && score > 0.0 {
+        score *= 1.0
+            + (SHORT_BLOCK_TOKEN_BONUS_LIMIT - total_content_tokens).max(0.0)
+                / SHORT_BLOCK_TOKEN_BONUS_DIVISOR;
     }
     score
 }
@@ -154,7 +161,7 @@ fn tokenize(text: &str) -> Vec<String> {
 // START_ngram_vectorize
 pub(crate) fn ngram_vectorize(text: &str) -> HashMap<u64, f64> {
     let chars: Vec<char> = text.to_lowercase().chars().collect();
-    if chars.len() < 3 {
+    if chars.len() < MIN_NGRAM_CHARS {
         return HashMap::new();
     }
     let mut vec = HashMap::new();

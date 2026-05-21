@@ -14,10 +14,11 @@
 // NonHumanPatternProjectReport - Project-level pattern score and aggregate violations
 // check_project_patterns - Scan a project using profile-aware non-human pattern enforcement
 // check_content_patterns - Scan one source text for tests and targeted consumers
+// is_generated_text_line - Exempts rendering/template lines from magic-value warnings
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added profile-aware non-human pattern checker]
+// LAST_CHANGE: [v1.1.0 - Reduced magic-value noise for rendering and template output lines]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::GraceProfile;
@@ -528,10 +529,14 @@ fn is_constant_declaration(code: &str) -> bool {
 }
 
 fn is_generated_text_line(code: &str) -> bool {
+    let trimmed = code.trim_start();
     code.contains("push_str(")
         || code.contains("format!(")
+        || code.contains("println!(")
+        || code.contains("String::from(\"<?xml")
         || code.contains("serde_json::json!")
         || code.contains("regex::Regex::new")
+        || trimmed.starts_with("echo ")
         || code.starts_with("r#")
         || code.starts_with('"')
 }
@@ -682,6 +687,20 @@ mod tests {
             .iter()
             .any(|violation| violation.pattern == "non-human-no-magic-values"
                 && violation.severity == ViolationSeverity::Warning));
+    }
+
+    #[test]
+    fn test_generated_rendering_lines_do_not_emit_magic_value_warning() {
+        let report = check_content_patterns(
+            "src/status.rs",
+            "rust",
+            "println!(\"╠══════════════════════════════════════╣\");\nlet graph = String::from(\"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\");\n",
+            GraceProfile::Strict,
+        );
+        assert!(report
+            .violations
+            .iter()
+            .all(|violation| violation.pattern != "non-human-no-magic-values"));
     }
 
     #[test]

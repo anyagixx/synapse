@@ -16,11 +16,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Added Technology parser, validator, detector, and generator]
+// LAST_CHANGE: [v1.1.0 - Named Go module parsing arity constants for GRACE pattern cleanliness]
 // END_CHANGE_SUMMARY
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
+
+const GO_REQUIRE_DIRECTIVE_PARTS: usize = 3;
+const GO_MODULE_REQUIRE_PARTS: usize = 2;
 
 // START_public_api
 
@@ -459,9 +462,12 @@ fn detect_go_mod_dependencies(root: &Path, out: &mut Vec<DetectedDependency>) {
     };
     for line in content.lines().map(str::trim) {
         let parts: Vec<_> = line.split_whitespace().collect();
-        if parts.len() == 3 && parts[0] == "require" {
+        if parts.len() == GO_REQUIRE_DIRECTIVE_PARTS && parts[0] == "require" {
             out.push(go_dep(parts[1], parts[2]));
-        } else if parts.len() == 2 && parts[0].contains('/') && parts[1].starts_with('v') {
+        } else if parts.len() == GO_MODULE_REQUIRE_PARTS
+            && parts[0].contains('/')
+            && parts[1].starts_with('v')
+        {
             out.push(go_dep(parts[0], parts[1]));
         }
     }

@@ -12,7 +12,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.1.0 - Skipped branch refs unless an explicit release tag is provided]
+# LAST_CHANGE: [v1.2.0 - Migrated semantic LINKS to typed format]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_version_guard
@@ -20,7 +20,8 @@
 # INPUTS: { SYN_RELEASE_TAG: optional release tag override }, { GITHUB_REF_NAME: GitHub tag name fallback }
 # OUTPUTS: { exit code 0 - tag matches or no tag is available, nonzero - tag mismatch }
 # SIDE_EFFECTS: reads Cargo.toml and writes CI log markers
-# LINKS: M-CI-RELEASE-SMOKE
+# LINKS:
+#   -> M-CI-RELEASE-SMOKE (depends) - release smoke policy module
 # START_run_release_version_guard
 set -euo pipefail
 

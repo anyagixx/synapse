@@ -17,7 +17,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.3.0 - Added release freshness guard to release-candidate policy]
+# LAST_CHANGE: [v1.4.0 - Migrated semantic LINKS to typed format]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_candidate_dry_run
@@ -25,7 +25,10 @@
 # INPUTS: { SYN_RELEASE_TAG: optional tag override }, { SYN_RC_SKIP_SMOKE: optional flag to skip local release smoke }
 # OUTPUTS: { exit code 0 - candidate checks pass }
 # SIDE_EFFECTS: invokes release_version_guard.sh, install.sh --dry-run, optionally release_install_smoke.sh, and may append to GITHUB_STEP_SUMMARY
-# LINKS: M-CI, M-INSTALL, M-CI-RELEASE-SMOKE
+# LINKS:
+#   -> M-CI (depends) - CI release candidate gate
+#   -> M-INSTALL (depends) - installer dry-run mapping
+#   -> M-CI-RELEASE-SMOKE (depends) - release smoke policy
 # START_run_release_candidate_dry_run
 set -euo pipefail
 

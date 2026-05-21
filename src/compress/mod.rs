@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.0 — Regex compression paths use cached fallbacks instead of unwrap panics]
+// LAST_CHANGE: [v2.2.0 — Named minimum compressible size threshold for GRACE pattern cleanliness]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -19,6 +19,7 @@ use std::sync::OnceLock;
 static COLLAPSE_NEWLINES_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
 static COLLAPSE_SPACES_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
 static ARTICLES_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
+const MIN_COMPRESSIBLE_CHARS: usize = 50;
 
 // START_public_api
 
@@ -185,7 +186,7 @@ impl Compressor {
     // START_compress_file
     pub async fn compress_file(&self, path: &std::path::Path) -> anyhow::Result<()> {
         let content = tokio::fs::read_to_string(path).await?;
-        if content.len() < 50 {
+        if content.len() < MIN_COMPRESSIBLE_CHARS {
             return Ok(()); // Very small files, skip
         }
 

@@ -3,7 +3,8 @@
 // PURPOSE: Skill registry — declares 15 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
 // SCOPE: Skill metadata constants, built-in MCP tool descriptions including cascade and tester-agent tools, and lookup helpers
 // DEPENDS: M-SKILLS-TYPES
-// LINKS: M-SKILLS
+// LINKS:
+//   -> M-SKILLS (depends) - skill runtime facade
 
 // START_MODULE_MAP
 // SKILL_DEFS — Static list of all GRACE skill tools
@@ -11,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Documented cascade MCP capabilities]
+// LAST_CHANGE: [v2.23.0 - Migrated semantic LINKS to typed format]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};

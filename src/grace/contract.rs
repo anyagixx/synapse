@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added XML-like contract anchor support]
+// LAST_CHANGE: [v2.14.0 — Scoped legacy LINKS migration warnings to semantic graph targets]
 // END_CHANGE_SUMMARY
 
 use std::collections::HashSet;
@@ -963,7 +963,7 @@ fn validate_one_link(
             .push(format!("{} has an empty LINKS target", context));
         return;
     }
-    if link.legacy {
+    if link.legacy && is_semantic_legacy_target(target) {
         result.legacy_format_warnings.push(format!(
             "{} uses old LINKS target '{}' as depends",
             context, target
@@ -1000,6 +1000,24 @@ fn validate_one_link(
             .push(format!("{} links to missing target '{}'", context, target));
     }
 }
+
+// START_CONTRACT_is_semantic_legacy_target
+// PURPOSE: Return true for legacy LINKS targets that should migrate to directional typed graph relationships
+// INPUTS: { target: &str }
+// OUTPUTS: { bool }
+// START_is_semantic_legacy_target
+fn is_semantic_legacy_target(target: &str) -> bool {
+    target.starts_with("M-")
+        || target.starts_with("V-")
+        || target.starts_with("UC-")
+        || target.starts_with("REQ-")
+        || target.starts_with("NFR-")
+        || target.starts_with("CON-")
+        || target.starts_with("G-")
+        || target.starts_with("Entity:")
+        || target.contains("::")
+}
+// END_is_semantic_legacy_target
 
 #[cfg(test)]
 mod tests {
@@ -1191,6 +1209,37 @@ mod tests {
         assert_eq!(mc.links.len(), 0);
         assert_eq!(mc.link_errors.len(), 1);
         assert!(mc.link_errors[0].contains("invalid typed link relationship"));
+    }
+
+    #[test]
+    fn test_legacy_file_links_do_not_emit_migration_warning() {
+        let mut report = ContractReport {
+            total_files: 1,
+            with_contract: 1,
+            without_contract: 0,
+            valid: 1,
+            invalid: 0,
+            contracts: Vec::new(),
+        };
+        report.contracts.push(ModuleContract {
+            file_path: "src/file_link.rs".into(),
+            module_id: Some("M-FILE-LINK".into()),
+            purpose: Some("File link".into()),
+            scope: Some("Testing".into()),
+            depends: Vec::new(),
+            links: vec![TypedLink::legacy_depends(
+                "docs/modules/M-FILE-LINK.xml".into(),
+            )],
+            link_errors: Vec::new(),
+            has_contract: true,
+            valid: true,
+            has_module_map: true,
+            has_change_summary: true,
+            function_contracts: Vec::new(),
+            errors: Vec::new(),
+        });
+        let validation = ContractValidator::validate_links(Path::new("."), &report);
+        assert!(validation.legacy_format_warnings.is_empty());
     }
 
     #[test]

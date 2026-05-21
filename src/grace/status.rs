@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Added cascade pending/changelog status]
+// LAST_CHANGE: [v2.23.0 - Named Phase 0 completion action text for GRACE pattern cleanliness]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -32,6 +32,9 @@ use crate::grace::traceability::TraceabilityReport;
 use crate::grace::verify::Verifier;
 use crate::tracking::Tracker;
 use std::path::Path;
+
+const PHASE_ZERO_COMPLETION_ACTION: &str =
+    "Complete sharded Phase 0: create graph/plan/verification indexes and shard directories";
 
 // START_public_api
 
@@ -245,7 +248,7 @@ impl StatusCollector {
             && layout.phases_dir().exists()
             && layout.verification_dir().exists();
         if !phase0_done {
-            next_actions.push("Complete sharded Phase 0: create graph/plan/verification indexes and shard directories".into());
+            next_actions.push(PHASE_ZERO_COMPLETION_ACTION.into());
         }
 
         let graph_index = std::fs::read_to_string(layout.graph_index_path()).unwrap_or_default();

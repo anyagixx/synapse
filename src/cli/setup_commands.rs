@@ -12,13 +12,15 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.10.0 - Updated install summary for 38 MCP tools]
+// LAST_CHANGE: [v3.11.0 - Named watch reindex debounce threshold]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
 use crate::config::Config;
 use crate::grace::bootstrap::bootstrap_existing_repo;
 use crate::grace::layout::DocsLayout;
+
+const WATCH_REINDEX_DEBOUNCE_SECS: u64 = 2;
 
 // START_public_api
 
@@ -209,7 +211,9 @@ async fn watch_and_reindex(root: std::path::PathBuf) -> anyhow::Result<()> {
                     })
                     .collect();
 
-                if source_files.is_empty() || last_index.elapsed() < Duration::from_secs(2) {
+                if source_files.is_empty()
+                    || last_index.elapsed() < Duration::from_secs(WATCH_REINDEX_DEBOUNCE_SECS)
+                {
                     continue;
                 }
                 last_index = tokio::time::Instant::now();

@@ -14,11 +14,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Use Unicode-safe previews for search and grep output]
+// LAST_CHANGE: [v2.9.0 - Named structural grep source-size guard]
 // END_CHANGE_SUMMARY
 
 use super::{GraphRagCmd, GrepCmd, HistoryCmd, SearchCmd, ViewCmd};
 use crate::config::Config;
+
+const MAX_SEARCHABLE_FILE_BYTES: usize = 100_000;
 
 // START_public_api
 
@@ -128,7 +130,7 @@ impl GrepCmd {
                 Ok(c) => c,
                 Err(_) => continue,
             };
-            if code.len() > 100_000 {
+            if code.len() > MAX_SEARCHABLE_FILE_BYTES {
                 continue;
             }
 

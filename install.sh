@@ -25,7 +25,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.20.0 - Bumped default release tag to v2.5.1 post-release cleanup line]
+# LAST_CHANGE: [v2.21.0 - Named git prerequisite diagnostic message]
 # END_CHANGE_SUMMARY
 
 set -eu
@@ -38,6 +38,7 @@ ARCH="x86_64"
 OS="unknown-linux-gnu"
 TMP_DIR=""
 INSTALLED_BIN=""
+GIT_REQUIRED_MESSAGE="git not installed; required for cargo install --git. Run: sh install.sh --diagnose"
 
 # START_CONTRACT_cleanup
 # PURPOSE: Remove temporary installer files created during release or source installation
@@ -404,7 +405,7 @@ install_from_source() {
         echo "Run: sh install.sh --diagnose"
         exit 1
     }
-    command -v git >/dev/null 2>&1 || { echo "git not installed; required for cargo install --git. Run: sh install.sh --diagnose"; exit 1; }
+    command -v git >/dev/null 2>&1 || { echo "$GIT_REQUIRED_MESSAGE"; exit 1; }
 
     if [ -n "${SYN_INSTALL_SOURCE_REF:-}" ]; then
         echo "Building Synapse from source ref ${SYN_INSTALL_SOURCE_REF}..."

@@ -13,14 +13,16 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.3.0 - Added packaged syn --version assertion against Cargo.toml]
+# LAST_CHANGE: [v1.4.0 - Migrated semantic LINKS to typed format]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_install_smoke
 # PURPOSE: Validate that the release tarball checksum and layout can be verified and executed by installer consumers
 # OUTPUTS: { exit code 0 - packaged syn binary runs --version }
 # SIDE_EFFECTS: invokes cargo build --release --locked and writes temporary package files
-# LINKS: M-BUILD, M-INSTALL
+# LINKS:
+#   -> M-BUILD (depends) - release binary build metadata
+#   -> M-INSTALL (depends) - installer artifact contract
 # START_run_release_install_smoke
 set -euo pipefail
 

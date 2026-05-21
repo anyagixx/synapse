@@ -15,7 +15,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.0.0 — Initial production runtime panic CI guard]
+# LAST_CHANGE: [v1.1.0 - Named runtime guard remediation hint]
 # END_CHANGE_SUMMARY
 
 from __future__ import annotations
@@ -38,6 +38,11 @@ DENIED_MARKERS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("unimplemented!", re.compile(r"\bunimplemented!\s*\(")),
 )
 ALLOW_MARKER = "runtime-guard: allow"
+RUNTIME_GUARD_FIX_HINT_PREFIX = "Add error handling or use '"
+RUNTIME_GUARD_FIX_HINT_SUFFIX = "' with a justification for intentional production panics."
+RUNTIME_GUARD_FIX_HINT = (
+    RUNTIME_GUARD_FIX_HINT_PREFIX + ALLOW_MARKER + RUNTIME_GUARD_FIX_HINT_SUFFIX
+)
 
 
 @dataclass(frozen=True)
@@ -78,10 +83,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"{rel}:{violation.line_no}: {violation.marker}: {violation.line}",
                 file=sys.stderr,
             )
-        print(
-            f"Add error handling or use '{ALLOW_MARKER}' with a justification for intentional production panics.",
-            file=sys.stderr,
-        )
+        print(RUNTIME_GUARD_FIX_HINT, file=sys.stderr)
         return 1
 
     print("[CI][runtime_guard][SCAN] No production panic markers found")

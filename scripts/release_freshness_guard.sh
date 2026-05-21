@@ -14,7 +14,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.0.0 - Added public-release tag freshness guard]
+# LAST_CHANGE: [v1.1.0 - Migrated semantic LINKS to typed format]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_freshness_guard
@@ -22,7 +22,8 @@
 # INPUTS: { SYN_RELEASE_TAG: optional release tag override }, { GITHUB_REF_NAME/GITHUB_REF_TYPE/GITHUB_REF: GitHub release context }
 # OUTPUTS: { exit code 0 - tag is fresh or not yet published, nonzero - stale or wrong release tag }
 # SIDE_EFFECTS: reads Cargo.toml and git metadata, writes CI log markers
-# LINKS: M-CI-RELEASE-SMOKE
+# LINKS:
+#   -> M-CI-RELEASE-SMOKE (depends) - release freshness policy
 # START_run_release_freshness_guard
 set -euo pipefail
 

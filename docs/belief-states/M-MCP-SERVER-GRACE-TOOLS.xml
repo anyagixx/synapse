@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-MCP-SERVER-GRACE-TOOLS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, log analysis, belief extraction, compression, tracking, and skills
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
+      - PROCESSING: Implement only the declared scope while preserving dependencies: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
+      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+    Critical invariants:
+      - Scope remains bounded to: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, submit_test_report, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
+    Complexity_areas: artifact drift, backward compatibility, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - verify_project, review_code, and relevant unit tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
+    - Incomplete module artifacts can make the first belief state too generic
+</BELIEF_STATE>
