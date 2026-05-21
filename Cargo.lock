@@ -1284,7 +1284,7 @@ dependencies = [
 
 [[package]]
 name = "synapse-agent"
-version = "2.5.1"
+version = "2.5.2"
 dependencies = [
  "anyhow",
  "axum",

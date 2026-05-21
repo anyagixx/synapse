@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-TRACEABILITY" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-TRACEABILITY</NAME>
-  <PURPOSE>End-to-end traceability engine from requirements and use cases through contracts, semantic blocks, verification, LOG evidence, and strict-ready module intent defaults</PURPOSE>
-  <SCOPE>TraceabilityChain, TraceabilityReport, compact traceability index generation, project scan, module intent defaults, function trace inheritance, gap detection, and scoped query formatting</SCOPE>
+  <PURPOSE>End-to-end traceability engine from requirements and use cases through contracts, semantic blocks, verification, LOG evidence, strict-ready module intent defaults, and compact rendering helpers</PURPOSE>
+  <SCOPE>TraceabilityChain, TraceabilityReport, compact traceability index generation, project scan, module intent defaults, function trace inheritance, gap detection, scoped query formatting, and split traceability helper modules</SCOPE>
   <FILES>
     <FILE>src/grace/traceability.rs</FILE>
+    <FILE>src/grace/traceability_defaults.rs</FILE>
+    <FILE>src/grace/traceability_render.rs</FILE>
   </FILES>
   <DEPENDS>M-GRACE-CONTRACT,M-GRACE-LAYOUT,M-GRACE-LOG,M-GRACE-REQUIREMENTS,M-GRACE-SEMANTIC,M-INDEXER-WALKER</DEPENDS>
-  <LINKS>docs/traceability-index.xml,docs/verification/V-M-GRACE-TRACEABILITY.xml,docs/phases/Phase-14.xml,UC-002,NFR-002</LINKS>
+  <LINKS>docs/traceability-index.xml,docs/verification/V-M-GRACE-TRACEABILITY.xml,docs/phases/Phase-14.xml,docs/phases/Phase-15.xml,UC-002,NFR-002</LINKS>
   <VERIFICATION_REF>V-M-GRACE-TRACEABILITY</VERIFICATION_REF>
 </MODULE>

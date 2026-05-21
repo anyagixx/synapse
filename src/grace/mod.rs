@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Registered cascade update modules]
+// LAST_CHANGE: [v2.23.0 - Registered traceability helper split modules]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
@@ -40,6 +40,8 @@ pub mod status;
 pub mod technology;
 pub mod testing;
 pub mod traceability;
+mod traceability_defaults;
+mod traceability_render;
 pub mod verify;
 pub mod verify_phase;
 pub mod verify_types;

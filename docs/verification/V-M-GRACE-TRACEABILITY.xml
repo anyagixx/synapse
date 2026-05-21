@@ -11,7 +11,7 @@
     <ASSERTION>TraceabilityReport counts requirements, use cases, modules, functions, LOG evidence, score, and gaps.</ASSERTION>
     <ASSERTION>Strict enforcement fails untraced requirements or functions while advisory mode reports gaps without blocking migration.</ASSERTION>
     <ASSERTION>Synapse module-family defaults map modules to UC/NFR product intent and functions inherit module traces unless direct function LINKS override them.</ASSERTION>
-    <ASSERTION>traceability_report MCP output persists compact docs/traceability-index.xml with capped samples and returns full scoped module/requirement matrices.</ASSERTION>
+    <ASSERTION>traceability_report MCP output persists compact docs/traceability-index.xml with capped samples and returns full scoped module/requirement matrices through split render helpers.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-14</PHASE_GATE>
+  <PHASE_GATE>Phase-15</PHASE_GATE>
 </VERIFICATION>

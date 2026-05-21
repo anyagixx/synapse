@@ -25,12 +25,12 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.21.0 - Named git prerequisite diagnostic message]
+# LAST_CHANGE: [v2.22.0 - Advanced default version to v2.5.2 development line]
 # END_CHANGE_SUMMARY
 
 set -eu
 
-DEFAULT_VERSION="v2.5.1"
+DEFAULT_VERSION="v2.5.2"
 VERSION="$DEFAULT_VERSION"
 VERSION_EXPLICIT="0"
 MODE="install"

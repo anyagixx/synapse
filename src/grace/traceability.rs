@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-TRACEABILITY
 // PURPOSE: End-to-end traceability engine from requirements and use cases through contracts, semantic blocks, verification, and LOG evidence
-// SCOPE: TraceabilityChain, TraceabilityReport, traceability index generation, project scan, gap detection, and scoped query formatting
+// SCOPE: TraceabilityChain, TraceabilityReport, project scan, gap detection, trace default integration, and renderer facade exports
 // DEPENDS: M-GRACE-CONTRACT, M-GRACE-LAYOUT, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS:
 //   -> V-M-GRACE-TRACEABILITY (verified_by) - traceability parser, report, index, and gap tests
@@ -14,21 +14,19 @@
 // TraceabilityChain - One artifact plus upward and downward trace links
 // TraceabilityReport - Project-level coverage, score, and gap list
 // scan_project_traceability - Build traceability chains from requirements, plans, contracts, blocks, and LOGs
-// write_traceability_index - Persist docs/traceability-index.xml from a report
-// format_traceability_report - Render a scoped MCP-friendly traceability matrix
-// module_trace_defaults - Map Synapse module families to explicit product requirements/use cases
+// write_traceability_index - Re-export persisted docs/traceability-index.xml writer
+// format_traceability_report - Re-export scoped MCP-friendly traceability matrix renderer
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.3.0 - Kept persisted traceability index compact with capped implementer samples]
+// LAST_CHANGE: [v1.4.0 - Split traceability defaults and rendering helpers into focused modules]
 // END_CHANGE_SUMMARY
 
+use super::traceability_defaults::module_trace_defaults;
+pub use super::traceability_render::{format_traceability_report, write_traceability_index};
 use crate::grace::contract::{ContractValidator, GraceProfile, LinkDirection, TypedLink};
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Path, PathBuf};
-
-const TRACE_MATRIX_DISPLAY_LIMIT: usize = 80;
-const TRACE_INDEX_IMPLEMENTER_LIMIT: usize = 10;
+use std::path::Path;
 
 // START_public_api
 
@@ -371,105 +369,6 @@ pub fn scan_project_traceability(root: &Path) -> anyhow::Result<TraceabilityRepo
 }
 // END_scan_project_traceability
 
-// START_CONTRACT_write_traceability_index
-// PURPOSE: Persist docs/traceability-index.xml from the computed traceability report
-// INPUTS: { root: &Path }, { report: &TraceabilityReport }
-// OUTPUTS: { anyhow::Result<PathBuf> }
-// SIDE_EFFECTS: writes docs/traceability-index.xml
-// START_write_traceability_index
-pub fn write_traceability_index(
-    root: &Path,
-    report: &TraceabilityReport,
-) -> anyhow::Result<PathBuf> {
-    let layout = crate::grace::layout::DocsLayout::new(root);
-    std::fs::create_dir_all(layout.docs_dir())?;
-    let path = layout.traceability_index_path();
-    std::fs::write(&path, render_traceability_index(report))?;
-    Ok(path)
-}
-// END_write_traceability_index
-
-// START_CONTRACT_format_traceability_report
-// PURPOSE: Render a scoped traceability query as compact XML-like text for MCP output
-// INPUTS: { report: &TraceabilityReport }, { scope: &str }, { target: Option<&str> }, { direction: &str }
-// OUTPUTS: { String }
-// START_format_traceability_report
-pub fn format_traceability_report(
-    report: &TraceabilityReport,
-    scope: &str,
-    target: Option<&str>,
-    direction: &str,
-) -> String {
-    let selected = select_chains(report, scope, target);
-    let mut output = format!(
-        "<TraceabilityReport scope=\"{}\" direction=\"{}\" target=\"{}\" enforcement=\"{}\">\n",
-        xml_attr(scope),
-        xml_attr(direction),
-        xml_attr(target.unwrap_or("")),
-        xml_attr(&report.enforcement_mode)
-    );
-    output.push_str(&format!(
-        "  <Summary requirements=\"{}\" use_cases=\"{}\" traced_modules=\"{}\" traced_functions=\"{}/{}\" traced_logs=\"{}/{}\" score=\"{:.3}\" />\n",
-        report.requirements_total,
-        report.use_cases_total,
-        report.modules_with_traceability,
-        report.functions_with_traceability,
-        report.total_functions,
-        report.logs_with_traceability,
-        report.total_logs,
-        report.traceability_score
-    ));
-    output.push_str("  <TraceMatrix>\n");
-    for chain in selected.iter().take(80) {
-        output.push_str(&format!(
-            "    <Artifact id=\"{}\" type=\"{}\">\n",
-            xml_attr(&chain.artifact_id),
-            chain.artifact_type.as_str()
-        ));
-        render_links(
-            &mut output,
-            "TracesTo",
-            if direction == "down" {
-                &[]
-            } else {
-                &chain.traces_to
-            },
-        );
-        render_links(
-            &mut output,
-            "TracedBy",
-            if direction == "up" {
-                &[]
-            } else {
-                &chain.traced_by
-            },
-        );
-        output.push_str("    </Artifact>\n");
-    }
-    if selected.len() > TRACE_MATRIX_DISPLAY_LIMIT {
-        output.push_str(&format!(
-            "    <Truncated remaining=\"{}\" />\n",
-            selected.len() - TRACE_MATRIX_DISPLAY_LIMIT
-        ));
-    }
-    output.push_str("  </TraceMatrix>\n");
-    output.push_str("  <Gaps>\n");
-    for gap in report.gaps.iter().take(TRACE_MATRIX_DISPLAY_LIMIT) {
-        if target.is_some_and(|needle| !gap.source_id.contains(needle)) && scope != "project" {
-            continue;
-        }
-        output.push_str(&format!(
-            "    <Gap type=\"{}\" source=\"{}\">{}</Gap>\n",
-            xml_attr(&gap.gap_type),
-            xml_attr(&gap.source_id),
-            xml_text(&gap.description)
-        ));
-    }
-    output.push_str("  </Gaps>\n</TraceabilityReport>");
-    output
-}
-// END_format_traceability_report
-
 // END_public_api
 
 #[derive(Default)]
@@ -754,69 +653,6 @@ fn is_business_trace_target(target: &str) -> bool {
     )
 }
 
-#[derive(Debug, Clone, Copy)]
-struct TraceLinkSeed {
-    target_id: &'static str,
-    relationship: &'static str,
-}
-
-// START_CONTRACT_module_trace_defaults
-// PURPOSE: Map Synapse module families to product requirements or use cases for strict traceability adoption
-// START_module_trace_defaults
-fn module_trace_defaults(module_id: &str) -> Vec<TraceLinkSeed> {
-    let mut seeds = Vec::new();
-    let mut add = |target_id, relationship| {
-        seeds.push(TraceLinkSeed {
-            target_id,
-            relationship,
-        })
-    };
-    if module_id.starts_with("M-INSTALL")
-        || module_id.starts_with("M-BUILD")
-        || module_id.starts_with("M-CI")
-        || module_id == "M-TESTS-PARITY"
-    {
-        add("NFR-001", "traces_to");
-    }
-    if module_id.starts_with("M-CLI-SETUP")
-        || module_id.starts_with("M-HOOK")
-        || module_id == "M-HOOKS"
-        || module_id == "M-PLUGIN"
-        || module_id == "M-MAIN"
-        || module_id == "M-LIB"
-    {
-        add("UC-001", "implements");
-    }
-    if module_id.starts_with("M-GRACE")
-        || module_id.starts_with("M-MCP")
-        || module_id.starts_with("M-AGENT")
-        || module_id.starts_with("M-SKILLS")
-        || module_id == "M-CAPABILITIES"
-        || module_id == "M-CLI"
-        || module_id.starts_with("M-CLI-GRACE")
-    {
-        add("UC-002", "implements");
-        add("NFR-002", "traces_to");
-    }
-    if module_id.starts_with("M-TESTS-") && module_id != "M-TESTS-PARITY" {
-        add("NFR-002", "traces_to");
-    }
-    if module_id.starts_with("M-INDEXER")
-        || module_id.starts_with("M-GRAPHRAG")
-        || module_id.starts_with("M-PROXY")
-        || module_id.starts_with("M-CLI-CODE")
-        || module_id.starts_with("M-CLI-RUNTIME")
-        || matches!(
-            module_id,
-            "M-CONFIG" | "M-COMPRESS" | "M-DASHBOARD" | "M-TRACKING" | "M-UTILS"
-        )
-    {
-        add("NFR-003", "traces_to");
-    }
-    seeds
-}
-// END_module_trace_defaults
-
 fn is_known_id_shape(target: &str) -> bool {
     target.starts_with("UC-")
         || target.starts_with("REQ-")
@@ -910,180 +746,6 @@ fn traceability_enforcement_mode(root: &Path) -> String {
     } else {
         "advisory".into()
     }
-}
-
-fn render_traceability_index(report: &TraceabilityReport) -> String {
-    let mut output = format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<TRACEABILITY_INDEX enforcement=\"{}\">\n",
-        xml_attr(&report.enforcement_mode)
-    );
-    output.push_str("  <META>\n    <MODEL>mygrace-sharded</MODEL>\n    <PRIMARY>true</PRIMARY>\n    <GENERATED_BY>M-GRACE-TRACEABILITY</GENERATED_BY>\n  </META>\n");
-    output.push_str(&format!(
-        "  <SUMMARY requirements=\"{}\" use_cases=\"{}\" traced_modules=\"{}\" traced_functions=\"{}\" traced_logs=\"{}\" score=\"{:.3}\" />\n",
-        report.requirements_total,
-        report.use_cases_total,
-        report.modules_with_traceability,
-        report.functions_with_traceability,
-        report.logs_with_traceability,
-        report.traceability_score
-    ));
-    output.push_str(&format!(
-        "  <ENFORCEMENT mode=\"{}\">{}</ENFORCEMENT>\n",
-        xml_attr(&report.enforcement_mode),
-        if report.enforcement_mode == "strict" {
-            "Traceability gaps fail verification."
-        } else {
-            "Traceability gaps are reported before strict rollout."
-        }
-    ));
-    output.push_str("  <REQUIREMENTS>\n");
-    for chain in report
-        .chains
-        .iter()
-        .filter(|chain| chain.artifact_type == ArtifactType::Requirement)
-    {
-        render_index_chain(&mut output, "REQUIREMENT", chain);
-    }
-    output.push_str("  </REQUIREMENTS>\n  <USE_CASES>\n");
-    for chain in report
-        .chains
-        .iter()
-        .filter(|chain| chain.artifact_type == ArtifactType::UseCase)
-    {
-        render_index_chain(&mut output, "USE_CASE", chain);
-    }
-    output.push_str("  </USE_CASES>\n  <GAPS>\n");
-    for gap in &report.gaps {
-        output.push_str(&format!(
-            "    <GAP type=\"{}\" id=\"{}\">{}</GAP>\n",
-            xml_attr(&gap.gap_type),
-            xml_attr(&gap.source_id),
-            xml_text(&gap.description)
-        ));
-    }
-    output.push_str("  </GAPS>\n</TRACEABILITY_INDEX>\n");
-    output
-}
-
-fn render_index_chain(output: &mut String, tag: &str, chain: &TraceabilityChain) {
-    output.push_str(&format!(
-        "    <{} id=\"{}\">\n",
-        tag,
-        xml_attr(&chain.artifact_id)
-    ));
-    let implementers: Vec<&TraceLink> = chain
-        .traced_by
-        .iter()
-        .filter(|link| {
-            matches!(
-                link.target_type.as_str(),
-                "module" | "function" | "log_entry"
-            )
-        })
-        .collect();
-    let shown = implementers.len().min(TRACE_INDEX_IMPLEMENTER_LIMIT);
-    output.push_str(&format!(
-        "      <IMPLEMENTED_BY total=\"{}\" shown=\"{}\">\n",
-        implementers.len(),
-        shown
-    ));
-    for link in implementers.iter().take(TRACE_INDEX_IMPLEMENTER_LIMIT) {
-        output.push_str(&format!(
-            "        <ARTIFACT ref=\"{}\" type=\"{}\" relationship=\"{}\" />\n",
-            xml_attr(&link.target_id),
-            xml_attr(&link.target_type),
-            xml_attr(&link.relationship)
-        ));
-    }
-    if implementers.len() > TRACE_INDEX_IMPLEMENTER_LIMIT {
-        output.push_str(&format!(
-            "        <TRUNCATED remaining=\"{}\" />\n",
-            implementers.len() - TRACE_INDEX_IMPLEMENTER_LIMIT
-        ));
-    }
-    output.push_str("      </IMPLEMENTED_BY>\n    </");
-    output.push_str(tag);
-    output.push_str(">\n");
-}
-
-fn select_chains<'a>(
-    report: &'a TraceabilityReport,
-    scope: &str,
-    target: Option<&str>,
-) -> Vec<&'a TraceabilityChain> {
-    let selected: Vec<_> = match scope {
-        "module" => target
-            .map(|module| {
-                report
-                    .chains
-                    .iter()
-                    .filter(|chain| {
-                        chain.artifact_id == module
-                            || chain.artifact_id.starts_with(&format!("{}::", module))
-                            || chain.traces_to.iter().any(|link| link.target_id == module)
-                            || chain.traced_by.iter().any(|link| link.target_id == module)
-                    })
-                    .collect()
-            })
-            .unwrap_or_default(),
-        "requirement" => target
-            .map(|requirement| {
-                report
-                    .chains
-                    .iter()
-                    .filter(|chain| {
-                        chain.artifact_id == requirement
-                            || chain
-                                .traces_to
-                                .iter()
-                                .any(|link| link.target_id == requirement)
-                            || chain
-                                .traced_by
-                                .iter()
-                                .any(|link| link.target_id == requirement)
-                    })
-                    .collect()
-            })
-            .unwrap_or_default(),
-        _ => report.chains.iter().collect(),
-    };
-    if selected.is_empty() && scope != "project" {
-        report
-            .chains
-            .iter()
-            .filter(|chain| target.is_some_and(|needle| chain.artifact_id.contains(needle)))
-            .collect()
-    } else {
-        selected
-    }
-}
-
-fn render_links(output: &mut String, tag: &str, links: &[TraceLink]) {
-    output.push_str(&format!("      <{}>\n", tag));
-    for link in links {
-        output.push_str(&format!(
-            "        <Link target=\"{}\" type=\"{}\" relationship=\"{}\" />\n",
-            xml_attr(&link.target_id),
-            xml_attr(&link.target_type),
-            xml_attr(&link.relationship)
-        ));
-    }
-    output.push_str(&format!("      </{}>\n", tag));
-}
-
-fn xml_attr(value: &str) -> String {
-    value
-        .replace('&', "&amp;")
-        .replace('"', "&quot;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-}
-
-fn xml_text(value: &str) -> String {
-    value
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
 }
 
 #[cfg(test)]

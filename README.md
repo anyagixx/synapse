@@ -279,7 +279,7 @@ Dashboard routes exposed by `syn serve`:
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
 | Тестов | **184** (cargo test --all-targets) |
-| Контрактов в своём коде | **91/91** |
+| Контрактов в своём коде | **93/93** |
 | Belief-state coverage | **85/85** |
 | Traceability | **strict, 99.1%** |
 | Non-human warnings | **0** |
