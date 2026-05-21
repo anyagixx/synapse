@@ -2,8 +2,13 @@
 <VERIFICATION id="V-M-DASHBOARD" module="M-DASHBOARD" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test dashboard --all-targets</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Dashboard exposes JSON payloads for belief states, MentalTests, traceability, cascade impact, and cascade history.</ASSERTION>
+    <ASSERTION>Dashboard renders pages for /belief-states, /belief-state/{module_id}, /mental-tests, /traceability/{artifact_id}, /cascade/preview, and /cascade/history.</ASSERTION>
+    <ASSERTION>Cascade preview routes use M-GRACE-CASCADE as the data source and preserve JSON validity.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>

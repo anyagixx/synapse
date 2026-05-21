@@ -135,6 +135,11 @@
     <REL source="M-CLI-SETUP-COMMANDS" target="M-HOOKS" type="DEPENDS" />
     <REL source="M-COMPRESS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-GRACE-STATUS" type="DEPENDS" />
+    <REL source="M-DASHBOARD" target="M-GRACE-BELIEF-STATE" type="DEPENDS" />
+    <REL source="M-DASHBOARD" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
+    <REL source="M-DASHBOARD" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
+    <REL source="M-DASHBOARD" target="M-GRACE-CASCADE" type="DEPENDS" />
+    <REL source="M-DASHBOARD" target="M-GRACE-CASCADE-CHANGE" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-GRAPHRAG" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-CONFIG" type="DEPENDS" />

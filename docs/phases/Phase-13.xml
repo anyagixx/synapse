@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-13" status="active">
+<PHASE id="Phase-13" status="done">
   <NAME>Professional GRACE Framework Upgrade</NAME>
   <GOAL>Implement the grace-upgrade-guide roadmap as a persistent MyGRACE execution plan, starting with Sprint 1 P0 Foundation and continuing through all 13 feature sections without losing order across context compaction.</GOAL>
   <SOURCE_GUIDE>
@@ -137,27 +137,27 @@
         <VERIFY status="passed">Tests for Markdown guide parsing, pass summary, failure XML with LOG evidence, submit report handoff, custom and built-in console tool registration, MCP run_test_guide/submit_test_report handlers, tester agent configuration output, 36-tool MCP parity, refresh, verify --ci, review --mode full --ci, clippy, and 167-test suite.</VERIFY>
       </step-11>
     </sprint-3>
-    <sprint-4 name="P3 Integration and Polish" status="active">
+    <sprint-4 name="P3 Integration and Polish" status="done">
       <step-12 section="3.2" status="done" priority="P3">
         <TITLE>Cascade Update Engine</TITLE>
         <INTENT>Detect downstream impact of artifact changes, preview cascades, apply safe contract updates, and record cascade changelogs.</INTENT>
         <IMPLEMENTATION>Create M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, and M-MCP-SERVER-CASCADE-TOOLS; add docs/cascade layout, cascade_impact/cascade_execute schemas and routing, cascade-no-drift verify check, cascade-aware refresh/status/review, capability parity, and docs updates.</IMPLEMENTATION>
         <VERIFY status="passed">Eight cascade/MCP tests for requirement impact analysis, unrelated artifact no-op, preview chain formatting, changelog creation, post-cascade drift detection, MCP preview/execute handlers; cargo test --all-targets 175 passed, clippy clean, refresh clean, verify --ci passed, review --mode full --ci passed.</VERIFY>
       </step-12>
-      <step-13 section="4.2" status="pending" priority="P3">
+      <step-13 section="4.2" status="done" priority="P3">
         <TITLE>Belief State Dashboard</TITLE>
         <INTENT>Expose belief states, mental tests, traceability chains, cascade preview, and cascade history in the existing dashboard.</INTENT>
-        <IMPLEMENTATION>Extend dashboard routes and JSON APIs for belief-states, mental-tests, traceability, cascade-impact, and cascade history using the new GRACE modules as data sources.</IMPLEMENTATION>
-        <VERIFY>Tests or smoke checks for each route/API, JSON validity, module detail rendering, and data refresh after artifact changes.</VERIFY>
+        <IMPLEMENTATION>Extend M-DASHBOARD with pages and JSON APIs for belief-states, module belief-state detail, mental-tests, traceability, cascade-impact preview, and cascade history using M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, and M-GRACE-CASCADE-CHANGE as data sources.</IMPLEMENTATION>
+        <VERIFY status="passed">Six dashboard/belief-state tests cover persisted state collection, belief-state API/detail rendering, MentalTest JSON, traceability artifact filtering, cascade preview JSON, and cascade history rendering; cargo test --all-targets 181 passed.</VERIFY>
       </step-13>
     </sprint-4>
   </SPRINTS>
   <GLOBAL_ACCEPTANCE>
-    <CHECK status="pending">syn verify reports the new checks: belief-state-exists, mental-tests-passed, non-human-*, structured-log-format, links-*, traceability-*, dataflow-*, genorder-*, cascade-no-drift, and anchor-syntax-consistent.</CHECK>
-    <CHECK status="pending">syn init generates complete requirements.xml, technology.xml, DevelopmentPlan-compatible sharded artifacts, graph-index.xml, and verification-index.xml.</CHECK>
-    <CHECK status="pending">MCP tools exist and are listed in capabilities: extract_belief_state, mental_test_run, analyze_logs, traceability_report, generate_requirements, generate_technology, generate_development_plan, cascade_impact, cascade_execute, run_test_guide, and submit_test_report.</CHECK>
-    <CHECK status="pending">Synapse self-verifies against the new checks without regressing legacy projects that use comma-separated LINKS or START/END anchors.</CHECK>
-    <CHECK status="pending">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
+    <CHECK status="passed">syn verify reports the new checks: belief-state-exists, mental-tests-passed, non-human-*, structured-log-format, links-*, traceability-*, dataflow-*, genorder-*, cascade-no-drift, and anchor-syntax-consistent.</CHECK>
+    <CHECK status="passed">syn init generates complete requirements.xml, technology.xml, DevelopmentPlan-compatible sharded artifacts, graph-index.xml, and verification-index.xml.</CHECK>
+    <CHECK status="passed">MCP tools exist and are listed in capabilities: extract_belief_state, mental_test_run, analyze_logs, traceability_report, generate_requirements, generate_technology, generate_development_plan, cascade_impact, cascade_execute, run_test_guide, and submit_test_report.</CHECK>
+    <CHECK status="passed">Synapse self-verifies against the new checks without regressing legacy projects that use comma-separated LINKS or START/END anchors.</CHECK>
+    <CHECK status="passed">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
   </GLOBAL_ACCEPTANCE>
   <ROADMAP_IMPROVEMENTS>
     <improvement-1 id="TRACEABILITY-ADOPTION" status="planned" priority="P1">
@@ -169,8 +169,8 @@
     </improvement-1>
   </ROADMAP_IMPROVEMENTS>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 4 step-13 section 4.2 Belief State Dashboard.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-DASHBOARD.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-GRACE-BELIEF-STATE.xml, docs/modules/M-GRACE-MENTAL-TEST.xml, docs/modules/M-GRACE-TRACEABILITY.xml, docs/modules/M-GRACE-CASCADE.xml</READ_FIRST>
+    <NEXT_ACTION>Phase-13 complete. Next read plan-index.xml, then run release readiness review or prepare a public release candidate.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/product-readiness-assessment.xml, README.md, docs/COMMANDS.md</READ_FIRST>
     <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.2-belief-state-dashboard.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>

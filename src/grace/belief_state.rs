@@ -10,12 +10,13 @@
 // BeliefState — Explicit AI understanding, strategy, expectations, and risks for a module
 // BeliefStateReport — Project-level belief state coverage and structural validation report
 // parse_belief_states — Parse BELIEF_STATE blocks from source or artifact text
+// collect_project_belief_states — Collect source and persisted BELIEF_STATE blocks with file paths
 // scan_project_belief_states — Validate discovered belief states and report module coverage
 // extract_and_store_belief_state — Build and persist a deterministic belief state scaffold
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Added observable belief state parser, validator, scanner, and storage scaffold]
+// LAST_CHANGE: [v1.1.0 — Exposed project-level belief state collection for dashboard rendering]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -190,6 +191,17 @@ pub fn parse_belief_states(content: &str) -> Vec<BeliefState> {
 }
 // END_parse_belief_states
 
+// START_CONTRACT_collect_project_belief_states
+// PURPOSE: Collect all BELIEF_STATE blocks from source files and persisted docs/belief-states artifacts
+// INPUTS: { root: &Path — project root }
+// OUTPUTS: { anyhow::Result<Vec<BeliefState>> }
+// START_collect_project_belief_states
+pub fn collect_project_belief_states(root: &Path) -> anyhow::Result<Vec<BeliefState>> {
+    let (states, _) = collect_project_belief_states_with_counts(root)?;
+    Ok(states)
+}
+// END_collect_project_belief_states
+
 // START_CONTRACT_scan_project_belief_states
 // PURPOSE: Validate source and docs/belief-states BELIEF_STATE blocks and report project module coverage
 // INPUTS: { root: &Path — project root }
@@ -207,40 +219,7 @@ pub fn scan_project_belief_states(root: &Path) -> anyhow::Result<BeliefStateRepo
     module_ids.dedup();
     let total_modules = module_ids.len();
 
-    let walker = crate::indexer::walker::Walker::new(root);
-    let mut discovered = Vec::new();
-    for file in walker.walk() {
-        if file.language == "markdown" {
-            continue;
-        }
-        let full_path = root.join(&file.path);
-        let Ok(content) = std::fs::read_to_string(&full_path) else {
-            continue;
-        };
-        for mut state in parse_belief_states(&content) {
-            state.file_path = Some(file.path.clone());
-            discovered.push(state);
-        }
-    }
-
-    let layout = DocsLayout::new(root);
-    let mut persisted_states = 0usize;
-    if let Ok(entries) = std::fs::read_dir(layout.belief_states_dir()) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if !path.is_file() {
-                continue;
-            }
-            let Ok(content) = std::fs::read_to_string(&path) else {
-                continue;
-            };
-            for mut state in parse_belief_states(&content) {
-                state.file_path = Some(path.display().to_string());
-                persisted_states += 1;
-                discovered.push(state);
-            }
-        }
-    }
+    let (discovered, persisted_states) = collect_project_belief_states_with_counts(root)?;
 
     let mut seen_modules = HashSet::new();
     let mut issues = Vec::new();
@@ -321,6 +300,52 @@ pub fn extract_and_store_belief_state(
 // END_extract_and_store_belief_state
 
 // END_public_api
+
+// START_CONTRACT_collect_project_belief_states_with_counts
+// PURPOSE: Collect source and persisted belief states while counting persisted artifacts for coverage reports
+// INPUTS: { root: &Path — project root }
+// OUTPUTS: { anyhow::Result<(Vec<BeliefState>, usize)> }
+// START_collect_project_belief_states_with_counts
+fn collect_project_belief_states_with_counts(
+    root: &Path,
+) -> anyhow::Result<(Vec<BeliefState>, usize)> {
+    let walker = crate::indexer::walker::Walker::new(root);
+    let mut discovered = Vec::new();
+    for file in walker.walk() {
+        if file.language == "markdown" {
+            continue;
+        }
+        let full_path = root.join(&file.path);
+        let Ok(content) = std::fs::read_to_string(&full_path) else {
+            continue;
+        };
+        for mut state in parse_belief_states(&content) {
+            state.file_path = Some(file.path.clone());
+            discovered.push(state);
+        }
+    }
+
+    let layout = DocsLayout::new(root);
+    let mut persisted_states = 0usize;
+    if let Ok(entries) = std::fs::read_dir(layout.belief_states_dir()) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let Ok(content) = std::fs::read_to_string(&path) else {
+                continue;
+            };
+            for mut state in parse_belief_states(&content) {
+                state.file_path = Some(path.display().to_string());
+                persisted_states += 1;
+                discovered.push(state);
+            }
+        }
+    }
+    Ok((discovered, persisted_states))
+}
+// END_collect_project_belief_states_with_counts
 
 #[derive(Debug, Clone, Default)]
 struct ModuleInfo {
@@ -776,4 +801,40 @@ mod tests {
         assert!(parsed[0].valid);
     }
     // END_test_extract_and_store_belief_state_writes_artifact
+
+    // START_CONTRACT_test_collect_project_belief_states_reads_persisted_artifact
+    // PURPOSE: Verify dashboard-facing collection returns persisted belief-state artifacts with file paths
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: writes temp docs artifacts
+    // START_test_collect_project_belief_states_reads_persisted_artifact
+    #[test]
+    fn test_collect_project_belief_states_reads_persisted_artifact() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let layout = DocsLayout::new(dir.path());
+        std::fs::create_dir_all(layout.belief_states_dir()).expect("belief states dir");
+        let state = scaffold_belief_state(
+            "M-SAMPLE",
+            "dashboard fixture",
+            &ModuleInfo {
+                purpose: "Render belief state details".into(),
+                scope: "Dashboard collection".into(),
+                depends: Vec::new(),
+            },
+        );
+        std::fs::write(
+            layout.belief_states_dir().join("M-SAMPLE.xml"),
+            state.to_xml(),
+        )
+        .expect("write belief state");
+
+        let states = collect_project_belief_states(dir.path()).expect("collect states");
+        assert_eq!(states.len(), 1);
+        assert_eq!(states[0].module_id, "M-SAMPLE");
+        assert!(states[0]
+            .file_path
+            .as_deref()
+            .unwrap_or_default()
+            .contains("M-SAMPLE.xml"));
+    }
+    // END_test_collect_project_belief_states_reads_persisted_artifact
 }

@@ -52,7 +52,7 @@ This page lists shipped CLI commands only.
 | `syn config` | Print current configuration |
 | `syn config path` | Print the config file path |
 | `syn config edit` | Open the config file in `$EDITOR` |
-| `syn serve` | Start the local dashboard |
+| `syn serve` | Start the local dashboard with health, token, belief-state, MentalTest, traceability, and cascade views |
 
 ## Skills
 

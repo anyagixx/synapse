@@ -234,12 +234,23 @@ my-project/
 | `syn status` | Health-отчёт |
 | `syn doctor` | Диагностика (10 проверок) |
 | `syn history "q"` | Поиск по git-истории |
-| `syn serve` | Web дашборд |
+| `syn serve` | Web дашборд: health/status/tokens plus GRACE state views |
 | `syn proxy -- <cmd>` | Ручной прокси |
 | `syn gain` | Статистика экономии |
 | `syn gain --graph` | Статистика экономии с ASCII-графом |
 | `syn skills list|show|run` | Локальный запуск и отладка 15 GRACE skills |
 | `syn ci verify|review|status` | CI-friendly strict outputs |
+
+Dashboard routes exposed by `syn serve`:
+
+| Route | Назначение |
+|-------|-----------|
+| `/belief-states` | BeliefState coverage and module drill-down links |
+| `/mental-tests` | DevelopmentPlan MentalTest status |
+| `/traceability/{artifact_id}` | Artifact-scoped traceability chains |
+| `/cascade/preview?artifact=...&change=...` | Cascade impact preview |
+| `/cascade/history` | Cascade changelog history |
+| `/api/belief-states`, `/api/mental-tests`, `/api/traceability`, `/api/cascade-impact`, `/api/cascade-history` | JSON API for automation |
 
 ---
 
@@ -267,7 +278,7 @@ my-project/
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
-| Тестов | **175** (cargo test --all-targets) |
+| Тестов | **181** (cargo test --all-targets) |
 | Контрактов в своём коде | **91/91** |
 | self-verify | **ALL PASS** |
 

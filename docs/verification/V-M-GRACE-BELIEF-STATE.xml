@@ -3,12 +3,14 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test grace::belief_state --lib</COMMAND>
+    <COMMAND>cargo test grace::belief_state::tests::test_collect_project_belief_states_reads_persisted_artifact --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_extract_belief_state_writes_artifact --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Parser extracts valid BELIEF_STATE blocks with understanding, data flows, strategy, verification intent, and risks.</ASSERTION>
     <ASSERTION>Validator reports missing required belief state fields.</ASSERTION>
+    <ASSERTION>collect_project_belief_states returns persisted docs/belief-states artifacts with source paths for dashboard rendering.</ASSERTION>
     <ASSERTION>extract_belief_state persists a validated docs/belief-states/M-*.xml artifact.</ASSERTION>
     <ASSERTION>verify_project and review_code include belief-state-exists coverage while keeping legacy projects migratable.</ASSERTION>
   </TRACE_ASSERTIONS>
