@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-20-V2-5-0-POST-RELEASE" status="current">
-  <DATE>2026-05-20</DATE>
-  <PHASE_GATE>v2.5.1 public Linux/macOS feedback release is complete: the verified commit was pushed, hosted CI passed, tag v2.5.1 was published, release assets were generated, and public fresh-install smoke passed from the tag.</PHASE_GATE>
-  <SUMMARY>Synapse is now a public Linux/macOS feedback-release developer tool with feedback-driven MyGRACE ergonomics. v2.5.1 closes Phase-14 debt gates with strict traceability, full belief-state baseline coverage, zero legacy typed-LINKS migration warnings, zero strict non-human warnings, and hosted release validation.</SUMMARY>
+<PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-21-V2-5-2-PHASE-16" status="current">
+  <DATE>2026-05-21</DATE>
+  <PHASE_GATE>v2.5.1 public Linux/macOS feedback release remains the latest published release; the local v2.5.2 development line has completed Phase-16 traceability/LDD/maintainability polish and is ready for release-candidate gates.</PHASE_GATE>
+  <SUMMARY>Synapse is now a public Linux/macOS feedback-release developer tool with feedback-driven MyGRACE ergonomics. Phase-16 raises the v2.5.2 line to strict 100.0% traceability, full belief-state baseline coverage, zero canonical drift, zero strict non-human warnings, and lower MCP GRACE handler size pressure.</SUMMARY>
   <SCORES>
-    <OVERALL_READINESS>9.7/10</OVERALL_READINESS>
+    <OVERALL_READINESS>9.8/10</OVERALL_READINESS>
     <RELEASE_CANDIDATE_READINESS>10.0/10</RELEASE_CANDIDATE_READINESS>
-    <MYGRACE_TRUTH>9.8/10</MYGRACE_TRUTH>
+    <MYGRACE_TRUTH>10.0/10</MYGRACE_TRUTH>
     <RELEASE_INSTALL_TRUTH>9.8/10</RELEASE_INSTALL_TRUTH>
     <LINUX_MACOS_INSTALL_READINESS>9.8/10</LINUX_MACOS_INSTALL_READINESS>
     <PUBLIC_DOC_TRUTH>9.8/10</PUBLIC_DOC_TRUTH>
@@ -15,10 +15,10 @@
     <PROTOCOL_BOOTSTRAP_RELIABILITY>9.2/10</PROTOCOL_BOOTSTRAP_RELIABILITY>
   </SCORES>
   <EVIDENCE>
-    <MYGRACE_DRIFT>0 canonical drift across 70 code modules, graph shards, and verification shards; 76/76 contracted files, 368 function contracts, and 619 closed semantic blocks after post-release cleanup.</MYGRACE_DRIFT>
-    <LOCAL_CI_GATE>scripts/ci.sh passed locally on 2026-05-20: cargo fmt --check, clippy -D warnings, runtime panic guard, 107 tests, release version guard, release freshness guard, release-candidate dry-run, release/install smoke, verify --ci, review --mode full --ci, refresh --json, and status --json.</LOCAL_CI_GATE>
+    <MYGRACE_DRIFT>0 canonical drift across 85 code modules, graph shards, and verification shards; 94/94 contracted files, 649 function contracts, and 1002 closed semantic blocks after Phase-16.</MYGRACE_DRIFT>
+    <LOCAL_CI_GATE>scripts/ci.sh passed locally on 2026-05-21: cargo fmt --check, clippy -D warnings, runtime panic guard, 185 tests, release version guard, release freshness guard, release-candidate dry-run, release/install smoke, verify --ci, review --mode full --ci, refresh --json, and status --json.</LOCAL_CI_GATE>
     <HOSTED_CI_GATE>GitHub Actions run 26157234065 passed on main after commit 820fc7ed336b4ab2fc262f2239d05077ae2b1821, including Linux/macOS platform tests, MyGRACE gate, security audit, fresh-install smoke, and release-smoke matrix.</HOSTED_CI_GATE>
-    <RELEASE_VERSION_TRUTH>Tag v2.5.1 is published at the verified release line, and the release workflow generated Linux/macOS artifacts plus SHA256SUMS. The main development line now targets v2.5.2 so Phase-15 development commits remain fresh relative to the published v2.5.1 tag.</RELEASE_VERSION_TRUTH>
+    <RELEASE_VERSION_TRUTH>Tag v2.5.1 is published at the verified release line, and the release workflow generated Linux/macOS artifacts plus SHA256SUMS. The main development line targets v2.5.2, with release freshness guards expected to treat v2.5.2 as unpublished until the Phase-16 release commit is pushed and tagged.</RELEASE_VERSION_TRUTH>
     <INSTALLER_TRUTH>The installer still prefers signed-off release artifacts plus SHA256SUMS verification. Source fallback is now explicit: SYN_INSTALL_SOURCE_REF for hosted fresh-install smoke, selected Git tag when available, and default main branch only during the pre-tag release-candidate window.</INSTALLER_TRUTH>
     <FRESH_INSTALL_TRUTH>Push CI fresh-install smoke uses raw.githubusercontent.com at the exact workflow commit plus SYN_INSTALL_SOURCE_REF, preventing a current-HEAD smoke job from silently installing an older release tag. A post-release public-tag smoke also passed against https://raw.githubusercontent.com/anyagixx/synapse/v2.5.1/install.sh and installed syn 2.5.1 from the release artifact.</FRESH_INSTALL_TRUTH>
     <PACKAGE_TRUTH>The Cargo package is synapse-agent to avoid the crates.io syn parser conflict; the public binary and library crate remain syn.</PACKAGE_TRUTH>
@@ -33,5 +33,5 @@
     <RISK_EXTERNAL_ADOPTION_EVIDENCE>Real user feedback still needs to be collected across more Linux/macOS environments after the public release.</RISK_EXTERNAL_ADOPTION_EVIDENCE>
     <RISK_TEST_FILE_SIZE_TARGET>tests/docs_parity.rs and tests/integration_test.rs exceed the 500-line Phase-2 maintainability target while remaining under the hard 1300-line gate.</RISK_TEST_FILE_SIZE_TARGET>
   </RESIDUAL_RISKS>
-  <NEXT_PHASE>Execute Phase-15 maintainability splits on the v2.5.2 development line, collect Linux/macOS user feedback from the public v2.5.1 release, keep MyGRACE truth gates green, and defer Windows packaging to a later dedicated release line.</NEXT_PHASE>
+  <NEXT_PHASE>Commit the Phase-16 v2.5.2 release-candidate line, push main, tag and publish v2.5.2 when hosted gates pass, collect Linux/macOS user feedback, and defer Windows packaging to a later dedicated release line.</NEXT_PHASE>
 </PRODUCT_READINESS_ASSESSMENT>

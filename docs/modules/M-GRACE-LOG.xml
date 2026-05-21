@@ -2,11 +2,11 @@
 <MODULE id="M-GRACE-LOG" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-LOG</NAME>
   <PURPOSE>Structured GRACE LOG model, validator, and rule-based analyzer for Log Driven Development</PURPOSE>
-  <SCOPE>GraceLog, LogLevel, LogResult, StructuredLogFormatReport, LogAnalysisReport, source scan, log parsing, and analysis helpers</SCOPE>
+  <SCOPE>GraceLog, LogLevel, LogResult, StructuredLogFormatReport, LogAnalysisReport, source scan, log parsing, TRACEABILITY evidence, and analysis helpers</SCOPE>
   <FILES>
     <FILE>src/grace/log.rs</FILE>
   </FILES>
   <DEPENDS>M-INDEXER-WALKER</DEPENDS>
-  <LINKS>V-M-GRACE-LOG</LINKS>
+  <LINKS>V-M-GRACE-LOG,docs/phases/Phase-16.xml</LINKS>
   <VERIFICATION_REF>V-M-GRACE-LOG</VERIFICATION_REF>
 </MODULE>

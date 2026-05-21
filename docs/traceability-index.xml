@@ -5,7 +5,7 @@
     <PRIMARY>true</PRIMARY>
     <GENERATED_BY>M-GRACE-TRACEABILITY</GENERATED_BY>
   </META>
-  <SUMMARY requirements="3" use_cases="2" traced_modules="85" traced_functions="648" traced_logs="1" score="0.991" />
+  <SUMMARY requirements="3" use_cases="2" traced_modules="85" traced_functions="648" traced_logs="4" score="1.000" />
   <ENFORCEMENT mode="strict">Traceability gaps fail verification.</ENFORCEMENT>
   <REQUIREMENTS>
     <REQUIREMENT id="NFR-001">
@@ -71,7 +71,7 @@
       </IMPLEMENTED_BY>
     </USE_CASE>
     <USE_CASE id="UC-002">
-      <IMPLEMENTED_BY total="410" shown="10">
+      <IMPLEMENTED_BY total="414" shown="10">
         <ARTIFACT ref="M-MCP-SERVER" type="module" relationship="implemented_by" />
         <ARTIFACT ref="M-MCP-SERVER::McpServer::new" type="function" relationship="implemented_by" />
         <ARTIFACT ref="M-MCP-SERVER::McpServer::start_stdio" type="function" relationship="implemented_by" />
@@ -82,7 +82,7 @@
         <ARTIFACT ref="M-MCP-SERVER::build_graphrag" type="function" relationship="implemented_by" />
         <ARTIFACT ref="M-MCP-SERVER-GRACE-TOOLS" type="module" relationship="implemented_by" />
         <ARTIFACT ref="M-MCP-SERVER-GRACE-TOOLS::handle_verify" type="function" relationship="implemented_by" />
-        <TRUNCATED remaining="400" />
+        <TRUNCATED remaining="404" />
       </IMPLEMENTED_BY>
     </USE_CASE>
   </USE_CASES>

@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Added structured LOG model, parser, validator, and analyzer]
+// LAST_CHANGE: [v1.1.0 - Added TRACEABILITY evidence to LOG test fixtures]
 // END_CHANGE_SUMMARY
 
 use std::collections::{HashMap, HashSet};
@@ -723,6 +723,8 @@ mod tests {
                 "//   EVENT: run_started\n",
                 "//   DECISION: Run the fixture\n",
                 "//   RESULT: success\n",
+                "//   TRACEABILITY:\n",
+                "//     UC-002: malformed log fixtures still point to verification intent\n",
                 "// </LOG>\n",
                 "// START_run\n",
                 "fn run() {}\n",
@@ -747,6 +749,8 @@ mod tests {
             "  DECISION: Authorize payment\n",
             "  EXPECTATION: Payment authorization succeeds\n",
             "  RESULT: failure\n",
+            "  TRACEABILITY:\n",
+            "    UC-002: anomaly analysis supports verified project changes\n",
             "</LOG>\n"
         );
         let report = analyze_log_content(content, "anomaly", Some("M-PAY"));

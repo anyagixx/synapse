@@ -19,7 +19,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.4.0 - Split traceability defaults and rendering helpers into focused modules]
+// LAST_CHANGE: [v1.5.0 - Count unique function trace artifacts and skip LOG format templates]
 // END_CHANGE_SUMMARY
 
 use super::traceability_defaults::module_trace_defaults;
@@ -207,7 +207,7 @@ pub fn scan_project_traceability(root: &Path) -> anyhow::Result<TraceabilityRepo
 
     let contract_report =
         ContractValidator::validate_project_with_profile(root, GraceProfile::Lite)?;
-    let mut total_functions = 0usize;
+    let mut total_function_ids = BTreeSet::new();
     let mut traced_functions = BTreeSet::new();
     let mut traced_modules = BTreeSet::new();
 
@@ -243,8 +243,8 @@ pub fn scan_project_traceability(root: &Path) -> anyhow::Result<TraceabilityRepo
             module_business_links.push((seed.target_id.to_string(), seed.relationship.to_string()));
         }
         for function in &contract.function_contracts {
-            total_functions += 1;
             let function_id = format!("{}::{}", module_id, function.name);
+            total_function_ids.insert(function_id.clone());
             ensure_chain(&mut chains, &function_id, ArtifactType::Function);
             known.insert(function_id.clone());
             add_trace_link(
@@ -334,6 +334,7 @@ pub fn scan_project_traceability(root: &Path) -> anyhow::Result<TraceabilityRepo
     } else {
         log_scan.total_logs
     };
+    let total_functions = total_function_ids.len();
     let score_denominator = req_artifacts.requirements.len()
         + req_artifacts.use_cases.len()
         + total_functions
@@ -477,18 +478,30 @@ fn collect_log_traceability(
         }
         let content = std::fs::read_to_string(root.join(&file.path)).unwrap_or_default();
         for cap in log_re.captures_iter(&content) {
+            let attrs = &cap[1];
+            if attrs.contains("{}") {
+                continue;
+            }
             scan.total_logs += 1;
             let id = id_re
-                .captures(&cap[1])
+                .captures(attrs)
                 .map(|id_cap| id_cap[1].to_string())
                 .unwrap_or_else(|| format!("{}#log-{}", file.path, scan.total_logs));
             let log_id = format!("LOG:{}", id);
             ensure_chain(chains, &log_id, ArtifactType::LogEntry);
             known.insert(log_id.clone());
             let body = &cap[2];
-            if let Some(trace_section) = traceability_section(body) {
-                scan.logs_with_traceability += 1;
+            let trace_source = traceability_section(body).or_else(|| {
+                if attrs.to_ascii_lowercase().contains("traceability") {
+                    Some(attrs)
+                } else {
+                    None
+                }
+            });
+            if let Some(trace_section) = trace_source {
+                let mut has_trace_target = false;
                 for target_cap in target_re.captures_iter(trace_section) {
+                    has_trace_target = true;
                     let target = target_cap[1].to_string();
                     register_known_target(known, &target);
                     add_trace_link(
@@ -499,6 +512,9 @@ fn collect_log_traceability(
                         classify_artifact_id(&target),
                         "evidences",
                     );
+                }
+                if has_trace_target {
+                    scan.logs_with_traceability += 1;
                 }
             }
         }
@@ -848,6 +864,19 @@ mod tests {
     }
 
     #[test]
+    fn test_duplicate_function_names_count_as_one_trace_artifact() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        write_requirements(dir.path(), "REQ-001", "UC-001");
+        write_module_to(dir.path(), "first.rs", duplicate_function_module("First"));
+        write_module_to(dir.path(), "second.rs", duplicate_function_module("Second"));
+
+        let report = scan_project_traceability(dir.path()).expect("report");
+        assert_eq!(report.total_functions, 1);
+        assert_eq!(report.functions_with_traceability, 1);
+        assert!(report.untraced_functions.is_empty());
+    }
+
+    #[test]
     fn test_traceability_report_flags_dangling_link() {
         let dir = tempfile::tempdir().expect("tempdir");
         write_requirements(dir.path(), "REQ-001", "UC-001");
@@ -955,7 +984,40 @@ mod tests {
     }
 
     fn write_module(root: &Path, content: &str) {
+        write_module_to(root, "order.rs", content.to_string());
+    }
+
+    fn write_module_to(root: &Path, file_name: &str, content: String) {
         std::fs::create_dir_all(root.join("src")).expect("src");
-        std::fs::write(root.join("src/order.rs"), content).expect("source");
+        std::fs::write(root.join("src").join(file_name), content).expect("source");
+    }
+
+    fn duplicate_function_module(label: &str) -> String {
+        format!(
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-DUP\n",
+                "// PURPOSE: Duplicate {label} workflow\n",
+                "// SCOPE: Exercise duplicate trace artifact counting\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "//   -> UC-001 (implements) - duplicate use case\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// read_cargo_version - Reads version\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 - Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_read_cargo_version\n",
+                "// PURPOSE: Read cargo version\n",
+                "// START_read_cargo_version\n",
+                "pub fn read_cargo_version() {{}}\n",
+                "// END_read_cargo_version\n",
+            ),
+            label = label
+        )
     }
 }

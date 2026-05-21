@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Added cascade MCP helper module]
+// LAST_CHANGE: [v2.23.0 - Added contract suggestion MCP helper module]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_public_api
@@ -21,6 +21,7 @@
 // START_public_api
 mod server_cascade_tools;
 mod server_code_tools;
+mod server_contract_tools;
 mod server_grace_tools;
 mod server_response;
 mod server_tools;

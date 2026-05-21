@@ -9,8 +9,9 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>GraceLog emits XML-like LOG entries with EXPECTATION and RESULT fields.</ASSERTION>
+    <ASSERTION>LOG fixtures and emitted LOG examples can carry TRACEABILITY evidence to UC/NFR targets for LDD analysis.</ASSERTION>
     <ASSERTION>Source scan reports malformed LOG markers without requiring projects to have adopted LDD yet.</ASSERTION>
     <ASSERTION>Rule-based analyzer reports trajectory matches and anomalies from structured LOG content.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13</PHASE_GATE>
+  <PHASE_GATE>Phase-16</PHASE_GATE>
 </VERIFICATION>

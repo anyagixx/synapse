@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added agent-based testing guide parser and report workflow]
+// LAST_CHANGE: [v1.1.0 - Added traceability evidence to generated LOG failure snippets]
 // END_CHANGE_SUMMARY
 
 use crate::grace::layout::DocsLayout;
@@ -314,7 +314,7 @@ fn failure_report_xml(guide: &TestGuide, scenarios: &[TestScenarioResult]) -> St
         out.push_str("    <LogEvidence>\n");
         for evidence in &scenario.log_evidence {
             out.push_str(&format!(
-                "      <LOG ref=\"{}\"><Expected>Guide LOG expectations hold</Expected><Actual>{}</Actual></LOG>\n",
+                "      <LOG ref=\"{}\" traceability=\"UC-002\"><Expected>Guide LOG expectations hold</Expected><Actual>{}</Actual></LOG>\n",
                 xml_text(&slug(&scenario.name)),
                 xml_text(evidence)
             ));

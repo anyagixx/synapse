@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-16" status="done">
+  <NAME>LDD Traceability And Maintainability Polish</NAME>
+  <GOAL>Raise release-candidate quality by closing traceability denominator gaps, adding LOG traceability evidence, and splitting the largest MCP GRACE handler file below release-risk pressure.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRACE-TRACEABILITY" />
+    <MODULE_REF id="M-GRACE-LOG" />
+    <MODULE_REF id="M-GRACE-TESTING" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+  </MODULE_REFS>
+  <CONTEXT>
+    <STARTING_POINT>Post Phase-15: all gates pass, traceability score is 99.1%, traced_functions is 648/649 due duplicate function artifact identity, traced_logs is 1/6, and src/mcp/server_grace_tools.rs is 1280 lines.</STARTING_POINT>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-16.xml, docs/modules/M-GRACE-TRACEABILITY.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml</READ_FIRST>
+  </CONTEXT>
+  <STEPS>
+    <step-1 status="done" priority="P0">
+      <TITLE>Traceability Denominator Closure</TITLE>
+      <INTENT>Count function traceability by unique function artifact identity so duplicate helper names in one module do not under-report a fully traced project.</INTENT>
+      <VERIFY>cargo test traceability --all-targets passed; verify --ci reports 648/648 traced functions.</VERIFY>
+    </step-1>
+    <step-2 status="done" priority="P0">
+      <TITLE>LOG Traceability Evidence</TITLE>
+      <INTENT>Add explicit TRACEABILITY evidence to structured LOG fixtures and tester-agent LOG evidence so LDD signals are linked to UC/NFR intent.</INTENT>
+      <VERIFY>cargo test grace::log --lib and mcp::server_grace_tools --lib passed; verify --ci reports 4/4 traced LOG markers and 100.0% traceability score.</VERIFY>
+    </step-2>
+    <step-3 status="done" priority="P1">
+      <TITLE>MCP GRACE Handler Split</TITLE>
+      <INTENT>Extract suggest_contract helpers into a focused MCP helper module and reduce src/mcp/server_grace_tools.rs below the previous near-hard-limit size.</INTENT>
+      <VERIFY>cargo test mcp::server_contract_tools --lib and mcp::server_grace_tools --lib passed; src/mcp/server_grace_tools.rs reduced from 1280 to 1178 lines.</VERIFY>
+    </step-3>
+    <step-4 status="done" priority="P0">
+      <TITLE>Release Candidate Gate</TITLE>
+      <INTENT>Run full CI, refresh, verify, review, and release freshness gates for v2.5.2 after Phase-16 closes.</INTENT>
+      <VERIFY>bash scripts/ci.sh passed with 185 tests, release/install smoke, verify --ci, review --mode full --ci, refresh --json, and status --json.</VERIFY>
+    </step-4>
+  </STEPS>
+  <RESUME_POINTER>Phase-16 release-candidate gates passed locally. Next action: commit, push main, tag v2.5.2, and publish only after hosted gates pass.</RESUME_POINTER>
+</PHASE>

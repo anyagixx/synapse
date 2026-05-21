@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, and submit_test_report, guarded index and GraphRAG preload
+// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, and suggest_contract, guarded index and GraphRAG preload
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
 // LINKS: N/A
 
@@ -14,11 +14,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.11.0 - Routed cascade MCP tools]
+// LAST_CHANGE: [v3.12.0 - Routed suggest_contract through focused contract helper module]
 // END_CHANGE_SUMMARY
 
 use super::{
-    server_cascade_tools, server_code_tools, server_grace_tools, server_response, server_tools,
+    server_cascade_tools, server_code_tools, server_contract_tools, server_grace_tools,
+    server_response, server_tools,
 };
 use crate::config::Config;
 use crate::graphrag::GraphRag;
@@ -277,7 +278,7 @@ impl SynapseHandler {
                     "compress_text" => server_grace_tools::handle_compress(id, args).await,
                     "refresh_project" => server_grace_tools::handle_refresh(id, args).await,
                     "suggest_contract" => {
-                        server_grace_tools::handle_suggest_contract(id, args).await
+                        server_contract_tools::handle_suggest_contract(id, args).await
                     }
                     "lsp_hover" => server_code_tools::handle_lsp_hover(id, args).await,
                     "lsp_references" => server_code_tools::handle_lsp_references(id, args).await,
