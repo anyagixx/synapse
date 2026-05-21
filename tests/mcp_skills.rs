@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-MCP
 // PURPOSE: MCP and skills integration tests — verify registry, discovery, tester-agent guidance, and representative skill behavior
-// SCOPE: Tool count parity including agent-based testing tools, grace skill visibility, tester subagent setup, basic CLI skills commands
+// SCOPE: Tool count parity including cascade and agent-based testing tools, grace skill visibility, tester subagent setup, basic CLI skills commands
 // DEPENDS: M-CLI, M-MCP, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.20.0 — Updated MCP capability count for agent-based testing tools]
+// LAST_CHANGE: [v2.22.0 - Updated MCP capability count for cascade tools]
 // END_CHANGE_SUMMARY
 
 use std::sync::{Mutex, OnceLock};
@@ -42,8 +42,8 @@ fn test_skill_registry_count() {
 fn test_capabilities_include_skills() {
     assert!(capabilities::COMMANDS.iter().any(|(n, _)| *n == "skills"));
     assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 15);
-    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 21);
-    assert_eq!(capabilities::MCP_TOOLS.len(), 36);
+    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 23);
+    assert_eq!(capabilities::MCP_TOOLS.len(), 38);
 }
 
 #[test]
@@ -72,6 +72,8 @@ fn test_skill_engine_executes_init() {
     assert!(tmp.path().join("docs/verification-index.xml").exists());
     assert!(tmp.path().join("docs/belief-states").exists());
     assert!(tmp.path().join("docs/mental-tests").exists());
+    assert!(tmp.path().join("docs/cascade/previews").exists());
+    assert!(tmp.path().join("docs/cascade/changelogs").exists());
     assert!(tmp.path().join("docs/tests/guides").exists());
     assert!(tmp.path().join("docs/tests/results").exists());
 

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability, non-human patterns, agent-based testing)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability/non-human pattern/testing reporting, and anchor normalization export
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-TESTING, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability, non-human patterns, agent-based testing, cascade updates)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability/non-human pattern/testing/cascade reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-TESTING, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,12 +11,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.21.0 — Registered agent-based testing module]
+// LAST_CHANGE: [v2.22.0 - Registered cascade update modules]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
 pub mod belief_state;
 pub mod bootstrap;
+pub mod cascade;
+pub mod cascade_change;
 pub mod contract;
 pub mod development_plan;
 pub mod explain;
@@ -269,6 +271,33 @@ impl GraceEngine {
         refresh::Refresher::refresh(root)
     }
     // END_grace_engine_refresh_project
+
+    // START_CONTRACT_GraceEngine::cascade_impact
+    // PURPOSE: Analyze downstream cascade impact for one changed artifact
+    // INPUTS: { root: &Path }, { changed_artifact: &str }, { change_description: &str }
+    // OUTPUTS: { anyhow::Result<ImpactAnalysis> }
+    // START_grace_engine_cascade_impact
+    pub fn cascade_impact(
+        root: &Path,
+        changed_artifact: &str,
+        change_description: &str,
+    ) -> anyhow::Result<cascade::ImpactAnalysis> {
+        cascade::cascade_impact(root, changed_artifact, change_description)
+    }
+    // END_grace_engine_cascade_impact
+
+    // START_CONTRACT_GraceEngine::cascade_execute
+    // PURPOSE: Execute a cached cascade preview and persist proposals/changelog
+    // INPUTS: { root: &Path }, { options: cascade::CascadeExecuteOptions }
+    // OUTPUTS: { anyhow::Result<CascadeReport> }
+    // START_grace_engine_cascade_execute
+    pub fn cascade_execute(
+        root: &Path,
+        options: cascade::CascadeExecuteOptions,
+    ) -> anyhow::Result<cascade::CascadeReport> {
+        cascade::cascade_execute(root, options)
+    }
+    // END_grace_engine_cascade_execute
 }
 
 impl Default for GraceEngine {

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-REGISTRY
 // PURPOSE: Skill registry — declares 15 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
-// SCOPE: Skill metadata constants, built-in MCP tool descriptions including tester-agent tools, and lookup helpers
+// SCOPE: Skill metadata constants, built-in MCP tool descriptions including cascade and tester-agent tools, and lookup helpers
 // DEPENDS: M-SKILLS-TYPES
 // LINKS: M-SKILLS
 
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.20.0 — Documented agent-based testing MCP capabilities]
+// LAST_CHANGE: [v2.22.0 - Documented cascade MCP capabilities]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -291,6 +291,14 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     (
         "traceability_report",
         "Generate an end-to-end traceability matrix and gap report",
+    ),
+    (
+        "cascade_impact",
+        "Preview downstream artifact impact for a requirement or contract change",
+    ),
+    (
+        "cascade_execute",
+        "Execute a cached cascade preview and record proposals plus changelog",
     ),
     (
         "run_test_guide",

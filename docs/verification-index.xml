@@ -21,6 +21,8 @@
     <VERIFICATION id="V-M-GRACE-ANCHOR" module="M-GRACE-ANCHOR" path="docs/verification/V-M-GRACE-ANCHOR.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-BELIEF-STATE" module="M-GRACE-BELIEF-STATE" path="docs/verification/V-M-GRACE-BELIEF-STATE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-BOOTSTRAP" module="M-GRACE-BOOTSTRAP" path="docs/verification/V-M-GRACE-BOOTSTRAP.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-CASCADE" module="M-GRACE-CASCADE" path="docs/verification/V-M-GRACE-CASCADE.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-CASCADE-CHANGE" module="M-GRACE-CASCADE-CHANGE" path="docs/verification/V-M-GRACE-CASCADE-CHANGE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-CONTRACT" module="M-GRACE-CONTRACT" path="docs/verification/V-M-GRACE-CONTRACT.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-DEVELOPMENT-PLAN" module="M-GRACE-DEVELOPMENT-PLAN" path="docs/verification/V-M-GRACE-DEVELOPMENT-PLAN.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-EXPLAIN" module="M-GRACE-EXPLAIN" path="docs/verification/V-M-GRACE-EXPLAIN.xml" priority="normal" status="active" />
@@ -65,6 +67,7 @@
     <VERIFICATION id="V-M-MCP" module="M-MCP" path="docs/verification/V-M-MCP.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-LSP" module="M-MCP-LSP" path="docs/verification/V-M-MCP-LSP.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER" module="M-MCP-SERVER" path="docs/verification/V-M-MCP-SERVER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-MCP-SERVER-CASCADE-TOOLS" module="M-MCP-SERVER-CASCADE-TOOLS" path="docs/verification/V-M-MCP-SERVER-CASCADE-TOOLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-CODE-TOOLS" module="M-MCP-SERVER-CODE-TOOLS" path="docs/verification/V-M-MCP-SERVER-CODE-TOOLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-GRACE-TOOLS" module="M-MCP-SERVER-GRACE-TOOLS" path="docs/verification/V-M-MCP-SERVER-GRACE-TOOLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-RESPONSE" module="M-MCP-SERVER-RESPONSE" path="docs/verification/V-M-MCP-SERVER-RESPONSE.xml" priority="normal" status="active" />

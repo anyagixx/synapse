@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles, requirements/technology/development-plan generation, traceability reporting, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.20.0 — Added agent-based testing MCP tool schemas]
+// LAST_CHANGE: [v2.22.0 - Added cascade MCP tool schemas]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -175,6 +175,33 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                     "target": { "type": "string", "description": "Required for module or requirement scope, such as M-ORDER or REQ-001" },
                     "direction": { "type": "string", "description": "up | down", "default": "up" }
                 }
+            }
+        }),
+        serde_json::json!({
+            "name": "cascade_impact",
+            "description": "Preview downstream artifact impact for a requirement, contract, interface, or implementation change.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "changed_artifact": { "type": "string", "description": "Changed artifact id such as UC-001, REQ-001, M-ORDER, or M-ORDER::place_order" },
+                    "change_description": { "type": "string", "description": "Short description of what changed" },
+                    "preview_only": { "type": "boolean", "description": "When false, execute the cascade immediately after preview", "default": true }
+                },
+                "required": ["changed_artifact"]
+            }
+        }),
+        serde_json::json!({
+            "name": "cascade_execute",
+            "description": "Execute a cached cascade preview, write proposals, and record a cascade changelog.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "cascade_id": { "type": "string", "description": "Cascade id returned by cascade_impact, such as CSC-1234ABCD" },
+                    "auto_apply_contracts": { "type": "boolean", "description": "Allow safe contract proposal updates to be marked applied", "default": true },
+                    "auto_apply_code": { "type": "boolean", "description": "Allow code regeneration to be marked applied. Defaults to false for human review.", "default": false },
+                    "apply_to_phases": { "type": "array", "items": { "type": "string" }, "description": "Optional phase ids to scope proposal output" }
+                },
+                "required": ["cascade_id"]
             }
         }),
         serde_json::json!({

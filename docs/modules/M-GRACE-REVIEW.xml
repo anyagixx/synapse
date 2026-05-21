@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRACE-REVIEW" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-REVIEW</NAME>
-  <PURPOSE>GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, traceability, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets</PURPOSE>
-  <SCOPE>Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, traceability, non-human patterns, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity</SCOPE>
+  <PURPOSE>GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, traceability, cascade history, non-human patterns, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets</PURPOSE>
+  <SCOPE>Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, traceability, cascade history, non-human patterns, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity</SCOPE>
   <FILES>
     <FILE>src/grace/review.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-ANCHOR,M-GRACE-BELIEF-STATE,M-GRACE-CONTRACT,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-NON-HUMAN-PATTERNS,M-GRACE-INVENTORY,M-GRACE-LOG,M-GRACE-REQUIREMENTS,M-GRACE-TECHNOLOGY,M-GRACE-SEMANTIC,M-INDEXER-WALKER</DEPENDS>
+  <DEPENDS>M-GRACE-ANCHOR,M-GRACE-BELIEF-STATE,M-GRACE-CASCADE,M-GRACE-CASCADE-CHANGE,M-GRACE-CONTRACT,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-NON-HUMAN-PATTERNS,M-GRACE-INVENTORY,M-GRACE-LOG,M-GRACE-REQUIREMENTS,M-GRACE-TECHNOLOGY,M-GRACE-SEMANTIC,M-INDEXER-WALKER</DEPENDS>
   <LINKS>docs/graph-index.xml,docs/verification-index.xml</LINKS>
   <VERIFICATION_REF>V-M-GRACE-REVIEW</VERIFICATION_REF>
 </MODULE>

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
-// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state, mental-test, traceability, and test-guide storage, requirements/technology/development-plan templates, and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability/test-guide indexes, requirements, technology, and development-plan templates, and shard dirs
-// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING
+// PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state, mental-test, traceability, cascade, and test-guide storage, requirements/technology/development-plan templates, and bootstraps templates
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability/cascade/test-guide indexes, requirements, technology, and development-plan templates, and shard dirs
+// DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-CASCADE
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.20.0 — Added docs/tests guide and result paths]
+// LAST_CHANGE: [v2.22.0 - Added docs/cascade layout paths]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -119,6 +119,60 @@ impl DocsLayout {
     }
     // END_docs_layout_tests_results_dir
 
+    // START_CONTRACT_DocsLayout::cascade_dir
+    // PURPOSE: Return cascade artifact directory path
+    // OUTPUTS: { PathBuf — docs/cascade directory }
+    // START_docs_layout_cascade_dir
+    pub fn cascade_dir(&self) -> PathBuf {
+        self.docs_dir().join("cascade")
+    }
+    // END_docs_layout_cascade_dir
+
+    // START_CONTRACT_DocsLayout::cascade_previews_dir
+    // PURPOSE: Return cascade preview cache directory path
+    // OUTPUTS: { PathBuf — docs/cascade/previews directory }
+    // START_docs_layout_cascade_previews_dir
+    pub fn cascade_previews_dir(&self) -> PathBuf {
+        self.cascade_dir().join("previews")
+    }
+    // END_docs_layout_cascade_previews_dir
+
+    // START_CONTRACT_DocsLayout::cascade_pending_dir
+    // PURPOSE: Return explicit pending cascade marker directory path
+    // OUTPUTS: { PathBuf — docs/cascade/pending directory }
+    // START_docs_layout_cascade_pending_dir
+    pub fn cascade_pending_dir(&self) -> PathBuf {
+        self.cascade_dir().join("pending")
+    }
+    // END_docs_layout_cascade_pending_dir
+
+    // START_CONTRACT_DocsLayout::cascade_changelogs_dir
+    // PURPOSE: Return cascade changelog directory path
+    // OUTPUTS: { PathBuf — docs/cascade/changelogs directory }
+    // START_docs_layout_cascade_changelogs_dir
+    pub fn cascade_changelogs_dir(&self) -> PathBuf {
+        self.cascade_dir().join("changelogs")
+    }
+    // END_docs_layout_cascade_changelogs_dir
+
+    // START_CONTRACT_DocsLayout::cascade_proposals_dir
+    // PURPOSE: Return cascade proposal directory path
+    // OUTPUTS: { PathBuf — docs/cascade/proposals directory }
+    // START_docs_layout_cascade_proposals_dir
+    pub fn cascade_proposals_dir(&self) -> PathBuf {
+        self.cascade_dir().join("proposals")
+    }
+    // END_docs_layout_cascade_proposals_dir
+
+    // START_CONTRACT_DocsLayout::cascade_last_impact_path
+    // PURPOSE: Return latest cascade impact preview path
+    // OUTPUTS: { PathBuf — docs/cascade/last-impact.xml path }
+    // START_docs_layout_cascade_last_impact_path
+    pub fn cascade_last_impact_path(&self) -> PathBuf {
+        self.cascade_dir().join("last-impact.xml")
+    }
+    // END_docs_layout_cascade_last_impact_path
+
     // START_CONTRACT_DocsLayout::tests_index_path
     // PURPOSE: Return agent-based testing index path
     // OUTPUTS: { PathBuf — docs/tests/index.xml path }
@@ -178,6 +232,10 @@ impl DocsLayout {
         std::fs::create_dir_all(self.mental_tests_dir())?;
         std::fs::create_dir_all(self.tests_guides_dir())?;
         std::fs::create_dir_all(self.tests_results_dir())?;
+        std::fs::create_dir_all(self.cascade_previews_dir())?;
+        std::fs::create_dir_all(self.cascade_pending_dir())?;
+        std::fs::create_dir_all(self.cascade_changelogs_dir())?;
+        std::fs::create_dir_all(self.cascade_proposals_dir())?;
 
         self.write_if_missing(
             &self.graph_index_path(),

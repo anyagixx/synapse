@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-CASCADE" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-CASCADE</NAME>
+  <PURPOSE>Cascade update engine for GRACE artifact impact analysis, preview, execution, and drift checks</PURPOSE>
+  <SCOPE>ImpactAnalysis, affected artifact traversal, preview caching, cascade execution proposals, and cascade-no-drift reporting</SCOPE>
+  <FILES>
+    <FILE>src/grace/cascade.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CASCADE-CHANGE,M-GRACE-CONTRACT,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-INVENTORY,M-GRACE-LAYOUT,M-GRACE-TRACEABILITY</DEPENDS>
+  <LINKS>V-M-GRACE-CASCADE</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-CASCADE</VERIFICATION_REF>
+</MODULE>

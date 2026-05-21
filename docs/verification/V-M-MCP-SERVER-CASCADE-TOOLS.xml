@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MCP-SERVER-CASCADE-TOOLS" module="M-MCP-SERVER-CASCADE-TOOLS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test mcp::server_cascade_tools::tests::test_handle_cascade_impact_returns_preview --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_cascade_tools::tests::test_handle_cascade_execute_writes_report --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>MCP cascade_impact returns a preview content envelope and cascade id.</ASSERTION>
+    <ASSERTION>MCP cascade_execute uses cached previews and writes cascade changelogs.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

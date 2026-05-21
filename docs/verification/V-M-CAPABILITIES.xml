@@ -5,8 +5,8 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>VERIFY_CHECKS lists typed LINKS, structured LOG, belief-state, requirements, technology, development-plan DataFlow/GenerationOrder, mental-test, traceability, non-human pattern, and anchor syntax checks exposed by syn verify/status capability metadata.</ASSERTION>
-    <ASSERTION>MCP capability counts include run_test_guide and submit_test_report as core tools 20 and 21.</ASSERTION>
+    <ASSERTION>VERIFY_CHECKS lists typed LINKS, structured LOG, belief-state, requirements, technology, development-plan DataFlow/GenerationOrder, mental-test, traceability, cascade-no-drift, non-human pattern, and anchor syntax checks exposed by syn verify/status capability metadata.</ASSERTION>
+    <ASSERTION>MCP capability counts include cascade_impact, cascade_execute, run_test_guide, and submit_test_report as core tools.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-13</PHASE_GATE>
 </VERIFICATION>

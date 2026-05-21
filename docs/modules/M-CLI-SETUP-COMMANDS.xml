@@ -2,7 +2,7 @@
 <MODULE id="M-CLI-SETUP-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-SETUP-COMMANDS</NAME>
   <PURPOSE>CLI setup and indexing command handlers with guarded index storage status reporting and safe OpenCode config merge</PURPOSE>
-  <SCOPE>InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts, gitignore toggle, OpenCode MCP merge, and 36-tool setup summary</SCOPE>
+  <SCOPE>InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts, gitignore toggle, OpenCode MCP merge, and 38-tool setup summary</SCOPE>
   <FILES>
     <FILE>src/cli/setup_commands.rs</FILE>
   </FILES>

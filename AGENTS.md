@@ -294,6 +294,8 @@ Phase Gate: Call verify_project (phase level) + review_code (full)
 | `generate_development_plan` | Create complete DevelopmentPlan with DataFlows, GenerationOrder, and MentalTests |
 | `mental_test_run` | Run a DevelopmentPlan MentalTest and persist trace evidence before code generation |
 | `traceability_report` | Generate requirement/use-case to code/LOG traceability matrix |
+| `cascade_impact` | Preview downstream impact for changed requirements, contracts, interfaces, or implementation |
+| `cascade_execute` | Execute a cached cascade preview and record proposal/changelog artifacts |
 | `run_test_guide` | Run a natural-language tester-agent guide and persist summary/failure artifacts |
 | `submit_test_report` | Submit tester-agent XML failure report with LOG refs to developer |
 | `suggest_contract` | Generate MODULE_CONTRACT template for new modules |

@@ -2,7 +2,7 @@
 // MODULE_ID: M-MCP
 // PURPOSE: MCP module declaration — exports lsp and server sub-modules
 // SCOPE: Module declarations for MCP server facade and private server helper modules
-// DEPENDS: M-MCP-SERVER, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-MCP-LSP
+// DEPENDS: M-MCP-SERVER, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-MCP-LSP
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -12,13 +12,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Added private MCP server helper modules]
+// LAST_CHANGE: [v2.22.0 - Added cascade MCP helper module]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_public_api
 // PURPOSE: Export MCP server and LSP bridge modules
 // OUTPUTS: { lsp module }, { server module }
 // START_public_api
+mod server_cascade_tools;
 mod server_code_tools;
 mod server_grace_tools;
 mod server_response;

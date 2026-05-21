@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.21.0 — Added agent-based testing MCP capabilities]
+// LAST_CHANGE: [v2.22.0 - Added cascade MCP capabilities]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -50,7 +50,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("serve", "Start web dashboard"),
 ];
 
-pub const CORE_MCP_TOOL_COUNT: usize = 21;
+pub const CORE_MCP_TOOL_COUNT: usize = 23;
 pub const GRACE_SKILL_TOOL_COUNT: usize = 15;
 pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
 
@@ -165,6 +165,14 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
     (
         "traceability_report",
         "Generate an end-to-end traceability matrix and gap report",
+    ),
+    (
+        "cascade_impact",
+        "Preview downstream artifact impact for a requirement, contract, interface, or implementation change",
+    ),
+    (
+        "cascade_execute",
+        "Execute a cached cascade preview and record proposals plus changelog",
     ),
     (
         "run_test_guide",
@@ -288,6 +296,7 @@ pub const VERIFY_CHECKS: &[&str] = &[
     "traceability-code-traced",
     "traceability-logs-traced",
     "traceability-no-dangling",
+    "cascade-no-drift",
     "non-human-explicit-typing",
     "non-human-explicit-flow",
     "non-human-explicit-null",

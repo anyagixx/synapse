@@ -1,9 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REFRESH
-// PURPOSE: Artifact synchronization — detects and fixes drift between code contracts and MyGRACE shards
-// SCOPE: Refresher struct, RefreshReport, canonical inventory-backed drift detection and sync including generated DevelopmentPlan refresh
-// DEPENDS: M-GRACE-INVENTORY, M-GRACE-DEVELOPMENT-PLAN
-// LINKS: docs/graph-index.xml, docs/verification-index.xml, docs/modules/, docs/verification/, docs/development-plan.xml
+// PURPOSE: Artifact synchronization — detects and fixes drift between code contracts, cascade state, and MyGRACE shards
+// SCOPE: Refresher struct, RefreshReport, canonical inventory-backed drift detection, cascade pending drift, and sync including generated DevelopmentPlan refresh
+// DEPENDS: M-GRACE-CASCADE, M-GRACE-INVENTORY, M-GRACE-DEVELOPMENT-PLAN
+// LINKS: docs/graph-index.xml, docs/verification-index.xml, docs/modules/, docs/verification/, docs/development-plan.xml, docs/cascade/
 
 // START_MODULE_MAP
 // RefreshReport — Drift detection report with suggested actions
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.6.0 — Refresh DevelopmentPlan from source contracts during --fix]
+// LAST_CHANGE: [v2.22.0 - Added cascade drift to refresh report]
 // END_CHANGE_SUMMARY
 
 use crate::grace::inventory::{ArtifactDrift, MyGraceInventory};
@@ -33,6 +33,7 @@ pub struct RefreshReport {
     pub suggested_actions: Vec<String>,
     pub fixed: bool,
     pub canonical_drift: ArtifactDrift,
+    pub cascade_drift: crate::grace::cascade::CascadeDriftReport,
 }
 // END_RefreshReport
 
@@ -87,7 +88,7 @@ impl Refresher {
 // END_public_api
 
 fn report_from_drift(
-    _root: &Path,
+    root: &Path,
     drift: ArtifactDrift,
     fixed: bool,
 ) -> anyhow::Result<RefreshReport> {
@@ -98,6 +99,11 @@ fn report_from_drift(
     let in_verification_not_in_code = drift.verification_not_in_code.clone();
     let in_graph = total_modules.saturating_sub(not_in_graph.len());
     let in_verification = total_modules.saturating_sub(not_in_verification.len());
+    let cascade_drift = crate::grace::cascade::cascade_no_drift(root)?;
+    let mut suggested_actions = drift.suggested_actions.clone();
+    if !cascade_drift.passed {
+        suggested_actions.push("Run cascade_execute for pending cascade markers".into());
+    }
 
     Ok(RefreshReport {
         total_modules,
@@ -108,8 +114,9 @@ fn report_from_drift(
         not_in_verification,
         in_verification_not_in_code,
         contract_issues: drift.contract_issues.clone(),
-        suggested_actions: drift.suggested_actions.clone(),
+        suggested_actions,
         fixed,
         canonical_drift: drift,
+        cascade_drift,
     })
 }

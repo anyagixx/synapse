@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
-// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, traceability, non-human patterns, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, traceability, non-human patterns, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
+// PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, traceability, cascade history, non-human patterns, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, traceability, cascade history, non-human patterns, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.20.0 — Added non-human patterns review section]
+// LAST_CHANGE: [v2.22.0 - Added cascade history review section]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -331,6 +331,24 @@ impl Reviewer {
                 traceability.enforcement_mode
             ),
             issues: trace_issues,
+        });
+
+        let cascade = crate::grace::cascade::cascade_no_drift(root)?;
+        let cascade_history = crate::grace::cascade_change::list_changelog_entries(root)?;
+        sections.push(ReviewSection {
+            name: "cascade-history".into(),
+            passed: cascade.passed,
+            details: format!(
+                "pending={} changelogs={} latest={}",
+                cascade.pending_cascades,
+                cascade_history.changelog_count,
+                cascade_history
+                    .latest
+                    .as_ref()
+                    .map(|entry| entry.id.as_str())
+                    .unwrap_or("none")
+            ),
+            issues: cascade.issues,
         });
 
         let patterns = crate::grace::non_human_patterns::check_project_patterns(root, profile)?;

@@ -25,6 +25,8 @@
     <MODULE_REF id="M-GRACE" />
     <MODULE_REF id="M-GRACE-ANCHOR" />
     <MODULE_REF id="M-GRACE-BELIEF-STATE" />
+    <MODULE_REF id="M-GRACE-CASCADE" />
+    <MODULE_REF id="M-GRACE-CASCADE-CHANGE" />
     <MODULE_REF id="M-GRACE-CONTRACT" />
     <MODULE_REF id="M-GRACE-SEMANTIC" />
     <MODULE_REF id="M-GRACE-VERIFY" />
@@ -44,6 +46,7 @@
     <MODULE_REF id="M-GRAPHRAG" />
     <MODULE_REF id="M-GRAPHRAG-BUILDER" />
     <MODULE_REF id="M-GRAPHRAG-TYPES" />
+    <MODULE_REF id="M-MCP-SERVER-CASCADE-TOOLS" />
     <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
     <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
     <MODULE_REF id="M-MCP-SERVER-TOOLS" />
@@ -134,12 +137,12 @@
         <VERIFY status="passed">Tests for Markdown guide parsing, pass summary, failure XML with LOG evidence, submit report handoff, custom and built-in console tool registration, MCP run_test_guide/submit_test_report handlers, tester agent configuration output, 36-tool MCP parity, refresh, verify --ci, review --mode full --ci, clippy, and 167-test suite.</VERIFY>
       </step-11>
     </sprint-3>
-    <sprint-4 name="P3 Integration and Polish" status="pending">
-      <step-12 section="3.2" status="pending" priority="P3">
+    <sprint-4 name="P3 Integration and Polish" status="active">
+      <step-12 section="3.2" status="done" priority="P3">
         <TITLE>Cascade Update Engine</TITLE>
         <INTENT>Detect downstream impact of artifact changes, preview cascades, apply safe contract updates, and record cascade changelogs.</INTENT>
-        <IMPLEMENTATION>Create cascade and cascade_change modules, docs/cascade layout, cascade_impact and cascade_execute MCP handlers, cascade-no-drift verify check, and cascade-aware refresh/status/review.</IMPLEMENTATION>
-        <VERIFY>Tests for requirement impact analysis, unrelated artifact no-op, preview chain formatting, changelog creation, and post-cascade drift detection.</VERIFY>
+        <IMPLEMENTATION>Create M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, and M-MCP-SERVER-CASCADE-TOOLS; add docs/cascade layout, cascade_impact/cascade_execute schemas and routing, cascade-no-drift verify check, cascade-aware refresh/status/review, capability parity, and docs updates.</IMPLEMENTATION>
+        <VERIFY status="passed">Eight cascade/MCP tests for requirement impact analysis, unrelated artifact no-op, preview chain formatting, changelog creation, post-cascade drift detection, MCP preview/execute handlers; cargo test --all-targets 175 passed, clippy clean, refresh clean, verify --ci passed, review --mode full --ci passed.</VERIFY>
       </step-12>
       <step-13 section="4.2" status="pending" priority="P3">
         <TITLE>Belief State Dashboard</TITLE>
@@ -166,9 +169,9 @@
     </improvement-1>
   </ROADMAP_IMPROVEMENTS>
   <RESUME_POINTER>
-    <NEXT_ACTION>Begin Sprint 4 step-12 section 3.2 Cascade Update Engine.</NEXT_ACTION>
-    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-GRACE-REFRESH.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-GRACE-REVIEW.xml, docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml, docs/modules/M-CAPABILITIES.xml</READ_FIRST>
-    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-3-advanced-mechanics/3.2-cascade-update-engine.md</SOURCE_SPEC>
+    <NEXT_ACTION>Begin Sprint 4 step-13 section 4.2 Belief State Dashboard.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/modules/M-DASHBOARD.xml, docs/modules/M-GRACE-STATUS.xml, docs/modules/M-GRACE-BELIEF-STATE.xml, docs/modules/M-GRACE-MENTAL-TEST.xml, docs/modules/M-GRACE-TRACEABILITY.xml, docs/modules/M-GRACE-CASCADE.xml</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.2-belief-state-dashboard.md</SOURCE_SPEC>
   </RESUME_POINTER>
   <LOCAL_GATE>
     cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci

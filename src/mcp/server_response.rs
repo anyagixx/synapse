@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Extracted response helpers from M-MCP-SERVER]
+// LAST_CHANGE: [v2.3.0 - Added cascade-no-drift remediation hint]
 // END_CHANGE_SUMMARY
 
 use std::fmt::Display;
@@ -92,6 +92,7 @@ pub(crate) fn suggest_fix(check: &str) -> String {
         "no-todos" => "Resolve TODO/FIXME or convert to tracked issues".into(),
         "file-size-limit" => "Split files exceeding 500 lines into modules".into(),
         "trace-assertions" => "Add [Module][function][BLOCK_NAME] log markers".into(),
+        "cascade-no-drift" => "Run cascade_execute for each pending cascade marker".into(),
         _ => "Review the check details and fix the reported issue".into(),
     }
 }

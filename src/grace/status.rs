@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, mental tests, traceability, non-human patterns, belief states, semantic, verification, drift, token economy, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology/development-plan/mental-test/traceability/non-human pattern and belief-state coverage, print_report, active-phase display helpers
-// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
+// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, mental tests, traceability, cascade state, non-human patterns, belief states, semantic, verification, drift, token economy, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology/development-plan/mental-test/traceability/cascade/non-human pattern and belief-state coverage, print_report, active-phase display helpers
+// DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
 // START_MODULE_MAP
@@ -13,11 +13,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.20.0 — Added non-human pattern score to status]
+// LAST_CHANGE: [v2.22.0 - Added cascade pending/changelog status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
 use crate::grace::belief_state::BeliefStateReport;
+use crate::grace::cascade::CascadeDriftReport;
 use crate::grace::contract::{ContractReport, ContractValidator};
 use crate::grace::development_plan::DevelopmentPlanReport;
 use crate::grace::layout::DocsLayout;
@@ -45,6 +46,7 @@ pub struct StatusReport {
     pub development_plan: DevelopmentPlanReport,
     pub mental_tests: MentalTestReport,
     pub traceability: TraceabilityReport,
+    pub cascade: CascadeDriftReport,
     pub non_human_patterns: NonHumanPatternProjectReport,
     pub belief_state: BeliefStateReport,
     pub semantic: SemanticReport,
@@ -108,6 +110,7 @@ impl StatusCollector {
         let development_plan = crate::grace::development_plan::validate_development_plan(root)?;
         let mental_tests = crate::grace::mental_test::scan_project_mental_tests(root)?;
         let traceability = crate::grace::traceability::scan_project_traceability(root)?;
+        let cascade = crate::grace::cascade::cascade_no_drift(root)?;
         let non_human_patterns = crate::grace::non_human_patterns::check_project_patterns(
             root,
             crate::grace::GraceProfile::Strict,
@@ -190,6 +193,12 @@ impl StatusCollector {
         }
         if !traceability.no_dangling_gate() {
             next_actions.push("Fix dangling traceability links".into());
+        }
+        if !cascade.passed {
+            next_actions.push(format!(
+                "Execute {} pending cascades before release",
+                cascade.pending_cascades
+            ));
         }
         if non_human_patterns.error_violations > 0 {
             next_actions.push(format!(
@@ -322,6 +331,7 @@ impl StatusCollector {
             development_plan,
             mental_tests,
             traceability,
+            cascade,
             non_human_patterns,
             belief_state,
             semantic,
@@ -468,6 +478,11 @@ impl StatusCollector {
             "║  Enforcement:    {:<20}║",
             report.traceability.enforcement_mode
         );
+        println!("╠══════════════════════════════════════╣");
+        println!("║ CASCADE                              ║");
+        println!("║  Pending:       {:<20}║", report.cascade.pending_cascades);
+        println!("║  Changelogs:    {:<20}║", report.cascade.changelog_count);
+        println!("║  No drift:      {:<20}║", report.cascade.passed);
         println!("╠══════════════════════════════════════╣");
         println!("║ NON-HUMAN PATTERNS                  ║");
         println!(
