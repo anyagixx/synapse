@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VERIFICATION id="V-M-CI-RELEASE-SMOKE" module="M-CI-RELEASE-SMOKE" priority="normal" status="active">
   <UNIT_TESTS>
-    <COMMAND>SYN_RELEASE_TAG=v2.5.2 bash scripts/release_version_guard.sh</COMMAND>
-    <COMMAND>SYN_RELEASE_TAG=v2.5.2 bash scripts/release_freshness_guard.sh</COMMAND>
+    <COMMAND>SYN_RELEASE_TAG=v2.5.3 bash scripts/release_version_guard.sh</COMMAND>
+    <COMMAND>SYN_RELEASE_TAG=v2.5.3 bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>cargo test --test docs_parity</COMMAND>
   </UNIT_TESTS>
