@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-49" status="planned">
+<PHASE id="Phase-49" status="done">
   <NAME>RTK Discovery And Learning Parity</NAME>
   <GOAL>Bring RTK discover/learn concepts into Synapse as bounded, MyGRACE-compatible diagnostics instead of ungoverned heuristic code.</GOAL>
   <MODULE_REFS>
@@ -8,13 +8,23 @@
     <MODULE_REF id="M-GRACE-STATUS" />
   </MODULE_REFS>
   <STEPS>
-    <step-1 module="M-CLI-RTK-COMMANDS" status="planned">Expose discovery of likely token-heavy commands and suggested RTK/Synapse replacements.</step-1>
-    <step-2 module="M-CAPABILITIES" status="planned">Publish discover/learn capability metadata for MCP and CLI consumers.</step-2>
-    <step-3 module="M-GRACE-STATUS" status="planned">Surface RTK adoption gaps in project status without weakening existing MyGRACE gates.</step-3>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="done">Exposed bounded syn discover and syn learn diagnostics for routeable token-heavy commands and Synapse replacement suggestions without scanning private session history.</step-1>
+    <step-2 module="M-CAPABILITIES" status="done">Published discover/learn command and RTK discovery capability metadata for CLI, docs, and status consumers.</step-2>
+    <step-3 module="M-GRACE-STATUS" status="done">Surfaced RTK adoption diagnostics in project status as advisory metadata without weakening existing MyGRACE gates.</step-3>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test capabilities --lib</CHECK>
-    <CHECK status="planned">cargo run --quiet -- status --json</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_discovery::tests --lib</CHECK>
+    <CHECK status="passed">cargo test capabilities --lib</CHECK>
+    <CHECK status="passed">cargo test grace::status::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity</CHECK>
+    <CHECK status="passed">cargo run --quiet -- discover docker ps</CHECK>
+    <CHECK status="passed">cargo run --quiet -- discover --json --limit 3</CHECK>
+    <CHECK status="passed">cargo run --quiet -- learn --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- status --json</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
   </VERIFICATION>
 </PHASE>

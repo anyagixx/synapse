@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including container shortcuts, local RTK adapters, local RTK system adapters, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including container shortcuts, local RTK adapters, local RTK system adapters, discovery/learning diagnostics, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
@@ -12,18 +12,20 @@
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
 // PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
+// DiscoverCmd/LearnCmd — Bounded RTK discovery and learning diagnostics
 // RtkParityCmd — Machine-checkable RTK parity inventory report
 // RewriteCmd — Hook-facing command rewrite dry run
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.9.0 — Added RTK container shortcut command schemas]
+// LAST_CHANGE: [v5.0.0 — Added bounded RTK discover/learn diagnostics]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
 mod grace_commands;
 mod rtk_adapters;
 mod rtk_commands;
+mod rtk_discovery;
 mod rtk_parity;
 mod rtk_system_adapters;
 mod runtime_commands;
@@ -189,6 +191,10 @@ pub enum Command {
     Log(LogCmd),
     #[command(about = "Summarize source file structure without printing full code")]
     Smart(SmartCmd),
+    #[command(about = "Discover routeable token-heavy commands and Synapse replacements")]
+    Discover(DiscoverCmd),
+    #[command(about = "Show bounded RTK learning guidance for recurring misses")]
+    Learn(LearnCmd),
     #[command(
         name = "rtk-parity",
         about = "Report machine-checkable RTK parity inventory"
@@ -391,6 +397,28 @@ pub struct SmartCmd {
     pub items: usize,
 }
 // END_SmartCmd
+
+// START_DiscoverCmd
+#[derive(clap::Args)]
+#[command(about = "Discover routeable token-heavy commands and Synapse replacements")]
+pub struct DiscoverCmd {
+    #[arg(long)]
+    pub json: bool,
+    #[arg(long, default_value_t = 20)]
+    pub limit: usize,
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub command: Vec<String>,
+}
+// END_DiscoverCmd
+
+// START_LearnCmd
+#[derive(clap::Args)]
+#[command(about = "Show bounded RTK learning guidance for recurring misses")]
+pub struct LearnCmd {
+    #[arg(long)]
+    pub json: bool,
+}
+// END_LearnCmd
 
 // START_RtkParityCmd
 #[derive(clap::Args)]

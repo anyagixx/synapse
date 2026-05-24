@@ -12,6 +12,8 @@
     <COMMAND>cargo run --quiet -- vitest --route run</COMMAND>
     <COMMAND>cargo run --quiet -- docker --route ps</COMMAND>
     <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
+    <COMMAND>cargo run --quiet -- discover docker ps</COMMAND>
+    <COMMAND>cargo run --quiet -- learn --json</COMMAND>
     <COMMAND>cargo test --test mcp_protocol test_stdio_keeps_logs_off_stdout_and_notifications_silent</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
@@ -22,8 +24,9 @@
     <ASSERTION>Main dispatch routes Phase-48 Docker and Podman shortcuts to RtkProxyCmd without bypassing proxy filtering.</ASSERTION>
     <ASSERTION>Main dispatch routes local RTK adapters to direct compact renderers with token tracking.</ASSERTION>
     <ASSERTION>Main dispatch routes pipe, log, and smart local system adapters to direct compact renderers with token tracking.</ASSERTION>
+    <ASSERTION>Main dispatch routes discover and learn diagnostics to bounded RTK advisory renderers.</ASSERTION>
     <ASSERTION>Main dispatch routes RtkParityCmd to the machine-checkable parity inventory gate.</ASSERTION>
     <ASSERTION>Main dispatch routes RewriteCmd to the hook-facing rewrite implementation.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-48</PHASE_GATE>
+  <PHASE_GATE>Phase-49</PHASE_GATE>
 </VERIFICATION>

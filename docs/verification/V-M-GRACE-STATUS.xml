@@ -3,6 +3,8 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test grace::status::tests::test_active_phase_display_value_hides_completed_phase --lib</COMMAND>
+    <COMMAND>cargo test grace::status::tests::test_rtk_adoption_gaps_are_advisory --lib</COMMAND>
+    <COMMAND>cargo run --quiet -- status --json</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -13,6 +15,7 @@
     <ASSERTION>Status JSON and text output include DevelopmentPlan DataFlow, GenerationOrder, and completed module counts.</ASSERTION>
     <ASSERTION>Status JSON and text output include MentalTests total, passed, failed, and required target counts.</ASSERTION>
     <ASSERTION>Status JSON and text output include non-human pattern score, files scanned, error count, and warning count.</ASSERTION>
+    <ASSERTION>Status JSON and text output include RTK adoption diagnostics as advisory metadata that does not weaken MyGRACE gates.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13</PHASE_GATE>
+  <PHASE_GATE>Phase-49</PHASE_GATE>
 </VERIFICATION>

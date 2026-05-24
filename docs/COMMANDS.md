@@ -56,11 +56,51 @@ This page lists shipped CLI commands only.
 | `syn pnpm [args...]` | Run pnpm through the token-saving proxy |
 | `syn npx [args...]` | Run npx through the token-saving proxy |
 | `syn pytest [args...]` | Run pytest through the token-saving proxy |
+| `syn gh [args...]` | Run GitHub CLI through the token-saving proxy |
+| `syn glab [args...]` | Run GitLab CLI through the token-saving proxy |
+| `syn aws [args...]` | Run AWS CLI through the token-saving proxy |
+| `syn psql [args...]` | Run psql through the token-saving proxy |
+| `syn curl [args...]` | Run curl through the token-saving proxy |
+| `syn wget [args...]` | Run wget through the token-saving proxy |
+| `syn jq [args...]` | Run jq through the token-saving proxy |
+| `syn go [args...]` | Run Go tooling through the token-saving proxy |
+| `syn golangci [args...]` | Run golangci-lint through the token-saving proxy |
+| `syn dotnet [args...]` | Run dotnet through the token-saving proxy |
+| `syn rake [args...]` | Run rake through the token-saving proxy |
+| `syn rspec [args...]` | Run rspec through the token-saving proxy |
+| `syn rubocop [args...]` | Run rubocop through the token-saving proxy |
+| `syn gradle [args...]` | Run Gradle through the token-saving proxy |
+| `syn gradlew [args...]` | Run local Gradle wrapper through the token-saving proxy |
+| `syn make [args...]` | Run make through the token-saving proxy |
+| `syn just [args...]` | Run just through the token-saving proxy |
+| `syn helm [args...]` | Run Helm through the token-saving proxy |
+| `syn kubectl [args...]` | Run kubectl through the token-saving proxy |
+| `syn docker [args...]` | Run Docker through the token-saving proxy |
+| `syn podman [args...]` | Run Podman through the token-saving proxy |
+| `syn ruff [args...]` | Run ruff through the token-saving proxy |
+| `syn mypy [args...]` | Run mypy through the token-saving proxy |
+| `syn basedpyright [args...]` | Run basedpyright through the token-saving proxy |
+| `syn pip [args...]` | Run pip through the token-saving proxy |
+| `syn uv [args...]` | Run uv through the token-saving proxy |
+| `syn next [args...]` | Run Next.js tooling through the token-saving proxy |
+| `syn playwright [args...]` | Run Playwright through the token-saving proxy |
+| `syn prettier [args...]` | Run Prettier through the token-saving proxy |
+| `syn prisma [args...]` | Run Prisma through the token-saving proxy |
+| `syn tsc [args...]` | Run TypeScript compiler through the token-saving proxy |
+| `syn vitest [args...]` | Run Vitest through the token-saving proxy |
 | `syn json <file>` | Inspect JSON with compact values |
 | `syn json --keys-only <file>` | Inspect JSON structure without printing values |
 | `syn deps [path]` | Summarize dependency manifests without dumping full files |
 | `syn env --filter <name>` | Show filtered environment variables with secrets masked |
 | `syn wc <file>` | Count text locally with compact wc-style output |
+| `syn pipe --filter <name>` | Filter stdin through Synapse RTK filters |
+| `syn log <file>` | Deduplicate and summarize log output |
+| `syn smart <file>` | Summarize source file structure without printing full code |
+| `syn discover [cmd...]` | Discover routeable token-heavy commands and Synapse replacements |
+| `syn discover --json --limit 10` | Render bounded discovery diagnostics as JSON |
+| `syn learn` | Show bounded RTK learning guidance for recurring misses |
+| `syn learn --json` | Render bounded RTK learning guidance as JSON |
+| `syn rtk-parity --ci` | Check RTK parity inventory for CI |
 | `syn rewrite <cmd>` | Print the hook rewrite for routeable commands, safe command chains, pipeline left edges, safe fd redirects, and shell prefixes without executing it |
 | `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |
 | `syn proxy --route -- <cmd>` | Preview the selected token-saving adapter without executing the command |

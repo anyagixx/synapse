@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-CLI-RTK-COMMANDS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Provide RTK-style first-class command shortcuts, direct local adapters, machine-checkable parity inventory gates, and shell-aware hook-facing rewrite decisions that route or compact token-heavy command surfaces.
+    Module responsibility: Provide RTK-style first-class command shortcuts, direct local adapters, bounded discover/learn diagnostics, machine-checkable parity inventory gates, and shell-aware hook-facing rewrite decisions that route or compact token-heavy command surfaces.
     Key data flows:
       - INPUT: RtkProxyCmd flags for original, expanded, language ecosystem, and container shortcut families, JsonCmd/DepsCmd/EnvCmd/WcCmd/PipeCmd/LogCmd/SmartCmd args, RtkParityCmd source/json/ci flags, RewriteCmd trailing args, and raw command strings from agent hooks.
-      - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, apply trusted TOML filters to stdin, compact logs, summarize source structure, compare RTK source-derived inventory with Synapse coverage, track expanded proxy/local adapter inventory, and use CommandRouter for per-segment rewrite decisions.
+      - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, apply trusted TOML filters to stdin, compact logs, summarize source structure, build route-aware discover/learn diagnostics, compare RTK source-derived inventory with Synapse coverage, track expanded proxy/local adapter inventory, and use CommandRouter for per-segment rewrite decisions.
       - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, local compact adapter output, parity report/CI gate, and hook rewrite strings, safe shell chains, pipeline-left-edge rewrites, safe fd-redirect-preserving rewrites, or shell-prefix-preserving rewrites as syn proxy.
     Critical invariants:
       - Shortcuts must not bypass M-PROXY filtering, tracking, or evidence capture.
@@ -41,6 +41,8 @@
     - syn ruff, syn mypy, syn basedpyright, syn pip, syn uv, syn next, syn playwright, syn prettier, syn prisma, syn tsc, syn vitest, and syn gradlew expose --route via RtkProxyCmd.
     - direct tsc and vitest commands route to js-tooling without requiring npx.
     - syn rewrite treats syn docker and syn podman as already token-safe.
+    - syn discover docker ps suggests syn docker ps without scanning private session history.
+    - syn learn --json reports bounded advisory rules without writing project rule files.
     - syn rtk-parity --source ../GRACEme/rtk-develop --ci passes with filters 59/59 and router families 12/12.
     - verify_project and review_code pass with no MyGRACE drift.
   RISKS_ACKNOWLEDGED:

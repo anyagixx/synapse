@@ -14,6 +14,10 @@
     <COMMAND>cargo run --quiet -- docker --route ps</COMMAND>
     <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
     <COMMAND>cargo run --quiet -- smart src/cli.rs</COMMAND>
+    <COMMAND>cargo test cli::rtk_discovery::tests --lib</COMMAND>
+    <COMMAND>cargo run --quiet -- discover docker ps</COMMAND>
+    <COMMAND>cargo run --quiet -- discover --json --limit 3</COMMAND>
+    <COMMAND>cargo run --quiet -- learn --json</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
     <COMMAND>cargo test --test rtk_system_adapters_test</COMMAND>
@@ -29,6 +33,8 @@
     <ASSERTION>RTK container shortcuts for docker and podman delegate through RtkProxyCmd::run_as and are treated as token-safe by syn rewrite.</ASSERTION>
     <ASSERTION>syn json, syn deps, syn env, and syn wc run as direct local adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn pipe, syn log, and syn smart run as direct local system adapters with compact output and adapter-level token tracking.</ASSERTION>
+    <ASSERTION>syn discover reports routeable token-heavy commands and first-class Synapse replacement suggestions without scanning private session history.</ASSERTION>
+    <ASSERTION>syn learn reports bounded advisory learning rules without mutating project rules.</ASSERTION>
     <ASSERTION>syn rewrite uses CommandRouter as the hook rewrite source of truth and exits non-zero without stdout for unsupported commands.</ASSERTION>
     <ASSERTION>syn rewrite rewrites safe shell chains joined by &amp;&amp;, ||, and ; segment by segment, preserves unsupported segments, and skips unsafe redirection and substitution constructs.</ASSERTION>
     <ASSERTION>syn rewrite rewrites routeable pipeline left edges while preserving pipe filter segments raw and resuming rewrite after subsequent &amp;&amp;, ||, or ; operators.</ASSERTION>
@@ -37,5 +43,5 @@
     <ASSERTION>syn rewrite treats expanded Synapse shortcuts such as syn gh, syn aws, syn go, syn make, syn helm, syn kubectl, syn docker, syn podman, syn pipe, syn log, syn smart, syn ruff, syn tsc, and syn vitest as already token-safe.</ASSERTION>
     <ASSERTION>syn rtk-parity emits a machine-checkable inventory and fails CI when critical filter or router-family parity gaps exist.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-48</PHASE_GATE>
+  <PHASE_GATE>Phase-49</PHASE_GATE>
 </VERIFICATION>

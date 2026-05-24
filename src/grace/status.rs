@@ -1,19 +1,20 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
-// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, mental tests, traceability, cascade state, non-human patterns, belief states, semantic, verification, drift, token economy, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, SystemInfo, requirements/technology/development-plan/mental-test/traceability/cascade/non-human pattern and belief-state coverage, print_report, active-phase display helpers
+// PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, mental tests, traceability, cascade state, non-human patterns, belief states, semantic, verification, drift, token economy, RTK adoption, phase state, and system info
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, RtkAdoption, SystemInfo, requirements/technology/development-plan/mental-test/traceability/cascade/non-human pattern and belief-state coverage, print_report, active-phase display helpers
 // DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
 // START_MODULE_MAP
-// StatusReport — Full project health report with requirements, technology, development plan, and belief state coverage
+// StatusReport — Full project health report with requirements, technology, development plan, belief state, and RTK adoption coverage
 // TokenEconomy — Token usage statistics
+// RtkAdoption — Advisory token-saving adoption diagnostics
 // SystemInfo — System metadata (version, paths)
 // StatusCollector — Collects and prints project health
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 - Named Phase 0 completion action text for GRACE pattern cleanliness]
+// LAST_CHANGE: [v2.24.0 - Added RTK adoption diagnostics to status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -56,6 +57,7 @@ pub struct StatusReport {
     pub verification: Vec<super::verify::VerificationResult>,
     pub drift: Option<super::refresh::RefreshReport>,
     pub token_economy: TokenEconomy,
+    pub rtk_adoption: RtkAdoption,
     pub system: SystemInfo,
     pub next_actions: Vec<String>,
 }
@@ -70,6 +72,16 @@ pub struct TokenEconomy {
     pub db_size: String,
 }
 // END_TokenEconomy
+
+// START_RtkAdoption
+#[derive(Debug, serde::Serialize)]
+pub struct RtkAdoption {
+    pub discovery_capabilities: usize,
+    pub hooks_installed: bool,
+    pub tracked_commands: u64,
+    pub gaps: Vec<String>,
+}
+// END_RtkAdoption
 
 // START_SystemInfo
 #[derive(Debug, serde::Serialize)]
@@ -126,6 +138,7 @@ impl StatusCollector {
         let config = Config::load_or_default();
         let tracker = Tracker::new(&config);
         let stats = tracker.get_stats().await?;
+        let rtk_adoption = collect_rtk_adoption(root, stats.total_commands);
 
         let db_path = Tracker::db_path().unwrap_or_default();
         let db_size = std::fs::metadata(&db_path)
@@ -234,6 +247,9 @@ impl StatusCollector {
                 semantic.duplicate_name_blocks.len()
             ));
         }
+        for gap in &rtk_adoption.gaps {
+            next_actions.push(format!("RTK adoption: {gap}"));
+        }
 
         let all_verify_pass = verification.iter().all(|v| v.passed);
         if !all_verify_pass {
@@ -320,6 +336,7 @@ impl StatusCollector {
                 avg_savings_pct: stats.avg_savings_pct,
                 db_size,
             },
+            rtk_adoption,
             system: SystemInfo {
                 version: crate::VERSION.into(),
                 config_path: Config::path()
@@ -554,6 +571,24 @@ impl StatusCollector {
             report.token_economy.db_size
         );
         println!("╠══════════════════════════════════════╣");
+        println!("║ RTK ADOPTION                         ║");
+        println!(
+            "║  Discover caps:    {:<17}║",
+            report.rtk_adoption.discovery_capabilities
+        );
+        println!(
+            "║  Hooks installed:  {:<17}║",
+            report.rtk_adoption.hooks_installed
+        );
+        println!(
+            "║  Tracked commands: {:<17}║",
+            report.rtk_adoption.tracked_commands
+        );
+        println!(
+            "║  Adoption gaps:    {:<17}║",
+            report.rtk_adoption.gaps.len()
+        );
+        println!("╠══════════════════════════════════════╣");
         println!("║ SHARDS                               ║");
         println!("║  Active phase: {:<27}║", active_phase);
         println!("║  Module shards: {:<27}║", module_shards);
@@ -596,6 +631,34 @@ impl StatusCollector {
     }
     // END_sc_print_report
 }
+
+// START_CONTRACT_collect_rtk_adoption
+// PURPOSE: Build advisory RTK adoption diagnostics without changing project health gates.
+// INPUTS: { root: &Path }, { tracked_commands: u64 }
+// OUTPUTS: { RtkAdoption }
+// START_collect_rtk_adoption
+fn collect_rtk_adoption(root: &Path, tracked_commands: u64) -> RtkAdoption {
+    let hooks_installed = root.join(".opencode/hooks/synapse-proxy.sh").exists()
+        || root.join(".opencode/plugin/synapse-proxy.js").exists()
+        || root.join("hooks/opencode/synapse-rewrite.sh").exists();
+    let mut gaps = Vec::new();
+    if tracked_commands == 0 {
+        gaps.push(
+            "no token-saving commands tracked yet; run syn discover or syn proxy to bootstrap"
+                .into(),
+        );
+    }
+    if !hooks_installed {
+        gaps.push("OpenCode shell hooks are not installed; run syn hooks install opencode".into());
+    }
+    RtkAdoption {
+        discovery_capabilities: crate::capabilities::RTK_DISCOVERY_CAPABILITIES.len(),
+        hooks_installed,
+        tracked_commands,
+        gaps,
+    }
+}
+// END_collect_rtk_adoption
 
 // START_CONTRACT_active_phase_label
 // PURPOSE: Format active phase status for next-action output without reviving completed phases.
@@ -673,5 +736,24 @@ mod tests {
         assert_eq!(active_phase_table_value(plan), "No active phase");
     }
     // END_test_active_phase_display_value_hides_completed_phase
+
+    // START_CONTRACT_test_rtk_adoption_gaps_are_advisory
+    // PURPOSE: Verify RTK adoption gaps are surfaced as advisory metadata without changing gates.
+    // OUTPUTS: { () }
+    // START_test_rtk_adoption_gaps_are_advisory
+    #[test]
+    fn test_rtk_adoption_gaps_are_advisory() {
+        let tmp = tempfile::tempdir().unwrap();
+        let adoption = collect_rtk_adoption(tmp.path(), 0);
+
+        assert_eq!(
+            adoption.discovery_capabilities,
+            crate::capabilities::RTK_DISCOVERY_CAPABILITIES.len()
+        );
+        assert!(!adoption.hooks_installed);
+        assert_eq!(adoption.tracked_commands, 0);
+        assert!(adoption.gaps.iter().any(|gap| gap.contains("syn discover")));
+    }
+    // END_test_rtk_adoption_gaps_are_advisory
 }
 // END_public_api

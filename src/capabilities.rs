@@ -1,9 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, discover/learn diagnostics, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
-// LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml
+// LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml
 
 // START_MODULE_MAP
 // COMMANDS — All shipped CLI commands
@@ -11,12 +11,13 @@
 // CORE_MCP_TOOLS — Base code/verification tools
 // GRACE_SKILL_TOOLS — 16 first-class GRACE workflow tools
 // VERIFY_CHECKS — All verification check names
+// RTK_DISCOVERY_CAPABILITIES — Discover/learn diagnostics surfaced to CLI, MCP, and status consumers
 // REVIEW_MODES — All review modes
 // PLATFORMS — Supported OS/arch targets
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.26.0 - Added filters command capability parity]
+// LAST_CHANGE: [v2.27.0 - Added RTK discover/learn capability metadata]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -47,6 +48,53 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("pnpm", "Run pnpm through the token-saving proxy"),
     ("npx", "Run npx through the token-saving proxy"),
     ("pytest", "Run pytest through the token-saving proxy"),
+    ("ruff", "Run ruff through the token-saving proxy"),
+    ("mypy", "Run mypy through the token-saving proxy"),
+    (
+        "basedpyright",
+        "Run basedpyright through the token-saving proxy",
+    ),
+    ("pip", "Run pip through the token-saving proxy"),
+    ("uv", "Run uv through the token-saving proxy"),
+    ("next", "Run Next.js tooling through the token-saving proxy"),
+    (
+        "playwright",
+        "Run Playwright through the token-saving proxy",
+    ),
+    ("prettier", "Run Prettier through the token-saving proxy"),
+    ("prisma", "Run Prisma through the token-saving proxy"),
+    (
+        "tsc",
+        "Run TypeScript compiler through the token-saving proxy",
+    ),
+    ("vitest", "Run Vitest through the token-saving proxy"),
+    ("gh", "Run GitHub CLI through the token-saving proxy"),
+    ("glab", "Run GitLab CLI through the token-saving proxy"),
+    ("aws", "Run AWS CLI through the token-saving proxy"),
+    ("psql", "Run psql through the token-saving proxy"),
+    ("curl", "Run curl through the token-saving proxy"),
+    ("wget", "Run wget through the token-saving proxy"),
+    ("jq", "Run jq through the token-saving proxy"),
+    ("go", "Run Go tooling through the token-saving proxy"),
+    (
+        "golangci",
+        "Run golangci-lint through the token-saving proxy",
+    ),
+    ("dotnet", "Run dotnet through the token-saving proxy"),
+    ("rake", "Run rake through the token-saving proxy"),
+    ("rspec", "Run rspec through the token-saving proxy"),
+    ("rubocop", "Run rubocop through the token-saving proxy"),
+    ("gradle", "Run Gradle through the token-saving proxy"),
+    (
+        "gradlew",
+        "Run local Gradle wrapper through the token-saving proxy",
+    ),
+    ("make", "Run make through the token-saving proxy"),
+    ("just", "Run just through the token-saving proxy"),
+    ("helm", "Run Helm through the token-saving proxy"),
+    ("kubectl", "Run kubectl through the token-saving proxy"),
+    ("docker", "Run Docker through the token-saving proxy"),
+    ("podman", "Run Podman through the token-saving proxy"),
     (
         "json",
         "Inspect JSON with compact values or keys-only schema",
@@ -60,6 +108,27 @@ pub const COMMANDS: &[(&str, &str)] = &[
         "Show filtered environment variables with secrets masked",
     ),
     ("wc", "Count text locally with compact wc-style output"),
+    ("pipe", "Filter stdin through Synapse RTK filters"),
+    (
+        "log",
+        "Deduplicate and summarize log output from a file or stdin",
+    ),
+    (
+        "smart",
+        "Summarize source file structure without printing full code",
+    ),
+    (
+        "discover",
+        "Discover routeable token-heavy commands and Synapse replacements",
+    ),
+    (
+        "learn",
+        "Show bounded RTK learning guidance for recurring misses",
+    ),
+    (
+        "rtk-parity",
+        "Report machine-checkable RTK parity inventory",
+    ),
     (
         "rewrite",
         "Rewrite a shell command to its Synapse proxy form for agent hooks",
@@ -86,6 +155,17 @@ pub const COMMANDS: &[(&str, &str)] = &[
 pub const CORE_MCP_TOOL_COUNT: usize = 23;
 pub const GRACE_SKILL_TOOL_COUNT: usize = 16;
 pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
+
+pub const RTK_DISCOVERY_CAPABILITIES: &[(&str, &str)] = &[
+    (
+        "discover",
+        "Route-aware missed-opportunity diagnostics for raw commands and built-in adapter examples.",
+    ),
+    (
+        "learn",
+        "Bounded learning guidance for recurring token-saving misses without scraping private session history.",
+    ),
+];
 
 /// Registered base MCP tools (server registry source)
 pub const CORE_TOOLS: &[(&str, &str)] = CORE_MCP_TOOLS;
@@ -383,6 +463,31 @@ pub const SKILL_NAMES: &[&str] = &[
 // OUTPUTS: { usize — registered skill definition count }
 pub fn skill_defs_count() -> usize {
     SKILL_DEFS.len()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_capabilities_include_rtk_discover_learn_metadata
+    // PURPOSE: Verify Phase-49 discover/learn commands and metadata are published together.
+    // OUTPUTS: { () }
+    // START_capabilities_include_rtk_discover_learn_metadata
+    #[test]
+    fn capabilities_include_rtk_discover_learn_metadata() {
+        let commands = COMMANDS.iter().map(|(name, _)| *name).collect::<Vec<_>>();
+        assert!(commands.contains(&"discover"));
+        assert!(commands.contains(&"learn"));
+        assert!(commands.contains(&"docker"));
+        assert!(commands.contains(&"podman"));
+
+        let capabilities = RTK_DISCOVERY_CAPABILITIES
+            .iter()
+            .map(|(name, _)| *name)
+            .collect::<Vec<_>>();
+        assert_eq!(capabilities, vec!["discover", "learn"]);
+    }
+    // END_capabilities_include_rtk_discover_learn_metadata
 }
 
 // END_public_api
