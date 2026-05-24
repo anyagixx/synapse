@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-ROUTER
 // PURPOSE: RTK-style command router — classifies shell commands into token-saving adapter families
-// SCOPE: CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue
+// SCOPE: CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue, RTK parity router-family coverage gate
 // DEPENDS: N/A
 // LINKS:
 //   → UC-002 (implements) - command routing makes token-saving behavior machine-checkable
@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Added RTK-style command router and adapter catalogue]
+// LAST_CHANGE: [v1.1.0 — Expanded adapter catalogue for RTK parity inventory]
 // END_CHANGE_SUMMARY
 
 // START_public_api
@@ -200,6 +200,11 @@ fn supported_adapters() -> Vec<SupportedAdapter> {
             examples: &["cargo test", "cargo check", "cargo clippy", "cargo fmt"],
         },
         SupportedAdapter {
+            adapter: "go-tooling",
+            family: "go",
+            examples: &["go test", "go build", "golangci-lint run"],
+        },
+        SupportedAdapter {
             adapter: "python-pytest",
             family: "python",
             examples: &["pytest", "python -m pytest", "uv run pytest"],
@@ -230,9 +235,24 @@ fn supported_adapters() -> Vec<SupportedAdapter> {
             examples: &["rg pattern", "find .", "journalctl -u service"],
         },
         SupportedAdapter {
+            adapter: "system-search",
+            family: "search",
+            examples: &["rg pattern", "grep needle", "find . -name '*.rs'"],
+        },
+        SupportedAdapter {
+            adapter: "system-logs",
+            family: "logs",
+            examples: &["journalctl -u service", "systemctl status service"],
+        },
+        SupportedAdapter {
             adapter: "build-tool",
             family: "build",
             examples: &["make test", "just check", "./gradlew test"],
+        },
+        SupportedAdapter {
+            adapter: "language-tooling",
+            family: "language",
+            examples: &["dotnet test", "rake test", "rspec"],
         },
         SupportedAdapter {
             adapter: "cloud-data",

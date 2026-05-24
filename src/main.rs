@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
 // PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
-// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including RTK proxy shortcuts, local RTK adapters, and hook rewrites
+// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including RTK proxy shortcuts, local RTK adapters, parity inventory, and hook rewrites
 // DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.3.0 — Dispatch local RTK adapter commands]
+// LAST_CHANGE: [v4.4.0 — Dispatch RTK parity inventory command]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -95,6 +95,7 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Deps(cmd) => cmd.run(config).await,
             syn::cli::Command::Env(cmd) => cmd.run(config).await,
             syn::cli::Command::Wc(cmd) => cmd.run(config).await,
+            syn::cli::Command::RtkParity(cmd) => cmd.run(config).await,
             syn::cli::Command::Rewrite(cmd) => cmd.run(config).await,
             syn::cli::Command::Run(cmd) => cmd.run(config).await,
             syn::cli::Command::Proxy(cmd) => cmd.run(config).await,

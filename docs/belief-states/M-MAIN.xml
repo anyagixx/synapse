@@ -7,7 +7,7 @@
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-LIB, M-CLI, M-CONFIG
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: CLI argument parsing, stderr tracing init, command dispatch
+      - Scope remains bounded to: CLI argument parsing, stderr tracing init, command dispatch including RTK proxy shortcuts, local RTK adapters, RTK parity inventory, and hook rewrites
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -16,6 +16,7 @@
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - syn rtk-parity --source ../GRACEme/rtk-develop --ci dispatches through main and passes
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

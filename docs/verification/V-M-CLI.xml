@@ -7,6 +7,7 @@
     <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
     <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
+    <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
   </UNIT_TESTS>
@@ -16,11 +17,12 @@
     <ASSERTION>CLI schema accepts gain --sessions, gain --adapters, and proxy --route as supported documented flags.</ASSERTION>
     <ASSERTION>CLI schema accepts first-class RTK shortcuts including read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest.</ASSERTION>
     <ASSERTION>CLI schema accepts local RTK adapters json, deps, env, and wc with documented flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts rtk-parity with --source, --json, and --ci flags.</ASSERTION>
     <ASSERTION>CLI schema accepts rewrite as a hook-facing dry-run command.</ASSERTION>
     <ASSERTION>CLI schema accepts syn run --scenario happy|blocked-review with phase/module/objective/json flags.</ASSERTION>
     <ASSERTION>CLI schema accepts syn run --action plan|next|loop|retry|replay with --run-id and --max-actions.</ASSERTION>
     <ASSERTION>CLI schema accepts verify/review --profile and doctor --deps as documented flags.</ASSERTION>
     <ASSERTION>CLI schema exposes syn mcp as stdio-only until HTTP/LSP transport flags are implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-28</PHASE_GATE>
+  <PHASE_GATE>Phase-44</PHASE_GATE>
 </VERIFICATION>

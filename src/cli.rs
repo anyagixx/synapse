@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, first-class RTK shortcut commands, local RTK adapters, rewrite hook decisions, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, first-class RTK shortcut commands, local RTK adapters, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
@@ -11,17 +11,19 @@
 // *Cmd structs — Clap argument schemas for supported commands
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
+// RtkParityCmd — Machine-checkable RTK parity inventory report
 // RewriteCmd — Hook-facing command rewrite dry run
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.4.0 — Added local RTK adapter command schemas]
+// LAST_CHANGE: [v4.5.0 — Added RTK parity inventory command schema]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
 mod grace_commands;
 mod rtk_adapters;
 mod rtk_commands;
+mod rtk_parity;
 mod runtime_commands;
 mod setup_commands;
 
@@ -94,6 +96,11 @@ pub enum Command {
     Env(EnvCmd),
     #[command(about = "Count text locally with compact wc-style output")]
     Wc(WcCmd),
+    #[command(
+        name = "rtk-parity",
+        about = "Report machine-checkable RTK parity inventory"
+    )]
+    RtkParity(RtkParityCmd),
     #[command(about = "Rewrite a shell command to its Synapse proxy form for agent hooks")]
     Rewrite(RewriteCmd),
     Run(RunCmd),
@@ -261,6 +268,19 @@ pub struct WcCmd {
     pub args: Vec<String>,
 }
 // END_WcCmd
+
+// START_RtkParityCmd
+#[derive(clap::Args)]
+#[command(about = "Report RTK parity inventory against an optional rtk-develop source tree")]
+pub struct RtkParityCmd {
+    #[arg(long)]
+    pub source: Option<String>,
+    #[arg(long)]
+    pub json: bool,
+    #[arg(long)]
+    pub ci: bool,
+}
+// END_RtkParityCmd
 
 // START_RunCmd
 #[derive(clap::Args)]

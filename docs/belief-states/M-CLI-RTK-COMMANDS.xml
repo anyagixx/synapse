@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-CLI-RTK-COMMANDS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Provide RTK-style first-class command shortcuts, direct local adapters, and shell-aware hook-facing rewrite decisions that route or compact token-heavy command surfaces.
+    Module responsibility: Provide RTK-style first-class command shortcuts, direct local adapters, machine-checkable parity inventory gates, and shell-aware hook-facing rewrite decisions that route or compact token-heavy command surfaces.
     Key data flows:
-      - INPUT: RtkProxyCmd flags, JsonCmd/DepsCmd/EnvCmd/WcCmd args, RewriteCmd trailing args, and raw command strings from agent hooks.
-      - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, and use CommandRouter for per-segment rewrite decisions.
-      - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, local compact adapter output, and hook rewrite strings, safe shell chains, pipeline-left-edge rewrites, safe fd-redirect-preserving rewrites, or shell-prefix-preserving rewrites as syn proxy.
+      - INPUT: RtkProxyCmd flags, JsonCmd/DepsCmd/EnvCmd/WcCmd args, RtkParityCmd source/json/ci flags, RewriteCmd trailing args, and raw command strings from agent hooks.
+      - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, compare RTK source-derived inventory with Synapse coverage, and use CommandRouter for per-segment rewrite decisions.
+      - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, local compact adapter output, parity report/CI gate, and hook rewrite strings, safe shell chains, pipeline-left-edge rewrites, safe fd-redirect-preserving rewrites, or shell-prefix-preserving rewrites as syn proxy.
     Critical invariants:
       - Shortcuts must not bypass M-PROXY filtering, tracking, or evidence capture.
       - Direct local adapters must record adapter-level token economics through M-TRACKING.
       - Hooks must use syn rewrite instead of maintaining separate command-family or chain-rewrite lists.
+      - rtk-parity critical gates must fail when source filter coverage or router-family coverage regresses.
       - Shell-aware rewrite may only handle safe &&, ||, ;, pipeline-left-edge sequences, trailing fd-merge redirects, and known transparent shell prefix builtins; pipe filter segments, file redirection, heredoc, and substitution constructs stay pass-through.
       - Shortcut flags --route and --evidence remain behaviorally identical to syn proxy.
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized.
@@ -27,6 +28,7 @@
     - syn rewrite "git log | head -5 && git stash" proxies the git log and stash segments while leaving head raw.
     - syn rewrite "RUST_BACKTRACE=1 cargo test 2&gt;&amp;1 | grep FAILED && git stash" preserves the fd redirect and proxies routeable segments.
     - syn rewrite "sudo nocorrect git status && builtin cargo test" preserves shell prefixes before proxied segments.
+    - syn rtk-parity --source ../GRACEme/rtk-develop --ci passes with filters 59/59 and router families 12/12.
     - verify_project and review_code pass with no MyGRACE drift.
   RISKS_ACKNOWLEDGED:
     - Native command availability differs by host; integration tests should use POSIX-stable cat behavior.

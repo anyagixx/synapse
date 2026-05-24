@@ -2,11 +2,11 @@
 <MODULE id="M-PROXY-ROUTER" type="INTEGRATION" status="active">
   <NAME>M-PROXY-ROUTER</NAME>
   <PURPOSE>RTK-style command router — classifies shell commands into token-saving adapter families</PURPOSE>
-  <SCOPE>CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue</SCOPE>
+  <SCOPE>CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue, RTK parity router-family coverage gate</SCOPE>
   <FILES>
     <FILE>src/proxy/router.rs</FILE>
   </FILES>
   <DEPENDS></DEPENDS>
-  <LINKS>docs/verification/V-M-PROXY-ROUTER.xml,docs/phases/Phase-21.xml</LINKS>
+  <LINKS>docs/verification/V-M-PROXY-ROUTER.xml,docs/phases/Phase-21.xml,docs/phases/Phase-44.xml</LINKS>
   <VERIFICATION_REF>V-M-PROXY-ROUTER</VERIFICATION_REF>
 </MODULE>
