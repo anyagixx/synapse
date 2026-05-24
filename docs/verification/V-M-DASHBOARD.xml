@@ -6,9 +6,9 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Dashboard exposes JSON payloads for belief states, MentalTests, traceability, run queue/blocked state, selected-run provenance, graph-aware search explanation, cascade impact, and cascade history.</ASSERTION>
-    <ASSERTION>Dashboard renders pages for /belief-states, /belief-state/{module_id}, /mental-tests, /runs, /runs/queue, /search-explain, /traceability/{artifact_id}, /cascade/preview, and /cascade/history.</ASSERTION>
-    <ASSERTION>Run cockpit payload classifies queued, blocked, and completed runs and renders blocked reasons for agent workflow triage.</ASSERTION>
+    <ASSERTION>Dashboard exposes JSON payloads for belief states, MentalTests, traceability, run queue/blocked state, selected-run replay, review decisions, graph-aware search explanation, cascade impact, and cascade history.</ASSERTION>
+    <ASSERTION>Dashboard renders pages for /belief-states, /belief-state/{module_id}, /mental-tests, /runs, /runs/queue, /runs/review, /search-explain, /traceability/{artifact_id}, /cascade/preview, and /cascade/history.</ASSERTION>
+    <ASSERTION>Run cockpit payload classifies queued, blocked, and completed runs, renders blocked reasons, and records approve/reject decisions for agent workflow triage.</ASSERTION>
     <ASSERTION>Cascade preview routes use M-GRACE-CASCADE as the data source and preserve JSON validity.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-18</PHASE_GATE>

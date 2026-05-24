@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-19" status="done">
+  <NAME>Dashboard Review And Replay Flow</NAME>
+  <GOAL>Close Phase 4 cockpit requirements by adding blocked-run approve/reject decisions and deterministic run replay.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-RUNNER" />
+    <MODULE_REF id="M-DASHBOARD" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-RUNNER" status="done">Added durable RunReviewDecision and RunReviewStatus records with approve/reject helpers and blocked-run resume guard.</step-1>
+    <step-2 module="M-RUNNER" status="done">Added deterministic RunReplay timeline covering state, gates, steps, reviews, outcomes, and evidence refs.</step-2>
+    <step-3 module="M-DASHBOARD" status="done">Added local /runs/review and /api/runs/review action surface plus replay-backed cockpit timeline.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">rtk cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-close-plan cargo test run::tests::run_review_approval_allows_blocked_resume_and_replay --lib</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-close-plan cargo test dashboard::tests::test_runs_payload_reports_runs_and_events --lib</CHECK>
+  </VERIFICATION>
+</PHASE>

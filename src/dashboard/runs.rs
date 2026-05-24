@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-DASHBOARD
-// PURPOSE: Dashboard run cockpit — builds run queue, blocked board, and provenance views for bounded agent workflows
-// SCOPE: run payload classification, blocked/queue summaries, selected run provenance timeline, and HTML cockpit rendering
+// PURPOSE: Dashboard run cockpit — builds run queue, blocked board, review actions, and replay views for bounded agent workflows
+// SCOPE: run payload classification, blocked/queue summaries, selected run replay timeline, review action persistence, and HTML cockpit rendering
 // DEPENDS: M-DASHBOARD, M-RUNNER
 // LINKS:
 //   -> V-M-DASHBOARD (verified_by) - dashboard route and payload tests
@@ -9,19 +9,30 @@
 
 // START_MODULE_MAP
 // runs_payload — Build JSON for runs, queue, blocked runs, completed runs, and provenance timeline
+// review_run_payload — Persist blocked-run review decisions and return updated payload
 // render_runs_page — Render the run cockpit page
+// render_review_result_page — Render review result and updated cockpit
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Added run queue and blocked cockpit view]
+// LAST_CHANGE: [v1.1.0 — Added blocked-run review action surface and replay timeline]
 // END_CHANGE_SUMMARY
 
 use super::render::{html_escape, json_pre, page_shell, primary_nav};
 use crate::run::{RunManager, RunRecord, RunStatus};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use std::path::Path;
 
 // START_public_api
+
+#[derive(Debug, Clone, Deserialize)]
+pub(in crate::dashboard) struct RunReviewForm {
+    pub run_id: String,
+    pub decision: String,
+    pub reviewer: Option<String>,
+    pub reason: Option<String>,
+}
 
 // START_CONTRACT_runs_payload
 // PURPOSE: Build JSON payload for bounded run queue, blocked records, and selected-run provenance
@@ -60,7 +71,17 @@ pub(in crate::dashboard) fn runs_payload(root: &Path, run_id: &str) -> Value {
         .filter(|run| matches!(run.status, RunStatus::Completed))
         .map(run_json)
         .collect::<Vec<_>>();
-    let events = selected.map(run_timeline).unwrap_or_default();
+    let replay = selected.map(|run| run.replay());
+    let events = replay
+        .as_ref()
+        .map(|replay| {
+            replay
+                .events
+                .iter()
+                .map(replay_event_json)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
     json!({
         "run_id": selected_id,
         "summary": {
@@ -74,9 +95,47 @@ pub(in crate::dashboard) fn runs_payload(root: &Path, run_id: &str) -> Value {
         "blocked": blocked,
         "completed": completed,
         "events": events,
+        "replay": replay,
     })
 }
 // END_runs_payload
+
+// START_CONTRACT_review_run_payload
+// PURPOSE: Persist a blocked-run review decision and return updated run cockpit payload
+// INPUTS: { root: &Path }, { form: &RunReviewForm }
+// OUTPUTS: { Value }
+// LINKS:
+//   → UC-002 (implements) - dashboard payload records human review over autonomous retry
+// START_review_run_payload
+pub(in crate::dashboard) fn review_run_payload(root: &Path, form: &RunReviewForm) -> Value {
+    let manager = RunManager::new(root);
+    let reviewer = form.reviewer.as_deref().unwrap_or("dashboard");
+    let reason = form.reason.as_deref().unwrap_or("review decision recorded");
+    let result = match form.decision.as_str() {
+        "approve" | "approved" => manager.approve_run(&form.run_id, reviewer, reason, None),
+        "reject" | "rejected" => manager.reject_run(&form.run_id, reviewer, reason, None),
+        other => Err(anyhow::anyhow!("unknown review decision {}", other)),
+    };
+    let mut payload = runs_payload(root, &form.run_id);
+    match result {
+        Ok(run) => {
+            payload["review"] = json!({
+                "ok": true,
+                "run_id": run.run_id,
+                "decision": form.decision.clone(),
+                "latest_review": run.latest_review_status().map(|status| format!("{:?}", status)),
+            });
+        }
+        Err(error) => {
+            payload["review"] = json!({
+                "ok": false,
+                "error": error.to_string(),
+            });
+        }
+    }
+    payload
+}
+// END_review_run_payload
 
 // START_CONTRACT_render_runs_page
 // PURPOSE: Render bounded run queue, blocked board, and selected-run provenance timeline
@@ -86,7 +145,7 @@ pub(in crate::dashboard) fn runs_payload(root: &Path, run_id: &str) -> Value {
 pub(in crate::dashboard) fn render_runs_page(root: &Path, run_id: &str) -> String {
     let payload = runs_payload(root, run_id);
     let body = format!(
-        "{}<section class=\"grid\">{}{}{}{}</section><section class=\"card\"><h2>Queue</h2>{}</section><section class=\"card\"><h2>Blocked</h2>{}</section><section class=\"card\"><h2>Provenance</h2>{}</section>",
+        "{}<section class=\"grid\">{}{}{}{}</section><section class=\"card\"><h2>Queue</h2>{}</section><section class=\"card\"><h2>Blocked</h2>{}</section><section class=\"card\"><h2>Review</h2>{}</section><section class=\"card\"><h2>Replay</h2>{}</section>",
         primary_nav(),
         metric("Total", &payload["summary"]["total"]),
         metric("Queue", &payload["summary"]["queue"]),
@@ -94,11 +153,31 @@ pub(in crate::dashboard) fn render_runs_page(root: &Path, run_id: &str) -> Strin
         metric("Done", &payload["summary"]["completed"]),
         runs_table(&payload["queue"]),
         blocked_table(&payload["blocked"]),
+        review_form(&payload["run_id"]),
         timeline_table(&payload["events"]),
     );
     page_shell("Run Cockpit", &body)
 }
 // END_render_runs_page
+
+// START_CONTRACT_render_review_result_page
+// PURPOSE: Render review result and the updated run cockpit
+// INPUTS: { root: &Path }, { form: &RunReviewForm }
+// OUTPUTS: { String }
+// LINKS:
+//   → UC-002 (implements) - dashboard presents review evidence for blocked run triage
+// START_render_review_result_page
+pub(in crate::dashboard) fn render_review_result_page(root: &Path, form: &RunReviewForm) -> String {
+    let payload = review_run_payload(root, form);
+    let body = format!(
+        "{}<section class=\"card\"><h2>Review Result</h2>{}</section><p><a href=\"/runs?run_id={}\">Back to run cockpit</a></p>",
+        primary_nav(),
+        json_pre(&payload["review"]),
+        html_escape(&form.run_id)
+    );
+    page_shell("Run Review", &body)
+}
+// END_render_review_result_page
 
 // END_public_api
 
@@ -130,36 +209,21 @@ fn run_json(run: &RunRecord) -> Value {
         "current_step": run.current_step,
         "blocked_reason": run.blocked_reason.clone(),
         "escalation_reason": run.escalation_reason.clone(),
+        "approval_state": run.latest_review_status().map(|status| format!("{:?}", status)),
+        "review_count": run.review_decisions.len(),
         "traceability_summary": run.metadata.get("traceability_summary").cloned(),
         "retry_count": run.metadata.get("retry_count").cloned(),
         "updated_at": run.updated_at.clone(),
     })
 }
 
-fn run_timeline(run: &RunRecord) -> Vec<Value> {
-    let mut events = vec![json!({
-        "kind": "state",
-        "status": format!("{:?}", run.status),
-        "detail": run.blocked_reason.clone().unwrap_or_else(|| run.objective.clone()),
-        "evidence": run.evidence_refs.clone(),
-    })];
-    events.extend(run.required_gates.iter().map(|gate| {
-        json!({
-            "kind": "gate",
-            "status": format!("{:?}", gate.status),
-            "detail": gate.reason.clone().unwrap_or_else(|| gate.name.clone()),
-            "evidence": gate.evidence_refs.clone(),
-        })
-    }));
-    events.extend(run.steps.iter().map(|step| {
-        json!({
-            "kind": "step",
-            "status": format!("{:?}", step.status),
-            "detail": step.error.clone().unwrap_or_else(|| step.description.clone()),
-            "evidence": step.evidence_refs.clone(),
-        })
-    }));
-    events
+fn replay_event_json(event: &crate::run::RunReplayEvent) -> Value {
+    json!({
+        "kind": event.kind.clone(),
+        "status": event.status.clone(),
+        "detail": event.detail.clone(),
+        "evidence": event.evidence_refs.clone(),
+    })
 }
 
 fn metric(label: &str, value: &Value) -> String {
@@ -185,6 +249,7 @@ fn blocked_table(rows: &Value) -> String {
             "status",
             "blocked_reason",
             "escalation_reason",
+            "approval_state",
             "retry_count",
         ],
     )
@@ -192,6 +257,17 @@ fn blocked_table(rows: &Value) -> String {
 
 fn timeline_table(rows: &Value) -> String {
     rows_table(rows, &["kind", "status", "detail", "evidence"])
+}
+
+fn review_form(run_id: &Value) -> String {
+    let run_id = run_id.as_str().unwrap_or_default();
+    if run_id.is_empty() {
+        return "<p>Select a blocked run to review.</p>".into();
+    }
+    format!(
+        "<form method=\"post\" action=\"/runs/review\"><input type=\"hidden\" name=\"run_id\" value=\"{}\"><label>Decision <select name=\"decision\"><option value=\"approve\">Approve retry</option><option value=\"reject\">Reject and escalate</option></select></label><label>Reviewer <input name=\"reviewer\" value=\"dashboard\"></label><label>Reason <input name=\"reason\" value=\"bounded review decision\"></label><button type=\"submit\">Record review</button></form>",
+        html_escape(run_id)
+    )
 }
 
 fn rows_table(rows: &Value, columns: &[&str]) -> String {

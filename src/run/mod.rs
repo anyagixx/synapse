@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
-// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, and outcomes for controlled execution
-// SCOPE: Run state model, task model, step model, gate model, outcome model, durable JSON persistence, run lifecycle helpers
+// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, and outcomes for controlled execution
+// SCOPE: Run state model, task model, step model, gate model, review model, replay model, outcome model, durable JSON persistence, run lifecycle helpers
 // DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-TRACKING
 // LINKS:
 //   → M-SKILLS (depends) - future execution bridge
@@ -15,12 +15,20 @@
 // RunRecord — Persisted run state
 // RunStep — Persisted execution step
 // RunGate — Persisted gate requirement
+// RunReviewDecision — Persisted human review decision for blocked runs
+// RunReplay — Replayable run timeline assembled from persisted state
 // RunOutcome — Persisted run outcome
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.1.0 — Initial autonomous run-state scaffold]
+// LAST_CHANGE: [v0.2.0 — Added human review decisions and replay timeline support]
 // END_CHANGE_SUMMARY
+
+mod replay;
+mod review;
+
+pub use replay::{RunReplay, RunReplayEvent};
+pub use review::{RunReviewDecision, RunReviewStatus};
 
 use crate::config::Config;
 use crate::tracking::Tracker;
@@ -193,6 +201,8 @@ pub struct RunRecord {
     pub blocked_reason: Option<String>,
     pub escalation_reason: Option<String>,
     pub metadata: BTreeMap<String, String>,
+    #[serde(default)]
+    pub review_decisions: Vec<RunReviewDecision>,
     pub outcome: Option<RunOutcome>,
     pub created_at: String,
     pub updated_at: String,
@@ -764,8 +774,20 @@ impl RunManager {
         ) {
             return Ok(record);
         }
+        if matches!(record.status, RunStatus::Blocked)
+            && !matches!(
+                record.latest_review_status(),
+                Some(RunReviewStatus::Approved)
+            )
+        {
+            anyhow::bail!(
+                "blocked run {} requires approved review before resume",
+                run_id
+            );
+        }
         if matches!(record.status, RunStatus::Ready | RunStatus::Blocked) {
             record.status = RunStatus::Running;
+            record.blocked_reason = None;
         }
         if let Some(step) = record.steps.get_mut(record.current_step) {
             if matches!(step.status, RunStepStatus::Pending | RunStepStatus::Skipped) {
@@ -1029,6 +1051,7 @@ impl RunRecord {
             blocked_reason: None,
             escalation_reason: None,
             metadata: BTreeMap::new(),
+            review_decisions: Vec::new(),
             outcome: None,
             created_at: now.clone(),
             updated_at: now,
@@ -1230,6 +1253,43 @@ mod tests {
             .unwrap();
         assert_eq!(blocked.status, RunStatus::Blocked);
         assert_eq!(blocked.outcome.unwrap().kind, RunOutcomeKind::Blocked);
+    }
+
+    #[test]
+    fn run_review_approval_allows_blocked_resume_and_replay() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = RunManager::new(root.path());
+        let mut record = RunRecord::new(
+            "goal-e".into(),
+            "Phase-19".into(),
+            "M-RUNNER".into(),
+            "objective-e".into(),
+        );
+        record.steps = default_steps("M-RUNNER");
+        record.status = RunStatus::Ready;
+        manager.save(&record).unwrap();
+        manager.start_run(&record.run_id).unwrap();
+        let blocked = manager
+            .block_run(&record.run_id, "review required", Some("verify.log"))
+            .unwrap();
+        assert!(manager.resume_run(&blocked.run_id).is_err());
+
+        let reviewed = manager
+            .approve_run(
+                &blocked.run_id,
+                "maintainer",
+                "bounded retry approved",
+                None,
+            )
+            .unwrap();
+        assert_eq!(
+            reviewed.latest_review_status(),
+            Some(RunReviewStatus::Approved)
+        );
+        let resumed = manager.resume_run(&blocked.run_id).unwrap();
+        assert_eq!(resumed.status, RunStatus::Running);
+        let replay = resumed.replay();
+        assert!(replay.events.iter().any(|event| event.kind == "review"));
     }
 }
 // END_public_api

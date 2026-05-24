@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-RUNNER" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Autonomous run runtime — persists bounded agent runs, steps, gates, and outcomes for controlled execution
+    Module responsibility: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, and outcomes for controlled execution
     Key data flows:
       - INPUT: goal, phase, module_id, objective, and gate definitions from agent workflow and GRACE artifacts
-      - PROCESSING: create durable run state, track steps/gates/outcomes, serialize and restore JSON records
-      - OUTPUT: run ledger files and machine-readable lifecycle state for future autonomous execution
+      - PROCESSING: create durable run state, track steps/gates/reviews/outcomes, assemble replay timelines, serialize and restore JSON records
+      - OUTPUT: run ledger files, review decisions, replay events, and machine-readable lifecycle state for future autonomous execution
     Critical invariants:
       - run records remain durable, serializable, and resumable
-      - runs keep bounded scope and explicit status transitions
+      - runs keep bounded scope, explicit status transitions, and review-gated blocked resume behavior
       - persistence must not silently drop fields
   IMPLEMENTATION_STRATEGY:
     Approach: start with minimal durable state model, then extend orchestration and gate enforcement in later subphases

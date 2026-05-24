@@ -8,9 +8,9 @@ Last updated: 2026-05-24
 
 ## Current checkpoint
 - Active program: Phase 4 — Dashboard as Agent Cockpit
-- Current subphase: Queue/blocked workflow surface
-- Last completed activity: added a run cockpit surface with queue, blocked, completed, and selected-run provenance sections backed by `src/dashboard/runs.rs`; kept formatting, dashboard test, full Rust test suite, clippy, and MyGRACE verify green
-- Next recommended activity: add review/approve flow for blocked runs, then session replay once approval state is durable
+- Current subphase: Review/approve and replay surface
+- Last completed activity: added durable blocked-run review decisions, approve/reject helpers, review-gated blocked resume behavior, deterministic run replay events, and dashboard/API review actions
+- Next recommended activity: close Phase 5 with durable lessons memory, then mark this upgrade plan complete
 
 ## North Star
 Turn Synapse from strong governance/verification toolkit into controlled autonomous agent platform.
@@ -279,16 +279,16 @@ Planned work:
 12. Phase 5
 
 ## Current stop point
-Stopped after Phase 4 queue/blocked cockpit implementation.
-Phase 1 run model through bounded recovery, Phase 2 graph/search improvements, Phase 3 tester evidence additions, and the first Phase 4 run/provenance surfaces now exist in code.
+Stopped after Phase 4 review/approve and replay implementation.
+Phase 1 run model through bounded recovery, Phase 2 graph/search improvements, Phase 3 tester evidence additions, and Phase 4 cockpit queue/review/replay surfaces now exist in code.
 
 ## Next exact step
-Create execution-level implementation checklist for Phase 4 review/approve flow:
-- define approval state fields for blocked runs
-- decide whether approval state lives in `RunRecord.metadata` or a dedicated typed structure
-- add dashboard action surface for approve/escalate decisions without bypassing gate policy
-- add verification for blocked run approval rendering and persistence
-- update M-RUNNER/M-DASHBOARD artifacts before implementation
+Create execution-level implementation checklist for Phase 5 durable lessons memory:
+- define a small `LessonRecord` schema for reusable project memory
+- persist lessons under sharded project docs without coupling to global token tracking
+- add list/save behavior and tests
+- expose enough API surface for future MCP/CLI use
+- update MyGRACE artifacts and close this upgrade plan once verification passes
 
 ## Notes for future sessions
 When resuming:

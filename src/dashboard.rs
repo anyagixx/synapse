@@ -31,9 +31,9 @@ use crate::grace::mental_test::scan_project_mental_tests;
 use crate::grace::status::StatusCollector;
 use crate::grace::traceability::{scan_project_traceability, TraceabilityChain};
 use axum::{
-    extract::{Path as AxumPath, Query},
+    extract::{Form, Path as AxumPath, Query},
     response::Html,
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use serde::Deserialize;
@@ -59,6 +59,7 @@ pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
         .route("/mental-tests", get(mental_tests_html))
         .route("/runs", get(runs_html))
         .route("/runs/queue", get(runs_html))
+        .route("/runs/review", post(runs_review_html))
         .route("/traceability/{artifact_id}", get(traceability_html))
         .route("/search-explain", get(search_explain_html))
         .route("/cascade/preview", get(cascade_preview_html))
@@ -75,6 +76,7 @@ pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
         .route("/api/traceability", get(api_traceability))
         .route("/api/runs", get(api_runs))
         .route("/api/runs/queue", get(api_runs))
+        .route("/api/runs/review", post(api_runs_review))
         .route("/api/search-explain", get(api_search_explain))
         .route("/api/cascade-impact", get(api_cascade_impact))
         .route("/api/cascade-history", get(api_cascade_history));
@@ -239,6 +241,18 @@ async fn runs_html(Query(query): Query<RunsQuery>) -> Html<String> {
 }
 // END_runs_html
 
+// START_CONTRACT_runs_review_html
+// PURPOSE: Persist a blocked-run review decision from the local dashboard form and render the updated cockpit
+// INPUTS: { form: runs::RunReviewForm }
+// OUTPUTS: { Html<String> }
+// LINKS:
+//   → UC-002 (implements) - local dashboard review controls blocked autonomous run continuation
+// START_runs_review_html
+async fn runs_review_html(Form(form): Form<runs::RunReviewForm>) -> Html<String> {
+    Html(runs::render_review_result_page(&current_root(), &form))
+}
+// END_runs_review_html
+
 // START_CONTRACT_traceability_html
 // PURPOSE: Render artifact-scoped traceability chains
 // INPUTS: { artifact_id: String — artifact id path parameter }
@@ -397,6 +411,18 @@ async fn api_runs(Query(query): Query<RunsQuery>) -> Json<Value> {
     ))
 }
 // END_api_runs
+
+// START_CONTRACT_api_runs_review
+// PURPOSE: Persist a blocked-run review decision and return updated run payload JSON
+// INPUTS: { form: runs::RunReviewForm }
+// OUTPUTS: { Json<Value> }
+// LINKS:
+//   → UC-002 (implements) - machine-readable API records bounded run review decisions
+// START_api_runs_review
+async fn api_runs_review(Form(form): Form<runs::RunReviewForm>) -> Json<Value> {
+    Json(runs::review_run_payload(&current_root(), &form))
+}
+// END_api_runs_review
 
 // START_CONTRACT_api_search_explain
 // PURPOSE: Return graph-aware search results with explanation metadata as JSON
@@ -1005,7 +1031,21 @@ mod tests {
         assert!(payload.get("events").is_some());
         assert!(rendered.contains("Run Cockpit"));
         assert!(rendered.contains("Blocked"));
+        assert!(rendered.contains("Approve retry"));
         assert!(rendered.contains("verification gate blocked"));
+        let review_payload = runs::review_run_payload(
+            dir.path(),
+            &runs::RunReviewForm {
+                run_id: blocked.run_id.clone(),
+                decision: "approve".into(),
+                reviewer: Some("tester".into()),
+                reason: Some("retry approved".into()),
+            },
+        );
+        assert_eq!(review_payload["review"]["ok"], true);
+        assert!(review_payload["events"]
+            .as_array()
+            .is_some_and(|events| events.iter().any(|event| event["kind"] == "review")));
     }
 
     #[tokio::test]
