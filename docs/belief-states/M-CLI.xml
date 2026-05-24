@@ -4,10 +4,10 @@
     Module responsibility: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: Implement only the declared scope while preserving dependencies: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS
+      - PROCESSING: Implement only the declared scope while preserving dependencies: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: SynCli, Command enum, command argument structs including GRACE --profile flags, doctor --deps, gain --graph/--sessions/--adapters, proxy --route, stdio-only mcp command, and CI action enum
+      - Scope remains bounded to: SynCli, Command enum, command argument structs including GRACE --profile flags, RTK shortcuts, local RTK adapters, doctor --deps, gain --graph/--sessions/--adapters, proxy --route, stdio-only mcp command, and CI action enum
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

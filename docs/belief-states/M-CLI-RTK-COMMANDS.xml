@@ -1,27 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-CLI-RTK-COMMANDS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Provide RTK-style first-class command shortcuts and hook-facing rewrite decisions that route common shell tools through Synapse proxy.
+    Module responsibility: Provide RTK-style first-class command shortcuts, direct local adapters, and hook-facing rewrite decisions that route or compact token-heavy command surfaces.
     Key data flows:
-      - INPUT: RtkProxyCmd flags, RewriteCmd trailing args, and raw command strings from agent hooks.
-      - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, and use CommandRouter for rewrite decisions.
-      - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, and hook rewrite strings as syn proxy.
+      - INPUT: RtkProxyCmd flags, JsonCmd/DepsCmd/EnvCmd/WcCmd args, RewriteCmd trailing args, and raw command strings from agent hooks.
+      - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, and use CommandRouter for rewrite decisions.
+      - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, local compact adapter output, and hook rewrite strings as syn proxy.
     Critical invariants:
       - Shortcuts must not bypass M-PROXY filtering, tracking, or evidence capture.
+      - Direct local adapters must record adapter-level token economics through M-TRACKING.
       - Hooks must use syn rewrite instead of maintaining separate command-family lists.
       - Shortcut flags --route and --evidence remain behaviorally identical to syn proxy.
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized.
   IMPLEMENTATION_STRATEGY:
-    Approach: Keep shortcuts as thin CLI wrappers over ProxyCmd and keep hooks as thin delegates to rewrite_command.
-    Complexity_areas: clap trailing args, command flags beginning with hyphen, shell quoting, exit-code propagation.
-    Patterns_applied: explicit delegation, typed links, shared proxy execution path, router-backed rewrite decisions.
+    Approach: Keep shell-backed shortcuts as thin CLI wrappers over ProxyCmd, implement structured-data adapters locally, and keep hooks as thin delegates to rewrite_command.
+    Complexity_areas: clap trailing args, command flags beginning with hyphen, shell quoting, exit-code propagation, safe environment masking, bounded JSON/dependency summaries.
+    Patterns_applied: explicit delegation, typed links, shared proxy execution path, router-backed rewrite decisions, direct adapter tracking.
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - syn read --evidence filters stdout with the cat filter and writes complete raw evidence.
     - syn git --route status shows the same route decision as syn proxy --route -- git status.
+    - syn json --keys-only, syn deps, syn env --filter, and syn wc emit compact output and record adapter savings.
     - syn rewrite git status prints syn proxy -- git status without executing it.
     - verify_project and review_code pass with no MyGRACE drift.
   RISKS_ACKNOWLEDGED:
     - Native command availability differs by host; integration tests should use POSIX-stable cat behavior.
-    - Additional specialized command-specific adapters may still be needed after shortcut UX parity.
+    - Additional specialized command-specific adapters may still be needed after local JSON/deps/env/wc parity.
 </BELIEF_STATE>

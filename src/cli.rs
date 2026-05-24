@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, first-class RTK shortcut commands, rewrite hook decisions, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, first-class RTK shortcut commands, local RTK adapters, rewrite hook decisions, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
@@ -10,15 +10,17 @@
 // Command — Enum of all supported CLI commands
 // *Cmd structs — Clap argument schemas for supported commands
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
+// JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
 // RewriteCmd — Hook-facing command rewrite dry run
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.3.0 — Added hook-facing syn rewrite command]
+// LAST_CHANGE: [v4.4.0 — Added local RTK adapter command schemas]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
 mod grace_commands;
+mod rtk_adapters;
 mod rtk_commands;
 mod runtime_commands;
 mod setup_commands;
@@ -84,6 +86,14 @@ pub enum Command {
     Npx(RtkProxyCmd),
     #[command(about = "Run pytest through the token-saving proxy")]
     Pytest(RtkProxyCmd),
+    #[command(about = "Inspect JSON with compact values or keys-only schema")]
+    Json(JsonCmd),
+    #[command(about = "Summarize dependency manifests without dumping full files")]
+    Deps(DepsCmd),
+    #[command(about = "Show filtered environment variables with secrets masked")]
+    Env(EnvCmd),
+    #[command(about = "Count text locally with compact wc-style output")]
+    Wc(WcCmd),
     #[command(about = "Rewrite a shell command to its Synapse proxy form for agent hooks")]
     Rewrite(RewriteCmd),
     Run(RunCmd),
@@ -210,6 +220,47 @@ pub struct RewriteCmd {
     pub args: Vec<String>,
 }
 // END_RewriteCmd
+
+// START_JsonCmd
+#[derive(clap::Args)]
+#[command(about = "Inspect JSON with compact values or keys-only schema")]
+pub struct JsonCmd {
+    pub file: String,
+    #[arg(short = 'd', long, default_value_t = 5)]
+    pub depth: usize,
+    #[arg(long)]
+    pub keys_only: bool,
+}
+// END_JsonCmd
+
+// START_DepsCmd
+#[derive(clap::Args)]
+#[command(about = "Summarize dependency manifests")]
+pub struct DepsCmd {
+    #[arg(default_value = ".")]
+    pub path: String,
+}
+// END_DepsCmd
+
+// START_EnvCmd
+#[derive(clap::Args)]
+#[command(about = "Show filtered environment variables with secrets masked")]
+pub struct EnvCmd {
+    #[arg(short, long)]
+    pub filter: Option<String>,
+    #[arg(long)]
+    pub show_all: bool,
+}
+// END_EnvCmd
+
+// START_WcCmd
+#[derive(clap::Args)]
+#[command(about = "Count text locally with compact wc-style output")]
+pub struct WcCmd {
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub args: Vec<String>,
+}
+// END_WcCmd
 
 // START_RunCmd
 #[derive(clap::Args)]

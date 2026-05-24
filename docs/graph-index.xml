@@ -140,6 +140,8 @@
     <REL source="M-CLI-RTK-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-CLI-RTK-COMMANDS" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-CLI-RTK-COMMANDS" target="M-UTILS" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-BOOTSTRAP" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-LAYOUT" type="DEPENDS" />

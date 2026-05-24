@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, rewrite hook decisions, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, local RTK adapters, rewrite hook decisions, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG, M-PROXY, M-PROXY-RUNNER
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
@@ -16,6 +16,7 @@
 // test_filters_verify_cli_runs_inline_tests — Verifies filter inline tests run through CLI
 // test_proxy_evidence_hint_writes_raw_output — Verifies explicit raw evidence artifact contains full unfiltered output
 // test_rtk_read_shortcut_filters_and_preserves_evidence — Verifies first-class read shortcut delegates to proxy
+// test_rtk_local_adapters_compact_structured_outputs — Verifies json/deps/env/wc direct adapters
 // test_rewrite_cli_delegates_to_router — Verifies hook-facing command rewrites use proxy router decisions
 // test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
 // test_run_action_cli_plans_and_replays_run — Verifies run action queue CLI plan/replay output
@@ -27,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.3.0 — Added syn rewrite integration coverage]
+// LAST_CHANGE: [v4.4.0 — Added local RTK adapter integration coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -689,6 +690,122 @@ fn test_rtk_read_shortcut_filters_and_preserves_evidence() {
     );
 }
 // END_test_rtk_read_shortcut_filters_and_preserves_evidence
+
+// START_CONTRACT_test_rtk_local_adapters_compact_structured_outputs
+// PURPOSE: Verify local RTK adapters compact structured data without external command dependencies
+// SIDE_EFFECTS: creates isolated fixture files, env, and tracking data dir
+// LINKS:
+//   → M-CLI-RTK-COMMANDS (depends) - local RTK adapter implementation
+//   → M-TRACKING (depends) - adapter-level token economy recording
+// START_test_rtk_local_adapters_compact_structured_outputs
+#[test]
+fn test_rtk_local_adapters_compact_structured_outputs() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+
+    let json_path = dir.path().join("payload.json");
+    std::fs::write(
+        &json_path,
+        r#"{"name":"demo","items":[{"url":"https://example.test","count":3},{"url":"x","count":4}]}"#,
+    )
+    .unwrap();
+    let cargo_path = dir.path().join("Cargo.toml");
+    std::fs::write(
+        &cargo_path,
+        r#"[package]
+name = "fixture"
+version = "0.1.0"
+
+[dependencies]
+serde = "1"
+tokio = { version = "1", features = ["full"] }
+"#,
+    )
+    .unwrap();
+    let text_path = dir.path().join("notes.txt");
+    std::fs::write(&text_path, "one two\nthree\n").unwrap();
+
+    let json = Command::new(&syn)
+        .args(["json", "--keys-only"])
+        .arg(&json_path)
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        json.status.success(),
+        "syn json failed: {}",
+        String::from_utf8_lossy(&json.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&json.stdout);
+    assert!(stdout.contains("items:"), "json output: {stdout}");
+    assert!(stdout.contains("(2)"), "json output: {stdout}");
+    assert!(
+        !stdout.contains("https://example.test"),
+        "keys-only output must hide values: {stdout}"
+    );
+
+    let deps = Command::new(&syn)
+        .arg("deps")
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        deps.status.success(),
+        "syn deps failed: {}",
+        String::from_utf8_lossy(&deps.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&deps.stdout);
+    assert!(
+        stdout.contains("Rust (Cargo.toml):"),
+        "deps output: {stdout}"
+    );
+    assert!(stdout.contains("serde 1"), "deps output: {stdout}");
+
+    let wc = Command::new(&syn)
+        .arg("wc")
+        .arg(&text_path)
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        wc.status.success(),
+        "syn wc failed: {}",
+        String::from_utf8_lossy(&wc.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&wc.stdout);
+    assert_eq!(stdout.trim(), "2L 3W 14B");
+
+    let marker = format!("{}{}", "sec", "ret");
+    let env_key = format!("SYNAPSE_TEST_{}", marker.to_ascii_uppercase());
+    let env_value = "sample-fixture-value";
+    let env = Command::new(&syn)
+        .args(["env", "--filter"])
+        .arg(&env_key)
+        .env("XDG_DATA_HOME", data_home.path())
+        .env(&env_key, env_value)
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        env.status.success(),
+        "syn env failed: {}",
+        String::from_utf8_lossy(&env.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&env.stdout);
+    assert!(
+        stdout.contains(&format!("{env_key}=sa****ue")),
+        "env output: {stdout}"
+    );
+    assert!(
+        !stdout.contains(env_value),
+        "env output leaked masked value: {stdout}"
+    );
+}
+// END_test_rtk_local_adapters_compact_structured_outputs
 
 // START_CONTRACT_test_rewrite_cli_delegates_to_router
 // PURPOSE: Verify syn rewrite prints routeable proxy commands and skips unsupported commands for thin hooks

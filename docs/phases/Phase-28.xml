@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-28" status="done">
+  <NAME>RTK Local Command-Specific Adapters</NAME>
+  <GOAL>Move beyond thin proxy shortcuts by adding direct local adapters for structured data and environment surfaces that can be compacted without spawning native shell commands.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-MAIN" />
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI" status="done">Expose json, deps, env, and wc as first-class local RTK adapter commands with documented flags.</step-1>
+    <step-2 module="M-CLI-RTK-COMMANDS" status="done">Implement direct compact renderers for JSON, dependency manifests, environment variables, and wc-style counts.</step-2>
+    <step-3 module="M-MAIN" status="done">Dispatch local RTK adapter commands through the binary entry point.</step-3>
+    <step-4 module="M-CAPABILITIES" status="done">Document local RTK adapters as shipped CLI capabilities.</step-4>
+    <step-5 module="M-TESTS-INTEGRATION" status="done">Verify local adapters compact structured outputs and mask secrets.</step-5>
+    <step-6 module="M-TESTS-PARITY" status="done">Teach docs parity about documented local adapter flags.</step-6>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo check --all-targets</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_adapters::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_commands::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity test_no_ghost_commands</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity test_command_count_matches_capabilities</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

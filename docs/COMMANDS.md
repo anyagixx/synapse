@@ -56,6 +56,11 @@ This page lists shipped CLI commands only.
 | `syn pnpm [args...]` | Run pnpm through the token-saving proxy |
 | `syn npx [args...]` | Run npx through the token-saving proxy |
 | `syn pytest [args...]` | Run pytest through the token-saving proxy |
+| `syn json <file>` | Inspect JSON with compact values |
+| `syn json --keys-only <file>` | Inspect JSON structure without printing values |
+| `syn deps [path]` | Summarize dependency manifests without dumping full files |
+| `syn env --filter <name>` | Show filtered environment variables with secrets masked |
+| `syn wc <file>` | Count text locally with compact wc-style output |
 | `syn rewrite <cmd>` | Print the hook rewrite command without executing it |
 | `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |
 | `syn proxy --route -- <cmd>` | Preview the selected token-saving adapter without executing the command |

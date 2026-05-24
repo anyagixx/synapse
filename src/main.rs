@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
 // PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
-// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including RTK proxy shortcuts and hook rewrites
+// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including RTK proxy shortcuts, local RTK adapters, and hook rewrites
 // DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.2.0 — Dispatch hook-facing syn rewrite command]
+// LAST_CHANGE: [v4.3.0 — Dispatch local RTK adapter commands]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -91,6 +91,10 @@ fn main() -> anyhow::Result<()> {
                 cmd.run_as(config, "pytest", false, "Usage: syn pytest [args...]")
                     .await
             }
+            syn::cli::Command::Json(cmd) => cmd.run(config).await,
+            syn::cli::Command::Deps(cmd) => cmd.run(config).await,
+            syn::cli::Command::Env(cmd) => cmd.run(config).await,
+            syn::cli::Command::Wc(cmd) => cmd.run(config).await,
             syn::cli::Command::Rewrite(cmd) => cmd.run(config).await,
             syn::cli::Command::Run(cmd) => cmd.run(config).await,
             syn::cli::Command::Proxy(cmd) => cmd.run(config).await,
