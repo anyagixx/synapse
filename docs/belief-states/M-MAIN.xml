@@ -3,7 +3,7 @@
   UNDERSTANDING:
     Module responsibility: Binary entry point — parses CLI, resolves runtime config, initializes stderr tracing, dispatches commands via tokio runtime
     Key data flows:
-      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-46 dispatches local RTK system adapters through direct compact renderers.
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-47 dispatches RTK language ecosystem shortcuts through the proxy path.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-LIB, M-CLI, M-CONFIG
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
@@ -19,6 +19,7 @@
     - syn rtk-parity --source ../GRACEme/rtk-develop --ci dispatches through main and passes
     - expanded shortcuts dispatch through RtkProxyCmd::run_as instead of executing native commands directly
     - pipe, log, and smart dispatch without bypassing adapter-level token tracking
+    - language ecosystem shortcuts dispatch through RtkProxyCmd::run_as rather than direct process execution
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

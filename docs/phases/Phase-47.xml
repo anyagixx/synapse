@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-47" status="planned">
+<PHASE id="Phase-47" status="done">
   <NAME>RTK Language Adapter Parity</NAME>
   <GOAL>Port or wrap RTK language ecosystem adapters for Python, JavaScript/TypeScript, Go, Ruby, Rust, JVM, and .NET workflows.</GOAL>
   <MODULE_REFS>
@@ -8,14 +8,20 @@
     <MODULE_REF id="M-PROXY-FILTER" />
   </MODULE_REFS>
   <STEPS>
-    <step-1 module="M-CLI-RTK-COMMANDS" status="planned">Add command-specific adapter behavior for pytest, ruff, mypy, pip, npm, pnpm, next, playwright, prettier, prisma, tsc, vitest, go, golangci, rake, rspec, rubocop, cargo, gradlew, and dotnet reports where proxy filtering is insufficient.</step-1>
-    <step-2 module="M-PROXY-ROUTER" status="planned">Expand router families and examples to reflect supported language adapter coverage.</step-2>
-    <step-3 module="M-PROXY-FILTER" status="planned">Add any missing inline filter cases discovered while porting command-specific adapters.</step-3>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="done">Added first-class language ecosystem proxy shortcuts for ruff, mypy, basedpyright, pip, uv, next, playwright, prettier, prisma, tsc, vitest, and gradlew while preserving existing pytest/npm/pnpm/go/ruby/rust/dotnet delegates.</step-1>
+    <step-2 module="M-PROXY-ROUTER" status="done">Expanded router behavior and examples to cover direct JavaScript/TypeScript tools without requiring npx wrappers.</step-2>
+    <step-3 module="M-PROXY-FILTER" status="done">Verified existing RTK filter pack; no missing inline filter cases were required for this phase.</step-3>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test cli::rtk_adapters::tests --lib</CHECK>
-    <CHECK status="planned">cargo test proxy::router::tests --lib</CHECK>
-    <CHECK status="planned">cargo run --quiet -- filters verify</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_commands::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_parity::tests --lib</CHECK>
+    <CHECK status="passed">cargo test proxy::router::tests --lib</CHECK>
+    <CHECK status="passed">cargo run --quiet -- ruff --route check .</CHECK>
+    <CHECK status="passed">cargo run --quiet -- tsc --route --noEmit</CHECK>
+    <CHECK status="passed">cargo run --quiet -- vitest --route run</CHECK>
+    <CHECK status="passed">cargo run --quiet -- gradlew --route test</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
   </VERIFICATION>
 </PHASE>

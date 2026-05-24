@@ -7,6 +7,6 @@
     <FILE>src/cli.rs</FILE>
   </FILES>
   <DEPENDS>M-CLI-SETUP-COMMANDS,M-CLI-CODE-COMMANDS,M-CLI-GRACE-COMMANDS,M-CLI-RUNTIME-COMMANDS,M-CLI-RTK-COMMANDS</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml</LINKS>
+  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml</LINKS>
   <VERIFICATION_REF>V-M-CLI</VERIFICATION_REF>
 </MODULE>

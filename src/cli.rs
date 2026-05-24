@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.7.0 — Added local RTK system adapter command schemas]
+// LAST_CHANGE: [v4.8.0 — Added RTK language ecosystem shortcut command schemas]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -90,6 +90,43 @@ pub enum Command {
     Npx(RtkProxyCmd),
     #[command(about = "Run pytest through the token-saving proxy")]
     Pytest(RtkProxyCmd),
+    #[command(name = "ruff", about = "Run ruff through the token-saving proxy")]
+    Ruff(RtkProxyCmd),
+    #[command(name = "mypy", about = "Run mypy through the token-saving proxy")]
+    Mypy(RtkProxyCmd),
+    #[command(
+        name = "basedpyright",
+        about = "Run basedpyright through the token-saving proxy"
+    )]
+    Basedpyright(RtkProxyCmd),
+    #[command(name = "pip", about = "Run pip through the token-saving proxy")]
+    Pip(RtkProxyCmd),
+    #[command(name = "uv", about = "Run uv through the token-saving proxy")]
+    Uv(RtkProxyCmd),
+    #[command(
+        name = "next",
+        about = "Run Next.js tooling through the token-saving proxy"
+    )]
+    Next(RtkProxyCmd),
+    #[command(
+        name = "playwright",
+        about = "Run Playwright through the token-saving proxy"
+    )]
+    Playwright(RtkProxyCmd),
+    #[command(
+        name = "prettier",
+        about = "Run Prettier through the token-saving proxy"
+    )]
+    Prettier(RtkProxyCmd),
+    #[command(name = "prisma", about = "Run Prisma through the token-saving proxy")]
+    Prisma(RtkProxyCmd),
+    #[command(
+        name = "tsc",
+        about = "Run TypeScript compiler through the token-saving proxy"
+    )]
+    Tsc(RtkProxyCmd),
+    #[command(name = "vitest", about = "Run Vitest through the token-saving proxy")]
+    Vitest(RtkProxyCmd),
     #[command(name = "gh", about = "Run GitHub CLI through the token-saving proxy")]
     Gh(RtkProxyCmd),
     #[command(name = "glab", about = "Run GitLab CLI through the token-saving proxy")]
@@ -121,6 +158,11 @@ pub enum Command {
     Rubocop(RtkProxyCmd),
     #[command(name = "gradle", about = "Run Gradle through the token-saving proxy")]
     Gradle(RtkProxyCmd),
+    #[command(
+        name = "gradlew",
+        about = "Run local Gradle wrapper through the token-saving proxy"
+    )]
+    Gradlew(RtkProxyCmd),
     #[command(name = "make", about = "Run make through the token-saving proxy")]
     Make(RtkProxyCmd),
     #[command(name = "just", about = "Run just through the token-saving proxy")]

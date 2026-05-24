@@ -46,13 +46,54 @@ const REQUIRED_ROUTER_FAMILIES: &[&str] = &[
     "vcs",
 ];
 const PROXY_SHORTCUTS: &[&str] = &[
-    "read", "ls", "tree", "find", "rg", "grep", "git", "cargo", "npm", "pnpm", "npx", "pytest",
-    "gh", "glab", "aws", "psql", "curl", "wget", "jq", "go", "golangci", "dotnet", "rake", "rspec",
-    "rubocop", "gradle", "make", "just", "helm", "kubectl",
+    "read",
+    "ls",
+    "tree",
+    "find",
+    "rg",
+    "grep",
+    "git",
+    "cargo",
+    "npm",
+    "pnpm",
+    "npx",
+    "pytest",
+    "gh",
+    "glab",
+    "aws",
+    "psql",
+    "curl",
+    "wget",
+    "jq",
+    "go",
+    "golangci",
+    "dotnet",
+    "rake",
+    "rspec",
+    "rubocop",
+    "gradle",
+    "gradlew",
+    "make",
+    "just",
+    "helm",
+    "kubectl",
+    "ruff",
+    "mypy",
+    "basedpyright",
+    "pip",
+    "uv",
+    "next",
+    "playwright",
+    "prettier",
+    "prisma",
+    "tsc",
+    "vitest",
 ];
 const LOCAL_ADAPTERS: &[&str] = &["json", "deps", "env", "wc", "pipe", "log", "smart"];
 const HOOKS: &[&str] = &["opencode-rewrite"];
 const ANALYTICS: &[&str] = &["gain", "gain --graph", "gain --sessions", "gain --adapters"];
+const PROXY_SHORTCUTS_NOTE: &str =
+    "Phase-45 adds common proxy shortcuts; Phase-47 adds language ecosystem shortcuts.";
 const LOCAL_ADAPTERS_NOTE: &str =
     "Phase-46 adds pipe, log, and smart local system adapters; Phase-47 evaluates additional specialized adapters.";
 
@@ -130,7 +171,7 @@ fn build_rtk_parity_report(explicit_source: Option<&Path>) -> anyhow::Result<Rtk
             "tracked",
             false,
             PROXY_SHORTCUTS,
-            &["Phase-45 expands first-class shortcut parity for more RTK command families."],
+            &[PROXY_SHORTCUTS_NOTE],
         ),
         static_inventory_section(
             "local-adapters",
@@ -509,9 +550,10 @@ mod tests {
         let section =
             static_inventory_section("proxy-shortcuts", "tracked", false, PROXY_SHORTCUTS, &[]);
 
-        assert_eq!(section.synapse_count, 30);
+        assert_eq!(section.synapse_count, 42);
         for shortcut in [
-            "gh", "aws", "go", "golangci", "dotnet", "make", "helm", "kubectl",
+            "gh", "aws", "go", "golangci", "dotnet", "make", "helm", "kubectl", "ruff", "mypy",
+            "uv", "tsc", "vitest", "gradlew",
         ] {
             assert!(section.items.contains(&shortcut.to_string()), "{shortcut}");
         }

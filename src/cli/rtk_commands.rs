@@ -24,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.7.0 — Added local system adapters to token-safe detection]
+// LAST_CHANGE: [v1.8.0 — Added language ecosystem shortcuts to token-safe detection]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
@@ -44,10 +44,58 @@ struct SegmentRewrite {
 }
 
 const SYN_TOKEN_SAFE_COMMANDS: &[&str] = &[
-    "proxy", "read", "ls", "tree", "find", "rg", "grep", "git", "cargo", "npm", "pnpm", "npx",
-    "pytest", "gh", "glab", "aws", "psql", "curl", "wget", "jq", "go", "golangci", "dotnet",
-    "rake", "rspec", "rubocop", "gradle", "make", "just", "helm", "kubectl", "json", "deps", "env",
-    "wc", "pipe", "log", "smart", "gain", "compress",
+    "proxy",
+    "read",
+    "ls",
+    "tree",
+    "find",
+    "rg",
+    "grep",
+    "git",
+    "cargo",
+    "npm",
+    "pnpm",
+    "npx",
+    "pytest",
+    "gh",
+    "glab",
+    "aws",
+    "psql",
+    "curl",
+    "wget",
+    "jq",
+    "go",
+    "golangci",
+    "dotnet",
+    "rake",
+    "rspec",
+    "rubocop",
+    "gradle",
+    "gradlew",
+    "make",
+    "just",
+    "helm",
+    "kubectl",
+    "json",
+    "deps",
+    "env",
+    "wc",
+    "pipe",
+    "log",
+    "smart",
+    "ruff",
+    "mypy",
+    "basedpyright",
+    "pip",
+    "uv",
+    "next",
+    "playwright",
+    "prettier",
+    "prisma",
+    "tsc",
+    "vitest",
+    "gain",
+    "compress",
 ];
 
 // START_public_api
@@ -793,6 +841,18 @@ mod tests {
             "syn pipe --filter make",
             "syn log app.log",
             "syn smart src/main.rs",
+            "syn ruff check",
+            "syn mypy src",
+            "syn basedpyright",
+            "syn pip list",
+            "syn uv run pytest",
+            "syn next build",
+            "syn playwright test",
+            "syn prettier --check .",
+            "syn prisma generate",
+            "syn tsc --noEmit",
+            "syn vitest run",
+            "syn gradlew test",
         ] {
             assert!(is_already_token_safe(command), "{command}");
         }

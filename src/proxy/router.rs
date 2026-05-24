@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-ROUTER
 // PURPOSE: RTK-style command router — classifies shell commands into token-saving adapter families
-// SCOPE: CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue, RTK parity router-family coverage gate
+// SCOPE: CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue, direct language tool routing, RTK parity router-family coverage gate
 // DEPENDS: N/A
 // LINKS:
 //   → UC-002 (implements) - command routing makes token-saving behavior machine-checkable
@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 — Expanded adapter catalogue for RTK parity inventory]
+// LAST_CHANGE: [v1.2.0 — Added direct JavaScript language tool routing]
 // END_CHANGE_SUMMARY
 
 // START_public_api
@@ -118,6 +118,12 @@ fn route_parts(parts: &[String]) -> RouteDecision {
     ) {
         return route_js(&tokens);
     }
+    if matches!(
+        tokens[0].as_str(),
+        "next" | "playwright" | "prettier" | "prisma" | "tsc" | "vitest"
+    ) {
+        return route_js(&tokens);
+    }
     if tokens[0] == "pytest" || matches_prefix(&tokens, &["python", "-m", "pytest"]) {
         return route(
             "python-pytest",
@@ -217,7 +223,7 @@ fn supported_adapters() -> Vec<SupportedAdapter> {
         SupportedAdapter {
             adapter: "js-tooling",
             family: "javascript",
-            examples: &["npm test", "pnpm build", "npx tsc", "bun test"],
+            examples: &["npm test", "pnpm build", "tsc --noEmit", "vitest run"],
         },
         SupportedAdapter {
             adapter: "infra-cli",
@@ -499,6 +505,8 @@ mod tests {
                 "docker compose logs",
             ),
             (vec!["terraform", "plan"], "infra-cli", "terraform plan"),
+            (vec!["tsc", "--noEmit"], "js-tooling", "tsc"),
+            (vec!["vitest", "run"], "js-tooling", "vitest run"),
             (vec!["rg", "needle"], "system-text", "rg"),
         ];
 

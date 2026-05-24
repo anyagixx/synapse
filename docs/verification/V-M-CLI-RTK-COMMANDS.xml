@@ -9,6 +9,8 @@
     <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
     <COMMAND>cargo run --quiet -- make --route test</COMMAND>
     <COMMAND>cargo run --quiet -- dotnet --route test</COMMAND>
+    <COMMAND>cargo run --quiet -- ruff --route check .</COMMAND>
+    <COMMAND>cargo run --quiet -- tsc --route --noEmit</COMMAND>
     <COMMAND>cargo run --quiet -- smart src/cli.rs</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
@@ -21,6 +23,7 @@
     <ASSERTION>syn read --evidence applies the built-in cat filter while preserving complete raw output in the evidence artifact.</ASSERTION>
     <ASSERTION>Shortcut --route and --evidence flags use the same behavior as syn proxy.</ASSERTION>
     <ASSERTION>Expanded RTK shortcuts for hosting, cloud/data, Go, .NET, Ruby, JVM/build, and Kubernetes/Helm families delegate through RtkProxyCmd::run_as.</ASSERTION>
+    <ASSERTION>RTK language ecosystem shortcuts for Python, JavaScript/TypeScript, uv, and Gradle wrapper tooling delegate through RtkProxyCmd::run_as.</ASSERTION>
     <ASSERTION>syn json, syn deps, syn env, and syn wc run as direct local adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn pipe, syn log, and syn smart run as direct local system adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn rewrite uses CommandRouter as the hook rewrite source of truth and exits non-zero without stdout for unsupported commands.</ASSERTION>
@@ -28,8 +31,8 @@
     <ASSERTION>syn rewrite rewrites routeable pipeline left edges while preserving pipe filter segments raw and resuming rewrite after subsequent &amp;&amp;, ||, or ; operators.</ASSERTION>
     <ASSERTION>syn rewrite preserves safe fd-merge redirects such as 2&gt;&amp;1 after proxied commands while keeping file redirects and non-trailing redirect tokens pass-through.</ASSERTION>
     <ASSERTION>syn rewrite preserves transparent shell prefix builtins including builtin and nocorrect before proxied commands.</ASSERTION>
-    <ASSERTION>syn rewrite treats expanded Synapse shortcuts such as syn gh, syn aws, syn go, syn make, syn helm, syn kubectl, syn pipe, syn log, and syn smart as already token-safe.</ASSERTION>
+    <ASSERTION>syn rewrite treats expanded Synapse shortcuts such as syn gh, syn aws, syn go, syn make, syn helm, syn kubectl, syn pipe, syn log, syn smart, syn ruff, syn tsc, and syn vitest as already token-safe.</ASSERTION>
     <ASSERTION>syn rtk-parity emits a machine-checkable inventory and fails CI when critical filter or router-family parity gaps exist.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-46</PHASE_GATE>
+  <PHASE_GATE>Phase-47</PHASE_GATE>
 </VERIFICATION>

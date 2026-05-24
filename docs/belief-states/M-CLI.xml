@@ -3,7 +3,7 @@
   UNDERSTANDING:
     Module responsibility: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
     Key data flows:
-      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-46 adds local RTK system adapters while preserving the existing clap facade.
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-47 adds RTK language ecosystem shortcuts while preserving the existing clap facade.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
@@ -18,6 +18,7 @@
     - belief-state-exists reports no malformed BELIEF_STATE blocks
     - syn gh, syn aws, syn go, syn make, syn helm, and syn kubectl parse as first-class commands with --route support
     - syn pipe, syn log, and syn smart parse as local RTK system adapters
+    - syn ruff, syn mypy, syn uv, syn tsc, syn vitest, and syn gradlew parse as language ecosystem shortcuts
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

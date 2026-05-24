@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.6.0 — Dispatch local RTK system adapter commands]
+// LAST_CHANGE: [v4.7.0 — Dispatch RTK language ecosystem shortcut commands]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -91,6 +91,60 @@ fn main() -> anyhow::Result<()> {
                 cmd.run_as(config, "pytest", false, "Usage: syn pytest [args...]")
                     .await
             }
+            syn::cli::Command::Ruff(cmd) => {
+                cmd.run_as(config, "ruff", false, "Usage: syn ruff [args...]")
+                    .await
+            }
+            syn::cli::Command::Mypy(cmd) => {
+                cmd.run_as(config, "mypy", false, "Usage: syn mypy [args...]")
+                    .await
+            }
+            syn::cli::Command::Basedpyright(cmd) => {
+                cmd.run_as(
+                    config,
+                    "basedpyright",
+                    false,
+                    "Usage: syn basedpyright [args...]",
+                )
+                .await
+            }
+            syn::cli::Command::Pip(cmd) => {
+                cmd.run_as(config, "pip", false, "Usage: syn pip [args...]")
+                    .await
+            }
+            syn::cli::Command::Uv(cmd) => {
+                cmd.run_as(config, "uv", false, "Usage: syn uv [args...]")
+                    .await
+            }
+            syn::cli::Command::Next(cmd) => {
+                cmd.run_as(config, "next", false, "Usage: syn next [args...]")
+                    .await
+            }
+            syn::cli::Command::Playwright(cmd) => {
+                cmd.run_as(
+                    config,
+                    "playwright",
+                    false,
+                    "Usage: syn playwright [args...]",
+                )
+                .await
+            }
+            syn::cli::Command::Prettier(cmd) => {
+                cmd.run_as(config, "prettier", false, "Usage: syn prettier [args...]")
+                    .await
+            }
+            syn::cli::Command::Prisma(cmd) => {
+                cmd.run_as(config, "prisma", false, "Usage: syn prisma [args...]")
+                    .await
+            }
+            syn::cli::Command::Tsc(cmd) => {
+                cmd.run_as(config, "tsc", false, "Usage: syn tsc [args...]")
+                    .await
+            }
+            syn::cli::Command::Vitest(cmd) => {
+                cmd.run_as(config, "vitest", false, "Usage: syn vitest [args...]")
+                    .await
+            }
             syn::cli::Command::Gh(cmd) => {
                 cmd.run_as(config, "gh", false, "Usage: syn gh [args...]")
                     .await
@@ -150,6 +204,10 @@ fn main() -> anyhow::Result<()> {
             }
             syn::cli::Command::Gradle(cmd) => {
                 cmd.run_as(config, "gradle", false, "Usage: syn gradle [args...]")
+                    .await
+            }
+            syn::cli::Command::Gradlew(cmd) => {
+                cmd.run_as(config, "./gradlew", false, "Usage: syn gradlew [args...]")
                     .await
             }
             syn::cli::Command::Make(cmd) => {

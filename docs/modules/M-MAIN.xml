@@ -7,6 +7,6 @@
     <FILE>src/main.rs</FILE>
   </FILES>
   <DEPENDS>M-LIB,M-CLI,M-CONFIG</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml</LINKS>
+  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml</LINKS>
   <VERIFICATION_REF>V-M-MAIN</VERIFICATION_REF>
 </MODULE>
