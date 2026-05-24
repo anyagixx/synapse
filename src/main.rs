@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
 // PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
-// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts, local RTK adapters, parity inventory, and hook rewrites
+// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts, local RTK adapters, local RTK system adapters, parity inventory, and hook rewrites
 // DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.5.0 — Dispatch expanded RTK proxy shortcut commands]
+// LAST_CHANGE: [v4.6.0 — Dispatch local RTK system adapter commands]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -172,6 +172,9 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Deps(cmd) => cmd.run(config).await,
             syn::cli::Command::Env(cmd) => cmd.run(config).await,
             syn::cli::Command::Wc(cmd) => cmd.run(config).await,
+            syn::cli::Command::Pipe(cmd) => cmd.run(config).await,
+            syn::cli::Command::Log(cmd) => cmd.run(config).await,
+            syn::cli::Command::Smart(cmd) => cmd.run(config).await,
             syn::cli::Command::RtkParity(cmd) => cmd.run(config).await,
             syn::cli::Command::Rewrite(cmd) => cmd.run(config).await,
             syn::cli::Command::Run(cmd) => cmd.run(config).await,

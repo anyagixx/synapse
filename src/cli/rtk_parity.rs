@@ -9,6 +9,7 @@
 //   -> M-PROXY-ROUTER (depends) - reads routed adapter family catalogue
 //   -> Phase-44 (implements) - machine-checkable RTK parity inventory gate
 //   -> Phase-45 (implements) - expanded first-class RTK proxy shortcut parity
+//   -> Phase-46 (implements) - local RTK system adapter inventory
 //   -> NFR-003 (traces_to) - parity gates protect token-saving coverage
 
 // START_MODULE_MAP
@@ -20,7 +21,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Added expanded RTK proxy shortcut inventory]
+// LAST_CHANGE: [v1.2.0 - Added local RTK system adapter inventory]
 // END_CHANGE_SUMMARY
 
 use super::RtkParityCmd;
@@ -49,9 +50,11 @@ const PROXY_SHORTCUTS: &[&str] = &[
     "gh", "glab", "aws", "psql", "curl", "wget", "jq", "go", "golangci", "dotnet", "rake", "rspec",
     "rubocop", "gradle", "make", "just", "helm", "kubectl",
 ];
-const LOCAL_ADAPTERS: &[&str] = &["json", "deps", "env", "wc"];
+const LOCAL_ADAPTERS: &[&str] = &["json", "deps", "env", "wc", "pipe", "log", "smart"];
 const HOOKS: &[&str] = &["opencode-rewrite"];
 const ANALYTICS: &[&str] = &["gain", "gain --graph", "gain --sessions", "gain --adapters"];
+const LOCAL_ADAPTERS_NOTE: &str =
+    "Phase-46 adds pipe, log, and smart local system adapters; Phase-47 evaluates additional specialized adapters.";
 
 // START_public_api
 
@@ -134,7 +137,7 @@ fn build_rtk_parity_report(explicit_source: Option<&Path>) -> anyhow::Result<Rtk
             "tracked",
             false,
             LOCAL_ADAPTERS,
-            &["Phase-46 and Phase-47 evaluate additional standalone RTK adapters."],
+            &[LOCAL_ADAPTERS_NOTE],
         ),
         static_inventory_section(
             "hooks",
@@ -511,6 +514,17 @@ mod tests {
             "gh", "aws", "go", "golangci", "dotnet", "make", "helm", "kubectl",
         ] {
             assert!(section.items.contains(&shortcut.to_string()), "{shortcut}");
+        }
+    }
+
+    #[test]
+    fn local_adapter_inventory_covers_phase46_system_adapters() {
+        let section =
+            static_inventory_section("local-adapters", "tracked", false, LOCAL_ADAPTERS, &[]);
+
+        assert_eq!(section.synapse_count, 7);
+        for adapter in ["json", "deps", "env", "wc", "pipe", "log", "smart"] {
+            assert!(section.items.contains(&adapter.to_string()), "{adapter}");
         }
     }
 }

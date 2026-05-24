@@ -6,6 +6,7 @@
     <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
     <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
     <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
+    <COMMAND>cargo run --quiet -- smart src/cli.rs</COMMAND>
     <COMMAND>cargo run --quiet -- aws --route sts get-caller-identity</COMMAND>
     <COMMAND>cargo run --quiet -- helm --route list</COMMAND>
     <COMMAND>cargo test --test mcp_protocol test_stdio_keeps_logs_off_stdout_and_notifications_silent</COMMAND>
@@ -15,8 +16,9 @@
     <ASSERTION>Tracing writes to stderr so MCP stdio stdout remains a clean JSON-RPC channel.</ASSERTION>
     <ASSERTION>Main dispatch routes first-class RTK shortcuts, including expanded Phase-45 command families, to RtkProxyCmd without bypassing proxy filtering.</ASSERTION>
     <ASSERTION>Main dispatch routes local RTK adapters to direct compact renderers with token tracking.</ASSERTION>
+    <ASSERTION>Main dispatch routes pipe, log, and smart local system adapters to direct compact renderers with token tracking.</ASSERTION>
     <ASSERTION>Main dispatch routes RtkParityCmd to the machine-checkable parity inventory gate.</ASSERTION>
     <ASSERTION>Main dispatch routes RewriteCmd to the hook-facing rewrite implementation.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-45</PHASE_GATE>
+  <PHASE_GATE>Phase-46</PHASE_GATE>
 </VERIFICATION>

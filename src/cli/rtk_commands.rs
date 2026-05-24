@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
-// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, and kubectl; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, and expanded token-safe Synapse shortcuts
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, and kubectl; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, expanded proxy shortcuts, and local system adapters treated as token-safe Synapse shortcuts
 // DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
@@ -24,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.6.0 — Expanded token-safe detection for RTK shortcut parity]
+// LAST_CHANGE: [v1.7.0 — Added local system adapters to token-safe detection]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
@@ -47,7 +47,7 @@ const SYN_TOKEN_SAFE_COMMANDS: &[&str] = &[
     "proxy", "read", "ls", "tree", "find", "rg", "grep", "git", "cargo", "npm", "pnpm", "npx",
     "pytest", "gh", "glab", "aws", "psql", "curl", "wget", "jq", "go", "golangci", "dotnet",
     "rake", "rspec", "rubocop", "gradle", "make", "just", "helm", "kubectl", "json", "deps", "env",
-    "wc", "gain", "compress",
+    "wc", "pipe", "log", "smart", "gain", "compress",
 ];
 
 // START_public_api
@@ -790,6 +790,9 @@ mod tests {
             "syn just check",
             "syn helm list",
             "syn kubectl get pods",
+            "syn pipe --filter make",
+            "syn log app.log",
+            "syn smart src/main.rs",
         ] {
             assert!(is_already_token_safe(command), "{command}");
         }

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: Local RTK-style adapters for token-heavy structured data, dependency, environment, and count output
-// SCOPE: JsonCmd, DepsCmd, EnvCmd, WcCmd execution; compact renderers; adapter-level token tracking
+// SCOPE: JsonCmd, DepsCmd, EnvCmd, WcCmd execution; compact renderers; shared adapter-level token tracking for local RTK adapters
 // DEPENDS: M-CONFIG, M-TRACKING, M-UTILS
 // LINKS:
 //   -> M-CLI (depends) - implements command argument schemas declared by the CLI facade
@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added local RTK adapters for json, deps, env, and wc]
+// LAST_CHANGE: [v1.1.0 - Exposed shared local adapter token tracking helper]
 // END_CHANGE_SUMMARY
 
 use super::{DepsCmd, EnvCmd, JsonCmd, WcCmd};
@@ -1130,7 +1130,7 @@ fn wc_display_name(stats: &WcStats) -> String {
 // OUTPUTS: { () }
 // SIDE_EFFECTS: may write tracking database
 // START_record_adapter_savings
-async fn record_adapter_savings(
+pub(super) async fn record_adapter_savings(
     config: &Config,
     command: &str,
     raw: &str,

@@ -3,12 +3,14 @@
   UNDERSTANDING:
     Module responsibility: Provide RTK-style first-class command shortcuts, direct local adapters, machine-checkable parity inventory gates, and shell-aware hook-facing rewrite decisions that route or compact token-heavy command surfaces.
     Key data flows:
-      - INPUT: RtkProxyCmd flags for original and expanded shortcut families, JsonCmd/DepsCmd/EnvCmd/WcCmd args, RtkParityCmd source/json/ci flags, RewriteCmd trailing args, and raw command strings from agent hooks.
-      - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, compare RTK source-derived inventory with Synapse coverage, track expanded proxy shortcut inventory, and use CommandRouter for per-segment rewrite decisions.
+      - INPUT: RtkProxyCmd flags for original and expanded shortcut families, JsonCmd/DepsCmd/EnvCmd/WcCmd/PipeCmd/LogCmd/SmartCmd args, RtkParityCmd source/json/ci flags, RewriteCmd trailing args, and raw command strings from agent hooks.
+      - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, apply trusted TOML filters to stdin, compact logs, summarize source structure, compare RTK source-derived inventory with Synapse coverage, track expanded proxy/local adapter inventory, and use CommandRouter for per-segment rewrite decisions.
       - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, local compact adapter output, parity report/CI gate, and hook rewrite strings, safe shell chains, pipeline-left-edge rewrites, safe fd-redirect-preserving rewrites, or shell-prefix-preserving rewrites as syn proxy.
     Critical invariants:
       - Shortcuts must not bypass M-PROXY filtering, tracking, or evidence capture.
       - Direct local adapters must record adapter-level token economics through M-TRACKING.
+      - Pipe mode must use trusted FilterEngine definitions instead of maintaining a separate filter catalogue.
+      - Log and smart modes must bound input and avoid dumping raw large files into context.
       - Hooks must use syn rewrite instead of maintaining separate command-family or chain-rewrite lists.
       - rtk-parity critical gates must fail when source filter coverage or router-family coverage regresses.
       - Expanded shortcut inventory must stay synchronized across Command enum, main dispatch, rewrite token-safe detection, and rtk-parity reporting.
@@ -16,9 +18,9 @@
       - Shortcut flags --route and --evidence remain behaviorally identical to syn proxy.
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized.
   IMPLEMENTATION_STRATEGY:
-    Approach: Keep shell-backed shortcuts as thin CLI wrappers over ProxyCmd, implement structured-data adapters locally, keep parity inventory explicit, and keep hooks as thin delegates to shell-aware rewrite_command.
-    Complexity_areas: clap trailing args, command flags beginning with hyphen, shell quoting, shell operator safety, pipeline stream semantics, fd redirect preservation, shell prefix layering, exit-code propagation, safe environment masking, bounded JSON/dependency summaries.
-    Patterns_applied: explicit delegation, typed links, shared proxy execution path, router-backed per-segment rewrite decisions, pipeline target preservation, safe redirect suffix preservation, transparent prefix preservation, direct adapter tracking.
+    Approach: Keep shell-backed shortcuts as thin CLI wrappers over ProxyCmd, implement structured-data/system adapters locally only where they avoid subprocess duplication, keep parity inventory explicit, and keep hooks as thin delegates to shell-aware rewrite_command.
+    Complexity_areas: clap trailing args, command flags beginning with hyphen, shell quoting, shell operator safety, pipeline stream semantics, fd redirect preservation, shell prefix layering, exit-code propagation, safe environment masking, bounded JSON/dependency summaries, bounded stdin reads, trusted filter reuse, log normalization, source symbol extraction.
+    Patterns_applied: explicit delegation, typed links, shared proxy execution path, router-backed per-segment rewrite decisions, pipeline target preservation, safe redirect suffix preservation, transparent prefix preservation, direct adapter tracking, FilterEngine reuse.
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - syn read --evidence filters stdout with the cat filter and writes complete raw evidence.
@@ -32,6 +34,10 @@
     - syn rewrite "syn gh pr checks && aws sts get-caller-identity" preserves the token-safe syn gh segment and proxies the raw aws segment.
     - syn gh, syn glab, syn aws, syn psql, syn curl, syn wget, syn jq, syn go, syn golangci, syn dotnet, syn rake, syn rspec, syn rubocop, syn gradle, syn make, syn just, syn helm, and syn kubectl expose --route via RtkProxyCmd.
     - syn rtk-parity reports proxy-shortcuts synapse_count as 30.
+    - syn pipe --filter make filters stdin through the same TOML filter engine as syn proxy.
+    - syn log deduplicates volatile repeated log lines and records rtk-log savings.
+    - syn smart src/cli.rs emits source structure without printing full function bodies and records rtk-smart savings.
+    - syn rtk-parity reports local-adapters synapse_count as 7.
     - syn rtk-parity --source ../GRACEme/rtk-develop --ci passes with filters 59/59 and router families 12/12.
     - verify_project and review_code pass with no MyGRACE drift.
   RISKS_ACKNOWLEDGED:
@@ -39,4 +45,5 @@
     - Additional specialized command-specific adapters may still be needed after local JSON/deps/env/wc parity.
     - Full shell language support is intentionally out of scope; unsupported constructs must fail closed.
     - Expanded shortcuts remain proxy delegates, not standalone semantic parsers; deeper RTK adapter parity remains for later phases.
+    - summary/format command execution remains intentionally outside Phase-46 local adapters to avoid duplicating process runner semantics.
 </BELIEF_STATE>

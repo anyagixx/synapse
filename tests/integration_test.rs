@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, local RTK adapters, rewrite hook decisions including safe shell chains, pipelines, fd redirects, and shell prefixes, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, local RTK adapters, local RTK system adapters, rewrite hook decisions including safe shell chains, pipelines, fd redirects, and shell prefixes, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG, M-PROXY, M-PROXY-RUNNER
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
@@ -16,7 +16,7 @@
 // test_filters_verify_cli_runs_inline_tests — Verifies project and RTK built-in filter inline tests run through CLI
 // test_proxy_evidence_hint_writes_raw_output — Verifies explicit raw evidence artifact contains full unfiltered output
 // test_rtk_read_shortcut_filters_and_preserves_evidence — Verifies first-class read shortcut delegates to proxy
-// test_rtk_local_adapters_compact_structured_outputs — Verifies json/deps/env/wc direct adapters
+// test_rtk_local_adapters_compact_structured_outputs — Verifies json/deps/env/wc/pipe/log/smart direct adapters
 // test_rewrite_cli_delegates_to_router — Verifies hook-facing command rewrites, safe chains, pipelines, fd redirects, and shell prefixes use proxy router decisions
 // test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
 // test_run_action_cli_plans_and_replays_run — Verifies run action queue CLI plan/replay output
@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.9.0 — Added RTK built-in filter pack integration coverage]
+// LAST_CHANGE: [v5.0.0 — Added RTK system adapter integration coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -717,7 +717,7 @@ fn test_rtk_read_shortcut_filters_and_preserves_evidence() {
 // END_test_rtk_read_shortcut_filters_and_preserves_evidence
 
 // START_CONTRACT_test_rtk_local_adapters_compact_structured_outputs
-// PURPOSE: Verify local RTK adapters compact structured data without external command dependencies
+// PURPOSE: Verify local RTK adapters compact structured data and system output without external command dependencies
 // SIDE_EFFECTS: creates isolated fixture files, env, and tracking data dir
 // LINKS:
 //   → M-CLI-RTK-COMMANDS (depends) - local RTK adapter implementation

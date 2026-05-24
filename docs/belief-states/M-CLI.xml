@@ -3,11 +3,11 @@
   UNDERSTANDING:
     Module responsibility: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
     Key data flows:
-      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-45 expands RTK proxy shortcuts while preserving the existing clap facade.
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-46 adds local RTK system adapters while preserving the existing clap facade.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: SynCli, Command enum, command argument structs including GRACE --profile flags, expanded RTK proxy shortcuts, local RTK adapters, rtk-parity inventory gate, doctor --deps, gain --graph/--sessions/--adapters, proxy --route, stdio-only mcp command, and CI action enum
+      - Scope remains bounded to: SynCli, Command enum, command argument structs including GRACE --profile flags, expanded RTK proxy shortcuts, local RTK adapters, local RTK system adapters, rtk-parity inventory gate, doctor --deps, gain --graph/--sessions/--adapters, proxy --route, stdio-only mcp command, and CI action enum
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -17,6 +17,7 @@
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
     - syn gh, syn aws, syn go, syn make, syn helm, and syn kubectl parse as first-class commands with --route support
+    - syn pipe, syn log, and syn smart parse as local RTK system adapters
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

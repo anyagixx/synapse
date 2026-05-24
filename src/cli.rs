@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands, local RTK adapters, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands, local RTK adapters, local RTK system adapters, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
@@ -11,12 +11,13 @@
 // *Cmd structs — Clap argument schemas for supported commands
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
+// PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
 // RtkParityCmd — Machine-checkable RTK parity inventory report
 // RewriteCmd — Hook-facing command rewrite dry run
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.6.0 — Added expanded RTK proxy shortcut command schemas]
+// LAST_CHANGE: [v4.7.0 — Added local RTK system adapter command schemas]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -24,6 +25,7 @@ mod grace_commands;
 mod rtk_adapters;
 mod rtk_commands;
 mod rtk_parity;
+mod rtk_system_adapters;
 mod runtime_commands;
 mod setup_commands;
 
@@ -135,6 +137,12 @@ pub enum Command {
     Env(EnvCmd),
     #[command(about = "Count text locally with compact wc-style output")]
     Wc(WcCmd),
+    #[command(about = "Filter stdin through Synapse RTK filters")]
+    Pipe(PipeCmd),
+    #[command(about = "Deduplicate and summarize log output from a file or stdin")]
+    Log(LogCmd),
+    #[command(about = "Summarize source file structure without printing full code")]
+    Smart(SmartCmd),
     #[command(
         name = "rtk-parity",
         about = "Report machine-checkable RTK parity inventory"
@@ -307,6 +315,36 @@ pub struct WcCmd {
     pub args: Vec<String>,
 }
 // END_WcCmd
+
+// START_PipeCmd
+#[derive(clap::Args)]
+#[command(about = "Filter stdin through Synapse RTK filters")]
+pub struct PipeCmd {
+    #[arg(short = 'f', long)]
+    pub filter: Option<String>,
+    #[arg(long)]
+    pub passthrough: bool,
+}
+// END_PipeCmd
+
+// START_LogCmd
+#[derive(clap::Args)]
+#[command(about = "Deduplicate and summarize log output from a file or stdin")]
+pub struct LogCmd {
+    #[arg(default_value = "-")]
+    pub source: String,
+}
+// END_LogCmd
+
+// START_SmartCmd
+#[derive(clap::Args)]
+#[command(about = "Summarize source file structure without printing full code")]
+pub struct SmartCmd {
+    pub file: String,
+    #[arg(short = 'n', long, default_value_t = 12)]
+    pub items: usize,
+}
+// END_SmartCmd
 
 // START_RtkParityCmd
 #[derive(clap::Args)]

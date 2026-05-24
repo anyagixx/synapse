@@ -3,11 +3,11 @@
   UNDERSTANDING:
     Module responsibility: SQLite token tracker — records route-aware command token usage by canonical project identity and provides stats
     Key data flows:
-      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: migrate schema if needed, persist token counts with adapter/route/session metadata, aggregate command/adapter/session savings
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-46 reuses tracking for local RTK system adapters.
+      - PROCESSING: migrate schema if needed, persist proxy and local adapter token counts with adapter/route/session metadata, aggregate command/adapter/session savings
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Tracker struct, canonical project identity, migration-safe SQLite schema, token recording, session/adapter stats querying, TrackingStats model
+      - Scope remains bounded to: Tracker struct, canonical project identity, migration-safe SQLite schema, token recording with adapter/route/session metadata for proxy and local adapters, session/adapter stats querying, TrackingStats model
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -16,6 +16,7 @@
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - local pipe/log/smart adapters record savings through record_routed with adapter names rtk-pipe, rtk-log, and rtk-smart
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

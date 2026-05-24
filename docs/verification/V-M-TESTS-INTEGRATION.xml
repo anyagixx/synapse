@@ -9,6 +9,7 @@
     <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
+    <COMMAND>cargo test --test rtk_system_adapters_test</COMMAND>
     <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
@@ -16,7 +17,7 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Integration tests cover clean config bootstrap, canonical tracking identity, bounded run scenario/action queue JSON, proxy exit-code propagation, RTK shortcuts, local RTK adapters, RTK built-in filter verification, rewrite hook decisions including safe command chains, pipelines, fd redirects, and shell prefixes, route preview, Unicode truncation, and gain graph/session/adapter regressions.</ASSERTION>
+    <ASSERTION>Integration tests cover clean config bootstrap, canonical tracking identity, bounded run scenario/action queue JSON, proxy exit-code propagation, RTK shortcuts, local RTK adapters and system adapters, RTK built-in filter verification, rewrite hook decisions including safe command chains, pipelines, fd redirects, and shell prefixes, route preview, Unicode truncation, and gain graph/session/adapter regressions.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-33</PHASE_GATE>
+  <PHASE_GATE>Phase-46</PHASE_GATE>
 </VERIFICATION>
