@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-HOOK-OPENCODE-REWRITE" type="INTEGRATION" status="active">
   <NAME>M-HOOK-OPENCODE-REWRITE</NAME>
-  <PURPOSE>OpenCode shell rewrite hook — delegates command, safe chain, and pipeline rewrite decisions to syn rewrite</PURPOSE>
-  <SCOPE>syn rewrite delegation and exec handoff for supported command families, safe command chains, and pipeline-left-edge rewrites</SCOPE>
+  <PURPOSE>OpenCode shell rewrite hook — delegates command, safe chain, pipeline, and fd-redirect rewrite decisions to syn rewrite</PURPOSE>
+  <SCOPE>syn rewrite delegation and exec handoff for supported command families, safe command chains, pipeline-left-edge rewrites, and fd-merge redirect preservation</SCOPE>
   <FILES>
     <FILE>hooks/opencode/synapse-rewrite.sh</FILE>
   </FILES>
   <DEPENDS>M-CLI-RTK-COMMANDS,M-PROXY</DEPENDS>
-  <LINKS>hooks/opencode/README.md,docs/phases/Phase-27.xml,docs/phases/Phase-29.xml,docs/phases/Phase-30.xml</LINKS>
+  <LINKS>hooks/opencode/README.md,docs/phases/Phase-27.xml,docs/phases/Phase-29.xml,docs/phases/Phase-30.xml,docs/phases/Phase-31.xml</LINKS>
   <VERIFICATION_REF>V-M-HOOK-OPENCODE-REWRITE</VERIFICATION_REF>
 </MODULE>

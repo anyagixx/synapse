@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
-// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, and pipeline left edges
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, and fd-merge redirects
 // DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
@@ -17,11 +17,12 @@
 // rewrite_segment — Rewrites one routeable shell segment while preserving unsupported segments
 // split_shell_segments — Splits safe shell sequences on &&, ||, ;, and | without executing shell syntax
 // is_pipe_incompatible_segment — Guards pipeline sources that must keep native raw output
+// split_trailing_safe_redirects — Separates safe fd-merge redirects from route tokens
 // split_route_tokens — Separates transparent shell prefixes from routeable command tokens
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.3.0 — Added RTK pipeline rewrite parity]
+// LAST_CHANGE: [v1.4.0 — Added RTK fd-redirect rewrite parity]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
@@ -205,11 +206,22 @@ fn rewrite_segment(tokens: &[String], original: &str) -> Option<SegmentRewrite> 
             changed: false,
         });
     }
+    let (route_tokens, redirect_tokens) = split_trailing_safe_redirects(&route_tokens);
+    if route_tokens.is_empty()
+        || route_tokens
+            .iter()
+            .any(|token| is_safe_fd_merge_redirect_token(token))
+    {
+        return Some(SegmentRewrite {
+            rendered: original.to_string(),
+            changed: false,
+        });
+    }
     let router = crate::proxy::router::CommandRouter::new();
     let decision = router.route(&route_tokens);
     if decision.should_proxy {
         Some(SegmentRewrite {
-            rendered: format_rewritten_command(&prefix_tokens, &route_tokens),
+            rendered: format_rewritten_command(&prefix_tokens, &route_tokens, &redirect_tokens),
             changed: true,
         })
     } else {
@@ -279,18 +291,39 @@ fn split_route_tokens(tokens: &[String]) -> (Vec<String>, Vec<String>) {
 }
 // END_split_route_tokens
 
+// START_CONTRACT_split_trailing_safe_redirects
+// PURPOSE: Remove safe trailing fd-merge redirect tokens before router classification while preserving them for rendering
+// INPUTS: { tokens: &[String] }
+// OUTPUTS: { (Vec<String>, Vec<String>) }
+// START_split_trailing_safe_redirects
+fn split_trailing_safe_redirects(tokens: &[String]) -> (Vec<String>, Vec<String>) {
+    let mut command_end = tokens.len();
+    while command_end > 0 && is_safe_fd_merge_redirect_token(&tokens[command_end - 1]) {
+        command_end -= 1;
+    }
+    (
+        tokens[..command_end].to_vec(),
+        tokens[command_end..].to_vec(),
+    )
+}
+// END_split_trailing_safe_redirects
+
 // START_CONTRACT_format_rewritten_command
-// PURPOSE: Render a shell-safe rewrite while preserving env/transparent prefixes before syn proxy
-// INPUTS: { prefix_tokens: &[String] }, { route_tokens: &[String] }
+// PURPOSE: Render a shell-safe rewrite while preserving env/transparent prefixes before syn proxy and safe redirects after it
+// INPUTS: { prefix_tokens: &[String] }, { route_tokens: &[String] }, { redirect_tokens: &[String] }
 // OUTPUTS: { String }
 // START_format_rewritten_command
-fn format_rewritten_command(prefix_tokens: &[String], route_tokens: &[String]) -> String {
+fn format_rewritten_command(
+    prefix_tokens: &[String],
+    route_tokens: &[String],
+    redirect_tokens: &[String],
+) -> String {
     let command = route_tokens
         .iter()
         .map(|token| shell_quote(token))
         .collect::<Vec<_>>()
         .join(" ");
-    if prefix_tokens.is_empty() {
+    let mut rendered = if prefix_tokens.is_empty() {
         format!("syn proxy -- {command}")
     } else {
         let prefix = prefix_tokens
@@ -299,7 +332,12 @@ fn format_rewritten_command(prefix_tokens: &[String], route_tokens: &[String]) -
             .collect::<Vec<_>>()
             .join(" ");
         format!("{prefix} syn proxy -- {command}")
+    };
+    if !redirect_tokens.is_empty() {
+        rendered.push(' ');
+        rendered.push_str(&redirect_tokens.join(" "));
     }
+    rendered
 }
 // END_format_rewritten_command
 
@@ -359,6 +397,101 @@ fn shell_quote(value: &str) -> String {
 }
 // END_shell_quote
 
+// START_CONTRACT_is_safe_fd_merge_redirect_token
+// PURPOSE: Identify fd-merge redirect tokens that can be preserved without file path side effects
+// INPUTS: { token: &str }
+// OUTPUTS: { bool }
+// START_is_safe_fd_merge_redirect_token
+fn is_safe_fd_merge_redirect_token(token: &str) -> bool {
+    let Some((fd, target)) = token.split_once(">&") else {
+        return false;
+    };
+    !fd.is_empty()
+        && fd.chars().all(|ch| ch.is_ascii_digit())
+        && (target == "-" || (!target.is_empty() && target.chars().all(|ch| ch.is_ascii_digit())))
+}
+// END_is_safe_fd_merge_redirect_token
+
+// START_CONTRACT_is_safe_fd_merge_redirect_at
+// PURPOSE: Validate a safe fd-merge redirect beginning at a greater-than character in raw shell text
+// INPUTS: { input: &str }, { gt_index: usize }
+// OUTPUTS: { bool }
+// START_is_safe_fd_merge_redirect_at
+fn is_safe_fd_merge_redirect_at(input: &str, gt_index: usize) -> bool {
+    let bytes = input.as_bytes();
+    if gt_index == 0 || bytes.get(gt_index + 1) != Some(&b'&') {
+        return false;
+    }
+
+    let mut fd_start = gt_index;
+    while fd_start > 0 && bytes[fd_start - 1].is_ascii_digit() {
+        fd_start -= 1;
+    }
+    if fd_start == gt_index || !is_token_boundary_before(input, fd_start) {
+        return false;
+    }
+
+    let mut target_end = gt_index + 2;
+    if bytes.get(target_end) == Some(&b'-') {
+        target_end += 1;
+    } else {
+        let target_start = target_end;
+        while target_end < bytes.len() && bytes[target_end].is_ascii_digit() {
+            target_end += 1;
+        }
+        if target_start == target_end {
+            return false;
+        }
+    }
+
+    is_token_boundary_after(input, target_end)
+}
+// END_is_safe_fd_merge_redirect_at
+
+// START_CONTRACT_is_ampersand_in_safe_fd_redirect
+// PURPOSE: Allow the ampersand character only when it belongs to an already-validated fd-merge redirect
+// INPUTS: { input: &str }, { amp_index: usize }
+// OUTPUTS: { bool }
+// START_is_ampersand_in_safe_fd_redirect
+fn is_ampersand_in_safe_fd_redirect(input: &str, amp_index: usize) -> bool {
+    amp_index > 0
+        && input.as_bytes().get(amp_index - 1) == Some(&b'>')
+        && is_safe_fd_merge_redirect_at(input, amp_index - 1)
+}
+// END_is_ampersand_in_safe_fd_redirect
+
+// START_CONTRACT_is_token_boundary_before
+// PURPOSE: Check whether a byte index starts a shell token for the supported rewrite subset
+// INPUTS: { input: &str }, { index: usize }
+// OUTPUTS: { bool }
+// START_is_token_boundary_before
+fn is_token_boundary_before(input: &str, index: usize) -> bool {
+    if index == 0 {
+        return true;
+    }
+    input[..index]
+        .chars()
+        .next_back()
+        .is_some_and(|ch| ch.is_whitespace() || matches!(ch, '&' | '|' | ';'))
+}
+// END_is_token_boundary_before
+
+// START_CONTRACT_is_token_boundary_after
+// PURPOSE: Check whether a byte index ends a shell token for the supported rewrite subset
+// INPUTS: { input: &str }, { index: usize }
+// OUTPUTS: { bool }
+// START_is_token_boundary_after
+fn is_token_boundary_after(input: &str, index: usize) -> bool {
+    if index >= input.len() {
+        return true;
+    }
+    input[index..]
+        .chars()
+        .next()
+        .is_some_and(|ch| ch.is_whitespace() || matches!(ch, '&' | '|' | ';'))
+}
+// END_is_token_boundary_after
+
 // START_CONTRACT_split_shell_segments
 // PURPOSE: Split a raw shell string into safe command segments without executing or accepting complex shell syntax
 // INPUTS: { input: &str }
@@ -384,8 +517,14 @@ fn split_shell_segments(input: &str) -> Option<Vec<ShellSegment>> {
                 }
             }
             '`' if !in_single => return None,
-            '<' | '>' if !in_single && !in_double => return None,
+            '<' if !in_single && !in_double => return None,
+            '>' if !in_single && !in_double && !is_safe_fd_merge_redirect_at(input, index) => {
+                return None;
+            }
             '&' if !in_single && !in_double => {
+                if is_ampersand_in_safe_fd_redirect(input, index) {
+                    continue;
+                }
                 let Some((next_index, '&')) = chars.peek().copied() else {
                     return None;
                 };
@@ -659,8 +798,36 @@ mod tests {
     }
 
     #[test]
+    fn rewrite_command_preserves_fd_merge_redirect() {
+        let args = vec!["cargo test 2>&1".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- cargo test 2>&1".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_fd_redirect_pipeline() {
+        let args = vec!["RUST_BACKTRACE=1 cargo test 2>&1 | grep FAILED && git stash".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some(
+                "RUST_BACKTRACE=1 syn proxy -- cargo test 2>&1 | grep FAILED && syn proxy -- git stash"
+                    .to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn rewrite_command_skips_non_trailing_fd_redirect() {
+        let args = vec!["cargo 2>&1 test".to_string()];
+        assert_eq!(rewrite_command(&args), None);
+    }
+
+    #[test]
     fn rewrite_command_skips_unsupported_shell_constructs() {
         assert_eq!(rewrite_command(&["git status > out.txt".to_string()]), None);
+        assert_eq!(rewrite_command(&["git status >&2".to_string()]), None);
         assert_eq!(
             rewrite_command(&["git status $(printf branch)".to_string()]),
             None

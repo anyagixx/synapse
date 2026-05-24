@@ -17,6 +17,7 @@
     <ASSERTION>syn rewrite uses CommandRouter as the hook rewrite source of truth and exits non-zero without stdout for unsupported commands.</ASSERTION>
     <ASSERTION>syn rewrite rewrites safe shell chains joined by &amp;&amp;, ||, and ; segment by segment, preserves unsupported segments, and skips unsafe redirection and substitution constructs.</ASSERTION>
     <ASSERTION>syn rewrite rewrites routeable pipeline left edges while preserving pipe filter segments raw and resuming rewrite after subsequent &amp;&amp;, ||, or ; operators.</ASSERTION>
+    <ASSERTION>syn rewrite preserves safe fd-merge redirects such as 2&gt;&amp;1 after proxied commands while keeping file redirects and non-trailing redirect tokens pass-through.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-30</PHASE_GATE>
+  <PHASE_GATE>Phase-31</PHASE_GATE>
 </VERIFICATION>
