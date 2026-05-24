@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
 // PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, filter lifecycle, and clean-bootstrap reporting
-// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, ConfigCmd, HooksCmd status/audit, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, ConfigCmd, HooksCmd multi-agent install/status/audit, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
 // DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-PROXY-FILTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - route preview for proxied commands
@@ -33,7 +33,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.2.0 — Added hook audit dispatch and RTK coverage summary in gain]
+// LAST_CHANGE: [v5.3.0 — Routed hooks status to multi-agent targets]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -621,10 +621,10 @@ impl HooksCmd {
         match self.action.as_str() {
             "install" => manager.install(&self.agent),
             "uninstall" => manager.uninstall(&self.agent),
-            "status" => manager.status(),
+            "status" => manager.status(&self.agent),
             "audit" | "check" => manager.audit(&self.agent, self.json),
             _ => anyhow::bail!(
-                "Usage: syn hooks install|uninstall|status|audit|check [opencode|all] [--json]"
+                "Usage: syn hooks install|uninstall|status|audit|check [opencode|claude|cursor|gemini|copilot|all] [--json]"
             ),
         }
     }

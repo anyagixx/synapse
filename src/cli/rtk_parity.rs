@@ -117,8 +117,19 @@ const LOCAL_ADAPTERS: &[&str] = &[
 const HOOKS: &[&str] = &[
     "opencode-rewrite",
     "hooks install",
+    "hooks install claude",
+    "hooks install cursor",
+    "hooks install gemini",
+    "hooks install copilot",
+    "hooks install all",
     "hooks status",
+    "hooks status all",
     "hooks audit",
+    "hooks audit claude",
+    "hooks audit cursor",
+    "hooks audit gemini",
+    "hooks audit copilot",
+    "hooks audit all",
     "hooks check",
     "hooks audit --json",
 ];
@@ -265,7 +276,10 @@ fn build_rtk_parity_report(explicit_source: Option<&Path>) -> anyhow::Result<Rtk
             "tracked",
             false,
             HOOKS,
-            &["Phase-50 release-gates OpenCode rewrite hook audit/trust parity."],
+            &[
+                "Phase-50 release-gates OpenCode rewrite hook audit/trust parity.",
+                "Phase-55 adds Claude, Cursor, Gemini, Copilot, and all-target install/audit surfaces.",
+            ],
         ),
         static_inventory_section(
             "discovery-learn",
@@ -685,8 +699,10 @@ mod tests {
         assert!(discovery.items.contains(&"learn --json".to_string()));
 
         let hooks = static_inventory_section("hooks", "tracked", false, HOOKS, &[]);
-        assert_eq!(hooks.synapse_count, 6);
+        assert_eq!(hooks.synapse_count, 17);
         assert!(hooks.items.contains(&"hooks audit --json".to_string()));
+        assert!(hooks.items.contains(&"hooks install claude".to_string()));
+        assert!(hooks.items.contains(&"hooks audit all".to_string()));
 
         let analytics = static_inventory_section("analytics", "tracked", false, ANALYTICS, &[]);
         assert_eq!(analytics.synapse_count, 8);

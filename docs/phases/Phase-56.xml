@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-56" status="planned">
+<PHASE id="Phase-56" status="active">
   <NAME>RTK Session Learn Economics Parity</NAME>
   <GOAL>Move Synapse discover, learn, session, and economics from static guidance to measured RTK-style adoption analytics with explicit privacy boundaries.</GOAL>
   <MODULE_REFS>

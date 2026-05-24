@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discover/learn diagnostics, hook processors, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discover/learn diagnostics, hook processors and multi-agent hook install/audit targets, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml, docs/phases/Phase-54.xml, docs/phases/Phase-56.xml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.32.0 - Added .NET artifact RTK adapter surfaces]
+// LAST_CHANGE: [v2.33.0 - Added multi-agent hook install and audit surfaces]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -166,7 +166,10 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("mcp", "Start MCP server"),
     ("config", "Manage configuration"),
     ("graphrag", "Query the code knowledge graph"),
-    ("hooks", "Manage Synapse hooks for AI agents"),
+    (
+        "hooks",
+        "Manage Synapse hooks for OpenCode, Claude, Cursor, Gemini, Copilot, or all agents",
+    ),
     ("doctor", "Run diagnostic and dependency checks"),
     ("refresh", "Report or fix canonical MyGRACE artifact drift"),
     ("skills", "List and run GRACE workflow skills"),

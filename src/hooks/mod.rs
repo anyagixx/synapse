@@ -1,25 +1,30 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-HOOKS
-// PURPOSE: Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy
-// SCOPE: HookManager struct, install/uninstall/status/audit for opencode agent, JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation
+// PURPOSE: Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode and RTK-style multi-agent hook processors
+// SCOPE: HookManager struct, install/uninstall/status/audit for opencode, claude, cursor, gemini, copilot, and all targets; JSONC-aware MCP config merge, syn rewrite delegating plugin, shell hook generation, and trusted processor manifests
 // DEPENDS: M-CONFIG, M-CLI-RTK-COMMANDS
-// LINKS: .opencode/, docs/phases/Phase-27.xml
+// LINKS: .opencode/, .synapse/hooks/, docs/phases/Phase-27.xml, docs/phases/Phase-55.xml
 
 // START_MODULE_MAP
 // HookManager — Manages Synapse hook files for AI agent integration
 // HookAuditReport — Reports trusted hook installation checks for agents
 // HookAuditItem — One hook audit check result
+// AgentHookSpec — Describes a trusted local hook processor manifest target
 // merge_synapse_mcp_config — Adds mcp.synapse to an existing OpenCode config without dropping sibling keys
 // strip_jsonc_comments — Removes JSONC comments before safe config parsing
 // strip_trailing_commas — Removes JSONC trailing commas before safe config parsing
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Added RTK-style OpenCode hook audit and trust diagnostics]
+// LAST_CHANGE: [v3.3.0 — Added multi-agent hook install and audit targets]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
 use std::path::Path;
+
+const AGENT_HOOK_DIR: &str = ".synapse/hooks";
+const OPENCODE_AGENT: &str = "opencode";
+const ALL_AGENTS: &str = "all";
 
 // START_public_api
 
@@ -214,6 +219,76 @@ pub struct HookAuditItem {
 }
 // END_HookAuditItem
 
+// START_AgentHookSpec
+#[derive(Debug, Clone, Copy)]
+struct AgentHookSpec {
+    agent: &'static str,
+    event: &'static str,
+    file_name: &'static str,
+    install_hint: &'static str,
+}
+// END_AgentHookSpec
+
+// START_CONTRACT_processor_hook_specs
+// PURPOSE: Return trusted non-OpenCode hook processor install targets
+// OUTPUTS: { &'static [AgentHookSpec] }
+// LINKS:
+//   → M-HOOKS (depends) - multi-agent hook install/audit inventory
+//   → Phase-55 (implements) - install/audit targets beyond OpenCode
+// START_processor_hook_specs
+fn processor_hook_specs() -> &'static [AgentHookSpec] {
+    &[
+        AgentHookSpec {
+            agent: "claude",
+            event: "PreToolUse",
+            file_name: "claude.json",
+            install_hint: "Reference this manifest from Claude Code PreToolUse Bash hooks.",
+        },
+        AgentHookSpec {
+            agent: "cursor",
+            event: "preToolUse",
+            file_name: "cursor.json",
+            install_hint: "Reference this manifest from Cursor Agent shell hook configuration.",
+        },
+        AgentHookSpec {
+            agent: "gemini",
+            event: "BeforeTool",
+            file_name: "gemini.json",
+            install_hint: "Reference this manifest from Gemini CLI before-tool hooks.",
+        },
+        AgentHookSpec {
+            agent: "copilot",
+            event: "preToolUse",
+            file_name: "copilot.json",
+            install_hint: "Reference this manifest from GitHub Copilot hook/task integration.",
+        },
+    ]
+}
+// END_processor_hook_specs
+
+// START_CONTRACT_processor_hook_spec
+// PURPOSE: Find one trusted hook processor manifest spec by agent name
+// INPUTS: { agent: &str }
+// OUTPUTS: { Option<&'static AgentHookSpec> }
+// LINKS:
+//   → M-HOOKS (depends) - multi-agent hook target lookup
+// START_processor_hook_spec
+fn processor_hook_spec(agent: &str) -> Option<&'static AgentHookSpec> {
+    processor_hook_specs()
+        .iter()
+        .find(|spec| spec.agent == agent)
+}
+// END_processor_hook_spec
+
+// START_CONTRACT_supported_hook_agents
+// PURPOSE: Render the supported hook target list for CLI diagnostics
+// OUTPUTS: { &'static str }
+// START_supported_hook_agents
+fn supported_hook_agents() -> &'static str {
+    "opencode, claude, cursor, gemini, copilot, all"
+}
+// END_supported_hook_agents
+
 impl HookManager {
     // START_CONTRACT_HookManager::new
     // PURPOSE: Create a new HookManager
@@ -227,33 +302,41 @@ impl HookManager {
     // END_hookmanager_new
 
     // START_CONTRACT_HookManager::install
-    // PURPOSE: Install Synapse hooks for a given agent (opencode/all)
+    // PURPOSE: Install Synapse hooks for a given agent or all supported hook targets
     // INPUTS: { agent: &str — target agent name }
     // OUTPUTS: { anyhow::Result<()> }
-    // SIDE_EFFECTS: creates files in .opencode/, prints status
+    // SIDE_EFFECTS: creates files in .opencode/ or .synapse/hooks/, prints status
     // START_hookmanager_install
     pub fn install(&self, agent: &str) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         match agent {
-            "opencode" => self.install_opencode(&root),
-            "all" => {
+            OPENCODE_AGENT => self.install_opencode(&root),
+            ALL_AGENTS => {
                 self.install_opencode(&root)?;
+                for spec in processor_hook_specs() {
+                    self.install_agent_manifest(&root, spec)?;
+                }
                 println!("All hooks installed for project at {}", root.display());
                 Ok(())
             }
+            name if processor_hook_spec(name).is_some() => {
+                let spec = processor_hook_spec(name)
+                    .ok_or_else(|| anyhow::anyhow!("unknown hook agent: {name}"))?;
+                self.install_agent_manifest(&root, spec)
+            }
             _ => {
-                println!("Unknown agent: {}. Supported: opencode, all", agent);
-                println!(
-                    "For generic integration, use `syn proxy -- <cmd>` to filter shell output."
-                );
-                Ok(())
+                anyhow::bail!(
+                    "Unknown agent: {}. Supported: {}",
+                    agent,
+                    supported_hook_agents()
+                )
             }
         }
     }
     // END_hookmanager_install
 
     // START_CONTRACT_HookManager::audit
-    // PURPOSE: Audit OpenCode hook installation and trusted content markers
+    // PURPOSE: Audit hook installation and trusted content markers
     // INPUTS: { agent: &str — target agent name }, { json: bool — render machine-readable output }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: prints audit report and fails when required hook trust checks fail
@@ -276,7 +359,7 @@ impl HookManager {
     // END_hookmanager_audit
 
     // START_CONTRACT_HookManager::audit_report
-    // PURPOSE: Build an OpenCode hook audit report without printing
+    // PURPOSE: Build a hook audit report without printing
     // INPUTS: { agent: &str — target agent name }
     // OUTPUTS: { anyhow::Result<HookAuditReport> }
     // LINKS:
@@ -285,8 +368,18 @@ impl HookManager {
     pub fn audit_report(&self, agent: &str) -> anyhow::Result<HookAuditReport> {
         let root = std::env::current_dir()?;
         match agent {
-            "opencode" | "all" => self.audit_opencode(&root),
-            _ => anyhow::bail!("Unknown agent: {}. Supported: opencode, all", agent),
+            OPENCODE_AGENT => self.audit_opencode(&root),
+            ALL_AGENTS => self.audit_all(&root),
+            name if processor_hook_spec(name).is_some() => {
+                let spec = processor_hook_spec(name)
+                    .ok_or_else(|| anyhow::anyhow!("unknown hook agent: {name}"))?;
+                Ok(self.audit_agent_manifest(&root, spec))
+            }
+            _ => anyhow::bail!(
+                "Unknown agent: {}. Supported: {}",
+                agent,
+                supported_hook_agents()
+            ),
         }
     }
     // END_hookmanager_audit_report
@@ -467,6 +560,94 @@ echo "[synapse] Shell proxy hooks loaded (session ${SYNAPSE_SESSION_ID})"
     }
     // END_hookmanager_audit_opencode
 
+    // START_CONTRACT_HookManager::install_agent_manifest
+    // PURPOSE: Generate a trusted local manifest for a non-OpenCode hook processor
+    // INPUTS: { root: &Path }, { spec: &AgentHookSpec }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes .synapse/hooks/<agent>.json and prints the installed path
+    // LINKS:
+    //   → M-HOOKS (depends) - install target for RTK-style hook processors
+    //   → Phase-55 (implements) - non-OpenCode hook install parity
+    // START_hookmanager_install_agent_manifest
+    fn install_agent_manifest(&self, root: &Path, spec: &AgentHookSpec) -> anyhow::Result<()> {
+        let hook_dir = root.join(AGENT_HOOK_DIR);
+        std::fs::create_dir_all(&hook_dir)?;
+        let manifest_path = hook_dir.join(spec.file_name);
+        let processor_command = format!("syn hook {}", spec.agent);
+        let manifest = serde_json::json!({
+            "agent": spec.agent,
+            "event": spec.event,
+            "command": processor_command,
+            "delegates_to": "syn rewrite",
+            "token_savings": "RTK-style shell auto-proxy through Synapse",
+            "install_hint": spec.install_hint
+        });
+        std::fs::write(&manifest_path, serde_json::to_string_pretty(&manifest)?)?;
+        println!("  {}", manifest_path.strip_prefix(root)?.display());
+        Ok(())
+    }
+    // END_hookmanager_install_agent_manifest
+
+    // START_CONTRACT_HookManager::audit_agent_manifest
+    // PURPOSE: Verify a non-OpenCode hook processor manifest contains trusted delegation markers
+    // INPUTS: { root: &Path }, { spec: &AgentHookSpec }
+    // OUTPUTS: { HookAuditReport }
+    // LINKS:
+    //   → M-HOOKS (depends) - audit target for RTK-style hook processors
+    //   → Phase-55 (implements) - non-OpenCode hook audit parity
+    // START_hookmanager_audit_agent_manifest
+    fn audit_agent_manifest(&self, root: &Path, spec: &AgentHookSpec) -> HookAuditReport {
+        let path = format!("{AGENT_HOOK_DIR}/{}", spec.file_name);
+        let processor_marker = format!("syn hook {}", spec.agent);
+        let checks = vec![
+            audit_file_contains(
+                root,
+                &path,
+                "processor-command",
+                &processor_marker,
+                "Manifest delegates the agent hook to the matching syn hook processor.",
+            ),
+            audit_file_contains(
+                root,
+                &path,
+                "rewrite-delegation",
+                "syn rewrite",
+                "Manifest declares syn rewrite as the routing source of truth.",
+            ),
+        ];
+        let ok = checks.iter().all(|item| item.ok);
+        HookAuditReport {
+            agent: spec.agent.into(),
+            root: root.display().to_string(),
+            ok,
+            checks,
+        }
+    }
+    // END_hookmanager_audit_agent_manifest
+
+    // START_CONTRACT_HookManager::audit_all
+    // PURPOSE: Audit OpenCode assets plus every trusted processor manifest as one aggregate report
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { anyhow::Result<HookAuditReport> }
+    // LINKS:
+    //   → M-HOOKS (depends) - multi-agent hook audit aggregation
+    //   → Phase-55 (implements) - all-target hook audit parity
+    // START_hookmanager_audit_all
+    fn audit_all(&self, root: &Path) -> anyhow::Result<HookAuditReport> {
+        let mut checks = self.audit_opencode(root)?.checks;
+        for spec in processor_hook_specs() {
+            checks.extend(self.audit_agent_manifest(root, spec).checks);
+        }
+        let ok = checks.iter().all(|item| item.ok);
+        Ok(HookAuditReport {
+            agent: ALL_AGENTS.into(),
+            root: root.display().to_string(),
+            ok,
+            checks,
+        })
+    }
+    // END_hookmanager_audit_all
+
     // START_CONTRACT_HookManager::uninstall
     // PURPOSE: Uninstall Synapse hooks for a given agent
     // INPUTS: { agent: &str — target agent name }
@@ -476,7 +657,7 @@ echo "[synapse] Shell proxy hooks loaded (session ${SYNAPSE_SESSION_ID})"
     pub fn uninstall(&self, agent: &str) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         match agent {
-            "opencode" | "all" => {
+            OPENCODE_AGENT | ALL_AGENTS => {
                 let files = [
                     root.join(".opencode/rules/synapse.md"),
                     root.join(".opencode/plugins/synapse.ts"),
@@ -506,40 +687,60 @@ echo "[synapse] Shell proxy hooks loaded (session ${SYNAPSE_SESSION_ID})"
                         }
                     }
                 }
+                if agent == ALL_AGENTS {
+                    for spec in processor_hook_specs() {
+                        self.uninstall_agent_manifest(&root, spec)?;
+                    }
+                }
                 println!("Uninstalled Synapse hooks from {}", root.display());
                 Ok(())
             }
+            name if processor_hook_spec(name).is_some() => {
+                let spec = processor_hook_spec(name)
+                    .ok_or_else(|| anyhow::anyhow!("unknown hook agent: {name}"))?;
+                self.uninstall_agent_manifest(&root, spec)
+            }
             _ => {
-                println!("Unknown agent: {}. Nothing to uninstall.", agent);
-                Ok(())
+                anyhow::bail!(
+                    "Unknown agent: {}. Supported: {}",
+                    agent,
+                    supported_hook_agents()
+                )
             }
         }
     }
     // END_hookmanager_uninstall
 
+    // START_CONTRACT_HookManager::uninstall_agent_manifest
+    // PURPOSE: Remove one non-OpenCode hook processor manifest if present
+    // INPUTS: { root: &Path }, { spec: &AgentHookSpec }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: removes .synapse/hooks/<agent>.json and prints removal status
+    // LINKS:
+    //   → M-HOOKS (depends) - multi-agent hook uninstall target
+    // START_hookmanager_uninstall_agent_manifest
+    fn uninstall_agent_manifest(&self, root: &Path, spec: &AgentHookSpec) -> anyhow::Result<()> {
+        let path = root.join(AGENT_HOOK_DIR).join(spec.file_name);
+        if path.exists() {
+            std::fs::remove_file(&path)?;
+            println!("Removed {}", path.display());
+        }
+        Ok(())
+    }
+    // END_hookmanager_uninstall_agent_manifest
+
     // START_CONTRACT_HookManager::status
-    // PURPOSE: Report the installation status of all Synapse hook files
+    // PURPOSE: Report the installation status of Synapse hook files for one target
+    // INPUTS: { agent: &str — target agent name }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: prints status to stdout
     // START_hookmanager_status
-    pub fn status(&self) -> anyhow::Result<()> {
+    pub fn status(&self, agent: &str) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
-        println!("Synapse Hook Status for {}", root.display());
+        println!("Synapse Hook Status for {agent} at {}", root.display());
         println!();
 
-        let checks = [
-            (".opencode/rules/synapse.md", "Rules (AI command reference)"),
-            (
-                ".opencode/plugins/synapse.ts",
-                "Plugin (proxy + system transform)",
-            ),
-            (
-                ".opencode/hooks/synapse-proxy.sh",
-                "Shell hook (bash proxy)",
-            ),
-            ("opencode.jsonc", "MCP config (auto-start)"),
-            (".opencode/package.json", "Plugin dependencies"),
-        ];
+        let checks = status_checks(agent)?;
 
         let mut all_ok = true;
         for (path, desc) in &checks {
@@ -556,9 +757,9 @@ echo "[synapse] Shell proxy hooks loaded (session ${SYNAPSE_SESSION_ID})"
         }
 
         if !all_ok {
-            println!("\nRun `syn hooks install opencode` to install all hooks.");
+            println!("\nRun `syn hooks install {agent}` to install missing hooks.");
         } else {
-            println!("\nAll hooks installed. OpenCode will auto-start syn mcp.");
+            println!("\nRequested hooks are installed.");
         }
 
         Ok(())
@@ -566,6 +767,83 @@ echo "[synapse] Shell proxy hooks loaded (session ${SYNAPSE_SESSION_ID})"
     // END_hookmanager_status
 }
 // END_public_api
+
+// START_CONTRACT_status_checks
+// PURPOSE: Return expected hook files for one status target
+// INPUTS: { agent: &str }
+// OUTPUTS: { anyhow::Result<Vec<(String, String)>> }
+// LINKS:
+//   → M-HOOKS (depends) - multi-agent hook status output
+// START_status_checks
+fn status_checks(agent: &str) -> anyhow::Result<Vec<(String, String)>> {
+    match agent {
+        OPENCODE_AGENT => Ok(opencode_status_checks()),
+        ALL_AGENTS => {
+            let mut checks = opencode_status_checks();
+            checks.extend(
+                processor_hook_specs()
+                    .iter()
+                    .map(agent_manifest_status_check),
+            );
+            Ok(checks)
+        }
+        name if processor_hook_spec(name).is_some() => {
+            let spec = processor_hook_spec(name)
+                .ok_or_else(|| anyhow::anyhow!("unknown hook agent: {name}"))?;
+            Ok(vec![agent_manifest_status_check(spec)])
+        }
+        _ => anyhow::bail!(
+            "Unknown agent: {}. Supported: {}",
+            agent,
+            supported_hook_agents()
+        ),
+    }
+}
+// END_status_checks
+
+// START_CONTRACT_opencode_status_checks
+// PURPOSE: Return expected OpenCode hook files for status output
+// OUTPUTS: { Vec<(String, String)> }
+// LINKS:
+//   → M-HOOK-OPENCODE-REWRITE (depends) - OpenCode install surface
+// START_opencode_status_checks
+fn opencode_status_checks() -> Vec<(String, String)> {
+    vec![
+        (
+            ".opencode/rules/synapse.md".into(),
+            "Rules (AI command reference)".into(),
+        ),
+        (
+            ".opencode/plugins/synapse.ts".into(),
+            "Plugin (proxy + system transform)".into(),
+        ),
+        (
+            ".opencode/hooks/synapse-proxy.sh".into(),
+            "Shell hook (bash proxy)".into(),
+        ),
+        ("opencode.jsonc".into(), "MCP config (auto-start)".into()),
+        (
+            ".opencode/package.json".into(),
+            "Plugin dependencies".into(),
+        ),
+    ]
+}
+// END_opencode_status_checks
+
+// START_CONTRACT_agent_manifest_status_check
+// PURPOSE: Return one expected processor manifest file for status output
+// INPUTS: { spec: &AgentHookSpec }
+// OUTPUTS: { (String, String) }
+// LINKS:
+//   → M-HOOKS (depends) - processor manifest status
+// START_agent_manifest_status_check
+fn agent_manifest_status_check(spec: &AgentHookSpec) -> (String, String) {
+    (
+        format!("{AGENT_HOOK_DIR}/{}", spec.file_name),
+        format!("{} hook processor manifest", spec.agent),
+    )
+}
+// END_agent_manifest_status_check
 
 // START_CONTRACT_audit_file_exists
 // PURPOSE: Create a hook audit result for a required file
@@ -678,9 +956,12 @@ fn print_hook_audit_report(report: &HookAuditReport) {
         );
     }
     if report.ok {
-        println!("\nHook audit passed. OpenCode hooks are trusted for RTK routing.");
+        println!("\nHook audit passed. Hooks are trusted for RTK routing.");
     } else {
-        println!("\nHook audit failed. Run `syn hooks install opencode`, then rerun audit.");
+        println!(
+            "\nHook audit failed. Run `syn hooks install {}` and rerun audit.",
+            report.agent
+        );
     }
 }
 // END_print_hook_audit_report
@@ -766,5 +1047,43 @@ mod tests {
             .checks
             .iter()
             .any(|item| item.name == "mcp-config" && item.status == "trusted"));
+    }
+
+    #[test]
+    fn test_hook_audit_trusts_generated_agent_manifest() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = HookManager::new(&Config::default());
+        let spec = processor_hook_spec("claude").unwrap();
+
+        manager.install_agent_manifest(root.path(), spec).unwrap();
+        let report = manager.audit_agent_manifest(root.path(), spec);
+
+        assert!(report.ok);
+        assert!(report
+            .checks
+            .iter()
+            .any(|item| item.name == "processor-command" && item.ok));
+        assert!(report
+            .checks
+            .iter()
+            .any(|item| item.name == "rewrite-delegation" && item.ok));
+    }
+
+    #[test]
+    fn test_hook_audit_all_trusts_opencode_and_processor_manifests() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = HookManager::new(&Config::default());
+
+        manager.install_opencode(root.path()).unwrap();
+        for spec in processor_hook_specs() {
+            manager.install_agent_manifest(root.path(), spec).unwrap();
+        }
+        let report = manager.audit_all(root.path()).unwrap();
+
+        assert!(report.ok);
+        assert!(report
+            .checks
+            .iter()
+            .any(|item| item.path == ".synapse/hooks/copilot.json" && item.ok));
     }
 }

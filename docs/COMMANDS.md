@@ -9,9 +9,9 @@ This page lists shipped CLI commands only.
 | `syn init` | Install OpenCode MCP config, plugin, rules, and MyGRACE starter artifacts |
 | `syn doctor` | Run local setup diagnostics |
 | `syn doctor --deps` | Include Python/pip and requirements dependency diagnostics |
-| `syn hooks install` | Install Synapse hooks for supported agents |
-| `syn hooks status` | Show hook installation status |
-| `syn hooks audit --json` | Audit OpenCode hook trust markers and MCP/rewrite/session wiring |
+| `syn hooks install [opencode\|claude\|cursor\|gemini\|copilot\|all]` | Install Synapse hook assets or processor manifests for supported agents |
+| `syn hooks status [agent]` | Show hook installation status for one agent or all targets |
+| `syn hooks audit [agent] --json` | Audit hook trust markers, processor manifests, and MCP/rewrite/session wiring |
 
 ## Code Navigation
 

@@ -98,6 +98,8 @@ cd synapse && make install
 ```bash
 mkdir my-project && cd my-project
 syn init          # 1 сек: интеграция с OpenCode
+syn hooks install all
+syn hooks audit all --json
 opencode          # LLM видит 39 MCP инструментов + sharded Phase 0 gate
 # LLM: "Что ты хочешь построить?"
 # Ты:  "Приложение для заметок с поиском"

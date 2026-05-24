@@ -11,6 +11,7 @@
     <ASSERTION>Full parity mode must be source-derived from rtk-develop instead of a manually maintained RTK command list.</ASSERTION>
     <ASSERTION>Full parity mode must distinguish implemented, equivalent, superseded, and missing RTK coverage.</ASSERTION>
     <ASSERTION>Full parity mode must classify proxy-equivalent command modules separately from truly missing specialized RTK modules.</ASSERTION>
+    <ASSERTION>Full parity mode must report hook-install-targets for opencode, claude, cursor, gemini, copilot, and all as release-gated Phase-55 coverage.</ASSERTION>
     <ASSERTION>Integration parity --ci remains backwards-compatible and does not fail because future full-RTK work is still planned.</ASSERTION>
     <ASSERTION>Full parity --ci fails while any RTK command, hook processor, or command-module surface remains missing and passes when missing_total is zero.</ASSERTION>
   </TRACE_ASSERTIONS>

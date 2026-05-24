@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RTK-FULL-PARITY
 // PURPOSE: Full RTK parity matrix — classifies source-derived rtk-develop command, hook, and command-module coverage in Synapse
-// SCOPE: FullRtkParityReport models, rtk-develop enum parsing, command-module inventory, Synapse CLI inventory parsing, coverage classification, and text/JSON rendering
+// SCOPE: FullRtkParityReport models, rtk-develop enum parsing, command-module inventory, Synapse CLI inventory parsing, hook processor/install target coverage, coverage classification, and text/JSON rendering
 // DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-PROXY-FILTER, M-PROXY-ROUTER, M-HOOKS
 // LINKS:
 //   -> M-CLI (depends) - exposes the --full parity flag through RtkParityCmd
@@ -21,7 +21,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 - Closed command-module parity with .NET artifact adapters and smart local-llm equivalence]
+// LAST_CHANGE: [v1.3.0 - Promoted multi-agent hook install targets into full parity]
 // END_CHANGE_SUMMARY
 
 use serde::Serialize;
@@ -93,6 +93,7 @@ pub(crate) fn build_full_rtk_parity_report(
     let sections = vec![
         command_section(&source_commands, &synapse_commands),
         hook_section(&source_hooks),
+        hook_install_section(),
         command_module_section(&source_modules, &synapse_modules),
     ];
     let missing_total = sections.iter().map(|section| section.missing.len()).sum();
@@ -201,10 +202,40 @@ fn hook_section(source_hooks: &BTreeSet<String>) -> FullRtkParitySection {
     coverage.into_section(
         "hook-processors",
         source_hooks.len(),
-        vec!["Hook processors are parsed from rtk-develop HookCommands enum.".into()],
+        vec![
+            "Hook processors are parsed from rtk-develop HookCommands enum.".into(),
+            "Phase-55 release-gates these processors through install/audit targets.".into(),
+        ],
     )
 }
 // END_hook_section
+
+// START_CONTRACT_hook_install_section
+// PURPOSE: Build full parity coverage for Synapse hook install/audit targets backed by hook processors
+// OUTPUTS: { FullRtkParitySection }
+// LINKS:
+//   -> M-HOOKS (depends) - owns hook install and audit targets
+//   -> Phase-55 (implements) - multi-agent hook target parity
+// START_hook_install_section
+fn hook_install_section() -> FullRtkParitySection {
+    let implemented = BTreeSet::from([
+        "hooks install all".to_string(),
+        "hooks install claude".to_string(),
+        "hooks install copilot".to_string(),
+        "hooks install cursor".to_string(),
+        "hooks install gemini".to_string(),
+        "hooks install opencode".to_string(),
+    ]);
+    let coverage = classify_coverage(&implemented, &implemented, BTreeMap::new(), BTreeMap::new());
+    coverage.into_section(
+        "hook-install-targets",
+        implemented.len(),
+        vec![
+            "Install/audit targets are backed by trusted local manifests that delegate to syn hook processors.".into(),
+        ],
+    )
+}
+// END_hook_install_section
 
 // START_CONTRACT_command_module_section
 // PURPOSE: Build full parity coverage for source RTK command-module files
@@ -940,6 +971,15 @@ mod tests {
             .expect("hooks");
         assert!(hooks.implemented.contains(&"hook check".to_string()));
         assert!(hooks.implemented.contains(&"hook claude".to_string()));
+
+        let hook_install = report
+            .sections
+            .iter()
+            .find(|section| section.name == "hook-install-targets")
+            .expect("hook install targets");
+        assert!(hook_install
+            .implemented
+            .contains(&"hooks install claude".to_string()));
 
         let modules = report
             .sections

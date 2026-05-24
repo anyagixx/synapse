@@ -2,11 +2,11 @@
 <MODULE id="M-CLI-RUNTIME-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-RUNTIME-COMMANDS</NAME>
   <PURPOSE>CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting</PURPOSE>
-  <SCOPE>RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output and RTK coverage counts, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verification/trust handlers including RTK built-in pack inline tests, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd status/audit dispatch, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd</SCOPE>
+  <SCOPE>RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output and RTK coverage counts, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verification/trust handlers including RTK built-in pack inline tests, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd multi-agent install/status/audit dispatch, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd</SCOPE>
   <FILES>
     <FILE>src/cli/runtime_commands.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-RUNNER,M-GRACE-STATUS,M-TRACKING,M-PROXY,M-PROXY-ROUTER,M-PROXY-FILTER,M-COMPRESS,M-MCP,M-HOOKS,M-DASHBOARD,M-INDEXER-STORAGE,M-INDEXER-WALKER</DEPENDS>
-  <LINKS>docs/modules/M-CLI.xml,docs/phases/Phase-23.xml,docs/phases/Phase-24.xml,docs/phases/Phase-25.xml,docs/phases/Phase-33.xml,docs/phases/Phase-50.xml</LINKS>
+  <LINKS>docs/modules/M-CLI.xml,docs/phases/Phase-23.xml,docs/phases/Phase-24.xml,docs/phases/Phase-25.xml,docs/phases/Phase-33.xml,docs/phases/Phase-50.xml,docs/phases/Phase-55.xml</LINKS>
   <VERIFICATION_REF>V-M-CLI-RUNTIME-COMMANDS</VERIFICATION_REF>
 </MODULE>

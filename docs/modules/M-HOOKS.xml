@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-HOOKS" type="INTEGRATION" status="active">
   <NAME>M-HOOKS</NAME>
-  <PURPOSE>Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode and processes RTK-style hook JSON for multi-agent shell autoproxy</PURPOSE>
-  <SCOPE>HookManager struct, install/uninstall/status/audit for opencode agent, JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation, trusted hook marker diagnostics, and syn hook processors for Claude, Cursor, Gemini, Copilot, and check mode</SCOPE>
+  <PURPOSE>Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode and RTK-style multi-agent hook processors</PURPOSE>
+  <SCOPE>HookManager struct, install/uninstall/status/audit for opencode, claude, cursor, gemini, copilot, and all targets; JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation, trusted processor manifests, trusted hook marker diagnostics, and syn hook processors for Claude, Cursor, Gemini, Copilot, and check mode</SCOPE>
   <FILES>
     <FILE>src/hooks/mod.rs</FILE>
     <FILE>src/cli/rtk_hook_processors.rs</FILE>
