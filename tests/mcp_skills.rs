@@ -5,14 +5,14 @@
 // DEPENDS: M-CLI, M-MCP, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
-// test_skill_registry_count — 15 GRACE skills exposed
+// test_skill_registry_count — 16 GRACE skills exposed
 // test_capabilities_include_skills — Capabilities registry includes skill tools
 // test_skill_engine_executes_init — Skill engine can run grace_init
 // test_skill_engine_setup_subagents_includes_tester — Skill output includes Tester agent setup
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Updated MCP capability count for cascade tools]
+// LAST_CHANGE: [v2.23.0 - Updated MCP capability count for run history skill]
 // END_CHANGE_SUMMARY
 
 use std::sync::{Mutex, OnceLock};
@@ -32,7 +32,7 @@ fn cwd_lock() -> &'static Mutex<()> {
 // PURPOSE: Verify the GRACE skill registry exposes the expected skill count
 // SIDE_EFFECTS: test assertion
 fn test_skill_registry_count() {
-    assert_eq!(SKILL_DEFS.len(), 15, "Expected 15 GRACE skills");
+    assert_eq!(SKILL_DEFS.len(), 16, "Expected 16 GRACE skills");
 }
 
 #[test]
@@ -41,9 +41,9 @@ fn test_skill_registry_count() {
 // SIDE_EFFECTS: test assertion
 fn test_capabilities_include_skills() {
     assert!(capabilities::COMMANDS.iter().any(|(n, _)| *n == "skills"));
-    assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 15);
+    assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 16);
     assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 23);
-    assert_eq!(capabilities::MCP_TOOLS.len(), 38);
+    assert_eq!(capabilities::MCP_TOOLS.len(), 39);
 }
 
 #[test]

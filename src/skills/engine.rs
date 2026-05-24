@@ -1,6 +1,6 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
-// PURPOSE: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
+// PURPOSE: Skill execution engine — dispatches 16 GRACE skill tools to deterministic project-aware summaries
 // SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, traceability, tester-agent workflow, belief state, and project workflows
 // DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS:
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.21.0 — Migrated semantic LINKS to typed format]
+// LAST_CHANGE: [v2.22.0 — Added run history skill dispatch]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -22,6 +22,8 @@ use crate::grace::layout::DocsLayout;
 use crate::grace::refresh::Refresher;
 use crate::grace::status::StatusCollector;
 use crate::grace::verify::Verifier;
+use crate::run::{RunManager, RunRecord};
+use crate::tracking::Tracker;
 
 // START_public_api
 
@@ -186,6 +188,7 @@ impl SkillEngine {
                         .ok();
                 let mental_tests =
                     crate::grace::mental_test::scan_project_mental_tests(&self.context.root).ok();
+                let status = StatusCollector::collect(&self.context.root).await.ok();
                 let failing = verify
                     .as_ref()
                     .map(|results| results.iter().filter(|r| !r.passed).count())
@@ -214,8 +217,45 @@ impl SkillEngine {
                         }
                     })
                     .unwrap_or_else(|| "unknown".into());
+                let mut run = RunRecord::new(
+                    string_arg(&request.arguments, "objective", "complete next bounded implementation step"),
+                    active_phase.clone(),
+                    module.clone(),
+                    string_arg(&request.arguments, "objective", "complete next bounded implementation step"),
+                );
+                if let Some(report) = status {
+                    let manager = RunManager::new(&self.context.root);
+                    let (created_run, _) = manager
+                        .create_run(
+                            &string_arg(
+                                &request.arguments,
+                                "objective",
+                                "complete next bounded implementation step",
+                            ),
+                            &active_phase,
+                            &module,
+                            &string_arg(
+                                &request.arguments,
+                                "objective",
+                                "complete next bounded implementation step",
+                            ),
+                            &report,
+                        )
+                        .unwrap_or_else(|_| {
+                            let policy = manager.build_gate_policy(&active_phase, &module, &report);
+                            let decision = manager.evaluate_gate_policy(&policy);
+                            run.policy = Some(policy);
+                            run.status = if decision.blocked {
+                                crate::run::RunStatus::Blocked
+                            } else {
+                                crate::run::RunStatus::Ready
+                            };
+                            (run.clone(), decision)
+                        });
+                    run = created_run;
+                }
                 format!(
-                    "Execution guidance:\n- phase: {}\n- module: {}\n- generation-order next: {}\n- data flows in plan: {}\n- mental test gate: {}\n- objective: {}\n- failing verification groups: {}\n\nNext bounded step:\n1. read docs/development-plan.xml GenerationOrder, DataFlows, and MentalTests for {}\n2. run mental_test_run for {} if a matching MentalTest exists\n3. read shard docs for {}\n4. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n5. inspect affected source files for {}\n6. add/update LINKS to requirements or use cases and run traceability_report for {}\n7. implement smallest safe change for objective only after mental test PASS\n8. run verify_project\n9. if verify fails, switch to grace_fix",
+                    "Execution guidance:\n- phase: {}\n- module: {}\n- generation-order next: {}\n- data flows in plan: {}\n- mental test gate: {}\n- objective: {}\n- failing verification groups: {}\n- run_id: {}\n- run_status: {:?}\n\nNext bounded step:\n1. read docs/development-plan.xml GenerationOrder, DataFlows, and MentalTests for {}\n2. run mental_test_run for {} if a matching MentalTest exists\n3. read shard docs for {}\n4. call extract_belief_state for {} and inspect docs/belief-states/{}.xml\n5. inspect affected source files for {}\n6. add/update LINKS to requirements or use cases and run traceability_report for {}\n7. implement smallest safe change for objective only after mental test PASS\n8. run verify_project\n9. if verify fails, switch to grace_fix",
                     active_phase,
                     module,
                     next_plan_module,
@@ -223,6 +263,8 @@ impl SkillEngine {
                     mental_gate,
                     string_arg(&request.arguments, "objective", "complete next bounded implementation step"),
                     failing,
+                    run.run_id,
+                    run.status,
                     module,
                     module,
                     module,
@@ -280,16 +322,70 @@ impl SkillEngine {
                 rel(&self.context.root, &layout.verification_index_path()),
                 rel(&self.context.root, &layout.traceability_index_path()),
             ),
-            "grace_ask" => format!(
-                "Artifact-aware answer flow prepared.\n\nQuestion: {}\n\nUse sources in order:\n1. docs/plan-index.xml\n2. docs/graph-index.xml\n3. docs/verification-index.xml\n4. relevant shards under docs/modules, docs/phases, docs/verification\n5. indexed code search",
-                string_arg(&request.arguments, "question", "no question provided"),
-            ),
+            "grace_run_history" => {
+                let detail_level = string_arg(&request.arguments, "detail_level", "standard");
+                let run_id = string_arg(&request.arguments, "run_id", "");
+                let tracker = Tracker::new(&self.context.config);
+                let runs = RunManager::new(&self.context.root);
+                let latest_run = runs.list().ok().and_then(|mut list| list.pop());
+                let selected_run = if run_id.is_empty() {
+                    latest_run.clone()
+                } else {
+                    runs.load(&run_id).ok().or(latest_run.clone())
+                };
+                let events = if let Some(run) = &selected_run {
+                    tracker.get_run_events(Some(&run.run_id)).await.ok().unwrap_or_default()
+                } else {
+                    Vec::new()
+                };
+                let mut body = String::new();
+                body.push_str(&format!(
+                    "Run history view\n- detail level: {}\n- run selected: {}\n- event count: {}\n\n",
+                    detail_level,
+                    selected_run
+                        .as_ref()
+                        .map(|r| r.run_id.as_str())
+                        .unwrap_or("none"),
+                    events.len()
+                ));
+                if let Some(run) = selected_run {
+                    body.push_str(&format!(
+                        "Current run\n- phase: {}\n- module: {}\n- status: {:?}\n- step: {}\n- blocked: {}\n- escalation: {}\n- traceability: {}\n- retries: {}\n\n",
+                        run.phase,
+                        run.module_id,
+                        run.status,
+                        run.current_step,
+                        run.blocked_reason.as_deref().unwrap_or("none"),
+                        run.escalation_reason.as_deref().unwrap_or("none"),
+                        run.metadata
+                            .get("traceability_summary")
+                            .map(|s| s.as_str())
+                            .unwrap_or("none"),
+                        run.metadata
+                            .get("retry_count")
+                            .map(|s| s.as_str())
+                            .unwrap_or("0")
+                    ));
+                    if detail_level != "summary" {
+                        for event in events.iter().rev().take(10) {
+                            body.push_str(&format!(
+                                "- {} | {} | {} | {} | {}\n",
+                                event.timestamp, event.event_type, event.phase, event.status, event.detail
+                            ));
+                        }
+                    }
+                } else {
+                    body.push_str("No run records found.\n");
+                }
+                body
+            }
+
             "grace_explainer" => format!(
                 "Explainer target: {}\n\nExplain using:\n- architecture shard\n- verification shard\n- code signatures\n- semantic search results\n- graph relationships",
                 string_arg(&request.arguments, "target", "module or subsystem"),
             ),
             "grace_cli" => format!(
-                "CLI usage guide topic: {}\n\nCore commands:\n- syn init\n- syn verify\n- syn review\n- syn refresh\n- syn status\n- syn mcp\n\nOpenCode path:\n- opencode loads synapse MCP from opencode.jsonc\n- 15 grace tools exposed over MCP\n- shell commands proxied through syn proxy",
+                "CLI usage guide topic: {}\n\nCore commands:\n- syn init\n- syn verify\n- syn review\n- syn refresh\n- syn status\n- syn mcp\n\nOpenCode path:\n- opencode loads synapse MCP from opencode.jsonc\n- 16 grace tools exposed over MCP\n- shell commands proxied through syn proxy",
                 string_arg(&request.arguments, "topic", "general workflow"),
             ),
             "grace_setup_subagents" => format!(
@@ -342,6 +438,59 @@ fn first_module_id(layout: &DocsLayout) -> Option<String> {
     regex::Regex::new(r#"<MODULE id=\"([^\"]+)\""#)
         .ok()
         .and_then(|re| re.captures(&content).map(|c| c[1].to_string()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[tokio::test]
+    async fn grace_run_history_reports_current_run_state() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let dir = tempfile::tempdir().unwrap();
+        let layout = DocsLayout::new(dir.path());
+        layout.ensure_initialized().unwrap();
+        let old_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
+        std::env::set_current_dir(dir.path()).unwrap();
+        let config = Config::default();
+        let engine = SkillEngine::new(&config);
+        let tracker = Tracker::new(&config);
+        let run_manager = RunManager::new(dir.path());
+        let report = crate::grace::status::StatusCollector::collect(dir.path())
+            .await
+            .unwrap();
+        let (record, _) = run_manager
+            .create_run(
+                "test goal",
+                "Phase-17",
+                "M-RUNNER",
+                "test objective",
+                &report,
+            )
+            .unwrap();
+        tracker
+            .record_run_event(
+                &record.run_id,
+                "create_run",
+                &record.module_id,
+                &record.phase,
+                "ready",
+                "created test run",
+            )
+            .await
+            .unwrap();
+        let response = engine
+            .execute(SkillRequest {
+                name: "grace_run_history".into(),
+                arguments: serde_json::json!({"run_id": record.run_id, "detail_level": "deep"}),
+            })
+            .await
+            .unwrap();
+        std::env::set_current_dir(old_cwd).unwrap();
+        assert!(response.body.contains("Run history view"));
+        assert!(response.body.contains("create_run"));
+    }
 }
 
 // END_public_api

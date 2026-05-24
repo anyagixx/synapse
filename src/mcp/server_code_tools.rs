@@ -1,13 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
 // PURPOSE: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
-// SCOPE: semantic_search, graphrag_query with type filters, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
+// SCOPE: semantic_search, graphrag_query with lazy GraphRAG build and type filters, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
 // DEPENDS: M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
 // handle_search — Runs indexed semantic search and formats MCP text content
 // handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship operations
+// ensure_graphrag — Lazily builds GraphRAG state on first graph query
 // read_graphrag — Reads GraphRAG state without panicking on poisoned locks
 // handle_view_signatures — Returns indexed signatures for a file
 // handle_lsp_hover — Returns LSP hover contents
@@ -15,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Added typed LINKS filters to graphrag_query]
+// LAST_CHANGE: [v3.2.0 — Added lazy GraphRAG build for protocol responsiveness]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result};
@@ -50,13 +51,14 @@ pub(crate) async fn handle_search(
                     .map(|(i, r)| {
                         let preview = crate::utils::truncate_chars(&r.content, 150);
                         format!(
-                            "{}. {} ({}:{}-{})\n   {}",
+                            "{}. {} ({}:{}-{})\n   {}\n   reason: {}",
                             i + 1,
                             r.path,
                             r.language,
                             r.start_line,
                             r.end_line,
-                            preview
+                            preview,
+                            r.explanation
                         )
                     })
                     .collect::<Vec<_>>()
@@ -86,6 +88,9 @@ pub(crate) fn handle_graphrag(
     args: &serde_json::Value,
 ) -> serde_json::Value {
     let operation = args["operation"].as_str().unwrap_or("search");
+    if let Err(message) = ensure_graphrag(graphrag) {
+        return error(id, -32603, message);
+    }
     let guard = match read_graphrag(graphrag) {
         Ok(guard) => guard,
         Err(message) => return error(id, -32603, message),
@@ -128,13 +133,28 @@ pub(crate) fn handle_graphrag(
                     .iter()
                     .enumerate()
                     .map(|(i, n)| {
+                        let rels = graphrag.get_relationships(&n.id);
+                        let graph_summary = if rels.is_empty() {
+                            String::new()
+                        } else {
+                            let summary = rels
+                                .iter()
+                                .take(4)
+                                .map(|rel| {
+                                    format!("{}→{}", rel.relation_type.label(), rel.target_id)
+                                })
+                                .collect::<Vec<_>>()
+                                .join(", ");
+                            format!("\n   graph: {}", summary)
+                        };
                         format!(
-                            "{}. {} — {} ({}:{})",
+                            "{}. {} — {} ({}:{}){}",
                             i + 1,
                             n.name,
                             n.kind,
                             n.path,
-                            n.size_lines
+                            n.size_lines,
+                            graph_summary
                         )
                     })
                     .collect::<Vec<_>>()
@@ -324,6 +344,38 @@ pub(crate) fn handle_graphrag(
     }
 }
 // END_handle_graphrag
+
+// START_CONTRACT_ensure_graphrag
+// PURPOSE: Build GraphRAG state on first graph query while keeping initialize/tools-list fast
+// INPUTS: { graphrag: &RwLock<Option<GraphRag>> }
+// OUTPUTS: { Result<(), String> }
+// SIDE_EFFECTS: reads current project source and populates GraphRAG state
+// START_ensure_graphrag
+fn ensure_graphrag(graphrag: &RwLock<Option<GraphRag>>) -> Result<(), String> {
+    if graphrag
+        .read()
+        .map_err(|_| "GraphRAG lock unavailable; restart MCP server".to_string())?
+        .is_some()
+    {
+        return Ok(());
+    }
+
+    let root = std::env::current_dir()
+        .map_err(|e| format!("GraphRAG cannot resolve current directory: {}", e))?;
+    let mut built = GraphRag::new();
+    built
+        .build(&root)
+        .map_err(|e| format!("build GraphRAG for {}: {}", root.display(), e))?;
+
+    let mut guard = graphrag
+        .write()
+        .map_err(|_| "GraphRAG lock unavailable; restart MCP server".to_string())?;
+    if guard.is_none() {
+        *guard = Some(built);
+    }
+    Ok(())
+}
+// END_ensure_graphrag
 
 // START_CONTRACT_read_graphrag
 // PURPOSE: Read GraphRAG state and convert poisoned-lock panics into JSON-RPC-safe errors

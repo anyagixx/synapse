@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-UTILS" type="UTILITY" status="active">
   <NAME>M-UTILS</NAME>
-  <PURPOSE>Token estimation, ANSI stripping, Unicode-safe truncation, and savings formatting — utility functions</PURPOSE>
-  <SCOPE>ANSI escape stripping, Unicode-safe string truncation, naive token estimation (chars/4), savings percentage formatting</SCOPE>
+  <PURPOSE>Token estimation, ANSI stripping, Unicode-safe truncation, savings formatting, and test synchronization — utility functions</PURPOSE>
+  <SCOPE>ANSI escape stripping, Unicode-safe string truncation, naive token estimation (chars/4), savings percentage formatting, shared test-only current-directory locking</SCOPE>
   <FILES>
     <FILE>src/utils/mod.rs</FILE>
   </FILES>

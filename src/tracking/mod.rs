@@ -1,17 +1,18 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TRACKING
-// PURPOSE: SQLite token tracker — records command token usage by canonical project identity and provides stats
-// SCOPE: Tracker struct, canonical project identity, SQLite schema, token recording, stats querying, TrackingStats model
+// PURPOSE: SQLite tracking and provenance ledger — records token usage plus autonomous run events by canonical project identity and provides stats
+// SCOPE: Tracker struct, canonical project identity, SQLite schema, token recording, provenance event recording, stats querying, TrackingStats and RunEvent models
 // DEPENDS: M-CONFIG
 // LINKS: tracking.db
 
 // START_MODULE_MAP
-// Tracker — Token usage tracker backed by SQLite
+// Tracker — Token usage and provenance ledger backed by SQLite
 // TrackingStats — Aggregate token economy statistics
+// RunEvent — Autonomous run lifecycle event record
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Propagated SQLite errors and switched tracking identity to canonical project path]
+// LAST_CHANGE: [v2.9.0 — Isolated run-event unit test against parallel current-directory mutation]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -108,10 +109,105 @@ impl Tracker {
     }
     // END_tracker_record
 
-    // START_CONTRACT_Tracker::get_stats
-    // PURPOSE: Retrieve aggregate tracking statistics for the current project
-    // OUTPUTS: { anyhow::Result<TrackingStats> }
-    // START_tracker_get_stats
+    // START_CONTRACT_Tracker::record_run_event
+    // PURPOSE: Record an autonomous run lifecycle event into SQLite provenance ledger
+    // INPUTS: { run_id: &str }, { event_type: &str }, { module_id: &str }, { phase: &str }, { status: &str }, { detail: &str }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes to SQLite database
+    // START_tracker_record_run_event
+    pub async fn record_run_event(
+        &self,
+        run_id: &str,
+        event_type: &str,
+        module_id: &str,
+        phase: &str,
+        status: &str,
+        detail: &str,
+    ) -> anyhow::Result<()> {
+        if !self.config.tracking.enabled() {
+            return Ok(());
+        }
+        let project = current_project_key();
+        let db_path = Self::db_path()?;
+        if let Some(parent) = db_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let conn = rusqlite::Connection::open(&db_path)
+            .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
+        ensure_schema(&conn)?;
+        conn.execute(
+            "INSERT INTO run_events (run_id, event_type, module_id, phase, status, detail, project_path)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            rusqlite::params![run_id, event_type, module_id, phase, status, detail, project],
+        )?;
+        Ok(())
+    }
+    // END_tracker_record_run_event
+
+    // START_CONTRACT_Tracker::get_run_events
+    // PURPOSE: Retrieve autonomous run lifecycle events for the current project
+    // INPUTS: { run_id: Option<&str> }
+    // OUTPUTS: { anyhow::Result<Vec<RunEvent>> }
+    // START_tracker_get_run_events
+    pub async fn get_run_events(&self, run_id: Option<&str>) -> anyhow::Result<Vec<RunEvent>> {
+        let db_path = Self::db_path()?;
+        let project = current_project_key();
+        if let Some(parent) = db_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let conn = rusqlite::Connection::open(&db_path)
+            .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
+        ensure_schema(&conn)?;
+        let mut events = Vec::new();
+        match run_id {
+            Some(run_id) => {
+                let mut stmt = conn.prepare(
+                    "SELECT run_id, event_type, module_id, phase, status, detail, timestamp
+                     FROM run_events
+                     WHERE project_path = ?1 AND run_id = ?2
+                     ORDER BY id ASC",
+                )?;
+                let rows = stmt.query_map(rusqlite::params![project, run_id], |row| {
+                    Ok(RunEvent {
+                        run_id: row.get(0)?,
+                        event_type: row.get(1)?,
+                        module_id: row.get(2)?,
+                        phase: row.get(3)?,
+                        status: row.get(4)?,
+                        detail: row.get(5)?,
+                        timestamp: row.get(6)?,
+                    })
+                })?;
+                for row in rows {
+                    events.push(row?);
+                }
+            }
+            None => {
+                let mut stmt = conn.prepare(
+                    "SELECT run_id, event_type, module_id, phase, status, detail, timestamp
+                     FROM run_events
+                     WHERE project_path = ?1
+                     ORDER BY id ASC",
+                )?;
+                let rows = stmt.query_map(rusqlite::params![project], |row| {
+                    Ok(RunEvent {
+                        run_id: row.get(0)?,
+                        event_type: row.get(1)?,
+                        module_id: row.get(2)?,
+                        phase: row.get(3)?,
+                        status: row.get(4)?,
+                        detail: row.get(5)?,
+                        timestamp: row.get(6)?,
+                    })
+                })?;
+                for row in rows {
+                    events.push(row?);
+                }
+            }
+        }
+        Ok(events)
+    }
+    // END_tracker_get_run_events
     pub async fn get_stats(&self) -> anyhow::Result<TrackingStats> {
         let db_path = Self::db_path()?;
         let project = current_project_key();
@@ -198,6 +294,17 @@ fn ensure_schema(conn: &rusqlite::Connection) -> rusqlite::Result<()> {
             saved_tokens INTEGER NOT NULL,
             savings_pct REAL NOT NULL,
             project_path TEXT DEFAULT ''
+        );
+        CREATE TABLE IF NOT EXISTS run_events (
+            id INTEGER PRIMARY KEY,
+            timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+            run_id TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            module_id TEXT NOT NULL,
+            phase TEXT NOT NULL,
+            status TEXT NOT NULL,
+            detail TEXT NOT NULL,
+            project_path TEXT DEFAULT ''
         );",
     )
 }
@@ -213,6 +320,19 @@ pub struct TrackingCommandStat {
 }
 // END_TrackingCommandStat
 
+// START_RunEvent
+#[derive(serde::Serialize, Default, Debug, Clone)]
+pub struct RunEvent {
+    pub run_id: String,
+    pub event_type: String,
+    pub module_id: String,
+    pub phase: String,
+    pub status: String,
+    pub detail: String,
+    pub timestamp: String,
+}
+// END_RunEvent
+
 // START_TrackingStats
 #[derive(serde::Serialize, Default, Debug, Clone)]
 pub struct TrackingStats {
@@ -224,4 +344,51 @@ pub struct TrackingStats {
     pub top_commands: Vec<TrackingCommandStat>,
 }
 // END_TrackingStats
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn tracker_records_and_reads_run_events() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let data_home = tempfile::tempdir().unwrap();
+        unsafe {
+            std::env::set_var("XDG_DATA_HOME", data_home.path());
+        }
+        let project_home = tempfile::tempdir().unwrap();
+        let old_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
+        std::env::set_current_dir(project_home.path()).unwrap();
+        let tracker = Tracker::new(&Config::default());
+        tracker
+            .record_run_event(
+                "run-test-1",
+                "create_run",
+                "M-RUNNER",
+                "Phase-17",
+                "ready",
+                "created bounded run",
+            )
+            .await
+            .unwrap();
+        tracker
+            .record_run_event(
+                "run-test-1",
+                "start_run",
+                "M-RUNNER",
+                "Phase-17",
+                "running",
+                "started bounded run",
+            )
+            .await
+            .unwrap();
+
+        let events = tracker.get_run_events(Some("run-test-1")).await.unwrap();
+        std::env::set_current_dir(old_cwd).unwrap();
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[0].event_type, "create_run");
+        assert_eq!(events[1].status, "running");
+    }
+}
+
 // END_public_api

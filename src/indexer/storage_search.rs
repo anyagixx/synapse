@@ -7,6 +7,7 @@
 
 // START_MODULE_MAP
 // score_block — Computes text relevance score for a stored block
+// expand_query_terms — Builds expanded query vocabulary from identifiers and module/file hints
 // tokenize — Splits identifiers and paths into searchable tokens
 // ngram_vectorize — Builds normalized 3-gram vectors
 // cosine_similarity — Computes vector dot-product similarity
@@ -123,6 +124,42 @@ pub(crate) fn score_block(block: &StoredBlock, query_lower: &str, query_words: &
 }
 // END_score_block
 
+// START_CONTRACT_expand_query_terms
+// PURPOSE: Expand query text into normalized identifier and module/file hint terms
+// INPUTS: { query: &str }
+// OUTPUTS: { Vec<String> }
+// START_expand_query_terms
+pub(crate) fn expand_query_terms(query: &str) -> Vec<String> {
+    let mut expanded = Vec::new();
+    let lower = query.to_lowercase();
+    for raw in lower.split_whitespace() {
+        expanded.push(raw.to_string());
+        for token in tokenize(raw) {
+            if !expanded.contains(&token) {
+                expanded.push(token.clone());
+            }
+            if let Some(stripped) = token.strip_prefix("m-") {
+                let stripped = stripped.to_string();
+                if !expanded.contains(&stripped) {
+                    expanded.push(stripped);
+                }
+            }
+            if token.ends_with(".rs")
+                || token.ends_with(".py")
+                || token.ends_with(".ts")
+                || token.ends_with(".js")
+            {
+                let file_stem = token.split('.').next().unwrap_or(&token).to_string();
+                if !expanded.contains(&file_stem) {
+                    expanded.push(file_stem);
+                }
+            }
+        }
+    }
+    expanded
+}
+// END_expand_query_terms
+
 // START_CONTRACT_tokenize
 // PURPOSE: Split code identifiers, paths, and punctuation-delimited text into normalized tokens
 // INPUTS: { text: &str }
@@ -200,6 +237,16 @@ pub(crate) fn cosine_similarity(a: &HashMap<u64, f64>, b: &HashMap<u64, f64>) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_expand_query_terms_adds_identifier_variants() {
+        let terms = expand_query_terms("M-RUNNER start_run.rs");
+        assert!(terms.contains(&"m-runner".to_string()));
+        assert!(terms.contains(&"runner".to_string()));
+        assert!(
+            terms.contains(&"start_run.rs".to_string()) || terms.contains(&"start_run".to_string())
+        );
+    }
 
     #[test]
     fn test_tokenize_camel_case() {

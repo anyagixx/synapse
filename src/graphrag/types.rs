@@ -36,6 +36,7 @@ pub enum RelationType {
     AdapterPattern,
     Imports,
     Calls,
+    References,
     Uses,
     Depends,
     Refines,
@@ -62,7 +63,7 @@ impl RelationType {
             | Self::AdapterPattern
             | Self::VerifiedBy
             | Self::Manages => 0.8,
-            Self::Imports | Self::Calls | Self::Uses => 0.7,
+            Self::Imports | Self::Calls | Self::References | Self::Uses => 0.7,
             Self::Refines => 0.6,
             Self::SiblingModule | Self::ParentModule | Self::ChildModule => 0.3,
         }
@@ -83,6 +84,7 @@ impl RelationType {
             Self::AdapterPattern => "adapter_pattern",
             Self::Imports => "imports",
             Self::Calls => "calls",
+            Self::References => "references",
             Self::Uses => "uses",
             Self::Depends => "depends",
             Self::Refines => "refines",
@@ -111,6 +113,7 @@ impl RelationType {
             "adapter_pattern" => Some(Self::AdapterPattern),
             "imports" => Some(Self::Imports),
             "calls" => Some(Self::Calls),
+            "references" => Some(Self::References),
             "uses" => Some(Self::Uses),
             "depends" => Some(Self::Depends),
             "refines" => Some(Self::Refines),

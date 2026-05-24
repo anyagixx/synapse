@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-SKILLS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Skill runtime facade — exposes 15 first-class GRACE skill tools for MCP and CLI integration
+    Module responsibility: Skill runtime facade — exposes 16 first-class GRACE skill tools for MCP and CLI integration
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-CONFIG, M-GRACE-LAYOUT, M-SKILLS-ENGINE, M-SKILLS-REGISTRY, M-SKILLS-TYPES

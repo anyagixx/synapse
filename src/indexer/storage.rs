@@ -16,7 +16,7 @@
 // LAST_CHANGE: [v3.0.0 — Added full snapshot replacement to purge deleted files from the index]
 // END_CHANGE_SUMMARY
 
-use super::storage_search::{cosine_similarity, ngram_vectorize, score_block};
+use super::storage_search::{cosine_similarity, expand_query_terms, ngram_vectorize, score_block};
 use std::path::{Path, PathBuf};
 
 // START_public_api
@@ -178,7 +178,8 @@ impl Storage {
         if query_lower.trim().is_empty() {
             return Vec::new();
         }
-        let query_words: Vec<&str> = query_lower.split_whitespace().collect();
+        let expanded_terms = expand_query_terms(&query_lower);
+        let query_words: Vec<&str> = expanded_terms.iter().map(|term| term.as_str()).collect();
 
         let mut scored: Vec<(f64, StoredBlock)> = self
             .blocks
@@ -205,7 +206,9 @@ impl Storage {
     // OUTPUTS: { Vec<(StoredBlock, f64)> }
     // START_storage_vector_search
     pub fn vector_search(&self, query: &str, max_results: usize) -> Vec<(StoredBlock, f64)> {
-        let query_vec = ngram_vectorize(query);
+        let expanded_terms = expand_query_terms(query);
+        let query_text = expanded_terms.join(" ");
+        let query_vec = ngram_vectorize(&query_text);
         if query_vec.is_empty() {
             return Vec::new();
         }

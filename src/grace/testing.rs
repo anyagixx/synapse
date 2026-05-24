@@ -66,7 +66,15 @@ pub struct TestGuideRun {
     pub agent_console_url: Option<String>,
     pub collect_logs: bool,
     pub passed: bool,
+    pub flaky_suspected: bool,
+    pub flaky_reasons: Vec<String>,
+    pub retry_attempts: u32,
+    pub retry_history: Vec<String>,
+    pub retry_evidence_paths: Vec<String>,
+    pub environment_summary: String,
+    pub fixture_paths: Vec<String>,
     pub scenarios: Vec<TestScenarioResult>,
+    pub evidence_bundle_path: Option<String>,
     pub summary_path: String,
     pub failure_report_path: Option<String>,
 }
@@ -190,6 +198,15 @@ pub fn run_test_guide(
 
     let fail_mode =
         application_url.starts_with("mock://fail") || content.contains("INTENTIONAL_FAILURE");
+    let flaky_suspected =
+        application_url.starts_with("mock://flaky") || content.contains("FLAKY_SIGNAL");
+    let mut flaky_reasons = Vec::new();
+    if application_url.starts_with("mock://flaky") {
+        flaky_reasons.push("application_url requested flaky simulation".into());
+    }
+    if content.contains("FLAKY_SIGNAL") {
+        flaky_reasons.push("testing guide declared flaky signal marker".into());
+    }
     let mut scenarios = Vec::new();
     for scenario in &guide.tests {
         let passed = !fail_mode;
@@ -211,6 +228,15 @@ pub fn run_test_guide(
         });
     }
 
+    let retry_attempts = if flaky_suspected { 2 } else { 1 };
+    let mut retry_history = Vec::new();
+    if flaky_suspected {
+        retry_history.push(format!(
+            "attempt 1: {}",
+            if fail_mode { "fail" } else { "pass" }
+        ));
+        retry_history.push("attempt 2: stable result recorded after retry".into());
+    }
     let passed = scenarios.iter().all(|scenario| scenario.passed);
     let failure_report_path = if !passed && output_report {
         let report_path = run_dir.join(format!("{}-failure.xml", slug(&guide.title)));
@@ -220,13 +246,60 @@ pub fn run_test_guide(
         None
     };
     let summary_path = run_dir.join("summary.json");
+    let environment_summary = format!(
+        "cwd={} docs={} guides={} results={}",
+        root.display(),
+        layout.docs_dir().display(),
+        layout.tests_guides_dir().display(),
+        layout.tests_results_dir().display()
+    );
+    let fixture_paths = vec![
+        rel_display(root, &guide_file),
+        rel_display(root, &layout.tests_guides_dir()),
+        rel_display(root, &layout.tests_results_dir()),
+    ];
+
+    let evidence_bundle_path = if collect_logs {
+        let bundle_path = run_dir.join("evidence.log");
+        let bundle = scenarios
+            .iter()
+            .flat_map(|scenario| {
+                scenario
+                    .log_evidence
+                    .iter()
+                    .map(|entry| format!("{} | {}", scenario.name, entry))
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        std::fs::write(&bundle_path, bundle)?;
+        Some(rel_display(root, &bundle_path))
+    } else {
+        None
+    };
+    let mut retry_evidence_paths = Vec::new();
+    if flaky_suspected {
+        for (idx, note) in retry_history.iter().enumerate() {
+            let attempt_path = run_dir.join(format!("retry-{}.log", idx + 1));
+            std::fs::write(&attempt_path, note)?;
+            retry_evidence_paths.push(rel_display(root, &attempt_path));
+        }
+    }
     let run = TestGuideRun {
         guide_path: rel_display(root, &guide_file),
         application_url: application_url.into(),
         agent_console_url: agent_console_url.map(str::to_string),
         collect_logs,
         passed,
+        flaky_suspected,
+        flaky_reasons,
+        retry_attempts,
+        retry_history,
+        retry_evidence_paths,
+        environment_summary,
+        fixture_paths,
         scenarios,
+        evidence_bundle_path,
         summary_path: rel_display(root, &summary_path),
         failure_report_path,
     };
@@ -433,8 +506,43 @@ mod tests {
         )
         .expect("run");
         assert!(run.passed);
+        assert_eq!(run.retry_attempts, 1);
+        assert!(run.environment_summary.contains("docs="));
+        assert!(run.retry_evidence_paths.is_empty());
+        assert_eq!(run.fixture_paths.len(), 3);
         assert!(dir.path().join(&run.summary_path).exists());
+        assert!(run.evidence_bundle_path.is_some());
+        assert!(dir
+            .path()
+            .join(run.evidence_bundle_path.as_deref().unwrap_or_default())
+            .exists());
         assert!(run.failure_report_path.is_none());
+    }
+
+    #[test]
+    fn test_run_test_guide_marks_flaky_signal() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let layout = DocsLayout::new(dir.path());
+        std::fs::create_dir_all(layout.tests_guides_dir()).expect("guides");
+        std::fs::write(
+            layout.tests_guides_dir().join("sample.md"),
+            format!("{}\n\nFLAKY_SIGNAL\n", sample_guide()),
+        )
+        .expect("guide");
+        let run = run_test_guide(
+            dir.path(),
+            "docs/tests/guides/sample.md",
+            "mock://flaky",
+            None,
+            true,
+            true,
+        )
+        .expect("run");
+        assert!(run.flaky_suspected);
+        assert_eq!(run.retry_attempts, 2);
+        assert!(!run.retry_history.is_empty());
+        assert_eq!(run.retry_evidence_paths.len(), run.retry_history.len());
+        assert!(!run.flaky_reasons.is_empty());
     }
 
     #[test]
@@ -453,6 +561,11 @@ mod tests {
         )
         .expect("run");
         let report = run.failure_report_path.expect("failure report");
+        assert_eq!(run.retry_attempts, 1);
+        assert!(run.environment_summary.contains("results="));
+        assert!(run.retry_evidence_paths.is_empty());
+        assert_eq!(run.fixture_paths.len(), 3);
+        assert!(run.evidence_bundle_path.is_some());
         let content = std::fs::read_to_string(dir.path().join(&report)).expect("report");
         assert!(content.contains("<TestFailureReport>"));
         assert!(content.contains("<LogEvidence>"));

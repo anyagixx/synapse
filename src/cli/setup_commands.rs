@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.11.0 - Named watch reindex debounce threshold]
+// LAST_CHANGE: [v3.12.0 - Updated setup summary for 39 MCP tools]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
@@ -97,7 +97,7 @@ impl InitCmd {
         println!();
         println!("What was created:");
         println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
-        println!("  opencode.jsonc              — MCP auto-start (38 tools: 23 core + 15 GRACE)");
+        println!("  opencode.jsonc              — MCP auto-start (39 tools: 23 core + 16 GRACE)");
         println!(
             "  docs/                        — Sharded architecture layout + compatibility XML docs"
         );

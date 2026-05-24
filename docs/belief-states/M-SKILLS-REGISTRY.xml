@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-SKILLS-REGISTRY" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Skill registry — declares 15 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
+    Module responsibility: Skill registry — declares 16 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-SKILLS-TYPES

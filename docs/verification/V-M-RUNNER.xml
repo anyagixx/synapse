@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-RUNNER" module="M-RUNNER" priority="critical" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test run::tests --lib</COMMAND>
+    <COMMAND>cargo test dashboard::tests::test_runs_payload_reports_runs_and_events --lib</COMMAND>
+    <COMMAND>cargo test skills::engine::tests::grace_run_history_reports_current_run_state --lib</COMMAND>
+    <TEST>run record serializes and restores without drift</TEST>
+    <TEST>run manager persists records atomically</TEST>
+    <TEST>run listing returns stable deterministic ordering</TEST>
+    <TEST>run recovery retries once then escalates deterministically</TEST>
+    <TEST>dashboard and grace_run_history expose persisted run state</TEST>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Autonomous run state stores goal, phase, module, objective, status, gates, steps, and outcome fields</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-17</PHASE_GATE>
+</VERIFICATION>

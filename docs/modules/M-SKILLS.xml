@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-SKILLS" type="CORE_LOGIC" status="active">
   <NAME>M-SKILLS</NAME>
-  <PURPOSE>Skill runtime facade — exposes 15 first-class GRACE skill tools for MCP and CLI integration</PURPOSE>
+  <PURPOSE>Skill runtime facade — exposes 16 first-class GRACE skill tools for MCP and CLI integration</PURPOSE>
   <SCOPE>SkillEngine facade, registry exports, skill metadata and execution surface</SCOPE>
   <FILES>
     <FILE>src/skills/mod.rs</FILE>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-RUNNER" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Autonomous run runtime — persists bounded agent runs, steps, gates, and outcomes for controlled execution
+    Key data flows:
+      - INPUT: goal, phase, module_id, objective, and gate definitions from agent workflow and GRACE artifacts
+      - PROCESSING: create durable run state, track steps/gates/outcomes, serialize and restore JSON records
+      - OUTPUT: run ledger files and machine-readable lifecycle state for future autonomous execution
+    Critical invariants:
+      - run records remain durable, serializable, and resumable
+      - runs keep bounded scope and explicit status transitions
+      - persistence must not silently drop fields
+  IMPLEMENTATION_STRATEGY:
+    Approach: start with minimal durable state model, then extend orchestration and gate enforcement in later subphases
+    Complexity_areas: serialization compatibility, lifecycle transitions, atomic persistence, future gate integration
+    Patterns_applied: explicit flow, typed links, bounded blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - run records serialize and deserialize without loss
+    - save/load/list behavior is deterministic
+    - future autonomous workflow code can build on this state model
+  RISKS_ACKNOWLEDGED:
+    - this first scaffold is intentionally minimal and may need schema evolution later
+    - phase 1.1 only creates runtime foundation, not full orchestration
+</BELIEF_STATE>

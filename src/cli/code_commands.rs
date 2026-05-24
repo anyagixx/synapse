@@ -50,13 +50,14 @@ impl SearchCmd {
             let normalized = r.content.replace('\n', " ");
             let preview = crate::utils::truncate_chars(&normalized, 120);
             println!(
-                "{}. {}:{} ({} {}) score={:.1}\n   {}",
+                "{}. {}:{} ({} {}) score={:.1} [{}]\n   {}",
                 i + 1,
                 r.path,
                 r.start_line,
                 r.language,
                 r.kind,
                 r.score,
+                r.explanation,
                 preview
             );
         }
@@ -211,6 +212,16 @@ impl GraphRagCmd {
                 let nodes = graphrag.search_nodes(&q);
                 for n in &nodes {
                     println!("• {} — {} ({}:{})", n.name, n.kind, n.path, n.size_lines);
+                    let rels = graphrag.get_relationships(&n.id);
+                    if !rels.is_empty() {
+                        let summary = rels
+                            .iter()
+                            .take(4)
+                            .map(|rel| format!("{}→{}", rel.relation_type.label(), rel.target_id))
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        println!("  graph: {}", summary);
+                    }
                 }
             }
             _ => {

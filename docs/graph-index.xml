@@ -76,6 +76,7 @@
     <MODULE id="M-PROXY" path="docs/modules/M-PROXY.xml" status="active" />
     <MODULE id="M-PROXY-FILTER" path="docs/modules/M-PROXY-FILTER.xml" status="active" />
     <MODULE id="M-PROXY-RUNNER" path="docs/modules/M-PROXY-RUNNER.xml" status="active" />
+    <MODULE id="M-RUNNER" path="docs/modules/M-RUNNER.xml" status="active" />
     <MODULE id="M-SKILLS" path="docs/modules/M-SKILLS.xml" status="active" />
     <MODULE id="M-SKILLS-ENGINE" path="docs/modules/M-SKILLS-ENGINE.xml" status="active" />
     <MODULE id="M-SKILLS-REGISTRY" path="docs/modules/M-SKILLS-REGISTRY.xml" status="active" />
@@ -221,6 +222,11 @@
     <REL source="M-GRACE-REFRESH" target="M-GRACE-CASCADE" type="DEPENDS" />
     <REL source="M-GRACE-REFRESH" target="M-GRACE-INVENTORY" type="DEPENDS" />
     <REL source="M-GRACE-REFRESH" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-SKILLS" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-ANCHOR" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-BELIEF-STATE" type="DEPENDS" />

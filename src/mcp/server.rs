@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, and suggest_contract, guarded index and GraphRAG preload
+// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, and suggest_contract, guarded index preload and lazy GraphRAG state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
 // LINKS: N/A
 
@@ -10,11 +10,10 @@
 // discover_project_count — Counts probable child projects for multi-root mode
 // SynapseHandler — MCP message router and initialization state
 // preload_index_storage — Loads index storage without panicking on poisoned locks
-// build_graphrag — Builds GraphRAG while preserving actionable errors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.12.0 - Routed suggest_contract through focused contract helper module]
+// LAST_CHANGE: [v3.13.0 - Made GraphRAG preload lazy for protocol responsiveness]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -152,27 +151,22 @@ impl Default for SynapseHandler {
 
 impl SynapseHandler {
     // START_CONTRACT_SynapseHandler::new
-    // PURPOSE: Create a new SynapseHandler with pre-loaded indexer and graph
+    // PURPOSE: Create a new SynapseHandler with pre-loaded index storage and lazy graph state
     // OUTPUTS: { Self }
     // START_sh_new
     pub fn new() -> Self {
         let config = Config::load_or_default();
         let indexer = Indexer::new(&config);
         let skill_engine = SkillEngine::new(&config);
-        let mut graphrag = GraphRag::new();
-
         // Try to find index from current directory.
         if let Ok(cwd) = std::env::current_dir() {
             if let Err(e) = preload_index_storage(&indexer, &cwd) {
                 tracing::warn!("[SynapseHandler][new][INDEX] {}", e);
             }
-            if let Err(e) = build_graphrag(&mut graphrag, &cwd) {
-                tracing::warn!("[SynapseHandler][new][GRAPHRAG] {}", e);
-            }
         }
         Self {
             indexer,
-            graphrag: RwLock::new(Some(graphrag)),
+            graphrag: RwLock::new(None),
             skill_engine,
             initialized: false,
         }
@@ -332,16 +326,4 @@ fn preload_index_storage(indexer: &Indexer, root: &Path) -> anyhow::Result<()> {
 }
 // END_preload_index_storage
 
-// START_CONTRACT_build_graphrag
-// PURPOSE: Build GraphRAG preload state with project path context in any returned error
-// INPUTS: { graphrag: &mut GraphRag }, { root: &Path }
-// OUTPUTS: { anyhow::Result<()> }
-// SIDE_EFFECTS: populates GraphRAG graph when build succeeds
-// START_build_graphrag
-fn build_graphrag(graphrag: &mut GraphRag, root: &Path) -> anyhow::Result<()> {
-    graphrag
-        .build(root)
-        .map_err(|e| anyhow::anyhow!("build GraphRAG for {}: {}", root.display(), e))
-}
-// END_build_graphrag
 // END_public_api

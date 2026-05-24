@@ -68,6 +68,7 @@
     <MODULE_REF id="M-TESTS-MCP-PROTOCOL" />
     <MODULE_REF id="M-TESTS-PARITY" />
     <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-RUNNER" />
     <MODULE_REF id="M-UTILS" />
   </MODULE_REFS>
 </PHASE>

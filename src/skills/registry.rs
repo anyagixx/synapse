@@ -1,6 +1,6 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-REGISTRY
-// PURPOSE: Skill registry — declares 15 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
+// PURPOSE: Skill registry — declares 16 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
 // SCOPE: Skill metadata constants, built-in MCP tool descriptions including cascade and tester-agent tools, and lookup helpers
 // DEPENDS: M-SKILLS-TYPES
 // LINKS:
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 - Migrated semantic LINKS to typed format]
+// LAST_CHANGE: [v2.24.0 - Added run history skill to registry]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -29,6 +29,18 @@ const DETAIL_LEVEL_ARG: &[SkillArg] = &[SkillArg {
     description: "Output detail level: summary | standard | deep",
     required: false,
 }];
+const HISTORY_ARGS: &[SkillArg] = &[
+    SkillArg {
+        name: "run_id",
+        description: "Optional run id to inspect; defaults to latest run",
+        required: false,
+    },
+    SkillArg {
+        name: "detail_level",
+        description: "Output detail level: summary | standard | deep",
+        required: false,
+    },
+];
 const SCOPE_ARG: &[SkillArg] = &[SkillArg {
     name: "scope",
     description: "Target scope such as module, phase, or project",
@@ -213,6 +225,11 @@ pub const SKILL_DEFS: &[SkillDef] = &[
         args: DETAIL_LEVEL_ARG,
     },
     SkillDef {
+        name: "grace_run_history",
+        description: "Return bounded autonomous run history and provenance events.",
+        args: HISTORY_ARGS,
+    },
+    SkillDef {
         name: "grace_ask",
         description: "Answer questions using project artifacts and indexed code context.",
         args: QUESTION_ARG,
@@ -250,7 +267,7 @@ pub fn find_skill(name: &str) -> Option<SkillDef> {
 }
 // END_find_skill
 
-pub const GRACE_TOOL_COUNT: usize = 15;
+pub const GRACE_TOOL_COUNT: usize = 16;
 
 pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
     ("semantic_search", "Search codebase by natural language"),

@@ -25,12 +25,12 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.23.0 - Advanced default version to v2.5.3 development line after v2.5.2 release]
+# LAST_CHANGE: [v2.24.0 - Advanced default version to v2.6.0 release candidate line]
 # END_CHANGE_SUMMARY
 
 set -eu
 
-DEFAULT_VERSION="v2.5.3"
+DEFAULT_VERSION="v2.6.0"
 VERSION="$DEFAULT_VERSION"
 VERSION_EXPLICIT="0"
 MODE="install"

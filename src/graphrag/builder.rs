@@ -56,6 +56,7 @@ impl GraphBuilder {
         let files = walker.walk();
 
         let mut contract_links: Vec<(String, Vec<TypedLink>)> = Vec::new();
+        let mut function_symbols: Vec<(String, String, String)> = Vec::new();
 
         // 1. Create nodes from files and MODULE_CONTRACT ids
         for file in &files {
@@ -113,6 +114,18 @@ impl GraphBuilder {
                 contract_links.push((module_id.clone(), contract.typed_links()));
                 for function in &contract.function_contracts {
                     let function_id = format!("{}::{}", module_id, function.name);
+                    let function_content = blocks
+                        .iter()
+                        .find(|block| {
+                            block.path == file.path && block.name.ends_with(&function.name)
+                        })
+                        .map(|block| block.content.clone())
+                        .unwrap_or_else(|| content.clone());
+                    function_symbols.push((
+                        function_id.clone(),
+                        function.name.clone(),
+                        function_content,
+                    ));
                     graph.add_node(CodeNode {
                         id: function_id.clone(),
                         name: function.name.clone(),
@@ -124,6 +137,13 @@ impl GraphBuilder {
                         size_lines: 0,
                         imports: Vec::new(),
                         exports: Vec::new(),
+                    });
+                    graph.add_relationship(CodeRelationship {
+                        source_id: module_id.clone(),
+                        target_id: function_id.clone(),
+                        relation_type: RelationType::ChildModule,
+                        weight: RelationType::ChildModule.weight(),
+                        description: Some(format!("declares function {}", function.name)),
                     });
                     contract_links.push((function_id, function.typed_links()));
                 }
@@ -160,7 +180,25 @@ impl GraphBuilder {
             }
         }
 
-        // 3. Create hierarchy relationships (parent/child module)
+        // 3. Create lightweight call/reference relationships from extracted function content.
+        for (source_id, _source_name, source_content) in &function_symbols {
+            for (target_id, target_name, _target_content) in &function_symbols {
+                if source_id == target_id {
+                    continue;
+                }
+                if symbol_mentioned(source_content, target_name) {
+                    graph.add_relationship(CodeRelationship {
+                        source_id: source_id.clone(),
+                        target_id: target_id.clone(),
+                        relation_type: RelationType::Calls,
+                        weight: RelationType::Calls.weight(),
+                        description: Some(format!("mentions function {}", target_name)),
+                    });
+                }
+            }
+        }
+
+        // 4. Create hierarchy relationships (parent/child module)
         let mut module_map: std::collections::BTreeMap<String, Vec<String>> =
             std::collections::BTreeMap::new();
         for node_id in &node_ids {
@@ -202,7 +240,25 @@ impl GraphBuilder {
             }
         }
 
-        // 4. Create typed semantic relationships from GRACE LINKS.
+        // 4. Create lightweight reference relationships from extracted function content.
+        for (source_id, _source_name, source_content) in &function_symbols {
+            for (target_id, target_name, _target_content) in &function_symbols {
+                if source_id == target_id {
+                    continue;
+                }
+                if symbol_mentioned(source_content, target_name) {
+                    graph.add_relationship(CodeRelationship {
+                        source_id: source_id.clone(),
+                        target_id: target_id.clone(),
+                        relation_type: RelationType::References,
+                        weight: RelationType::References.weight(),
+                        description: Some(format!("references function {}", target_name)),
+                    });
+                }
+            }
+        }
+
+        // 5. Create typed semantic relationships from GRACE LINKS.
         for (source_id, links) in contract_links {
             for link in links {
                 ensure_artifact_node(&mut graph, &link.target);
@@ -360,10 +416,73 @@ fn extract_imports(content: &str, language: &str) -> Vec<String> {
     imports
 }
 
+fn symbol_mentioned(content: &str, symbol: &str) -> bool {
+    let escaped = regex::escape(symbol);
+    regex::Regex::new(&format!(r"\b{}\b", escaped))
+        .ok()
+        .map(|re| re.is_match(content))
+        .unwrap_or(false)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::grace::contract::LinkType;
+
+    #[test]
+    fn test_build_extracts_call_edges_from_function_mentions() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(
+            src.join("workflow.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-WORKFLOW\n",
+                "// PURPOSE: Workflow module\n",
+                "// SCOPE: Test call edge graph extraction\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// first_step — first step\n",
+                "// second_step — second step\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 — Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_first_step\n",
+                "// PURPOSE: First step\n",
+                "// START_first_step\n",
+                "pub fn first_step() { second_step(); }\n",
+                "// END_first_step\n",
+                "\n",
+                "// START_CONTRACT_second_step\n",
+                "// PURPOSE: Second step\n",
+                "// START_second_step\n",
+                "pub fn second_step() {}\n",
+                "// END_second_step\n",
+            ),
+        )
+        .expect("write source");
+
+        let graph = GraphBuilder::build(dir.path()).expect("build graph");
+        let calls = graph.get_relationships("M-WORKFLOW::first_step");
+        assert!(graph.get_relationships("M-WORKFLOW").iter().any(|rel| {
+            rel.target_id == "M-WORKFLOW::first_step"
+                && matches!(rel.relation_type, RelationType::ChildModule)
+        }));
+        assert!(calls
+            .iter()
+            .any(|rel| rel.target_id == "M-WORKFLOW::second_step"
+                && matches!(rel.relation_type, RelationType::Calls)));
+        assert!(calls
+            .iter()
+            .any(|rel| rel.target_id == "M-WORKFLOW::second_step"
+                && matches!(rel.relation_type, RelationType::References)));
+    }
 
     #[test]
     fn test_build_extracts_typed_links_from_contracts() {

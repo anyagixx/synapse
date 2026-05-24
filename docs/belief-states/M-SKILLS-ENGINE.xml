@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-SKILLS-ENGINE" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Skill execution engine — dispatches 15 GRACE skill tools to deterministic project-aware summaries
+    Module responsibility: Skill execution engine — dispatches 16 GRACE skill tools to deterministic project-aware summaries
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES

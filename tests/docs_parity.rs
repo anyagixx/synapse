@@ -137,8 +137,8 @@ fn test_mcp_tool_count_matches_capabilities() {
     let expected = capabilities::MCP_TOOLS.len();
     assert_eq!(expected, capabilities::TOTAL_MCP_TOOL_COUNT);
     assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 23);
-    assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 15);
-    assert_eq!(capabilities::skill_defs_count(), 15);
+    assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 16);
+    assert_eq!(capabilities::skill_defs_count(), 16);
     assert!(!capabilities::MCP_TOOLS.is_empty(), "MCP tools list empty");
     let names: Vec<&str> = capabilities::MCP_TOOLS.iter().map(|(n, _)| *n).collect();
     let unique: std::collections::HashSet<_> = names.iter().collect();

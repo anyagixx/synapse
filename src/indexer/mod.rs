@@ -24,6 +24,7 @@ mod storage_types;
 pub mod walker;
 
 use crate::config::Config;
+use crate::graphrag::builder::GraphBuilder;
 use std::path::Path;
 use std::sync::RwLock;
 use storage::Storage;
@@ -43,6 +44,7 @@ pub struct SearchResult {
     pub end_line: u32,
     pub content: String,
     pub score: f64,
+    pub explanation: String,
 }
 // END_SearchResult
 
@@ -208,6 +210,7 @@ impl Indexer {
                 end_line: b.end_line as u32,
                 content: b.content,
                 score,
+                explanation: "lexical match".into(),
             })
             .collect())
     }
@@ -252,6 +255,24 @@ impl Indexer {
         }
 
         let mut results: Vec<_> = combined.into_values().collect();
+        let graph = GraphBuilder::build(&root).ok();
+        let query_words: Vec<String> = query
+            .to_lowercase()
+            .split_whitespace()
+            .map(|w| w.to_string())
+            .collect();
+        let mut explanations: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
+        if let Some(graph) = &graph {
+            for (score, block) in &mut results {
+                if let Some((boost, explanation)) =
+                    graph_proximity_boost(graph, block, &query_words)
+                {
+                    *score += boost;
+                    explanations.insert(block.id.clone(), explanation);
+                }
+            }
+        }
         results.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
         results.truncate(max_results);
 
@@ -266,6 +287,9 @@ impl Indexer {
                 end_line: b.end_line as u32,
                 content: b.content.clone(),
                 score,
+                explanation: explanations
+                    .remove(&b.id)
+                    .unwrap_or_else(|| "lexical/vector match".into()),
             })
             .collect())
     }
@@ -334,6 +358,78 @@ fn ensure_storage_ready(storage: &Storage) -> anyhow::Result<()> {
 }
 // END_ensure_storage_ready
 
+fn graph_proximity_boost(
+    graph: &crate::graphrag::types::CodeGraph,
+    block: &storage::StoredBlock,
+    query_words: &[String],
+) -> Option<(f64, String)> {
+    let node = graph
+        .nodes
+        .iter()
+        .find(|node| node.id == block.id || node.name == block.name)?;
+    let mut best_boost = 0.0_f64;
+    let mut reason = String::new();
+    for relationship in &graph.relationships {
+        if relationship.source_id != node.id && relationship.target_id != node.id {
+            continue;
+        }
+        let other_id = if relationship.source_id == node.id {
+            &relationship.target_id
+        } else {
+            &relationship.source_id
+        };
+        let Some(other_node) = graph
+            .nodes
+            .iter()
+            .find(|candidate| candidate.id == *other_id)
+        else {
+            continue;
+        };
+        let other_name = other_node.name.to_lowercase();
+        if query_words.iter().any(|query| other_name.contains(query)) {
+            let boost = relationship.weight * 0.75;
+            if boost > best_boost {
+                best_boost = boost;
+                reason = format!("graph proximity via {}", relationship.relation_type.label());
+            }
+        }
+        for second_hop in &graph.relationships {
+            if second_hop.source_id != *other_id && second_hop.target_id != *other_id {
+                continue;
+            }
+            let second_id = if second_hop.source_id == *other_id {
+                &second_hop.target_id
+            } else {
+                &second_hop.source_id
+            };
+            let Some(second_node) = graph
+                .nodes
+                .iter()
+                .find(|candidate| candidate.id == *second_id)
+            else {
+                continue;
+            };
+            let second_name = second_node.name.to_lowercase();
+            if query_words.iter().any(|query| second_name.contains(query)) {
+                let boost = (relationship.weight + second_hop.weight) * 0.35;
+                if boost > best_boost {
+                    best_boost = boost;
+                    reason = format!(
+                        "multi-hop graph proximity via {} → {}",
+                        relationship.relation_type.label(),
+                        second_hop.relation_type.label()
+                    );
+                }
+            }
+        }
+    }
+    if best_boost > 0.0 {
+        Some((best_boost, reason))
+    } else {
+        None
+    }
+}
+
 fn fallback_signatures(code: &str) -> Vec<String> {
     let mut sigs = Vec::new();
     for line in code.lines() {
@@ -378,6 +474,165 @@ mod tests {
             err
         );
     }
+    #[tokio::test]
+    async fn test_hybrid_search_uses_graph_call_edges_for_related_results() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(
+            src.join("workflow.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-WORKFLOW\n",
+                "// PURPOSE: Workflow module\n",
+                "// SCOPE: Graph-aware hybrid search test\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// first_step — first step\n",
+                "// second_step — second step\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 — Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_first_step\n",
+                "// PURPOSE: First step\n",
+                "// START_first_step\n",
+                "pub fn first_step() { second_step(); }\n",
+                "// END_first_step\n",
+                "\n",
+                "// START_CONTRACT_second_step\n",
+                "// PURPOSE: Second step\n",
+                "// START_second_step\n",
+                "pub fn second_step() {}\n",
+                "// END_second_step\n",
+            ),
+        )
+        .expect("write source");
+        let old_cwd = std::env::current_dir().expect("cwd");
+        std::env::set_current_dir(dir.path()).expect("set cwd");
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        let results = indexer
+            .hybrid_search("first_step", 5)
+            .await
+            .expect("search");
+        std::env::set_current_dir(old_cwd).expect("restore cwd");
+        assert!(results
+            .iter()
+            .any(|result| result.name.contains("second_step")));
+    }
+
+    #[tokio::test]
+    async fn test_search_expands_module_identifier_terms() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(
+            src.join("workflow.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-WORKFLOW\n",
+                "// PURPOSE: Workflow module\n",
+                "// SCOPE: Query expansion search test\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// first_step — first step\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 — Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_first_step\n",
+                "// PURPOSE: First step\n",
+                "// START_first_step\n",
+                "pub fn first_step() {}\n",
+                "// END_first_step\n",
+            ),
+        )
+        .expect("write source");
+        let old_cwd = std::env::current_dir().expect("cwd");
+        std::env::set_current_dir(dir.path()).expect("set cwd");
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        let results = indexer
+            .search("runner workflow M-WORKFLOW", 5)
+            .await
+            .expect("search");
+        std::env::set_current_dir(old_cwd).expect("restore cwd");
+        assert!(results
+            .iter()
+            .any(|result| result.name.contains("first_step")));
+    }
+
+    #[tokio::test]
+    async fn test_hybrid_search_uses_multi_hop_graph_proximity() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(
+            src.join("workflow.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-WORKFLOW\n",
+                "// PURPOSE: Workflow module\n",
+                "// SCOPE: Multi-hop graph-aware hybrid search test\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// first_step — first step\n",
+                "// second_step — second step\n",
+                "// third_step — third step\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 — Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_first_step\n",
+                "// PURPOSE: First step\n",
+                "// START_first_step\n",
+                "pub fn first_step() { second_step(); }\n",
+                "// END_first_step\n",
+                "\n",
+                "// START_CONTRACT_second_step\n",
+                "// PURPOSE: Second step\n",
+                "// START_second_step\n",
+                "pub fn second_step() { third_step(); }\n",
+                "// END_second_step\n",
+                "\n",
+                "// START_CONTRACT_third_step\n",
+                "// PURPOSE: Third step\n",
+                "// START_third_step\n",
+                "pub fn third_step() {}\n",
+                "// END_third_step\n",
+            ),
+        )
+        .expect("write source");
+        let old_cwd = std::env::current_dir().expect("cwd");
+        std::env::set_current_dir(dir.path()).expect("set cwd");
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        let results = indexer
+            .hybrid_search("third_step", 10)
+            .await
+            .expect("search");
+        std::env::set_current_dir(old_cwd).expect("restore cwd");
+        assert!(results.iter().any(
+            |result| result.name.contains("second_step") || result.name.contains("first_step")
+        ));
+    }
+
     // END_test_search_reports_poisoned_storage_lock
 }
 // END_public_api

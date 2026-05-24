@@ -7,16 +7,16 @@
 
 // START_MODULE_MAP
 // COMMANDS — All shipped CLI commands
-// MCP_TOOLS — All registered MCP tools including 15 GRACE skills
+// MCP_TOOLS — All registered MCP tools including 16 GRACE skills
 // CORE_MCP_TOOLS — Base code/verification tools
-// GRACE_SKILL_TOOLS — 15 first-class GRACE workflow tools
+// GRACE_SKILL_TOOLS — 16 first-class GRACE workflow tools
 // VERIFY_CHECKS — All verification check names
 // REVIEW_MODES — All review modes
 // PLATFORMS — Supported OS/arch targets
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Added cascade MCP capabilities]
+// LAST_CHANGE: [v2.23.0 - Synchronized run history skill capability counts]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -51,7 +51,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
 ];
 
 pub const CORE_MCP_TOOL_COUNT: usize = 23;
-pub const GRACE_SKILL_TOOL_COUNT: usize = 15;
+pub const GRACE_SKILL_TOOL_COUNT: usize = 16;
 pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
 
 /// Registered base MCP tools (server registry source)
@@ -98,6 +98,10 @@ pub const GRACE_SKILL_TOOLS: &[(&str, &str)] = &[
     (
         "grace_status",
         "Return project health, phase progress, and artifact coverage summary.",
+    ),
+    (
+        "grace_run_history",
+        "Return bounded autonomous run history and provenance events.",
     ),
     (
         "grace_ask",
@@ -235,6 +239,10 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "Return project health, phase progress, and artifact coverage summary.",
     ),
     (
+        "grace_run_history",
+        "Return bounded autonomous run history and provenance events.",
+    ),
+    (
         "grace_ask",
         "Answer questions using project artifacts and indexed code context.",
     ),
@@ -329,6 +337,7 @@ pub const SKILL_NAMES: &[&str] = &[
     "grace_refactor",
     "grace_fix",
     "grace_status",
+    "grace_run_history",
     "grace_ask",
     "grace_explainer",
     "grace_cli",

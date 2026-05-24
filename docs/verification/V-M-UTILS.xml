@@ -8,6 +8,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>Shared ANSI stripping utility uses cached fallback regex construction and does not unwrap.</ASSERTION>
     <ASSERTION>Shared truncation utility preserves UTF-8 boundaries and appends an ellipsis only when text is shortened.</ASSERTION>
+    <ASSERTION>Shared test-only current-directory lock serializes unit tests that mutate process cwd.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

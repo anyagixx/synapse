@@ -31,6 +31,7 @@ pub mod hooks;
 pub mod indexer;
 pub mod mcp;
 pub mod proxy;
+pub mod run;
 pub mod skills;
 pub mod tracking;
 pub mod utils;

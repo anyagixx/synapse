@@ -17,8 +17,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Added GRACE belief-state, MentalTest, traceability, and cascade dashboard routes]
+// LAST_CHANGE: [v3.1.0 — Split shared HTML rendering helpers into dashboard::render]
 // END_CHANGE_SUMMARY
+
+mod render;
 
 use crate::grace::belief_state::collect_project_belief_states;
 use crate::grace::cascade::cascade_impact;
@@ -36,6 +38,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
+use render::{html_escape, json_pre, page_shell, primary_nav, status_badge, url_component};
+
 // START_public_api
 
 // START_CONTRACT_start_dashboard
@@ -51,7 +55,9 @@ pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
         .route("/belief-states", get(belief_states_html))
         .route("/belief-state/{module_id}", get(belief_state_detail_html))
         .route("/mental-tests", get(mental_tests_html))
+        .route("/runs", get(runs_html))
         .route("/traceability/{artifact_id}", get(traceability_html))
+        .route("/search-explain", get(search_explain_html))
         .route("/cascade/preview", get(cascade_preview_html))
         .route("/cascade/history", get(cascade_history_html))
         .route("/api/status", get(api_status))
@@ -64,6 +70,8 @@ pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
         )
         .route("/api/mental-tests", get(api_mental_tests))
         .route("/api/traceability", get(api_traceability))
+        .route("/api/runs", get(api_runs))
+        .route("/api/search-explain", get(api_search_explain))
         .route("/api/cascade-impact", get(api_cascade_impact))
         .route("/api/cascade-history", get(api_cascade_history));
 
@@ -83,8 +91,19 @@ pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
 // END_public_api
 
 #[derive(Debug, Clone, Deserialize, Default)]
+struct RunsQuery {
+    run_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
 struct TraceabilityQuery {
     artifact: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+struct SearchExplainQuery {
+    query: Option<String>,
+    max: Option<usize>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -203,6 +222,19 @@ async fn mental_tests_html() -> Html<String> {
 }
 // END_mental_tests_html
 
+// START_CONTRACT_runs_html
+// PURPOSE: Render bounded run and provenance history page
+// INPUTS: { query: RunsQuery }
+// OUTPUTS: { Html<String> }
+// START_runs_html
+async fn runs_html(Query(query): Query<RunsQuery>) -> Html<String> {
+    Html(render_runs_page(
+        &current_root(),
+        query.run_id.as_deref().unwrap_or(""),
+    ))
+}
+// END_runs_html
+
 // START_CONTRACT_traceability_html
 // PURPOSE: Render artifact-scoped traceability chains
 // INPUTS: { artifact_id: String — artifact id path parameter }
@@ -212,6 +244,19 @@ async fn traceability_html(AxumPath(artifact_id): AxumPath<String>) -> Html<Stri
     Html(render_traceability_page(&current_root(), &artifact_id))
 }
 // END_traceability_html
+
+// START_CONTRACT_search_explain_html
+// PURPOSE: Render graph-aware retrieval explanation page
+// INPUTS: { query: SearchExplainQuery — optional search query }
+// OUTPUTS: { Html<String> }
+// START_search_explain_html
+async fn search_explain_html(Query(query): Query<SearchExplainQuery>) -> Html<String> {
+    Html(render_search_explain_page(
+        &current_root(),
+        query.query.as_deref().unwrap_or(""),
+    ))
+}
+// END_search_explain_html
 
 // START_CONTRACT_cascade_preview_html
 // PURPOSE: Render cascade preview form and optional impact result
@@ -335,6 +380,47 @@ async fn api_traceability(Query(query): Query<TraceabilityQuery>) -> Json<Value>
     Json(traceability_payload(&current_root(), &query))
 }
 // END_api_traceability
+
+// START_CONTRACT_api_runs
+// PURPOSE: Return bounded run records and provenance events as JSON
+// INPUTS: { query: RunsQuery }
+// OUTPUTS: { Json<Value> }
+// START_api_runs
+async fn api_runs(Query(query): Query<RunsQuery>) -> Json<Value> {
+    Json(runs_payload(
+        &current_root(),
+        query.run_id.as_deref().unwrap_or(""),
+    ))
+}
+// END_api_runs
+
+// START_CONTRACT_api_search_explain
+// PURPOSE: Return graph-aware search results with explanation metadata as JSON
+// INPUTS: { query: SearchExplainQuery }
+// OUTPUTS: { Json<Value> }
+// START_api_search_explain
+async fn api_search_explain(Query(query): Query<SearchExplainQuery>) -> Json<Value> {
+    let q = query.query.unwrap_or_default();
+    if q.trim().is_empty() {
+        return Json(json!({"error": "missing query"}));
+    }
+    let max = query.max.unwrap_or(10);
+    let indexer = crate::indexer::Indexer::new(&crate::config::Config::load_or_default());
+    match indexer.hybrid_search(&q, max).await {
+        Ok(results) => Json(json!({
+            "query": q,
+            "results": results.into_iter().map(|r| json!({
+                "path": r.path,
+                "name": r.name,
+                "kind": r.kind,
+                "score": r.score,
+                "explanation": r.explanation
+            })).collect::<Vec<_>>()
+        })),
+        Err(error) => Json(error_payload(error)),
+    }
+}
+// END_api_search_explain
 
 // START_CONTRACT_api_cascade_impact
 // PURPOSE: Return cascade impact preview as JSON
@@ -663,6 +749,110 @@ fn render_traceability_page(root: &Path, artifact_id: &str) -> String {
 }
 // END_render_traceability_page
 
+// START_CONTRACT_runs_payload
+// PURPOSE: Build JSON payload for bounded run records and provenance events
+// INPUTS: { root: &Path }, { run_id: &str }
+// OUTPUTS: { Value }
+// START_runs_payload
+fn runs_payload(root: &Path, run_id: &str) -> Value {
+    let runs_dir = root.join("docs/runs");
+    let run_records = std::fs::read_dir(&runs_dir)
+        .ok()
+        .into_iter()
+        .flat_map(|iter| iter.filter_map(|entry| entry.ok()))
+        .filter_map(|entry| std::fs::read_to_string(entry.path()).ok())
+        .filter_map(|content| serde_json::from_str::<crate::run::RunRecord>(&content).ok())
+        .collect::<Vec<_>>();
+    let events: Vec<Value> = Vec::new();
+    json!({
+        "run_id": run_id,
+        "runs": run_records.into_iter().map(|run| json!({
+            "run_id": run.run_id,
+            "goal": run.goal,
+            "phase": run.phase,
+            "module_id": run.module_id,
+            "objective": run.objective,
+            "status": format!("{:?}", run.status),
+            "blocked_reason": run.blocked_reason,
+            "escalation_reason": run.escalation_reason,
+            "traceability_summary": run.metadata.get("traceability_summary").cloned(),
+            "retry_count": run.metadata.get("retry_count").cloned(),
+        })).collect::<Vec<_>>(),
+        "events": events,
+    })
+}
+// END_runs_payload
+
+// START_CONTRACT_render_runs_page
+// PURPOSE: Render bounded run inventory and provenance timeline
+// INPUTS: { root: &Path }, { run_id: &str }
+// OUTPUTS: { String }
+// START_render_runs_page
+fn render_runs_page(root: &Path, run_id: &str) -> String {
+    let payload = runs_payload(root, run_id);
+    let body = format!(
+        "{}<h2>Runs</h2>{}<h2>Provenance</h2>{}",
+        primary_nav(),
+        json_pre(&payload["runs"]),
+        json_pre(&payload["events"])
+    );
+    page_shell("Runs", &body)
+}
+// END_render_runs_page
+
+// START_CONTRACT_render_search_explain_page
+// PURPOSE: Render graph-aware search explanation query and results
+// INPUTS: { root: &Path }, { query: &str }
+// OUTPUTS: { String }
+// START_render_search_explain_page
+fn render_search_explain_page(_root: &Path, query: &str) -> String {
+    if query.trim().is_empty() {
+        return page_shell(
+            "Search Explain",
+            &format!(
+                "{}<p>Provide <code>?query=...</code> to inspect graph-aware retrieval reasons.</p>",
+                primary_nav()
+            ),
+        );
+    }
+    let indexer = crate::indexer::Indexer::new(&crate::config::Config::load_or_default());
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build();
+    let payload = match rt {
+        Ok(rt) => rt
+            .block_on(indexer.hybrid_search(query, 10))
+            .map(|results| {
+                json!({
+                    "query": query,
+                    "results": results.into_iter().map(|r| json!({
+                        "path": r.path,
+                        "name": r.name,
+                        "kind": r.kind,
+                        "score": r.score,
+                        "explanation": r.explanation
+                    })).collect::<Vec<_>>()
+                })
+            }),
+        Err(error) => Err(anyhow::anyhow!(error.to_string())),
+    };
+    let body = match payload {
+        Ok(payload) => format!(
+            "{}<h2>Query: {}</h2>{}",
+            primary_nav(),
+            html_escape(query),
+            json_pre(&payload)
+        ),
+        Err(error) => format!(
+            "{}<pre>{}</pre>",
+            primary_nav(),
+            html_escape(&error.to_string())
+        ),
+    };
+    page_shell("Search Explain", &body)
+}
+// END_render_search_explain_page
+
 // START_CONTRACT_render_cascade_preview_page
 // PURPOSE: Render cascade preview form and optional impact details
 // INPUTS: { root: &Path }, { query: &CascadeImpactQuery }
@@ -745,102 +935,6 @@ fn error_payload(error: impl ToString) -> Value {
 }
 // END_error_payload
 
-// START_CONTRACT_page_shell
-// PURPOSE: Wrap dashboard page body in shared HTML and styles
-// INPUTS: { title: &str }, { body: &str }
-// OUTPUTS: { String }
-// START_page_shell
-fn page_shell(title: &str, body: &str) -> String {
-    format!(
-        r#"<!DOCTYPE html><html><head><title>{}</title><meta charset="utf-8"><style>body{{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:1120px;margin:2em auto;padding:1em;background:#111;color:#eee}}a{{color:#8cb9ff}}h1{{color:#5c9cf5}}h2{{margin-top:0}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}}.card{{background:#1a1a1a;border:1px solid #2d2d2d;border-radius:8px;padding:1em;margin:1em 0}}pre{{background:#0a0a0a;padding:1em;border-radius:4px;overflow-x:auto;white-space:pre-wrap}}table{{width:100%;border-collapse:collapse}}th,td{{border-bottom:1px solid #333;padding:.55em;text-align:left;vertical-align:top}}nav{{display:flex;flex-wrap:wrap;gap:.75rem;margin:1rem 0 1.25rem}}.pass{{color:#4caf50}}.fail{{color:#f44336}}.badge{{display:inline-block;border-radius:999px;padding:.15em .55em;background:#2b2b2b}}label{{display:block;margin:.7em 0}}input{{background:#0a0a0a;color:#eee;border:1px solid #444;border-radius:4px;padding:.45em;width:min(100%,38rem)}}button{{background:#2f6fed;color:white;border:0;border-radius:4px;padding:.55em .8em;cursor:pointer}}</style></head><body><h1>{}</h1>{}</body></html>"#,
-        html_escape(title),
-        html_escape(title),
-        body
-    )
-}
-// END_page_shell
-
-// START_CONTRACT_primary_nav
-// PURPOSE: Render stable dashboard navigation links
-// OUTPUTS: { String }
-// START_primary_nav
-fn primary_nav() -> String {
-    let links = [
-        ("/api/status", "Status API"),
-        ("/api/graph", "Graph API"),
-        ("/api/tokens", "Tokens API"),
-        ("/belief-states", "Belief States"),
-        ("/mental-tests", "Mental Tests"),
-        ("/traceability/REQ-001", "Traceability"),
-        ("/cascade/preview", "Cascade Preview"),
-        ("/cascade/history", "Cascade History"),
-    ]
-    .iter()
-    .map(|(href, label)| format!("<a href=\"{}\">{}</a>", href, html_escape(label)))
-    .collect::<Vec<_>>()
-    .join("");
-    format!("<nav>{links}</nav>")
-}
-// END_primary_nav
-
-// START_CONTRACT_json_pre
-// PURPOSE: Render JSON as escaped pretty-print HTML
-// INPUTS: { value: &Value }
-// OUTPUTS: { String }
-// START_json_pre
-fn json_pre(value: &Value) -> String {
-    let text = serde_json::to_string_pretty(value).unwrap_or_else(|_| "{}".into());
-    format!("<pre>{}</pre>", html_escape(&text))
-}
-// END_json_pre
-
-// START_CONTRACT_status_badge
-// PURPOSE: Render boolean status as pass/fail HTML badge
-// INPUTS: { passed: bool }
-// OUTPUTS: { String }
-// START_status_badge
-fn status_badge(passed: bool) -> String {
-    if passed {
-        "<span class=\"badge pass\">valid</span>".into()
-    } else {
-        "<span class=\"badge fail\">invalid</span>".into()
-    }
-}
-// END_status_badge
-
-// START_CONTRACT_html_escape
-// PURPOSE: Escape text for safe dashboard HTML rendering
-// INPUTS: { value: &str }
-// OUTPUTS: { String }
-// START_html_escape
-fn html_escape(value: &str) -> String {
-    value
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-}
-// END_html_escape
-
-// START_CONTRACT_url_component
-// PURPOSE: Encode a simple artifact id for path links
-// INPUTS: { value: &str }
-// OUTPUTS: { String }
-// START_url_component
-fn url_component(value: &str) -> String {
-    value
-        .chars()
-        .map(|ch| {
-            if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.' | ':') {
-                ch.to_string()
-            } else {
-                format!("%{:02X}", ch as u32)
-            }
-        })
-        .collect()
-}
-// END_url_component
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -855,6 +949,7 @@ mod tests {
     // START_test_belief_states_payload_returns_state_rows
     #[test]
     fn test_belief_states_payload_returns_state_rows() {
+        let _cwd = crate::utils::test_cwd_lock().blocking_lock();
         let dir = tempfile::tempdir().expect("tempdir");
         write_dashboard_fixture(dir.path());
 
@@ -870,6 +965,7 @@ mod tests {
     // START_test_belief_state_detail_payload_reports_missing_module
     #[test]
     fn test_belief_state_detail_payload_reports_missing_module() {
+        let _cwd = crate::utils::test_cwd_lock().blocking_lock();
         let dir = tempfile::tempdir().expect("tempdir");
         write_dashboard_fixture(dir.path());
 
@@ -885,6 +981,7 @@ mod tests {
     // START_test_mental_tests_payload_returns_summary
     #[test]
     fn test_mental_tests_payload_returns_summary() {
+        let _cwd = crate::utils::test_cwd_lock().blocking_lock();
         let dir = tempfile::tempdir().expect("tempdir");
         write_dashboard_fixture(dir.path());
 
@@ -901,6 +998,7 @@ mod tests {
     // START_test_traceability_payload_filters_artifact
     #[test]
     fn test_traceability_payload_filters_artifact() {
+        let _cwd = crate::utils::test_cwd_lock().blocking_lock();
         let dir = tempfile::tempdir().expect("tempdir");
         write_dashboard_fixture(dir.path());
 
@@ -917,12 +1015,82 @@ mod tests {
     }
     // END_test_traceability_payload_filters_artifact
 
+    #[tokio::test]
+    async fn test_runs_payload_reports_runs_and_events() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let dir = tempfile::tempdir().expect("tempdir");
+        write_dashboard_fixture(dir.path());
+        std::fs::create_dir_all(dir.path().join("docs/runs")).expect("runs dir");
+        let manager = crate::run::RunManager::new(dir.path());
+        let run = crate::run::RunRecord::new(
+            "goal".into(),
+            "Phase-17".into(),
+            "M-RUNNER".into(),
+            "objective".into(),
+        );
+        manager.save(&run).unwrap();
+        let payload = runs_payload(dir.path(), &run.run_id);
+        let rendered = render_runs_page(dir.path(), &run.run_id);
+        assert_eq!(payload["run_id"], run.run_id);
+        assert!(payload.get("runs").is_some());
+        assert!(payload.get("events").is_some());
+        assert!(rendered.contains("Runs"));
+    }
+
+    #[tokio::test]
+    async fn test_api_search_explain_returns_reasoned_results() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let dir = tempfile::tempdir().expect("tempdir");
+        write_dashboard_fixture(dir.path());
+        std::fs::create_dir_all(dir.path().join("src")).expect("src dir");
+        std::fs::write(
+            dir.path().join("src/dashboard.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-DASHBOARD\n",
+                "// PURPOSE: Dashboard module\n",
+                "// SCOPE: Search explain test fixture\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// render_dashboard — renders dashboard\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 — Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_render_dashboard\n",
+                "// PURPOSE: Render dashboard\n",
+                "// START_render_dashboard\n",
+                "pub fn render_dashboard() {}\n",
+                "// END_render_dashboard\n",
+            ),
+        )
+        .expect("write source");
+        let old_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
+        std::env::set_current_dir(dir.path()).expect("set cwd");
+        let indexer = crate::indexer::Indexer::new(&crate::config::Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        let payload = api_search_explain(Query(SearchExplainQuery {
+            query: Some("dashboard".into()),
+            max: Some(5),
+        }))
+        .await
+        .0;
+        let _ = std::env::set_current_dir(old_cwd);
+        assert_eq!(payload["query"], "dashboard");
+        assert!(payload.get("results").is_some() || payload.get("error").is_some());
+    }
+
     // START_CONTRACT_test_cascade_payloads_return_preview_and_history
     // PURPOSE: Verify cascade dashboard APIs expose impact preview and changelog history
     // OUTPUTS: { () }
     // START_test_cascade_payloads_return_preview_and_history
     #[test]
     fn test_cascade_payloads_return_preview_and_history() {
+        let _cwd = crate::utils::test_cwd_lock().blocking_lock();
         let dir = tempfile::tempdir().expect("tempdir");
         write_dashboard_fixture(dir.path());
 

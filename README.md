@@ -1,7 +1,7 @@
 # Synapse
 
 > **AI Agent Engineering Platform — works transparently through OpenCode CLI**
-> *38 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
+> *39 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
 
 ---
 
@@ -13,7 +13,7 @@
          ┌─────────────┼─────────────┐
          ▼             ▼             ▼
     MCP Tools       Plugin       AGENTS.md
-  (38 инструментов)  (proxy,      (GRACE
+  (39 инструментов)  (proxy,      (GRACE
                      GRACE)       конституция)
          │
          ▼
@@ -21,7 +21,7 @@
 ```
 
 Ты общаешься с AI через `opencode`. Synapse невидимо:
-- Даёт LLM **38 MCP-инструментов** для поиска, проверки и генерации кода
+- Даёт LLM **39 MCP-инструментов** для поиска, проверки и генерации кода
 - Авто-фильтрует шумный вывод shell-команд; фактическую экономию показывает `syn gain`
 - **Принуждает GRACE методологию**: Phase 0, контракты, верификация, ревью
 - **Сам проходит собственные проверки**: `syn verify` → ALL PASS
@@ -36,8 +36,8 @@
 
 Synapse решает это так:
 - хранит архитектуру в **sharded GRACE artifacts**
-- даёт OpenCode **38 MCP tools**
-- даёт **15 workflow tools** для init/plan/execute/review/fix/status
+- даёт OpenCode **39 MCP tools**
+- даёт **16 workflow tools** для init/plan/execute/review/fix/status/run-history
 - режет shell noise через proxy
 - навязывает verify/review discipline прямо в цикле работы
 
@@ -98,7 +98,7 @@ cd synapse && make install
 ```bash
 mkdir my-project && cd my-project
 syn init          # 1 сек: интеграция с OpenCode
-opencode          # LLM видит 38 MCP инструментов + sharded Phase 0 gate
+opencode          # LLM видит 39 MCP инструментов + sharded Phase 0 gate
 # LLM: "Что ты хочешь построить?"
 # Ты:  "Приложение для заметок с поиском"
 ```
@@ -137,7 +137,7 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 
 ---
 
-## 38 MCP Tools
+## 39 MCP Tools
 
 ### 23 Core tools
 
@@ -167,7 +167,7 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 | `lsp_hover` | Тип/сигнатура через LSP |
 | `lsp_references` | Поиск использований символа |
 
-### 15 GRACE workflow tools
+### 16 GRACE workflow tools
 
 | Tool | Purpose |
 |------|---------|
@@ -181,6 +181,7 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 | `grace_refactor` | Refactor planning under GRACE |
 | `grace_fix` | Диагностика и bounded fix flow |
 | `grace_status` | Статус по артефактам и фазам |
+| `grace_run_history` | История bounded autonomous runs и provenance events |
 | `grace_ask` | Вопросы по артефактам и коду |
 | `grace_explainer` | Объяснение кода и архитектуры |
 | `grace_cli` | Помощь по Synapse/OpenCode CLI |
@@ -238,7 +239,7 @@ my-project/
 | `syn proxy -- <cmd>` | Ручной прокси |
 | `syn gain` | Статистика экономии |
 | `syn gain --graph` | Статистика экономии с ASCII-графом |
-| `syn skills list|show|run` | Локальный запуск и отладка 15 GRACE skills |
+| `syn skills list|show|run` | Локальный запуск и отладка 16 GRACE skills |
 | `syn ci verify|review|status` | CI-friendly strict outputs |
 
 Dashboard routes exposed by `syn serve`:
@@ -261,7 +262,7 @@ Dashboard routes exposed by `syn serve`:
 | **Octocode** | AST-индексация (5 языков) + fallback (14), BM25 + векторный + гибридный поиск |
 | **RTK Proxy** | 30+ TOML-фильтров, 8-стадийный пайплайн, авто-прокси через плагин |
 | **Caveman** | 3 уровня сжатия (lite/full/ultra) |
-| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 38 MCP tools, 15 workflow tools, 3 режима ревью |
+| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 39 MCP tools, 16 workflow tools, 3 режима ревью |
 
 ---
 
@@ -271,10 +272,10 @@ Dashboard routes exposed by `syn serve`:
 |---------|----------|
 | Бинарник | ~13 MB release |
 | Зависимости | 0 внешних системных (всё статически слинковано) |
-| MCP инструментов | **38** |
+| MCP инструментов | **39** |
 | CLI команд | 19 |
 | Проверок verify | 55 |
-| GRACE workflow tools | 15 |
+| GRACE workflow tools | 16 |
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |

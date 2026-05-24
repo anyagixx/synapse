@@ -76,6 +76,7 @@
     <VERIFICATION id="V-M-PROXY" module="M-PROXY" path="docs/verification/V-M-PROXY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-PROXY-FILTER" module="M-PROXY-FILTER" path="docs/verification/V-M-PROXY-FILTER.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-PROXY-RUNNER" module="M-PROXY-RUNNER" path="docs/verification/V-M-PROXY-RUNNER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-RUNNER" module="M-RUNNER" path="docs/verification/V-M-RUNNER.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-SKILLS" module="M-SKILLS" path="docs/verification/V-M-SKILLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-SKILLS-ENGINE" module="M-SKILLS-ENGINE" path="docs/verification/V-M-SKILLS-ENGINE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-SKILLS-REGISTRY" module="M-SKILLS-REGISTRY" path="docs/verification/V-M-SKILLS-REGISTRY.xml" priority="normal" status="active" />

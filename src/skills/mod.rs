@@ -1,6 +1,6 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS
-// PURPOSE: Skill runtime facade — exposes 15 first-class GRACE skill tools for MCP and CLI integration
+// PURPOSE: Skill runtime facade — exposes 16 first-class GRACE skill tools for MCP and CLI integration
 // SCOPE: SkillEngine facade, registry exports, skill metadata and execution surface
 // DEPENDS: M-CONFIG, M-GRACE-LAYOUT, M-SKILLS-ENGINE, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS:
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Migrated semantic LINKS to typed format]
+// LAST_CHANGE: [v2.8.0 — Updated skill facade count for run history]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_public_api

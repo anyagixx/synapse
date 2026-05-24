@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-UTILS
-// PURPOSE: Token estimation, ANSI stripping, savings formatting — utility functions
-// SCOPE: ANSI escape stripping, Unicode-safe truncation, naive token estimation (chars/4), savings percentage formatting
+// PURPOSE: Token estimation, ANSI stripping, savings formatting, and test synchronization — utility functions
+// SCOPE: ANSI escape stripping, Unicode-safe truncation, naive token estimation (chars/4), savings percentage formatting, test-only cwd locking
 // DEPENDS: N/A
 // LINKS: N/A
 
@@ -10,10 +10,11 @@
 // truncate_chars — Truncate a string by Unicode scalar values without splitting UTF-8
 // estimate_tokens — Estimate token count as text length / 4
 // format_savings — Format token savings as percentage string
+// test_cwd_lock — Return a shared test-only lock for current-directory mutation
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Added Unicode-safe truncation helper for proxy and diagnostics]
+// LAST_CHANGE: [v2.3.0 — Added shared test-only cwd lock for parallel test isolation]
 // END_CHANGE_SUMMARY
 
 use std::sync::OnceLock;
@@ -75,6 +76,18 @@ pub fn format_savings(input: u32, output: u32) -> String {
     format!("{}%", pct.min(100))
 }
 // END_format_savings
+
+// START_CONTRACT_test_cwd_lock
+// PURPOSE: Return the process-wide async lock used by tests that mutate current directory
+// OUTPUTS: { &'static tokio::sync::Mutex<()> }
+// SIDE_EFFECTS: Initializes a test-only static mutex once
+// START_test_cwd_lock
+#[cfg(test)]
+pub fn test_cwd_lock() -> &'static tokio::sync::Mutex<()> {
+    static TEST_CWD_LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
+    TEST_CWD_LOCK.get_or_init(|| tokio::sync::Mutex::new(()))
+}
+// END_test_cwd_lock
 
 #[cfg(test)]
 mod tests {
