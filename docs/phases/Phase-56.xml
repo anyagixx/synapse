@@ -8,11 +8,14 @@
   </MODULE_REFS>
   <STEPS>
     <step-1 module="M-TRACKING" status="planned">Add session adoption and missed-route query surfaces backed by the tracking database.</step-1>
-    <step-2 module="M-CLI-RTK-COMMANDS" status="planned">Add session, discover history, learn corrections, and economics command surfaces.</step-2>
-    <step-3 module="M-CLI-RTK-COMMANDS" status="planned">Keep private agent history opt-in and documented in CLI output.</step-3>
+    <step-2 module="M-CLI-RTK-COMMANDS" status="active">Add session, discover history, learn corrections, and economics command surfaces; session and cc-economics now read local tracking stats.</step-2>
+    <step-3 module="M-CLI-RTK-COMMANDS" status="active">Keep private agent history opt-in and documented in CLI output; cc-economics reports local-only tracking and does not upload telemetry.</step-3>
   </STEPS>
   <VERIFICATION>
     <CHECK status="planned">cargo test tracking::tests --lib</CHECK>
     <CHECK status="planned">cargo test cli::rtk_discovery::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_economics::tests --lib</CHECK>
+    <CHECK status="passed">cargo run --quiet -- session --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- cc-economics --format json</CHECK>
   </VERIFICATION>
 </PHASE>

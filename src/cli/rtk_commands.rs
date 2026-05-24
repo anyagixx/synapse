@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
-// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, jest, lint, format, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, kubectl, docker, and podman; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, expanded proxy shortcuts, and local system adapters treated as token-safe Synapse shortcuts
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, gt, cargo, npm, pnpm, npx, pytest, jest, lint, format, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, kubectl, docker, and podman; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, expanded proxy shortcuts, session/economics analytics, and local system adapters treated as token-safe Synapse shortcuts
 // DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
@@ -24,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.0.0 — Added jest/lint/format shortcuts to token-safe detection]
+// LAST_CHANGE: [v2.1.0 — Added gt/session/cc-economics to token-safe detection]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
@@ -52,6 +52,7 @@ const SYN_TOKEN_SAFE_COMMANDS: &[&str] = &[
     "rg",
     "grep",
     "git",
+    "gt",
     "cargo",
     "npm",
     "pnpm",
@@ -99,6 +100,8 @@ const SYN_TOKEN_SAFE_COMMANDS: &[&str] = &[
     "jest",
     "lint",
     "format",
+    "session",
+    "cc-economics",
     "gain",
     "compress",
 ];

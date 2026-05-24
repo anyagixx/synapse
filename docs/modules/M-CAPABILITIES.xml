@@ -2,11 +2,11 @@
 <MODULE id="M-CAPABILITIES" type="CORE_LOGIC" status="active">
   <NAME>M-CAPABILITIES</NAME>
   <PURPOSE>Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms</PURPOSE>
-  <SCOPE>Command list including RTK shortcuts, local RTK adapters, discover/learn diagnostics, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms</SCOPE>
+  <SCOPE>Command list including RTK shortcuts, local RTK adapters, core RTK adapters, session/economics analytics, discover/learn diagnostics, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms</SCOPE>
   <FILES>
     <FILE>src/capabilities.rs</FILE>
   </FILES>
   <DEPENDS>M-CLI,M-MCP,M-SKILLS-REGISTRY</DEPENDS>
-  <LINKS>README.md,docs/COMMANDS.md,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-33.xml,docs/phases/Phase-49.xml</LINKS>
+  <LINKS>README.md,docs/COMMANDS.md,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-33.xml,docs/phases/Phase-49.xml,docs/phases/Phase-54.xml,docs/phases/Phase-56.xml</LINKS>
   <VERIFICATION_REF>V-M-CAPABILITIES</VERIFICATION_REF>
 </MODULE>

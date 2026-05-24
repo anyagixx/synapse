@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: RTK parity inventory gate — compares Synapse RTK coverage against source and release-gated parity domains
-// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including container shortcuts, discover/learn, hook audit, analytics inventory, optional full RTK parity matrix handoff, compact/JSON report rendering
+// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including Graphite and container shortcuts, discover/learn, hook audit, session/economics analytics inventory, optional full RTK parity matrix handoff, compact/JSON report rendering
 // DEPENDS: M-CLI, M-PROXY-FILTER, M-PROXY-ROUTER, M-HOOKS, M-TRACKING, M-RTK-FULL-PARITY
 // LINKS:
 //   -> M-CLI (depends) - exposes the rtk-parity command schema
@@ -27,7 +27,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.5.0 - Added optional --full standalone RTK parity matrix mode]
+// LAST_CHANGE: [v1.6.0 - Added Graphite shortcut plus session/economics parity inventory]
 // END_CHANGE_SUMMARY
 
 use super::rtk_full_parity::{build_full_rtk_parity_report, print_full_rtk_parity_report};
@@ -60,6 +60,7 @@ const PROXY_SHORTCUTS: &[&str] = &[
     "rg",
     "grep",
     "git",
+    "gt",
     "cargo",
     "npm",
     "pnpm",
@@ -122,11 +123,13 @@ const ANALYTICS: &[&str] = &[
     "gain --graph",
     "gain --sessions",
     "gain --adapters",
+    "session",
+    "cc-economics",
     "adapter_groups",
     "session_groups",
 ];
 const PROXY_SHORTCUTS_NOTE: &str =
-    "Phase-45 adds common proxy shortcuts; Phase-47 adds language ecosystem shortcuts; Phase-48 adds container shortcuts.";
+    "Phase-45 adds common proxy shortcuts; Phase-47 adds language ecosystem shortcuts; Phase-48 adds container shortcuts; Phase-54 adds Graphite.";
 const LOCAL_ADAPTERS_NOTE: &str =
     "Phase-46 adds pipe, log, and smart local system adapters; Phase-47 evaluates additional specialized adapters.";
 
@@ -631,10 +634,10 @@ mod tests {
         let section =
             static_inventory_section("proxy-shortcuts", "tracked", false, PROXY_SHORTCUTS, &[]);
 
-        assert_eq!(section.synapse_count, 47);
+        assert_eq!(section.synapse_count, 48);
         for shortcut in [
             "gh", "aws", "go", "golangci", "dotnet", "make", "helm", "kubectl", "ruff", "mypy",
-            "uv", "tsc", "vitest", "jest", "lint", "format", "gradlew", "docker", "podman",
+            "uv", "tsc", "vitest", "jest", "lint", "format", "gradlew", "docker", "podman", "gt",
         ] {
             assert!(section.items.contains(&shortcut.to_string()), "{shortcut}");
         }
@@ -664,7 +667,9 @@ mod tests {
         assert!(hooks.items.contains(&"hooks audit --json".to_string()));
 
         let analytics = static_inventory_section("analytics", "tracked", false, ANALYTICS, &[]);
-        assert_eq!(analytics.synapse_count, 6);
+        assert_eq!(analytics.synapse_count, 8);
+        assert!(analytics.items.contains(&"session".to_string()));
+        assert!(analytics.items.contains(&"cc-economics".to_string()));
         assert!(analytics.items.contains(&"adapter_groups".to_string()));
         assert!(analytics.items.contains(&"session_groups".to_string()));
     }

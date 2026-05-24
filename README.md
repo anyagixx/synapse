@@ -238,9 +238,12 @@ my-project/
 | `syn serve` | Web дашборд: health/status/tokens plus GRACE state views |
 | `syn proxy -- <cmd>` | Ручной прокси |
 | `syn proxy --route -- <cmd>` | Показать выбранный token-saving adapter без запуска команды |
+| `syn gt <cmd>` | Graphite stacked-PR команды через token-saving proxy |
 | `syn gain` | Статистика экономии |
 | `syn gain --graph` | Статистика экономии с ASCII-графом |
 | `syn gain --sessions --adapters` | Экономика по сессиям и command adapters |
+| `syn session` | Экономика по tracked RTK sessions |
+| `syn cc-economics --format json` | Локальная экономика токенов для Claude Code/Synapse sessions |
 | `syn skills list|show|run` | Локальный запуск и отладка 16 GRACE skills |
 | `syn ci verify|review|status` | CI-friendly strict outputs |
 

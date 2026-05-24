@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
 // PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
-// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts, ecosystem shortcuts, and container shortcuts, local RTK adapters, local RTK system adapters, core RTK adapters, discovery/learning diagnostics, parity inventory, hook processors, and hook rewrites
+// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts, ecosystem shortcuts, Graphite shortcuts, and container shortcuts, local RTK adapters, local RTK system adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, parity inventory, hook processors, and hook rewrites
 // DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.2.0 — Dispatch RTK-style hook processor command]
+// LAST_CHANGE: [v5.3.0 — Dispatch Graphite shortcut and RTK session/economics analytics]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -69,6 +69,10 @@ fn main() -> anyhow::Result<()> {
             }
             syn::cli::Command::Git(cmd) => {
                 cmd.run_as(config, "git", false, "Usage: syn git [args...]")
+                    .await
+            }
+            syn::cli::Command::Gt(cmd) => {
+                cmd.run_as(config, "gt", false, "Usage: syn gt [args...]")
                     .await
             }
             syn::cli::Command::Cargo(cmd) => {
@@ -259,6 +263,8 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Smart(cmd) => cmd.run(config).await,
             syn::cli::Command::Discover(cmd) => cmd.run(config).await,
             syn::cli::Command::Learn(cmd) => cmd.run(config).await,
+            syn::cli::Command::Session(cmd) => cmd.run(config).await,
+            syn::cli::Command::CcEconomics(cmd) => cmd.run(config).await,
             syn::cli::Command::RtkParity(cmd) => cmd.run(config).await,
             syn::cli::Command::Rewrite(cmd) => cmd.run(config).await,
             syn::cli::Command::Hook(cmd) => cmd.run(config).await,

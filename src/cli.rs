@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem and container shortcuts, local RTK adapters, local RTK system adapters, core RTK adapters, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
@@ -13,6 +13,7 @@
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
 // PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
 // ErrCmd/TestCmd/DiffCmd/SummaryCmd — Core RTK-style adapters
+// SessionCmd/CcEconomicsCmd — Local RTK session and economics analytics
 // DiscoverCmd/LearnCmd — Bounded RTK discovery and learning diagnostics
 // HooksCmd — Agent hook install/status/audit schema
 // HookCmd/HookProcessorAction — RTK-style hook processor schema
@@ -21,7 +22,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.5.0 — Added RTK-style hook processor schemas]
+// LAST_CHANGE: [v5.6.0 — Added Graphite shortcut plus RTK session/economics schemas]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -30,6 +31,7 @@ mod rtk_adapters;
 mod rtk_commands;
 mod rtk_core_adapters;
 mod rtk_discovery;
+mod rtk_economics;
 mod rtk_full_parity;
 mod rtk_hook_processors;
 mod rtk_parity;
@@ -89,6 +91,8 @@ pub enum Command {
     Grep(RtkProxyCmd),
     #[command(about = "Run git through the token-saving proxy")]
     Git(RtkProxyCmd),
+    #[command(name = "gt", about = "Run Graphite CLI through the token-saving proxy")]
+    Gt(RtkProxyCmd),
     #[command(about = "Run cargo through the token-saving proxy")]
     Cargo(RtkProxyCmd),
     #[command(about = "Run npm through the token-saving proxy")]
@@ -216,6 +220,13 @@ pub enum Command {
     Discover(DiscoverCmd),
     #[command(about = "Show bounded RTK learning guidance for recurring misses")]
     Learn(LearnCmd),
+    #[command(about = "Show RTK adoption and token savings by tracked Synapse session")]
+    Session(SessionCmd),
+    #[command(
+        name = "cc-economics",
+        about = "Show local Claude Code token economics from Synapse tracking"
+    )]
+    CcEconomics(CcEconomicsCmd),
     #[command(
         name = "rtk-parity",
         about = "Report machine-checkable RTK parity inventory"
@@ -477,6 +488,32 @@ pub struct LearnCmd {
     pub json: bool,
 }
 // END_LearnCmd
+
+// START_SessionCmd
+#[derive(clap::Args)]
+#[command(about = "Show RTK adoption and token savings by tracked Synapse session")]
+pub struct SessionCmd {
+    #[arg(long)]
+    pub json: bool,
+}
+// END_SessionCmd
+
+// START_CcEconomicsCmd
+#[derive(clap::Args)]
+#[command(about = "Show local Claude Code token economics from Synapse tracking")]
+pub struct CcEconomicsCmd {
+    #[arg(short, long)]
+    pub daily: bool,
+    #[arg(short, long)]
+    pub weekly: bool,
+    #[arg(short, long)]
+    pub monthly: bool,
+    #[arg(short, long)]
+    pub all: bool,
+    #[arg(short, long, default_value = "text")]
+    pub format: String,
+}
+// END_CcEconomicsCmd
 
 // START_RtkParityCmd
 #[derive(clap::Args)]

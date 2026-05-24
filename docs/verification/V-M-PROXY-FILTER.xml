@@ -59,6 +59,9 @@
     <COMMAND>cargo run --quiet -- filters verify --filter helm</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter just</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter make</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gt-log</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gt-submit</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gt-sync</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter container-ps</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter container-images</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter container-logs</COMMAND>
@@ -89,6 +92,7 @@
     <ASSERTION>The RTK built-in filter pack verifies Python type-checker filters for basedpyright and ty through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies the final RTK parity filters for helm, just, and make through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies Phase-48 cloud/container filters for Docker/Podman listings, container logs, kubectl listings/logs, and psql tables through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies Graphite stacked-PR filters for gt log, gt submit, and gt sync/restack/create through the CLI.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-48</PHASE_GATE>
+  <PHASE_GATE>Phase-54</PHASE_GATE>
 </VERIFICATION>

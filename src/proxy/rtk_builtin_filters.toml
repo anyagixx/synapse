@@ -2246,3 +2246,64 @@ make[1]: Entering directory '/home/user'
 make[1]: Leaving directory '/home/user'
 """
 expected = "make: ok"
+
+[filters.gt-log]
+description = "Compact Graphite log output - strip email addresses and cap stacked-PR graph rows"
+match_command = "^gt\\s+log\\b"
+strip_ansi = true
+replace = [
+  { pattern = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b", replacement = "" },
+]
+truncate_lines_at = 120
+max_lines = 60
+
+[[tests.gt-log]]
+name = "strips emails and keeps graph entries"
+input = """
+◉  abc1234 feat/add-auth 2d ago user@example.com
+│  feat(auth): add login endpoint
+│
+◉  def5678 main 3d ago admin@corp.io
+│  chore: update dependencies
+"""
+expected = "◉  abc1234 feat/add-auth 2d ago \n│  feat(auth): add login endpoint\n│\n◉  def5678 main 3d ago \n│  chore: update dependencies"
+
+[filters.gt-submit]
+description = "Compact Graphite submit output - strip blank lines and cap branch/PR status"
+match_command = "^gt\\s+submit\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+truncate_lines_at = 140
+max_lines = 60
+
+[[tests.gt-submit]]
+name = "keeps push and PR status"
+input = """
+Pushed branch feat/add-auth
+
+Created pull request #42 for feat/add-auth
+Updated pull request #40 for feat/add-db
+"""
+expected = "Pushed branch feat/add-auth\nCreated pull request #42 for feat/add-auth\nUpdated pull request #40 for feat/add-db"
+
+[filters.gt-sync]
+description = "Compact Graphite sync/restack/create output"
+match_command = "^gt\\s+(sync|restack|create)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+truncate_lines_at = 140
+max_lines = 50
+
+[[tests.gt-sync]]
+name = "keeps sync state without blank lines"
+input = """
+Synced with remote
+
+Deleted branch old-stack
+Restacked branch feat/auth
+"""
+expected = "Synced with remote\nDeleted branch old-stack\nRestacked branch feat/auth"

@@ -1,9 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, core RTK adapters, discover/learn diagnostics, hook processors, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, core RTK adapters, session/economics analytics, discover/learn diagnostics, hook processors, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
-// LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml
+// LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml, docs/phases/Phase-54.xml, docs/phases/Phase-56.xml
 
 // START_MODULE_MAP
 // COMMANDS — All shipped CLI commands
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.30.0 - Added RTK-style hook processor command]
+// LAST_CHANGE: [v2.31.0 - Added Graphite, session, and cc-economics RTK surfaces]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -43,6 +43,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("rg", "Search with ripgrep through the token-saving proxy"),
     ("grep", "Search with grep through the token-saving proxy"),
     ("git", "Run git through the token-saving proxy"),
+    ("gt", "Run Graphite CLI through the token-saving proxy"),
     ("cargo", "Run cargo through the token-saving proxy"),
     ("npm", "Run npm through the token-saving proxy"),
     ("pnpm", "Run pnpm through the token-saving proxy"),
@@ -131,6 +132,14 @@ pub const COMMANDS: &[(&str, &str)] = &[
     (
         "learn",
         "Show bounded RTK learning guidance for recurring misses",
+    ),
+    (
+        "session",
+        "Show RTK adoption and token savings by tracked Synapse session",
+    ),
+    (
+        "cc-economics",
+        "Show local Claude Code token economics from Synapse tracking",
     ),
     (
         "rtk-parity",

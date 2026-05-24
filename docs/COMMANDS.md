@@ -52,6 +52,7 @@ This page lists shipped CLI commands only.
 | `syn rg <pattern> [path...]` | Search with ripgrep through the token-saving proxy |
 | `syn grep <pattern> [path...]` | Search with grep through the token-saving proxy |
 | `syn git [args...]` | Run git through the token-saving proxy |
+| `syn gt [args...]` | Run Graphite stacked-PR CLI through the token-saving proxy |
 | `syn cargo [args...]` | Run cargo through the token-saving proxy |
 | `syn npm [args...]` | Run npm through the token-saving proxy |
 | `syn pnpm [args...]` | Run pnpm through the token-saving proxy |
@@ -101,6 +102,9 @@ This page lists shipped CLI commands only.
 | `syn discover --json --limit 10` | Render bounded discovery diagnostics as JSON |
 | `syn learn` | Show bounded RTK learning guidance for recurring misses |
 | `syn learn --json` | Render bounded RTK learning guidance as JSON |
+| `syn session` | Show tracked RTK session token savings |
+| `syn session --json` | Render tracked RTK session savings as JSON |
+| `syn cc-economics --format json` | Render local token economics from Synapse tracking |
 | `syn rtk-parity --ci` | Check RTK parity inventory for CI |
 | `syn rewrite <cmd>` | Print the hook rewrite for routeable commands, safe command chains, pipeline left edges, safe fd redirects, and shell prefixes without executing it |
 | `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |

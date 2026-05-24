@@ -2,11 +2,11 @@
 <MODULE id="M-CLI" type="ENTRY_POINT" status="active">
   <NAME>M-CLI</NAME>
   <PURPOSE>CLI schema facade — clap-powered top-level parser, command enum, and command argument structs</PURPOSE>
-  <SCOPE>SynCli, Command enum, command argument structs including GRACE --profile flags, run scenario/action flags, expanded RTK proxy shortcuts including container shortcuts, local RTK adapters, local RTK system adapters, discover/learn diagnostics, hooks audit --json, rtk-parity inventory and --full matrix flags, rewrite hook decisions, doctor --deps, gain --graph/--sessions/--adapters, proxy --route/--evidence, filters verify/trust controls, stdio-only mcp command, and CI action enum</SCOPE>
+  <SCOPE>SynCli, Command enum, command argument structs including GRACE --profile flags, run scenario/action flags, expanded RTK proxy shortcuts including Graphite and container shortcuts, local RTK adapters, local RTK system adapters, session/cc-economics analytics, discover/learn diagnostics, hooks audit --json, rtk-parity inventory and --full matrix flags, rewrite hook decisions, doctor --deps, gain --graph/--sessions/--adapters, proxy --route/--evidence, filters verify/trust controls, stdio-only mcp command, and CI action enum</SCOPE>
   <FILES>
     <FILE>src/cli.rs</FILE>
   </FILES>
   <DEPENDS>M-CLI-SETUP-COMMANDS,M-CLI-CODE-COMMANDS,M-CLI-GRACE-COMMANDS,M-CLI-RUNTIME-COMMANDS,M-CLI-RTK-COMMANDS,M-RTK-FULL-PARITY</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml,docs/phases/Phase-48.xml,docs/phases/Phase-49.xml,docs/phases/Phase-50.xml,docs/phases/Phase-51.xml</LINKS>
+  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml,docs/phases/Phase-48.xml,docs/phases/Phase-49.xml,docs/phases/Phase-50.xml,docs/phases/Phase-51.xml,docs/phases/Phase-54.xml,docs/phases/Phase-56.xml</LINKS>
   <VERIFICATION_REF>V-M-CLI</VERIFICATION_REF>
 </MODULE>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: Bounded RTK discover/learn diagnostics for routeable token-heavy commands
-// SCOPE: DiscoverCmd, LearnCmd, route-aware missed-opportunity reports, static learning guidance, JSON/text rendering
+// SCOPE: DiscoverCmd, LearnCmd, route-aware missed-opportunity reports including Graphite shortcuts, static learning guidance, JSON/text rendering
 // DEPENDS: M-CONFIG, M-PROXY-ROUTER, M-CAPABILITIES
 // LINKS:
 //   -> M-PROXY-ROUTER (depends) - uses route decisions as the source of truth for discovery
@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added bounded RTK discover/learn diagnostics]
+// LAST_CHANGE: [v1.1.0 - Added Graphite shortcut discovery]
 // END_CHANGE_SUMMARY
 
 use super::{DiscoverCmd, LearnCmd};
@@ -212,11 +212,13 @@ fn suggestion_for_tokens(tokens: &[String]) -> String {
         "golangci-lint" => ("golangci", 1),
         "./gradlew" => ("gradlew", 1),
         "pip3" => ("pip", 1),
-        "ls" | "tree" | "find" | "rg" | "grep" | "git" | "cargo" | "npm" | "pnpm" | "npx"
-        | "pytest" | "ruff" | "mypy" | "basedpyright" | "pip" | "uv" | "next" | "playwright"
-        | "prettier" | "prisma" | "tsc" | "vitest" | "gh" | "glab" | "aws" | "psql" | "curl"
-        | "wget" | "jq" | "go" | "dotnet" | "rake" | "rspec" | "rubocop" | "gradle" | "make"
-        | "just" | "helm" | "kubectl" | "docker" | "podman" | "wc" => (tokens[0].as_str(), 1),
+        "ls" | "tree" | "find" | "rg" | "grep" | "git" | "gt" | "cargo" | "npm" | "pnpm"
+        | "npx" | "pytest" | "ruff" | "mypy" | "basedpyright" | "pip" | "uv" | "next"
+        | "playwright" | "prettier" | "prisma" | "tsc" | "vitest" | "gh" | "glab" | "aws"
+        | "psql" | "curl" | "wget" | "jq" | "go" | "dotnet" | "rake" | "rspec" | "rubocop"
+        | "gradle" | "make" | "just" | "helm" | "kubectl" | "docker" | "podman" | "wc" => {
+            (tokens[0].as_str(), 1)
+        }
         _ => return format!("syn proxy -- {}", tokens.join(" ")),
     };
     render_shortcut(shortcut, &tokens[skip..])

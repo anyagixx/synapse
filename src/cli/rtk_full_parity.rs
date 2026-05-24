@@ -21,7 +21,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added source-derived full RTK parity matrix]
+// LAST_CHANGE: [v1.1.0 - Classified proxy-equivalent RTK command modules and new analytics commands]
 // END_CHANGE_SUMMARY
 
 use serde::Serialize;
@@ -419,6 +419,8 @@ fn synapse_specialized_modules() -> BTreeSet<String> {
         "wc",
         "discover",
         "learn",
+        "session",
+        "cc-economics",
         "rewrite",
     ]
     .into_iter()
@@ -554,11 +556,113 @@ fn command_superseded() -> BTreeMap<String, String> {
 // START_module_equivalents
 fn module_equivalents() -> BTreeMap<String, String> {
     BTreeMap::from([
+        (
+            "aws-cmd".into(),
+            "aws proxy shortcut plus cloud-data router".into(),
+        ),
+        (
+            "cargo-cmd".into(),
+            "cargo proxy shortcut plus rust-cargo router".into(),
+        ),
         ("cat".into(), "read proxy shortcut plus cat filter".into()),
+        (
+            "container".into(),
+            "docker/podman proxy shortcuts plus container filters".into(),
+        ),
+        (
+            "curl-cmd".into(),
+            "curl proxy shortcut plus cloud-data router".into(),
+        ),
+        (
+            "dotnet-cmd".into(),
+            "dotnet proxy shortcut plus language-tooling router".into(),
+        ),
         ("env-cmd".into(), "env".into()),
+        (
+            "find-cmd".into(),
+            "find proxy shortcut plus search router".into(),
+        ),
+        (
+            "gh-cmd".into(),
+            "gh proxy shortcut plus vcs-hosting router".into(),
+        ),
+        (
+            "git".into(),
+            "git proxy shortcut plus vcs-git router".into(),
+        ),
+        (
+            "glab-cmd".into(),
+            "glab proxy shortcut plus vcs-hosting router".into(),
+        ),
+        (
+            "go-cmd".into(),
+            "go proxy shortcut plus go-tooling router".into(),
+        ),
+        (
+            "golangci-cmd".into(),
+            "golangci proxy shortcut plus go-tooling router".into(),
+        ),
+        (
+            "gradlew-cmd".into(),
+            "gradlew proxy shortcut plus build-tool router".into(),
+        ),
+        (
+            "grep-cmd".into(),
+            "grep proxy shortcut plus grep filter".into(),
+        ),
+        (
+            "gt-cmd".into(),
+            "gt proxy shortcut plus vcs-graphite router".into(),
+        ),
         ("json-cmd".into(), "json".into()),
+        ("ls".into(), "ls proxy shortcut plus system router".into()),
         ("log-cmd".into(), "log".into()),
+        (
+            "mypy-cmd".into(),
+            "mypy proxy shortcut plus python-tooling router".into(),
+        ),
+        (
+            "next-cmd".into(),
+            "next proxy shortcut plus js-tooling router".into(),
+        ),
+        (
+            "npm-cmd".into(),
+            "npm proxy shortcut plus js-tooling router".into(),
+        ),
+        (
+            "pip-cmd".into(),
+            "pip proxy shortcut plus python-tooling router".into(),
+        ),
         ("pipe-cmd".into(), "pipe".into()),
+        (
+            "playwright-cmd".into(),
+            "playwright proxy shortcut plus js-tooling router".into(),
+        ),
+        (
+            "pnpm-cmd".into(),
+            "pnpm proxy shortcut plus js-tooling router".into(),
+        ),
+        (
+            "prettier-cmd".into(),
+            "prettier proxy shortcut plus js-tooling router".into(),
+        ),
+        (
+            "prisma-cmd".into(),
+            "prisma proxy shortcut plus js-tooling router".into(),
+        ),
+        (
+            "psql-cmd".into(),
+            "psql proxy shortcut plus cloud-data router".into(),
+        ),
+        (
+            "pytest-cmd".into(),
+            "pytest proxy shortcut plus python-pytest router".into(),
+        ),
+        (
+            "rake-cmd".into(),
+            "rake proxy shortcut plus language-tooling router".into(),
+        ),
+        ("read".into(), "read proxy shortcut plus cat filter".into()),
         (
             "rg".into(),
             "rg proxy shortcut plus grep/ripgrep filters".into(),
@@ -567,7 +671,35 @@ fn module_equivalents() -> BTreeMap<String, String> {
             "ripgrep".into(),
             "rg proxy shortcut plus grep/ripgrep filters".into(),
         ),
+        (
+            "rspec-cmd".into(),
+            "rspec proxy shortcut plus language-tooling router".into(),
+        ),
+        (
+            "rubocop-cmd".into(),
+            "rubocop proxy shortcut plus language-tooling router".into(),
+        ),
+        (
+            "ruff-cmd".into(),
+            "ruff proxy shortcut plus python-tooling router".into(),
+        ),
+        (
+            "tree".into(),
+            "tree proxy shortcut plus system router".into(),
+        ),
+        (
+            "tsc-cmd".into(),
+            "tsc proxy shortcut plus js-tooling router".into(),
+        ),
         ("wc-cmd".into(), "wc".into()),
+        (
+            "vitest-cmd".into(),
+            "vitest proxy shortcut plus js-tooling router".into(),
+        ),
+        (
+            "wget-cmd".into(),
+            "wget proxy shortcut plus cloud-data router".into(),
+        ),
         ("verify".into(), "filters verify".into()),
         ("trust".into(), "filters trust".into()),
         ("untrust".into(), "filters untrust".into()),
@@ -583,10 +715,16 @@ fn module_equivalents() -> BTreeMap<String, String> {
 //   -> Phase-56 (traces_to) - local economics policy
 // START_module_superseded
 fn module_superseded() -> BTreeMap<String, String> {
-    BTreeMap::from([(
-        "telemetry".into(),
-        "local-only Synapse economics policy".into(),
-    )])
+    BTreeMap::from([
+        (
+            "constants".into(),
+            "shared command constants are centralized in Synapse router, filter, and capability registries".into(),
+        ),
+        (
+            "telemetry".into(),
+            "local-only Synapse economics policy".into(),
+        ),
+    ])
 }
 // END_module_superseded
 
@@ -753,6 +891,7 @@ mod tests {
             enum Commands {
                 Cat { args: Vec<String> },
                 Ls { args: Vec<String> },
+                FutureGap {},
                 Session {},
                 Telemetry { command: String },
                 Verify { filter: Option<String> },
@@ -763,7 +902,7 @@ mod tests {
                 Check { command: Vec<String> },
             }
             "#,
-            &["json", "pytest"],
+            &["json", "pytest_cmd"],
         );
 
         let report = build_full_rtk_parity_report(Some(source.path())).expect("report");
@@ -784,7 +923,8 @@ mod tests {
             .superseded
             .iter()
             .any(|entry| entry.starts_with("telemetry ->")));
-        assert!(commands.missing.contains(&"session".to_string()));
+        assert!(commands.implemented.contains(&"session".to_string()));
+        assert!(commands.missing.contains(&"future-gap".to_string()));
 
         let hooks = report
             .sections
@@ -800,7 +940,9 @@ mod tests {
             .find(|section| section.name == "command-modules")
             .expect("modules");
         assert!(modules.implemented.contains(&"json".to_string()));
-        assert!(modules.missing.contains(&"pytest".to_string()));
+        assert!(modules.equivalent.contains(
+            &"pytest-cmd -> pytest proxy shortcut plus python-pytest router".to_string()
+        ));
     }
 
     #[test]

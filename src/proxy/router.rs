@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-ROUTER
 // PURPOSE: RTK-style command router — classifies shell commands into token-saving adapter families
-// SCOPE: CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue, direct language tool routing, container command routing, RTK parity router-family coverage gate
+// SCOPE: CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue, direct language tool routing, Graphite stacked-PR routing, container command routing, RTK parity router-family coverage gate
 // DEPENDS: N/A
 // LINKS:
 //   → UC-002 (implements) - command routing makes token-saving behavior machine-checkable
@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.3.0 — Added Docker and Podman container routing]
+// LAST_CHANGE: [v1.4.0 — Added Graphite stacked-PR routing]
 // END_CHANGE_SUMMARY
 
 // START_public_api
@@ -102,6 +102,9 @@ fn route_parts(parts: &[String]) -> RouteDecision {
 
     if tokens[0] == "git" {
         return route_git(&tokens);
+    }
+    if tokens[0] == "gt" {
+        return route_gt(&tokens);
     }
     if tokens[0] == "cargo" {
         return route_two_token("rust-cargo", "rust", &tokens, "cargo command");
@@ -199,6 +202,11 @@ fn supported_adapters() -> Vec<SupportedAdapter> {
             adapter: "vcs-git",
             family: "vcs",
             examples: &["git status", "git diff", "git log", "git show"],
+        },
+        SupportedAdapter {
+            adapter: "vcs-graphite",
+            family: "vcs",
+            examples: &["gt log", "gt submit", "gt sync", "gt stack"],
         },
         SupportedAdapter {
             adapter: "rust-cargo",
@@ -326,6 +334,24 @@ fn route_git(tokens: &[String]) -> RouteDecision {
     route("vcs-git", "vcs", &key, "git command")
 }
 // END_route_git
+
+// START_CONTRACT_route_gt
+// PURPOSE: Route Graphite stacked-PR commands to VCS adapter keys
+// INPUTS: { tokens: &[String] }
+// OUTPUTS: { RouteDecision }
+// LINKS:
+//   → NFR-003 (traces_to) - stacked PR output can be high-volume and benefits from VCS filtering
+// START_route_gt
+fn route_gt(tokens: &[String]) -> RouteDecision {
+    let subcommand = tokens.get(1).map(String::as_str).unwrap_or("");
+    let key = match subcommand {
+        "log" | "submit" | "sync" | "restack" | "create" | "branch" | "status" | "diff"
+        | "show" | "stack" | "up" | "down" => format!("gt {}", subcommand),
+        _ => "gt".into(),
+    };
+    route("vcs-graphite", "vcs", &key, "Graphite CLI")
+}
+// END_route_gt
 
 // START_CONTRACT_route_go
 // PURPOSE: Route Go and golangci commands to stable adapter keys
@@ -499,6 +525,7 @@ mod tests {
         let router = CommandRouter::new();
         let samples = [
             (vec!["cargo", "test"], "rust-cargo", "cargo test"),
+            (vec!["gt", "log"], "vcs-graphite", "gt log"),
             (
                 vec!["python", "-m", "pytest"],
                 "python-pytest",
