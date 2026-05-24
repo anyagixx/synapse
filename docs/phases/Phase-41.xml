@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-41" status="done">
+  <NAME>RTK Developer Service Filter Expansion</NAME>
+  <GOAL>Expand the RTK built-in filter pack with developer-service, VCS-adjacent, local LLM, and file metadata filters.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-FILTER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-FILTER" status="done">Add RTK-style named filters and inline tests for jj, jira, shopify-theme, ollama, and stat.</step-1>
+    <step-2 module="M-PROXY-FILTER" status="done">Verify the expanded developer-service filter pack through syn filters verify.</step-2>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter jj</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter jira</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter shopify-theme</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter ollama</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter stat</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify</CHECK>
+    <CHECK status="passed">cargo test proxy::toml_filter::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

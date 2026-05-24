@@ -2,7 +2,7 @@
 <MODULE id="M-PROXY-FILTER" type="INTEGRATION" status="active">
   <NAME>M-PROXY-FILTER</NAME>
   <PURPOSE>TOML filter engine — applies regex-based output transformations from TOML filter definitions</PURPOSE>
-  <SCOPE>FilterDef, ReplaceRule, MatchOutputRule, FilterFile, FilterEngine with find_filter/apply/verify, project-local filter trust gating, split Synapse legacy and RTK-style built-in filter packs including lint, build, compiler, language ecosystem, operations/admin, platform tooling, system, DevOps, infrastructure/IaC, and package-management filters, RTK-first built-in precedence, Unicode-safe truncation, 8-stage pipeline</SCOPE>
+  <SCOPE>FilterDef, ReplaceRule, MatchOutputRule, FilterFile, FilterEngine with find_filter/apply/verify, project-local filter trust gating, split Synapse legacy and RTK-style built-in filter packs including lint, build, compiler, developer-service, language ecosystem, operations/admin, platform tooling, system, DevOps, infrastructure/IaC, and package-management filters, RTK-first built-in precedence, Unicode-safe truncation, 8-stage pipeline</SCOPE>
   <FILES>
     <FILE>src/proxy/toml_filter.rs</FILE>
     <FILE>src/proxy/filter_trust.rs</FILE>
@@ -10,6 +10,6 @@
     <FILE>src/proxy/rtk_builtin_filters.toml</FILE>
   </FILES>
   <DEPENDS>M-UTILS</DEPENDS>
-  <LINKS>builtin_filters.toml,rtk_builtin_filters.toml,~/.config/synapse/filters.toml,.synapse/filters.toml,docs/phases/Phase-21.xml,docs/phases/Phase-24.xml,docs/phases/Phase-33.xml,docs/phases/Phase-34.xml,docs/phases/Phase-35.xml,docs/phases/Phase-36.xml,docs/phases/Phase-37.xml,docs/phases/Phase-38.xml,docs/phases/Phase-39.xml,docs/phases/Phase-40.xml</LINKS>
+  <LINKS>builtin_filters.toml,rtk_builtin_filters.toml,~/.config/synapse/filters.toml,.synapse/filters.toml,docs/phases/Phase-21.xml,docs/phases/Phase-24.xml,docs/phases/Phase-33.xml,docs/phases/Phase-34.xml,docs/phases/Phase-35.xml,docs/phases/Phase-36.xml,docs/phases/Phase-37.xml,docs/phases/Phase-38.xml,docs/phases/Phase-39.xml,docs/phases/Phase-40.xml,docs/phases/Phase-41.xml</LINKS>
   <VERIFICATION_REF>V-M-PROXY-FILTER</VERIFICATION_REF>
 </MODULE>

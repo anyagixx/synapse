@@ -1763,3 +1763,152 @@ expected = "On branch main\nYour branch is up to date with 'origin/main'.\nChang
 name = "short output preserved"
 input = "Already up to date."
 expected = "Already up to date."
+
+[filters.jj]
+description = "Compact Jujutsu jj output - strip blank lines, truncate"
+match_command = "^jj\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Hint:",
+  "^Working copy now at:",
+]
+max_lines = 30
+truncate_lines_at = 120
+
+[[tests.jj]]
+name = "log output stripped of hints"
+input = """
+@  qpvuntsm patrick@example.com 2026-03-10 12:00 abc123
+\u2502  feat: add new feature
+\u25c9  zzzzzzzz root()
+
+Working copy now at: qpvuntsm abc123 feat: add new feature
+Hint: use `jj log` to see the full history
+"""
+expected = "@  qpvuntsm patrick@example.com 2026-03-10 12:00 abc123\n\u2502  feat: add new feature\n\u25c9  zzzzzzzz root()"
+
+[[tests.jj]]
+name = "empty input passes through"
+input = ""
+expected = ""
+
+[filters.jira]
+description = "Compact Jira CLI output - strip verbose metadata, keep essentials"
+match_command = "^jira\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*--",
+]
+truncate_lines_at = 120
+max_lines = 40
+
+[[tests.jira]]
+name = "strips blank lines from issue list"
+input = "TYPE\tKEY\tSUMMARY\tSTATUS\n\nStory\tPROJ-123\tAdd login feature\tIn Progress\n\nBug\tPROJ-456\tFix crash on startup\tOpen"
+expected = "TYPE\tKEY\tSUMMARY\tSTATUS\nStory\tPROJ-123\tAdd login feature\tIn Progress\nBug\tPROJ-456\tFix crash on startup\tOpen"
+
+[[tests.jira]]
+name = "single issue view"
+input = "KEY: PROJ-123\nSummary: Add login feature\nStatus: In Progress\nAssignee: john@example.com"
+expected = "KEY: PROJ-123\nSummary: Add login feature\nStatus: In Progress\nAssignee: john@example.com"
+
+[filters.shopify-theme]
+description = "Compact shopify theme push/pull output"
+match_command = "^shopify\\s+theme\\s+(push|pull)"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*Uploading",
+  "^\\s*Downloading",
+]
+tail_lines = 5
+max_lines = 15
+on_empty = "shopify theme: ok"
+
+[[tests.shopify-theme]]
+name = "strips upload/download lines, keeps tail"
+input = """
+Uploading assets/app.css
+Uploading assets/app.js
+Uploading templates/index.liquid
+Downloading assets/old.css
+
+Theme 'Development' (id: 12345) pushed to store.example.myshopify.com
+"""
+expected = "Theme 'Development' (id: 12345) pushed to store.example.myshopify.com"
+
+[[tests.shopify-theme]]
+name = "on_empty when all stripped"
+input = "Uploading assets/app.css\nDownloading assets/base.css\n"
+expected = "shopify theme: ok"
+
+[filters.ollama]
+description = "Strip ANSI spinners and cursor control from ollama output, keep final text"
+match_command = "^ollama\\s+run\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^[\\u{280b}\\u{2819}\\u{2839}\\u{2838}\\u{283c}\\u{2834}\\u{2826}\\u{2827}\\u{2807}\\u{280f}\\s]*$",
+  "^\\s*$",
+]
+
+[[tests.ollama]]
+name = "strips spinner lines, keeps response"
+input = "\u280b \n\u2819 \n\u2839 \nHello! How can I help you today?"
+expected = "Hello! How can I help you today?"
+
+[[tests.ollama]]
+name = "preserves multi-line response"
+input = "\u280b \n\u2819 \nLine one of the response.\nLine two of the response."
+expected = "Line one of the response.\nLine two of the response."
+
+[[tests.ollama]]
+name = "empty input"
+input = ""
+expected = ""
+
+[filters.stat]
+description = "Compact stat output - strip device/inode/birth noise"
+match_command = "^stat\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*Device:",
+  "^\\s*Birth:",
+]
+truncate_lines_at = 120
+max_lines = 20
+
+[[tests.stat]]
+name = "linux stat output strips device and birth"
+input = """
+  File: main.rs
+  Size: 12345           Blocks: 24         IO Block: 4096   regular file
+Device: 801h/2049d      Inode: 1234567     Links: 1
+Access: (0644/-rw-r--r--)  Uid: ( 1000/ patrick)   Gid: ( 1000/ patrick)
+Access: 2026-03-10 12:00:00.000000000 +0100
+Modify: 2026-03-10 11:00:00.000000000 +0100
+Change: 2026-03-10 11:00:00.000000000 +0100
+ Birth: 2026-03-09 10:00:00.000000000 +0100
+"""
+expected = "  File: main.rs\n  Size: 12345           Blocks: 24         IO Block: 4096   regular file\nAccess: (0644/-rw-r--r--)  Uid: ( 1000/ patrick)   Gid: ( 1000/ patrick)\nAccess: 2026-03-10 12:00:00.000000000 +0100\nModify: 2026-03-10 11:00:00.000000000 +0100\nChange: 2026-03-10 11:00:00.000000000 +0100"
+
+[[tests.stat]]
+name = "macOS stat strips device and birth"
+input = """
+  File: "main.rs"
+  Size: 82848        FileType: Regular File
+  Mode: (0644/-rw-r--r--)         Uid: (  501/ patrick)  Gid: (   20/   staff)
+Device: 1,15   Inode: 66302332    Links: 1
+Access: Wed Mar 18 21:21:15 2026
+Modify: Wed Mar 18 20:56:11 2026
+Change: Wed Mar 18 20:56:11 2026
+ Birth: Wed Mar 18 20:56:11 2026
+"""
+expected = "  File: \"main.rs\"\n  Size: 82848        FileType: Regular File\n  Mode: (0644/-rw-r--r--)         Uid: (  501/ patrick)  Gid: (   20/   staff)\nAccess: Wed Mar 18 21:21:15 2026\nModify: Wed Mar 18 20:56:11 2026\nChange: Wed Mar 18 20:56:11 2026"
+
+[[tests.stat]]
+name = "empty input passes through"
+input = ""
+expected = ""
