@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-DASHBOARD
-// PURPOSE: Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, cascade, and run cockpit views/APIs
-// SCOPE: HTTP server with health/status/graph/tokens APIs, GRACE state pages, traceability queries, run queue/blocked cockpit views, cascade previews, and cascade history
+// PURPOSE: Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, token-economy, cascade, and run cockpit views/APIs
+// SCOPE: HTTP server with health/status/graph/tokens APIs, token adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, cascade previews, and cascade history
 // DEPENDS: M-GRACE-STATUS, M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRAPHRAG, M-TRACKING, M-RUNNER, M-CONFIG
 // LINKS:
 //   -> V-M-DASHBOARD (verified_by) - dashboard route and JSON payload tests
@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Added run queue and blocked cockpit surface]
+// LAST_CHANGE: [v3.3.0 — Exposed adapter and session token stats in tokens API]
 // END_CHANGE_SUMMARY
 
 mod render;
@@ -355,6 +355,8 @@ async fn api_tokens() -> Json<Value> {
             "total_saved_tokens": stats.total_saved_tokens,
             "avg_savings_pct": stats.avg_savings_pct,
             "top_commands": stats.top_commands,
+            "top_adapters": stats.top_adapters,
+            "recent_sessions": stats.recent_sessions,
         })),
         Err(error) => Json(error_payload(error)),
     }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-PROXY" type="INTEGRATION" status="active">
   <NAME>M-PROXY</NAME>
-  <PURPOSE>Proxy executor — intercepts shell commands, applies TOML filters, and reports token tracking degradation</PURPOSE>
-  <SCOPE>Proxy struct, ProxyOutput status model, FilterEngine integration, CommandRunner integration, Unicode-safe passthrough truncation, token tracking with degraded-mode logging</SCOPE>
+  <PURPOSE>Proxy executor — routes shell commands, applies TOML filters, and reports token tracking degradation</PURPOSE>
+  <SCOPE>Proxy struct, ProxyOutput status model, CommandRouter integration, FilterEngine integration, CommandRunner integration, Unicode-safe passthrough truncation, adapter-aware token tracking with degraded-mode logging</SCOPE>
   <FILES>
     <FILE>src/proxy/mod.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG,M-TRACKING,M-PROXY-RUNNER,M-PROXY-FILTER,M-UTILS</DEPENDS>
-  <LINKS>filters.toml</LINKS>
+  <DEPENDS>M-CONFIG,M-TRACKING,M-PROXY-ROUTER,M-PROXY-RUNNER,M-PROXY-FILTER,M-UTILS</DEPENDS>
+  <LINKS>filters.toml,docs/phases/Phase-21.xml</LINKS>
   <VERIFICATION_REF>V-M-PROXY</VERIFICATION_REF>
 </MODULE>

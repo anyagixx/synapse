@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-FILTER
 // PURPOSE: TOML filter engine — applies regex-based output transformations from TOML filter definitions
-// SCOPE: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, 8-stage pipeline
+// SCOPE: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, expanded built-in filter catalogue, 8-stage pipeline
 // DEPENDS: M-UTILS
 // LINKS: builtin_filters.toml, ~/.config/synapse/filters.toml, .synapse/filters.toml
 
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Use Unicode-safe line truncation]
+// LAST_CHANGE: [v3.0.0 — Expanded built-in RTK-style command filters]
 // END_CHANGE_SUMMARY
 
 use std::path::Path;

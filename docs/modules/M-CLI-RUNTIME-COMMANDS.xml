@@ -2,11 +2,11 @@
 <MODULE id="M-CLI-RUNTIME-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-RUNTIME-COMMANDS</NAME>
   <PURPOSE>CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting</PURPOSE>
-  <SCOPE>GainCmd with graph output, ProxyCmd with wrapped exit-code propagation, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd</SCOPE>
+  <SCOPE>GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd</SCOPE>
   <FILES>
     <FILE>src/cli/runtime_commands.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG,M-TRACKING,M-PROXY,M-COMPRESS,M-MCP,M-HOOKS,M-DASHBOARD,M-INDEXER-STORAGE,M-INDEXER-WALKER</DEPENDS>
-  <LINKS>docs/modules/M-CLI.xml</LINKS>
+  <DEPENDS>M-CONFIG,M-TRACKING,M-PROXY,M-PROXY-ROUTER,M-COMPRESS,M-MCP,M-HOOKS,M-DASHBOARD,M-INDEXER-STORAGE,M-INDEXER-WALKER</DEPENDS>
+  <LINKS>docs/modules/M-CLI.xml,docs/phases/Phase-21.xml</LINKS>
   <VERIFICATION_REF>V-M-CLI-RUNTIME-COMMANDS</VERIFICATION_REF>
 </MODULE>

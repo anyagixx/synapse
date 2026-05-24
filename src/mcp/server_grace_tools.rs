@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
 // PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, log analysis, belief extraction, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, submit_test_report, token_savings, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, submit_test_report, token_savings with adapter/session stats, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
 // DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -25,7 +25,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Moved contract suggestion helpers into server_contract_tools]
+// LAST_CHANGE: [v2.23.0 - Added adapter and session details to token_savings output]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
@@ -688,6 +688,24 @@ pub(crate) async fn handle_gain(
             if stats.total_commands > 0 {
                 let est = stats.total_saved_tokens as f64 * 0.000003;
                 text.push_str(&format!("Est. cost saved:   ${:.4}\n", est));
+            }
+            if !stats.top_adapters.is_empty() {
+                text.push_str("\nTop adapters:\n");
+                for item in &stats.top_adapters {
+                    text.push_str(&format!(
+                        "- {}: {} runs, {} saved, avg {:.1}%\n",
+                        item.adapter, item.count, item.saved_tokens, item.avg_savings_pct
+                    ));
+                }
+            }
+            if !stats.recent_sessions.is_empty() {
+                text.push_str("\nRecent sessions:\n");
+                for item in &stats.recent_sessions {
+                    text.push_str(&format!(
+                        "- {}: {} runs, {} saved\n",
+                        item.session_id, item.count, item.saved_tokens
+                    ));
+                }
             }
             result(
                 id,

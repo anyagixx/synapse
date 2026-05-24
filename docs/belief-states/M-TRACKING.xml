@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-TRACKING" version="1.0">
   UNDERSTANDING:
-    Module responsibility: SQLite token tracker — records command token usage by canonical project identity and provides stats
+    Module responsibility: SQLite token tracker — records route-aware command token usage by canonical project identity and provides stats
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: Implement only the declared scope while preserving dependencies: M-CONFIG
+      - PROCESSING: migrate schema if needed, persist token counts with adapter/route/session metadata, aggregate command/adapter/session savings
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Tracker struct, canonical project identity, SQLite schema, token recording, stats querying, TrackingStats model
+      - Scope remains bounded to: Tracker struct, canonical project identity, migration-safe SQLite schema, token recording, session/adapter stats querying, TrackingStats model
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

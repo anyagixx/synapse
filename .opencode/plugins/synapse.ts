@@ -2,21 +2,36 @@ import type { Plugin } from "@opencode-ai/plugin"
 
 const PROXY_COMMANDS = [
   "git ", "cargo ", "npm ", "npx ", "pnpm ", "yarn ",
-  "ls", "cat ", "find ", "grep ", "tree ", "docker ",
-  "make ", "go build", "go test", "pwd", "which ", "du ", "wc ",
+  "bun ", "deno ", "uv ", "pytest", "python -m pytest",
+  "ruff ", "mypy ", "basedpyright ", "pip ", "pip3 ",
+  "ls", "cat ", "find ", "grep ", "rg ", "tree ", "docker ",
+  "kubectl ", "helm ", "terraform ", "tofu ", "gh ", "glab ",
+  "make ", "just ", "go build", "go test", "golangci-lint ",
+  "gradle ", "gradlew ", "./gradlew ", "dotnet ", "rake ", "rspec ",
+  "pwd", "which ", "du ", "wc ", "journalctl ", "systemctl ",
 ]
 
 function shouldProxy(cmd: string): boolean {
-  return PROXY_COMMANDS.some((p) => cmd.startsWith(p) || cmd.includes(` ${p.trim()}`))
+  const trimmed = cmd.trim()
+  if (!trimmed || trimmed.includes("syn proxy --") || trimmed.startsWith("rtk ")) return false
+  return PROXY_COMMANDS.some((p) => trimmed.startsWith(p) || trimmed.includes(` ${p.trim()}`))
+}
+
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`
 }
 
 export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
+  const sessionId = process.env.SYNAPSE_SESSION_ID
+    ?? process.env.OPENCODE_SESSION_ID
+    ?? `opencode-${Date.now()}`
+
   await client.app.log({
     body: {
       service: "synapse",
       level: "info",
-      message: "Synapse loaded — GRACE Phase-0 enforcement active",
-      extra: { directory },
+      message: "Synapse loaded — GRACE Phase-0 enforcement and RTK-style proxy routing active",
+      extra: { directory, sessionId },
     },
   })
 
@@ -25,7 +40,7 @@ export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
       if (input.tool !== "bash") return
       const cmd: string | undefined = output.args?.command
       if (!cmd || !shouldProxy(cmd)) return
-      output.args.command = `syn proxy -- ${cmd}`
+      output.args.command = `SYNAPSE_SESSION_ID=${shellQuote(sessionId)} syn proxy -- ${cmd}`
     },
 
     "experimental.chat.system.transform": async (_input, output) => {

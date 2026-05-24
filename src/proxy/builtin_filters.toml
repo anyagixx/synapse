@@ -203,3 +203,157 @@ strip_ansi = true
 keep_lines = ["FAIL", "error", "ok", "PASS", "--- PASS", "--- FAIL"]
 max_lines = 20
 on_empty = "All tests passed"
+
+[[filters]]
+match_command = "cargo fmt"
+strip_ansi = true
+keep_lines = ["Diff", "error", "warning", "Check", "would be formatted"]
+max_lines = 25
+on_empty = "Format check passed"
+
+[[filters]]
+match_command = "pytest"
+strip_ansi = true
+keep_lines = ["FAILED", "ERROR", "FAILURES", "short test summary", "passed", "failed", "error", "E   "]
+head_lines = 12
+tail_lines = 12
+max_lines = 35
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "python -m pytest"
+strip_ansi = true
+keep_lines = ["FAILED", "ERROR", "FAILURES", "short test summary", "passed", "failed", "error", "E   "]
+head_lines = 12
+tail_lines = 12
+max_lines = 35
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "uv run pytest"
+strip_ansi = true
+keep_lines = ["FAILED", "ERROR", "FAILURES", "short test summary", "passed", "failed", "error", "E   "]
+head_lines = 12
+tail_lines = 12
+max_lines = 35
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "ruff"
+strip_ansi = true
+keep_lines = ["error", "warning", "Found", "Fixed", "^.+:[0-9]+:[0-9]+:"]
+max_lines = 30
+on_empty = "Ruff passed"
+
+[[filters]]
+match_command = "mypy"
+strip_ansi = true
+keep_lines = ["error:", "note:", "Success:", "Found "]
+max_lines = 35
+on_empty = "Mypy passed"
+
+[[filters]]
+match_command = "rg"
+strip_ansi = true
+head_lines = 40
+max_lines = 45
+on_empty = "No matches"
+
+[[filters]]
+match_command = "gh pr"
+strip_ansi = true
+keep_lines = ["title:", "state:", "author:", "url:", "checks", "fail", "pass", "error", "review", "mergeable"]
+max_lines = 35
+on_empty = "No PR output"
+
+[[filters]]
+match_command = "glab mr"
+strip_ansi = true
+keep_lines = ["title:", "state:", "author:", "web_url", "failed", "passed", "pipeline", "merge_status"]
+max_lines = 35
+on_empty = "No MR output"
+
+[[filters]]
+match_command = "docker compose"
+strip_ansi = true
+keep_lines = ["error", "failed", "unhealthy", "Exit", "Started", "Running", "Created", "Recreated", "WARN"]
+tail_lines = 30
+max_lines = 40
+on_empty = "Compose command completed"
+
+[[filters]]
+match_command = "docker logs"
+strip_ansi = true
+tail_lines = 50
+max_lines = 55
+on_empty = "No container logs"
+
+[[filters]]
+match_command = "kubectl"
+strip_ansi = true
+keep_lines = ["NAME", "STATUS", "READY", "RESTARTS", "Error", "Warning", "Failed", "CrashLoop", "BackOff", "Events:"]
+head_lines = 20
+tail_lines = 20
+max_lines = 45
+on_empty = "Kubectl command completed"
+
+[[filters]]
+match_command = "terraform plan"
+strip_ansi = true
+keep_lines = ["Plan:", "No changes", "Error:", "Warning:", "will be", "must be", "forces replacement", "^  # "]
+head_lines = 20
+tail_lines = 20
+max_lines = 45
+on_empty = "Terraform plan: no changes detected"
+
+[[filters]]
+match_command = "tofu plan"
+strip_ansi = true
+keep_lines = ["Plan:", "No changes", "Error:", "Warning:", "will be", "must be", "forces replacement", "^  # "]
+head_lines = 20
+tail_lines = 20
+max_lines = 45
+on_empty = "OpenTofu plan: no changes detected"
+
+[[filters]]
+match_command = "helm"
+strip_ansi = true
+keep_lines = ["Error:", "WARNING", "STATUS:", "REVISION:", "NAME:", "LAST DEPLOYED:"]
+head_lines = 20
+tail_lines = 20
+max_lines = 40
+on_empty = "Helm command completed"
+
+[[filters]]
+match_command = "just"
+strip_ansi = true
+keep_lines = ["error", "failed", "FAILED", "PASS", "passed", "Finished", "test result"]
+head_lines = 10
+tail_lines = 15
+max_lines = 35
+on_empty = "Just command completed"
+
+[[filters]]
+match_command = "bun test"
+strip_ansi = true
+keep_lines = ["fail", "FAIL", "error", "Error", "pass", "passed", "tests"]
+head_lines = 10
+tail_lines = 10
+max_lines = 30
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "deno test"
+strip_ansi = true
+keep_lines = ["FAILED", "ok", "error", "fail", "pass", "test result"]
+head_lines = 10
+tail_lines = 10
+max_lines = 30
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "journalctl"
+strip_ansi = true
+tail_lines = 60
+max_lines = 65
+on_empty = "No journal output"

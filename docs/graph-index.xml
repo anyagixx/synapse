@@ -76,6 +76,7 @@
     <MODULE id="M-PLUGIN" path="docs/modules/M-PLUGIN.xml" status="active" />
     <MODULE id="M-PROXY" path="docs/modules/M-PROXY.xml" status="active" />
     <MODULE id="M-PROXY-FILTER" path="docs/modules/M-PROXY-FILTER.xml" status="active" />
+    <MODULE id="M-PROXY-ROUTER" path="docs/modules/M-PROXY-ROUTER.xml" status="active" />
     <MODULE id="M-PROXY-RUNNER" path="docs/modules/M-PROXY-RUNNER.xml" status="active" />
     <MODULE id="M-RUNNER" path="docs/modules/M-RUNNER.xml" status="active" />
     <MODULE id="M-SKILLS" path="docs/modules/M-SKILLS.xml" status="active" />
@@ -124,6 +125,7 @@
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-PROXY-ROUTER" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-COMPRESS" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-MCP" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-HOOKS" type="DEPENDS" />
@@ -350,6 +352,7 @@
     <REL source="M-PLUGIN" target="M-GRACE" type="DEPENDS" />
     <REL source="M-PROXY" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-PROXY" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-PROXY" target="M-PROXY-ROUTER" type="DEPENDS" />
     <REL source="M-PROXY" target="M-PROXY-RUNNER" type="DEPENDS" />
     <REL source="M-PROXY" target="M-PROXY-FILTER" type="DEPENDS" />
     <REL source="M-PROXY" target="M-UTILS" type="DEPENDS" />

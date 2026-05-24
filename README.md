@@ -237,8 +237,10 @@ my-project/
 | `syn history "q"` | Поиск по git-истории |
 | `syn serve` | Web дашборд: health/status/tokens plus GRACE state views |
 | `syn proxy -- <cmd>` | Ручной прокси |
+| `syn proxy --route -- <cmd>` | Показать выбранный token-saving adapter без запуска команды |
 | `syn gain` | Статистика экономии |
 | `syn gain --graph` | Статистика экономии с ASCII-графом |
+| `syn gain --sessions --adapters` | Экономика по сессиям и command adapters |
 | `syn skills list|show|run` | Локальный запуск и отладка 16 GRACE skills |
 | `syn ci verify|review|status` | CI-friendly strict outputs |
 

@@ -45,8 +45,10 @@ This page lists shipped CLI commands only.
 | Command | Description |
 |---------|-------------|
 | `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |
+| `syn proxy --route -- <cmd>` | Preview the selected token-saving adapter without executing the command |
 | `syn gain` | Show token savings analytics |
 | `syn gain --graph` | Show token savings analytics with ASCII bars |
+| `syn gain --sessions --adapters` | Show session-level and adapter-level token economics |
 | `syn compress <path>` | Compress files for AI context |
 | `syn mcp` | Start the MCP server over stdio |
 | `syn config` | Print current configuration |

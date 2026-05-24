@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-HOOKS
-// PURPOSE: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge
-// SCOPE: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, file generation
+// PURPOSE: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy
+// SCOPE: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, route-aware plugin and shell hook generation
 // DEPENDS: M-CONFIG
 // LINKS: .opencode/
 
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.0 — Added JSONC-aware OpenCode MCP config merge]
+// LAST_CHANGE: [v3.0.0 — Expanded OpenCode shell autoproxy command coverage and session tracking]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -229,6 +229,15 @@ impl HookManager {
     }
     // END_hookmanager_install
 
+    // START_CONTRACT_HookManager::install_opencode
+    // PURPOSE: Generate OpenCode rules, MCP config, plugin, package metadata, and shell proxy hook
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes .opencode files and opencode.jsonc
+    // LINKS:
+    //   → UC-001 (implements) - installs OpenCode integration assets
+    //   → NFR-003 (traces_to) - shell hook autoproxies high-volume commands
+    // START_hookmanager_install_opencode
     fn install_opencode(&self, root: &Path) -> anyhow::Result<()> {
         let opencode_dir = root.join(".opencode");
         std::fs::create_dir_all(&opencode_dir)?;
@@ -276,9 +285,17 @@ impl HookManager {
 # Synapse proxy hook — rewrites shell commands through `syn proxy`
 # Source this file in your shell to enable: source .opencode/hooks/synapse-proxy.sh
 
-syn_proxy_exec() {
+export SYNAPSE_SESSION_ID="${SYNAPSE_SESSION_ID:-opencode-$(date +%Y%m%d%H%M%S)-$$}"
+
+syn_proxy_should_proxy() {
     local cmd="$*"
-    if [[ "$cmd" =~ ^(git|cargo|npm|npx|pnpm|yarn|ls|cat|find|grep|tree|docker|make|go\ build|go\ test|pwd|which|du|wc) ]]; then
+    [[ "$cmd" =~ ^(syn\ proxy|rtk\ ) ]] && return 1
+    [[ "$cmd" =~ ^(git|cargo|npm|npx|pnpm|yarn|bun|deno|uv|pytest|python\ -m\ pytest|ruff|mypy|basedpyright|pip|pip3|ls|cat|find|grep|rg|tree|docker|kubectl|helm|terraform|tofu|gh|glab|make|just|go\ build|go\ test|golangci-lint|gradle|gradlew|\./gradlew|dotnet|rake|rspec|pwd|which|du|wc|journalctl|systemctl) ]] && return 0
+    return 1
+}
+
+syn_proxy_exec() {
+    if syn_proxy_should_proxy "$@"; then
         syn proxy -- "$@"
     else
         "$@"
@@ -290,10 +307,27 @@ alias cargo='syn_proxy_exec cargo'
 alias npm='syn_proxy_exec npm'
 alias npx='syn_proxy_exec npx'
 alias pnpm='syn_proxy_exec pnpm'
+alias yarn='syn_proxy_exec yarn'
+alias bun='syn_proxy_exec bun'
+alias deno='syn_proxy_exec deno'
+alias uv='syn_proxy_exec uv'
+alias pytest='syn_proxy_exec pytest'
+alias python='syn_proxy_exec python'
+alias ruff='syn_proxy_exec ruff'
+alias mypy='syn_proxy_exec mypy'
+alias rg='syn_proxy_exec rg'
 alias make='syn_proxy_exec make'
+alias just='syn_proxy_exec just'
 alias go='syn_proxy_exec go'
+alias docker='syn_proxy_exec docker'
+alias kubectl='syn_proxy_exec kubectl'
+alias helm='syn_proxy_exec helm'
+alias terraform='syn_proxy_exec terraform'
+alias tofu='syn_proxy_exec tofu'
+alias gh='syn_proxy_exec gh'
+alias glab='syn_proxy_exec glab'
 
-echo "[synapse] Shell proxy hooks loaded"
+echo "[synapse] Shell proxy hooks loaded (session ${SYNAPSE_SESSION_ID})"
 "#;
         let bash_path = hooks_dir.join("synapse-proxy.sh");
         if !bash_path.exists() {
@@ -303,6 +337,7 @@ echo "[synapse] Shell proxy hooks loaded"
 
         Ok(())
     }
+    // END_hookmanager_install_opencode
 
     // START_CONTRACT_HookManager::uninstall
     // PURPOSE: Uninstall Synapse hooks for a given agent

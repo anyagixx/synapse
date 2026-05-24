@@ -4,10 +4,10 @@
     Module responsibility: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: Implement only the declared scope while preserving dependencies: M-CONFIG, M-TRACKING, M-PROXY, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
+      - PROCESSING: run token-economy queries, render route previews through M-PROXY-ROUTER, execute proxied commands through M-PROXY, and preserve existing diagnostics
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: GainCmd with graph output, ProxyCmd with wrapped exit-code propagation, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+      - Scope remains bounded to: GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

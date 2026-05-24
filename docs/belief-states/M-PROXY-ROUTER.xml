@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-PROXY-ROUTER" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Classify shell commands into RTK-style adapter families before execution.
+    Key data flows:
+      - INPUT: argv tokens from syn proxy or route preview
+      - PROCESSING: normalize tokens, reject recursive proxy commands, map known command families to adapter/family/route_key metadata
+      - OUTPUT: RouteDecision consumed by Proxy, CLI route preview, and tracking analytics
+    Critical invariants:
+      - routing never executes commands
+      - unknown commands remain passthrough-safe
+      - route_key remains stable enough for aggregate token economics
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep routing as a deterministic, dependency-light classifier and let TOML filters continue handling output transformations.
+    Complexity_areas: avoiding shell-string false positives, avoiding recursive proxying, keeping adapter names stable
+    Patterns_applied: explicit argv normalization, typed links, bounded adapter catalogue
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - common RTK families route to stable adapters
+    - syn proxy --route prints a decision without running the command
+    - adapter metadata appears in token tracking stats
+  RISKS_ACKNOWLEDGED:
+    - specialized semantic filters remain TOML-based; router expands coverage and analytics but does not yet replicate every RTK parser
+</BELIEF_STATE>

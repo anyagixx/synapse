@@ -4,11 +4,13 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_apply_strip_ansi_without_panics --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_apply_truncate_lines_at_preserves_utf8_boundaries --lib</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>TOML filter ANSI stripping uses cached fallback regex construction and does not unwrap.</ASSERTION>
     <ASSERTION>TOML filter line truncation preserves UTF-8 boundaries.</ASSERTION>
+    <ASSERTION>Expanded built-in filters cover RTK-style Python, JS, VCS hosting, container, infrastructure, and search commands.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-3</PHASE_GATE>
+  <PHASE_GATE>Phase-21</PHASE_GATE>
 </VERIFICATION>

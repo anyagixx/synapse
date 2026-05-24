@@ -3,12 +3,14 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>CLI schema accepts gain --graph as a supported documented flag.</ASSERTION>
+    <ASSERTION>CLI schema accepts gain --sessions, gain --adapters, and proxy --route as supported documented flags.</ASSERTION>
     <ASSERTION>CLI schema accepts verify/review --profile and doctor --deps as documented flags.</ASSERTION>
     <ASSERTION>CLI schema exposes syn mcp as stdio-only until HTTP/LSP transport flags are implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-12</PHASE_GATE>
+  <PHASE_GATE>Phase-21</PHASE_GATE>
 </VERIFICATION>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, RTK route/economics flags, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS
 // LINKS: Cargo.toml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.10.0 — Added GRACE profile flags and doctor dependency audit flag]
+// LAST_CHANGE: [v3.0.0 — Added proxy route preview and session/adapter gain flags]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -176,6 +176,10 @@ pub struct GraphRagCmd {
 pub struct GainCmd {
     #[arg(long)]
     pub graph: bool,
+    #[arg(long)]
+    pub sessions: bool,
+    #[arg(long)]
+    pub adapters: bool,
 }
 // END_GainCmd
 
@@ -229,6 +233,8 @@ pub struct GrepCmd {
 #[derive(clap::Args)]
 #[command(about = "Run command through token-saving proxy")]
 pub struct ProxyCmd {
+    #[arg(long)]
+    pub route: bool,
     #[arg(trailing_var_arg = true)]
     pub args: Vec<String>,
 }

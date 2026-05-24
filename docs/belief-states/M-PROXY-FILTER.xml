@@ -7,7 +7,7 @@
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-UTILS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, Unicode-safe truncation, 8-stage pipeline
+      - Scope remains bounded to: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, expanded RTK-style built-in filters, Unicode-safe truncation, 8-stage pipeline
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

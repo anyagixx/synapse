@@ -1,14 +1,17 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, proxy, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, proxy, route preview, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-CONFIG
-// LINKS: docs/verification/V-M-CLI.xml
+// LINKS:
+//   ← V-M-CLI (verified_by) - CLI integration coverage
+//   ← V-M-PROXY-ROUTER (verified_by) - route preview integration coverage
 
 // START_MODULE_MAP
 // test_clean_config_bootstrap_commands_do_not_require_config_file — Verifies clean config bootstrap behavior
 // test_init_and_index — Verifies init, index, search, verify, and status
 // test_proxy_and_gain — Verifies proxy execution and token savings output
+// test_proxy_route_preview_for_rtk_like_command — Verifies route preview without execution
 // test_doctor_and_hooks — Verifies setup diagnostics and hook status
 // test_scoped_and_json_cli — Verifies scoped JSON GRACE gates
 // test_init_from_existing — Verifies existing repository bootstrap
@@ -17,7 +20,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.10.0 — Added explicit integration test module map and change summary]
+// LAST_CHANGE: [v3.0.0 — Added proxy route preview and session gain coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -254,6 +257,7 @@ fn test_proxy_tracking_records_positive_savings_and_gain_graph() {
         .args(["proxy", "--", "printf", "%s"])
         .arg(&noisy)
         .env("XDG_DATA_HOME", data_home.path())
+        .env("SYNAPSE_SESSION_ID", "integration-route-session")
         .current_dir(dir.path())
         .output()
         .unwrap();
@@ -264,8 +268,9 @@ fn test_proxy_tracking_records_positive_savings_and_gain_graph() {
     );
 
     let out = Command::new(&syn)
-        .args(["gain", "--graph"])
+        .args(["gain", "--graph", "--sessions", "--adapters"])
         .env("XDG_DATA_HOME", data_home.path())
+        .env("SYNAPSE_SESSION_ID", "integration-route-session")
         .current_dir(dir.path())
         .output()
         .unwrap();
@@ -286,8 +291,49 @@ fn test_proxy_tracking_records_positive_savings_and_gain_graph() {
         stdout.contains("Savings graph:") && stdout.contains('#'),
         "gain --graph should render savings bars: {stdout}"
     );
+    assert!(
+        stdout.contains("Top adapters by token savings:"),
+        "gain should render adapter stats: {stdout}"
+    );
+    assert!(
+        stdout.contains("Session economics:"),
+        "gain --sessions should render session stats: {stdout}"
+    );
 }
 // END_test_proxy_tracking_records_positive_savings_and_gain_graph
+
+// START_CONTRACT_test_proxy_route_preview_for_rtk_like_command
+// PURPOSE: Verify syn proxy --route reports an RTK-style adapter decision without executing the command
+// SIDE_EFFECTS: runs syn CLI route preview
+// LINKS:
+//   → M-PROXY-ROUTER (depends) - route preview command classification
+//   ← V-M-PROXY-ROUTER (verified_by) - integration route preview assertion
+// START_test_proxy_route_preview_for_rtk_like_command
+#[test]
+fn test_proxy_route_preview_for_rtk_like_command() {
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+
+    let out = Command::new(&syn)
+        .args(["proxy", "--route", "--", "python", "-m", "pytest"])
+        .output()
+        .unwrap();
+
+    assert!(
+        out.status.success(),
+        "route preview failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("adapter:      python-pytest"),
+        "route preview should report pytest adapter: {stdout}"
+    );
+    assert!(
+        stdout.contains("route_key:    python -m pytest"),
+        "route preview should report stable route key: {stdout}"
+    );
+}
+// END_test_proxy_route_preview_for_rtk_like_command
 
 // START_CONTRACT_test_tracking_is_scoped_by_canonical_project_path
 // PURPOSE: Verify tracking stats do not mix projects that share the same directory basename

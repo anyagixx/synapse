@@ -56,6 +56,8 @@ Savings are measured locally from commands routed through `syn proxy`. The exact
 ```bash
 syn gain
 syn gain --graph
+syn gain --sessions --adapters
+syn proxy --route -- cargo test
 ```
 
 ## Privacy

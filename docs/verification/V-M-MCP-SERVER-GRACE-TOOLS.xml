@@ -27,6 +27,7 @@
     <ASSERTION>MCP traceability_report writes docs/traceability-index.xml and returns a scoped TraceabilityReport.</ASSERTION>
     <ASSERTION>MCP run_test_guide writes docs/tests result summaries and returns a tester-agent run report.</ASSERTION>
     <ASSERTION>MCP submit_test_report highlights LOG evidence refs for developer-agent handoff.</ASSERTION>
+    <ASSERTION>MCP token_savings reports command, adapter, and recent session economics from M-TRACKING.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-16</PHASE_GATE>
+  <PHASE_GATE>Phase-21</PHASE_GATE>
 </VERIFICATION>

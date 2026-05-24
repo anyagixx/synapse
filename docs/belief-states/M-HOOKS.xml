@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-HOOKS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge
+    Module responsibility: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-CONFIG
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, file generation
+      - Scope remains bounded to: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, route-aware plugin and shell hook generation
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

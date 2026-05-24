@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-21" status="done">
+  <NAME>RTK-Style Command Router Upgrade</NAME>
+  <GOAL>Bring Synapse token savings closer to RTK scale with command routing, wider adapters, OpenCode autoproxy coverage, and session/adapter analytics.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-ROUTER" />
+    <MODULE_REF id="M-PROXY" />
+    <MODULE_REF id="M-PROXY-FILTER" />
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-HOOKS" />
+    <MODULE_REF id="M-DASHBOARD" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-ROUTER" status="done">Added RTK-style command router with adapter catalogue and route decisions.</step-1>
+    <step-2 module="M-PROXY" status="done">Connected proxy execution to router metadata and adapter-aware tracking.</step-2>
+    <step-3 module="M-PROXY-FILTER" status="done">Expanded built-in filters for pytest, uv, ruff, mypy, rg, gh/glab, docker compose/logs, kubectl, terraform/tofu, helm, just, bun, deno, and journalctl.</step-3>
+    <step-4 module="M-TRACKING" status="done">Added adapter, route_key, and session_id tracking with migration-safe SQLite schema updates.</step-4>
+    <step-5 module="M-CLI-RUNTIME-COMMANDS" status="done">Added syn proxy --route preview plus syn gain --sessions/--adapters analytics.</step-5>
+    <step-6 module="M-HOOKS" status="done">Expanded OpenCode plugin and shell hook autoproxy coverage with stable SYNAPSE_SESSION_ID propagation.</step-6>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">rtk cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-rtk-router cargo test proxy::router::tests --lib</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-rtk-router cargo test tracking::tests::tracker_records_routed_adapter_and_session_stats --lib</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-rtk-router cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-rtk-router cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-rtk-router cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-rtk-router cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-rtk-router cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

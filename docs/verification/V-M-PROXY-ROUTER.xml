@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-PROXY-ROUTER" module="M-PROXY-ROUTER" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test proxy::router::tests --lib</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Router classifies RTK-like command families including cargo, pytest, gh, docker compose, terraform, and rg.</ASSERTION>
+    <ASSERTION>Router refuses recursive proxying for commands already routed through syn proxy or rtk.</ASSERTION>
+    <ASSERTION>CLI route preview reports adapter and stable route key without executing the wrapped command.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-21</PHASE_GATE>
+</VERIFICATION>

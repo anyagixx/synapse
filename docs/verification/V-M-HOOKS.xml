@@ -9,6 +9,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>OpenCode config merge preserves existing mcp siblings and unrelated root keys.</ASSERTION>
     <ASSERTION>OpenCode config merge accepts JSONC comments and trailing commas before writing normalized JSON.</ASSERTION>
+    <ASSERTION>OpenCode plugin and shell hook autoproxy high-volume RTK-style command families and propagate SYNAPSE_SESSION_ID.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7</PHASE_GATE>
+  <PHASE_GATE>Phase-21</PHASE_GATE>
 </VERIFICATION>

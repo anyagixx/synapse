@@ -1,14 +1,21 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
 // PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting
-// SCOPE: GainCmd, ProxyCmd, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
-// DEPENDS: M-CONFIG, M-TRACKING, M-PROXY, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
-// LINKS: docs/modules/M-CLI.xml
+// SCOPE: GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// DEPENDS: M-CONFIG, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
+// LINKS:
+//   → M-PROXY-ROUTER (depends) - route preview for proxied commands
+//   → M-TRACKING (depends) - token economy analytics
+//   → UC-002 (implements) - CLI exposes bounded execution diagnostics
+//   → NFR-003 (traces_to) - command analytics quantify token savings
 
 // START_MODULE_MAP
 // GainCmd::run — Prints token savings
 // print_savings_graph — Prints ASCII token-savings bars for top commands
+// print_adapter_stats — Prints adapter-level savings
+// print_session_stats — Prints session-level savings
 // ProxyCmd::run — Runs proxied shell commands
+// print_route_decision — Prints command-router decision without execution
 // CompressCmd::run — Compresses or restores files
 // McpCmd::run — Starts MCP server
 // ConfigCmd::run — Prints or opens config
@@ -19,7 +26,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.4.0 - Named config command arity thresholds]
+// LAST_CHANGE: [v4.0.0 — Added RTK route preview and adapter/session gain analytics]
 // END_CHANGE_SUMMARY
 
 use super::{CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, ServeCmd};
@@ -38,6 +45,9 @@ impl GainCmd {
     // PURPOSE: Print token savings analytics
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
+    // LINKS:
+    //   → M-TRACKING (depends) - reads command, adapter, and session economy stats
+    //   → NFR-003 (traces_to) - displays token savings to users and agents
     // START_gain_run
     pub async fn run(&self, config: Config) -> anyhow::Result<()> {
         let tracker = crate::tracking::Tracker::new(&config);
@@ -62,6 +72,12 @@ impl GainCmd {
                 );
             }
         }
+        if self.adapters || !stats.top_adapters.is_empty() {
+            print_adapter_stats(&stats.top_adapters);
+        }
+        if self.sessions {
+            print_session_stats(&stats.recent_sessions);
+        }
         if self.graph {
             print_savings_graph(&stats.top_commands);
         }
@@ -75,6 +91,8 @@ impl GainCmd {
 // INPUTS: { items: &[TrackingCommandStat] — top tracked command savings }
 // OUTPUTS: { stdout graph lines }
 // SIDE_EFFECTS: writes to stdout
+// LINKS:
+//   → NFR-003 (traces_to) - graph summarizes token savings compactly
 // START_print_savings_graph
 fn print_savings_graph(items: &[crate::tracking::TrackingCommandStat]) {
     if items.is_empty() {
@@ -108,16 +126,79 @@ fn print_savings_graph(items: &[crate::tracking::TrackingCommandStat]) {
 }
 // END_print_savings_graph
 
+// START_CONTRACT_print_adapter_stats
+// PURPOSE: Render token savings grouped by routed adapter
+// INPUTS: { items: &[TrackingAdapterStat] }
+// OUTPUTS: { stdout adapter summary lines }
+// SIDE_EFFECTS: writes to stdout
+// LINKS:
+//   → M-PROXY-ROUTER (depends) - adapter names come from route decisions
+//   → NFR-003 (traces_to) - adapter economics highlight high-impact routing
+// START_print_adapter_stats
+fn print_adapter_stats(items: &[crate::tracking::TrackingAdapterStat]) {
+    if items.is_empty() {
+        return;
+    }
+    println!();
+    println!("Top adapters by token savings:");
+    for item in items {
+        println!(
+            "  - {}: {} runs, {} tokens saved, avg {:.1}%",
+            item.adapter, item.count, item.saved_tokens, item.avg_savings_pct
+        );
+    }
+}
+// END_print_adapter_stats
+
+// START_CONTRACT_print_session_stats
+// PURPOSE: Render token savings grouped by session id
+// INPUTS: { items: &[TrackingSessionStat] }
+// OUTPUTS: { stdout session summary lines }
+// SIDE_EFFECTS: writes to stdout
+// LINKS:
+//   → M-TRACKING (depends) - session stats are loaded from tracking database
+//   → NFR-003 (traces_to) - session economics show per-agent-run savings
+// START_print_session_stats
+fn print_session_stats(items: &[crate::tracking::TrackingSessionStat]) {
+    if items.is_empty() {
+        return;
+    }
+    println!();
+    println!("Session economics:");
+    for item in items {
+        println!(
+            "  - {}: {} runs, {} → {} tokens, saved {}, avg {:.1}%",
+            item.session_id,
+            item.count,
+            item.input_tokens,
+            item.output_tokens,
+            item.saved_tokens,
+            item.avg_savings_pct
+        );
+    }
+}
+// END_print_session_stats
+
 impl ProxyCmd {
     // START_CONTRACT_ProxyCmd::run
-    // PURPOSE: Execute a command through the token-saving proxy
+    // PURPOSE: Execute or preview a command through the token-saving proxy
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
-    // SIDE_EFFECTS: runs external command through proxy
+    // SIDE_EFFECTS: may run external command through proxy
+    // LINKS:
+    //   → M-PROXY-ROUTER (depends) - --route previews command classification
+    //   → M-PROXY (depends) - command execution path
+    //   → UC-002 (implements) - shell execution remains observable
     // START_proxy_run
     pub async fn run(&self, config: Config) -> anyhow::Result<()> {
         if self.args.is_empty() {
-            anyhow::bail!("Usage: syn proxy -- <command> [args...]");
+            anyhow::bail!("Usage: syn proxy [--route] -- <command> [args...]");
+        }
+        if self.route {
+            let router = crate::proxy::router::CommandRouter::new();
+            let decision = router.route(&self.args);
+            print_route_decision(&decision);
+            return Ok(());
         }
         let proxy = crate::proxy::Proxy::new(&config);
         let output = proxy.execute(&self.args).await?;
@@ -133,6 +214,26 @@ impl ProxyCmd {
     }
     // END_proxy_run
 }
+
+// START_CONTRACT_print_route_decision
+// PURPOSE: Render a command-router decision for dry-run diagnostics
+// INPUTS: { decision: &RouteDecision }
+// OUTPUTS: { stdout route lines }
+// SIDE_EFFECTS: writes to stdout
+// LINKS:
+//   → M-PROXY-ROUTER (depends) - displays route decision metadata
+//   → NFR-003 (traces_to) - route preview helps agents choose proxied commands
+// START_print_route_decision
+fn print_route_decision(decision: &crate::proxy::router::RouteDecision) {
+    println!("=== Synapse Proxy Route ===");
+    println!("should_proxy: {}", decision.should_proxy);
+    println!("adapter:      {}", decision.adapter);
+    println!("family:       {}", decision.family);
+    println!("route_key:    {}", decision.route_key);
+    println!("filter_key:   {}", decision.filter_key);
+    println!("reason:       {}", decision.reason);
+}
+// END_print_route_decision
 
 impl CompressCmd {
     // START_CONTRACT_CompressCmd::run

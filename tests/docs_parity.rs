@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, public docs, install docs, Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, verify check count, CLI flag truth including route/session/adapter flags, public docs, install docs, Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
 
 // START_MODULE_MAP
@@ -26,7 +26,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.5.0 - Guard public docs to the latest published release installer]
+// LAST_CHANGE: [v4.6.0 - Added proxy route and gain economics flags to CLI parity]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -119,10 +119,10 @@ fn invocation_tokens(rest: &str) -> Vec<String> {
 // OUTPUTS: { &'static [&'static str] — allowed flags }
 fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
     match command {
-        "gain" => &["--graph"],
+        "gain" => &["--graph", "--sessions", "--adapters"],
         "index" => &["--watch", "--no-git"],
         "doctor" => &["--deps"],
-        "proxy" => &["--"],
+        "proxy" => &["--", "--route"],
         "refresh" => &["--fix"],
         "review" => &["--mode", "--profile"],
         "verify" => &["--profile"],

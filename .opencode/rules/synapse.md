@@ -286,4 +286,6 @@ Phase Gate: Call verify_project (phase level) + review_code (full)
 | `lsp_hover` | Get type/signature at a code position |
 | `lsp_references` | Find all usages of a symbol |
 
-Shell commands (git, cargo, npm, etc.) are auto-proxied through `syn proxy` for token savings.
+Shell commands (git, cargo, npm, pytest, rg, gh, docker, kubectl, terraform, etc.) are auto-proxied through `syn proxy` for token savings.
+Use `syn proxy --route -- <cmd>` to inspect the selected adapter without executing the command.
+Use `syn gain --sessions --adapters` when session-level or adapter-level token economics matter.
