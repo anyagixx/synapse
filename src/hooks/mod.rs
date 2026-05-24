@@ -1,9 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-HOOKS
 // PURPOSE: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy
-// SCOPE: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, route-aware plugin and shell hook generation
-// DEPENDS: M-CONFIG
-// LINKS: .opencode/
+// SCOPE: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation
+// DEPENDS: M-CONFIG, M-CLI-RTK-COMMANDS
+// LINKS: .opencode/, docs/phases/Phase-27.xml
 
 // START_MODULE_MAP
 // HookManager — Manages Synapse hook files for AI agent integration
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Expanded OpenCode shell autoproxy command coverage and session tracking]
+// LAST_CHANGE: [v3.1.0 — Delegated OpenCode shell autoproxy decisions to syn rewrite]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -287,19 +287,17 @@ impl HookManager {
 
 export SYNAPSE_SESSION_ID="${SYNAPSE_SESSION_ID:-opencode-$(date +%Y%m%d%H%M%S)-$$}"
 
-syn_proxy_should_proxy() {
-    local cmd="$*"
-    [[ "$cmd" =~ ^(syn\ proxy|rtk\ ) ]] && return 1
-    [[ "$cmd" =~ ^(git|cargo|npm|npx|pnpm|yarn|bun|deno|uv|pytest|python\ -m\ pytest|ruff|mypy|basedpyright|pip|pip3|ls|cat|find|grep|rg|tree|docker|kubectl|helm|terraform|tofu|gh|glab|make|just|go\ build|go\ test|golangci-lint|gradle|gradlew|\./gradlew|dotnet|rake|rspec|pwd|which|du|wc|journalctl|systemctl) ]] && return 0
-    return 1
-}
-
 syn_proxy_exec() {
-    if syn_proxy_should_proxy "$@"; then
-        syn proxy -- "$@"
-    else
+    local rewritten
+    rewritten="$(syn rewrite "$@" 2>/dev/null)" || {
         "$@"
+        return
+    }
+    if [[ -z "$rewritten" || "$rewritten" == "$*" ]]; then
+        "$@"
+        return
     fi
+    bash -lc "$rewritten"
 }
 
 alias git='syn_proxy_exec git'

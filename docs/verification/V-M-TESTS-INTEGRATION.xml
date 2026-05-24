@@ -7,13 +7,14 @@
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
     <COMMAND>cargo test --test integration_test test_tracking_is_scoped_by_canonical_project_path</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Integration tests cover clean config bootstrap, canonical tracking identity, bounded run scenario/action queue JSON, proxy exit-code propagation, RTK shortcuts, route preview, Unicode truncation, and gain graph/session/adapter regressions.</ASSERTION>
+    <ASSERTION>Integration tests cover clean config bootstrap, canonical tracking identity, bounded run scenario/action queue JSON, proxy exit-code propagation, RTK shortcuts, rewrite hook decisions, route preview, Unicode truncation, and gain graph/session/adapter regressions.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-26</PHASE_GATE>
+  <PHASE_GATE>Phase-27</PHASE_GATE>
 </VERIFICATION>

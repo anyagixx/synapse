@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, rewrite hook decisions, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG, M-PROXY, M-PROXY-RUNNER
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
@@ -16,6 +16,7 @@
 // test_filters_verify_cli_runs_inline_tests — Verifies filter inline tests run through CLI
 // test_proxy_evidence_hint_writes_raw_output — Verifies explicit raw evidence artifact contains full unfiltered output
 // test_rtk_read_shortcut_filters_and_preserves_evidence — Verifies first-class read shortcut delegates to proxy
+// test_rewrite_cli_delegates_to_router — Verifies hook-facing command rewrites use proxy router decisions
 // test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
 // test_run_action_cli_plans_and_replays_run — Verifies run action queue CLI plan/replay output
 // test_doctor_and_hooks — Verifies setup diagnostics and hook status
@@ -26,7 +27,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.2.0 — Added RTK read shortcut integration coverage]
+// LAST_CHANGE: [v4.3.0 — Added syn rewrite integration coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -688,6 +689,44 @@ fn test_rtk_read_shortcut_filters_and_preserves_evidence() {
     );
 }
 // END_test_rtk_read_shortcut_filters_and_preserves_evidence
+
+// START_CONTRACT_test_rewrite_cli_delegates_to_router
+// PURPOSE: Verify syn rewrite prints routeable proxy commands and skips unsupported commands for thin hooks
+// SIDE_EFFECTS: runs syn rewrite twice without executing rewritten commands
+// LINKS:
+//   → M-CLI-RTK-COMMANDS (depends) - rewrite command implementation
+//   → M-PROXY-ROUTER (depends) - route decision source of truth
+//   → M-HOOK-OPENCODE-REWRITE (verified_by) - hook delegation contract
+// START_test_rewrite_cli_delegates_to_router
+#[test]
+fn test_rewrite_cli_delegates_to_router() {
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+
+    let out = Command::new(&syn)
+        .args(["rewrite", "git", "status"])
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "syn rewrite routeable command failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&out.stdout).trim(),
+        "syn proxy -- git status"
+    );
+
+    let out = Command::new(&syn)
+        .args(["rewrite", "htop"])
+        .output()
+        .unwrap();
+    assert!(!out.status.success(), "unsupported command should skip");
+    assert!(
+        out.stdout.is_empty(),
+        "unsupported command should not emit rewrite"
+    );
+}
+// END_test_rewrite_cli_delegates_to_router
 
 // START_CONTRACT_test_proxy_route_preview_for_rtk_like_command
 // PURPOSE: Verify syn proxy --route reports an RTK-style adapter decision without executing the command

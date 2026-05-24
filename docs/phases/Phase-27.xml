@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-27" status="done">
+  <NAME>RTK Rewrite Hook Delegation</NAME>
+  <GOAL>Move hook command rewrite decisions into the Synapse binary so OpenCode plugin and shell hooks delegate to one router-backed source of truth.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-MAIN" />
+    <MODULE_REF id="M-HOOKS" />
+    <MODULE_REF id="M-HOOK-OPENCODE-REWRITE" />
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI" status="done">Expose syn rewrite as a hook-facing dry-run command.</step-1>
+    <step-2 module="M-CLI-RTK-COMMANDS" status="done">Implement router-backed rewrite decisions and shell-safe multi-arg output.</step-2>
+    <step-3 module="M-MAIN" status="done">Dispatch RewriteCmd through the binary entry point.</step-3>
+    <step-4 module="M-HOOKS" status="done">Generate OpenCode shell hooks that delegate command decisions to syn rewrite.</step-4>
+    <step-5 module="M-HOOK-OPENCODE-REWRITE" status="done">Update standalone OpenCode rewrite hook to delegate to syn rewrite.</step-5>
+    <step-6 module="M-CAPABILITIES" status="done">Document rewrite and RTK shortcuts as shipped CLI capabilities.</step-6>
+    <step-7 module="M-TESTS-INTEGRATION" status="done">Verify syn rewrite routeable and unsupported command behavior.</step-7>
+    <step-8 module="M-TESTS-PARITY" status="done">Allow shipped grep shortcut in public-doc parity checks.</step-8>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo check --all-targets</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_commands::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_rewrite_cli_delegates_to_router</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity test_no_ghost_commands</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

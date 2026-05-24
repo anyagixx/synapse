@@ -44,6 +44,19 @@ This page lists shipped CLI commands only.
 
 | Command | Description |
 |---------|-------------|
+| `syn read <file>` | Read files through the token-saving proxy |
+| `syn ls [args...]` | List directory contents through the token-saving proxy |
+| `syn tree [args...]` | Show directory tree through the token-saving proxy |
+| `syn find [args...]` | Find files through the token-saving proxy |
+| `syn rg <pattern> [path...]` | Search with ripgrep through the token-saving proxy |
+| `syn grep <pattern> [path...]` | Search with grep through the token-saving proxy |
+| `syn git [args...]` | Run git through the token-saving proxy |
+| `syn cargo [args...]` | Run cargo through the token-saving proxy |
+| `syn npm [args...]` | Run npm through the token-saving proxy |
+| `syn pnpm [args...]` | Run pnpm through the token-saving proxy |
+| `syn npx [args...]` | Run npx through the token-saving proxy |
+| `syn pytest [args...]` | Run pytest through the token-saving proxy |
+| `syn rewrite <cmd>` | Print the hook rewrite command without executing it |
 | `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |
 | `syn proxy --route -- <cmd>` | Preview the selected token-saving adapter without executing the command |
 | `syn gain` | Show token savings analytics |

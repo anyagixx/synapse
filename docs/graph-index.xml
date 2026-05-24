@@ -300,7 +300,9 @@
     <REL source="M-GRAPHRAG-BUILDER" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-HOOK-CLAUDE" target="M-PROXY" type="DEPENDS" />
     <REL source="M-HOOK-CURSOR" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-HOOK-OPENCODE-REWRITE" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-HOOK-OPENCODE-REWRITE" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-HOOKS" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-HOOKS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-PARSER" type="DEPENDS" />
@@ -400,6 +402,7 @@
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-SKILLS" type="DEPENDS" />
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-CAPABILITIES" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-CAPABILITIES" type="DEPENDS" />
+    <REL source="M-TESTS-PARITY" target="M-CLI" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-INSTALL" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-CI" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-CI-RELEASE-SMOKE" type="DEPENDS" />

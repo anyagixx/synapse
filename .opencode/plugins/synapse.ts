@@ -1,27 +1,18 @@
 import type { Plugin } from "@opencode-ai/plugin"
 
-const PROXY_COMMANDS = [
-  "git ", "cargo ", "npm ", "npx ", "pnpm ", "yarn ",
-  "bun ", "deno ", "uv ", "pytest", "python -m pytest",
-  "ruff ", "mypy ", "basedpyright ", "pip ", "pip3 ",
-  "ls", "cat ", "find ", "grep ", "rg ", "tree ", "docker ",
-  "kubectl ", "helm ", "terraform ", "tofu ", "gh ", "glab ",
-  "make ", "just ", "go build", "go test", "golangci-lint ",
-  "gradle ", "gradlew ", "./gradlew ", "dotnet ", "rake ", "rspec ",
-  "pwd", "which ", "du ", "wc ", "journalctl ", "systemctl ",
-]
-
-function shouldProxy(cmd: string): boolean {
-  const trimmed = cmd.trim()
-  if (!trimmed || trimmed.includes("syn proxy --") || trimmed.startsWith("rtk ")) return false
-  return PROXY_COMMANDS.some((p) => trimmed.startsWith(p) || trimmed.includes(` ${p.trim()}`))
-}
-
 function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`
 }
 
 export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
+  let canRewrite = true
+  try {
+    await $`which syn`.quiet()
+  } catch {
+    console.warn("[synapse] syn binary not found in PATH — plugin proxy rewrite disabled")
+    canRewrite = false
+  }
+
   const sessionId = process.env.SYNAPSE_SESSION_ID
     ?? process.env.OPENCODE_SESSION_ID
     ?? `opencode-${Date.now()}`
@@ -39,8 +30,16 @@ export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
     "tool.execute.before": async (input, output) => {
       if (input.tool !== "bash") return
       const cmd: string | undefined = output.args?.command
-      if (!cmd || !shouldProxy(cmd)) return
-      output.args.command = `SYNAPSE_SESSION_ID=${shellQuote(sessionId)} syn proxy -- ${cmd}`
+      if (!cmd || !canRewrite) return
+      try {
+        const result = await $`syn rewrite ${cmd}`.quiet().nothrow()
+        const rewritten = String(result.stdout).trim()
+        if (rewritten && rewritten !== cmd) {
+          output.args.command = `SYNAPSE_SESSION_ID=${shellQuote(sessionId)} ${rewritten}`
+        }
+      } catch {
+        // syn rewrite failed; pass through unchanged.
+      }
     },
 
     "experimental.chat.system.transform": async (_input, output) => {

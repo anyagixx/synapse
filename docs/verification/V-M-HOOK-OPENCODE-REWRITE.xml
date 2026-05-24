@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-HOOK-OPENCODE-REWRITE" module="M-HOOK-OPENCODE-REWRITE" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>OpenCode rewrite hook delegates routeable command decisions to syn rewrite instead of maintaining a separate command-family list.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-27</PHASE_GATE>
 </VERIFICATION>

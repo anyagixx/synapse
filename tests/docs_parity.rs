@@ -1,8 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, CLI flag truth including route/session/adapter flags, public docs, install docs, Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
-// DEPENDS: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
+// SCOPE: Compare README tool count, README command count, verify check count, CLI flag truth including route/session/adapter/rewrite flags, public docs, install docs, Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
+// DEPENDS: M-CAPABILITIES, M-CLI, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
+// LINKS: docs/phases/Phase-27.xml
 
 // START_MODULE_MAP
 // test_mcp_tool_count_matches_capabilities — MCP tool count check
@@ -26,7 +27,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.6.0 - Added proxy route and gain economics flags to CLI parity]
+// LAST_CHANGE: [v4.7.0 - Recognized shipped RTK grep and rewrite command surface]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -186,7 +187,6 @@ fn test_no_ghost_commands() {
         "syn execute",
         "syn fix",
         "syn explain",
-        "syn grep",
         "syn mcp --http",
         "syn mcp-proxy",
         "syn logs",

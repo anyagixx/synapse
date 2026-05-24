@@ -4,12 +4,13 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test hooks::tests::test_merge_synapse_mcp_config_preserves_existing_mcp_sibling --lib</COMMAND>
     <COMMAND>cargo test hooks::tests::test_merge_synapse_mcp_config_accepts_jsonc_comments_and_trailing_commas --lib</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>OpenCode config merge preserves existing mcp siblings and unrelated root keys.</ASSERTION>
     <ASSERTION>OpenCode config merge accepts JSONC comments and trailing commas before writing normalized JSON.</ASSERTION>
-    <ASSERTION>OpenCode plugin and shell hook autoproxy high-volume RTK-style command families and propagate SYNAPSE_SESSION_ID.</ASSERTION>
+    <ASSERTION>OpenCode plugin and shell hook delegate command-family decisions to syn rewrite and propagate SYNAPSE_SESSION_ID.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-21</PHASE_GATE>
+  <PHASE_GATE>Phase-27</PHASE_GATE>
 </VERIFICATION>

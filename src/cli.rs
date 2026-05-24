@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, first-class RTK shortcut commands, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, first-class RTK shortcut commands, rewrite hook decisions, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
@@ -10,10 +10,11 @@
 // Command — Enum of all supported CLI commands
 // *Cmd structs — Clap argument schemas for supported commands
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
+// RewriteCmd — Hook-facing command rewrite dry run
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.2.0 — Added first-class RTK proxy shortcuts]
+// LAST_CHANGE: [v4.3.0 — Added hook-facing syn rewrite command]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -83,6 +84,8 @@ pub enum Command {
     Npx(RtkProxyCmd),
     #[command(about = "Run pytest through the token-saving proxy")]
     Pytest(RtkProxyCmd),
+    #[command(about = "Rewrite a shell command to its Synapse proxy form for agent hooks")]
+    Rewrite(RewriteCmd),
     Run(RunCmd),
     Proxy(ProxyCmd),
     Filters(FiltersCmd),
@@ -199,6 +202,14 @@ pub struct RtkProxyCmd {
     pub args: Vec<String>,
 }
 // END_RtkProxyCmd
+
+// START_RewriteCmd
+#[derive(clap::Args)]
+pub struct RewriteCmd {
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub args: Vec<String>,
+}
+// END_RewriteCmd
 
 // START_RunCmd
 #[derive(clap::Args)]

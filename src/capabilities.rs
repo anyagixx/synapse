@@ -1,9 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts and rewrite, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
-// LINKS: README.md, docs/COMMANDS.md
+// LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml
 
 // START_MODULE_MAP
 // COMMANDS — All shipped CLI commands
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 - Synchronized run history skill capability counts]
+// LAST_CHANGE: [v2.24.0 - Added RTK shortcut and rewrite command capabilities]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -32,6 +32,25 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("verify", "Run profile-aware GRACE verification suite"),
     ("review", "Profile-aware GRACE integrity review"),
     ("status", "Project health report"),
+    ("read", "Read files through the token-saving proxy"),
+    (
+        "ls",
+        "List directory contents through the token-saving proxy",
+    ),
+    ("tree", "Show directory tree through the token-saving proxy"),
+    ("find", "Find files through the token-saving proxy"),
+    ("rg", "Search with ripgrep through the token-saving proxy"),
+    ("grep", "Search with grep through the token-saving proxy"),
+    ("git", "Run git through the token-saving proxy"),
+    ("cargo", "Run cargo through the token-saving proxy"),
+    ("npm", "Run npm through the token-saving proxy"),
+    ("pnpm", "Run pnpm through the token-saving proxy"),
+    ("npx", "Run npx through the token-saving proxy"),
+    ("pytest", "Run pytest through the token-saving proxy"),
+    (
+        "rewrite",
+        "Rewrite a shell command to its Synapse proxy form for agent hooks",
+    ),
     ("proxy", "Run command through token-saving proxy"),
     ("gain", "View token savings analytics"),
     ("compress", "Compress files for AI context"),

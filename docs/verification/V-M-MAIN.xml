@@ -3,12 +3,14 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
     <COMMAND>cargo test --test mcp_protocol test_stdio_keeps_logs_off_stdout_and_notifications_silent</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Tracing writes to stderr so MCP stdio stdout remains a clean JSON-RPC channel.</ASSERTION>
     <ASSERTION>Main dispatch routes first-class RTK shortcuts to RtkProxyCmd without bypassing proxy filtering.</ASSERTION>
+    <ASSERTION>Main dispatch routes RewriteCmd to the hook-facing rewrite implementation.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-26</PHASE_GATE>
+  <PHASE_GATE>Phase-27</PHASE_GATE>
 </VERIFICATION>
