@@ -6,6 +6,7 @@
 // LINKS:
 //   → M-UTILS (depends) - Unicode-safe truncation helpers
 //   → Phase-24 (implements) - RTK filter trust and verification parity
+//   → Phase-37 (implements) - RTK built-in precedence for overlapping filters
 //   ← V-M-PROXY-FILTER (verified_by) - filter schema and trust verification
 
 // START_MODULE_MAP
@@ -18,7 +19,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.1.0 — Added separate RTK built-in filter pack loading]
+// LAST_CHANGE: [v4.2.0 — Load RTK built-ins before legacy built-ins for overlapping command parity]
 // END_CHANGE_SUMMARY
 
 use regex::Regex;
@@ -377,9 +378,9 @@ impl FilterEngine {
     }
 
     fn load_builtin_filters(&mut self) {
-        let parsed = parse_filter_file(include_str!("builtin_filters.toml"), "builtin");
-        self.extend_from_parsed(parsed, FilterSource::BuiltIn);
         let parsed = parse_filter_file(include_str!("rtk_builtin_filters.toml"), "rtk-builtin");
+        self.extend_from_parsed(parsed, FilterSource::BuiltIn);
+        let parsed = parse_filter_file(include_str!("builtin_filters.toml"), "builtin");
         self.extend_from_parsed(parsed, FilterSource::BuiltIn);
     }
 
@@ -781,6 +782,36 @@ mod tests {
             .verify(Some("dotnet-build"), true)
             .expect("verify dotnet-build");
         assert!(results.passed(true), "{results:?}");
+    }
+
+    #[test]
+    fn test_rtk_builtin_filters_precede_legacy_for_overlapping_commands() {
+        let engine = FilterEngine::new();
+        let terraform_filter = engine
+            .find_filter("terraform plan")
+            .expect("terraform-plan RTK filter should load");
+        assert_eq!(filter_display_name(terraform_filter), "terraform-plan");
+
+        let tofu_filter = engine
+            .find_filter("tofu plan")
+            .expect("tofu-plan RTK filter should load");
+        assert_eq!(filter_display_name(tofu_filter), "tofu-plan");
+    }
+
+    #[test]
+    fn test_gradle_filter_matches_bare_and_wrapper_commands() {
+        let engine = FilterEngine::new();
+        for command in [
+            "gradle build",
+            "gradlew test",
+            "./gradle build",
+            "./gradlew test",
+        ] {
+            let filter = engine
+                .find_filter(command)
+                .unwrap_or_else(|| panic!("gradle RTK filter should match {command}"));
+            assert_eq!(filter_display_name(filter), "gradle");
+        }
     }
 
     #[test]
