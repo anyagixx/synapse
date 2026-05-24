@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-55" status="planned">
+<PHASE id="Phase-55" status="active">
   <NAME>Full Agent Hook Parity</NAME>
   <GOAL>Expand Synapse auto-proxy hooks from OpenCode-focused integration to RTK-level multi-agent hook processors.</GOAL>
   <MODULE_REFS>

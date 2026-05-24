@@ -9,7 +9,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>VERIFY_CHECKS lists typed LINKS, structured LOG, belief-state, requirements, technology, development-plan DataFlow/GenerationOrder, mental-test, traceability, cascade-no-drift, non-human pattern, and anchor syntax checks exposed by syn verify/status capability metadata.</ASSERTION>
-    <ASSERTION>COMMANDS lists shipped RTK shortcut, local adapter, session/economics, rewrite, and filters commands documented in docs/COMMANDS.md.</ASSERTION>
+    <ASSERTION>COMMANDS lists shipped RTK shortcut, local adapter, .NET artifact adapter, session/economics, rewrite, and filters commands documented in docs/COMMANDS.md.</ASSERTION>
     <ASSERTION>RTK_DISCOVERY_CAPABILITIES publishes bounded discover and learn metadata for CLI, MCP, and status consumers.</ASSERTION>
     <ASSERTION>MCP capability counts include cascade_impact, cascade_execute, run_test_guide, and submit_test_report as core tools.</ASSERTION>
   </TRACE_ASSERTIONS>

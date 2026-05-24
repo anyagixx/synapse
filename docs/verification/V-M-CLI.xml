@@ -20,6 +20,7 @@
     <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
     <COMMAND>cargo run --quiet -- discover docker ps</COMMAND>
     <COMMAND>cargo run --quiet -- learn --json</COMMAND>
+    <COMMAND>cargo test cli::rtk_dotnet_artifacts::tests --lib</COMMAND>
     <COMMAND>cargo run --quiet -- session --json</COMMAND>
     <COMMAND>cargo run --quiet -- cc-economics --format json</COMMAND>
     <COMMAND>cargo test hooks::tests::test_hook_audit_trusts_generated_opencode_assets --lib</COMMAND>
@@ -34,6 +35,7 @@
     <ASSERTION>CLI schema accepts RTK language ecosystem shortcuts including ruff, mypy, basedpyright, pip, uv, next, playwright, prettier, prisma, tsc, vitest, and gradlew.</ASSERTION>
     <ASSERTION>CLI schema accepts local RTK adapters json, deps, env, and wc with documented flags.</ASSERTION>
     <ASSERTION>CLI schema accepts local RTK system adapters pipe, log, and smart with documented flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts .NET artifact adapters binlog, dotnet-format-report, and dotnet-trx.</ASSERTION>
     <ASSERTION>CLI schema accepts bounded RTK discover and learn diagnostics with documented JSON/limit flags.</ASSERTION>
     <ASSERTION>CLI schema accepts session --json and cc-economics --format json/csv/text analytics flags.</ASSERTION>
     <ASSERTION>CLI schema accepts hooks audit/check with --json for trusted OpenCode hook diagnostics.</ASSERTION>

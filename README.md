@@ -239,6 +239,9 @@ my-project/
 | `syn proxy -- <cmd>` | Ручной прокси |
 | `syn proxy --route -- <cmd>` | Показать выбранный token-saving adapter без запуска команды |
 | `syn gt <cmd>` | Graphite stacked-PR команды через token-saving proxy |
+| `syn binlog <path>` | Краткая диагностика MSBuild binlog |
+| `syn dotnet-format-report <path>` | Сводка dotnet format JSON report |
+| `syn dotnet-trx <path-or-dir>` | Сводка TRX test results |
 | `syn gain` | Статистика экономии |
 | `syn gain --graph` | Статистика экономии с ASCII-графом |
 | `syn gain --sessions --adapters` | Экономика по сессиям и command adapters |

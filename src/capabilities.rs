@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, core RTK adapters, session/economics analytics, discover/learn diagnostics, hook processors, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discover/learn diagnostics, hook processors, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml, docs/phases/Phase-54.xml, docs/phases/Phase-56.xml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.31.0 - Added Graphite, session, and cc-economics RTK surfaces]
+// LAST_CHANGE: [v2.32.0 - Added .NET artifact RTK adapter surfaces]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -133,6 +133,12 @@ pub const COMMANDS: &[(&str, &str)] = &[
         "learn",
         "Show bounded RTK learning guidance for recurring misses",
     ),
+    ("binlog", "Summarize MSBuild binary log diagnostics"),
+    (
+        "dotnet-format-report",
+        "Summarize dotnet format JSON reports",
+    ),
+    ("dotnet-trx", "Summarize dotnet TRX test result files"),
     (
         "session",
         "Show RTK adoption and token savings by tracked Synapse session",

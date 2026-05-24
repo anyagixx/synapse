@@ -2,7 +2,7 @@
 <MODULE id="M-CLI" type="ENTRY_POINT" status="active">
   <NAME>M-CLI</NAME>
   <PURPOSE>CLI schema facade — clap-powered top-level parser, command enum, and command argument structs</PURPOSE>
-  <SCOPE>SynCli, Command enum, command argument structs including GRACE --profile flags, run scenario/action flags, expanded RTK proxy shortcuts including Graphite and container shortcuts, local RTK adapters, local RTK system adapters, session/cc-economics analytics, discover/learn diagnostics, hooks audit --json, rtk-parity inventory and --full matrix flags, rewrite hook decisions, doctor --deps, gain --graph/--sessions/--adapters, proxy --route/--evidence, filters verify/trust controls, stdio-only mcp command, and CI action enum</SCOPE>
+  <SCOPE>SynCli, Command enum, command argument structs including GRACE --profile flags, run scenario/action flags, expanded RTK proxy shortcuts including Graphite and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, session/cc-economics analytics, discover/learn diagnostics, hooks audit --json, rtk-parity inventory and --full matrix flags, rewrite hook decisions, doctor --deps, gain --graph/--sessions/--adapters, proxy --route/--evidence, filters verify/trust controls, stdio-only mcp command, and CI action enum</SCOPE>
   <FILES>
     <FILE>src/cli.rs</FILE>
   </FILES>

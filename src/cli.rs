@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
@@ -12,6 +12,7 @@
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
 // PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
+// BinlogCmd/DotnetFormatReportCmd/DotnetTrxCmd — Local .NET artifact summarizers
 // ErrCmd/TestCmd/DiffCmd/SummaryCmd — Core RTK-style adapters
 // SessionCmd/CcEconomicsCmd — Local RTK session and economics analytics
 // DiscoverCmd/LearnCmd — Bounded RTK discovery and learning diagnostics
@@ -22,7 +23,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.6.0 — Added Graphite shortcut plus RTK session/economics schemas]
+// LAST_CHANGE: [v5.7.0 — Added .NET artifact RTK adapter schemas]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -31,6 +32,7 @@ mod rtk_adapters;
 mod rtk_commands;
 mod rtk_core_adapters;
 mod rtk_discovery;
+mod rtk_dotnet_artifacts;
 mod rtk_economics;
 mod rtk_full_parity;
 mod rtk_hook_processors;
@@ -220,6 +222,15 @@ pub enum Command {
     Discover(DiscoverCmd),
     #[command(about = "Show bounded RTK learning guidance for recurring misses")]
     Learn(LearnCmd),
+    #[command(name = "binlog", about = "Summarize MSBuild binary log diagnostics")]
+    Binlog(BinlogCmd),
+    #[command(
+        name = "dotnet-format-report",
+        about = "Summarize dotnet format JSON reports"
+    )]
+    DotnetFormatReport(DotnetFormatReportCmd),
+    #[command(name = "dotnet-trx", about = "Summarize dotnet TRX test result files")]
+    DotnetTrx(DotnetTrxCmd),
     #[command(about = "Show RTK adoption and token savings by tracked Synapse session")]
     Session(SessionCmd),
     #[command(
@@ -488,6 +499,30 @@ pub struct LearnCmd {
     pub json: bool,
 }
 // END_LearnCmd
+
+// START_BinlogCmd
+#[derive(clap::Args)]
+#[command(about = "Summarize MSBuild binary log diagnostics")]
+pub struct BinlogCmd {
+    pub path: PathBuf,
+}
+// END_BinlogCmd
+
+// START_DotnetFormatReportCmd
+#[derive(clap::Args)]
+#[command(about = "Summarize dotnet format JSON reports")]
+pub struct DotnetFormatReportCmd {
+    pub path: PathBuf,
+}
+// END_DotnetFormatReportCmd
+
+// START_DotnetTrxCmd
+#[derive(clap::Args)]
+#[command(about = "Summarize dotnet TRX test result files")]
+pub struct DotnetTrxCmd {
+    pub path: PathBuf,
+}
+// END_DotnetTrxCmd
 
 // START_SessionCmd
 #[derive(clap::Args)]

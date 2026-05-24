@@ -21,7 +21,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Classified proxy-equivalent RTK command modules and new analytics commands]
+// LAST_CHANGE: [v1.2.0 - Closed command-module parity with .NET artifact adapters and smart local-llm equivalence]
 // END_CHANGE_SUMMARY
 
 use serde::Serialize;
@@ -403,8 +403,11 @@ fn synapse_top_level_commands() -> BTreeSet<String> {
 // START_synapse_specialized_modules
 fn synapse_specialized_modules() -> BTreeSet<String> {
     [
+        "binlog",
         "deps",
         "diff-cmd",
+        "dotnet-format-report",
+        "dotnet-trx",
         "env",
         "err",
         "format-cmd",
@@ -617,6 +620,10 @@ fn module_equivalents() -> BTreeMap<String, String> {
         ("json-cmd".into(), "json".into()),
         ("ls".into(), "ls proxy shortcut plus system router".into()),
         ("log-cmd".into(), "log".into()),
+        (
+            "local-llm".into(),
+            "smart heuristic source summarizer".into(),
+        ),
         (
             "mypy-cmd".into(),
             "mypy proxy shortcut plus python-tooling router".into(),

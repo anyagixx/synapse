@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: RTK parity inventory gate — compares Synapse RTK coverage against source and release-gated parity domains
-// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including Graphite and container shortcuts, discover/learn, hook audit, session/economics analytics inventory, optional full RTK parity matrix handoff, compact/JSON report rendering
+// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including Graphite and container shortcuts, discover/learn, hook audit, local adapter and .NET artifact adapter inventory, session/economics analytics inventory, optional full RTK parity matrix handoff, compact/JSON report rendering
 // DEPENDS: M-CLI, M-PROXY-FILTER, M-PROXY-ROUTER, M-HOOKS, M-TRACKING, M-RTK-FULL-PARITY
 // LINKS:
 //   -> M-CLI (depends) - exposes the rtk-parity command schema
@@ -27,7 +27,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.6.0 - Added Graphite shortcut plus session/economics parity inventory]
+// LAST_CHANGE: [v1.7.0 - Added .NET artifact adapter inventory]
 // END_CHANGE_SUMMARY
 
 use super::rtk_full_parity::{build_full_rtk_parity_report, print_full_rtk_parity_report};
@@ -102,7 +102,18 @@ const PROXY_SHORTCUTS: &[&str] = &[
     "lint",
     "format",
 ];
-const LOCAL_ADAPTERS: &[&str] = &["json", "deps", "env", "wc", "pipe", "log", "smart"];
+const LOCAL_ADAPTERS: &[&str] = &[
+    "json",
+    "deps",
+    "env",
+    "wc",
+    "pipe",
+    "log",
+    "smart",
+    "binlog",
+    "dotnet-format-report",
+    "dotnet-trx",
+];
 const HOOKS: &[&str] = &[
     "opencode-rewrite",
     "hooks install",
@@ -131,7 +142,7 @@ const ANALYTICS: &[&str] = &[
 const PROXY_SHORTCUTS_NOTE: &str =
     "Phase-45 adds common proxy shortcuts; Phase-47 adds language ecosystem shortcuts; Phase-48 adds container shortcuts; Phase-54 adds Graphite.";
 const LOCAL_ADAPTERS_NOTE: &str =
-    "Phase-46 adds pipe, log, and smart local system adapters; Phase-47 evaluates additional specialized adapters.";
+    "Phase-46 adds pipe, log, and smart local system adapters; Phase-54 adds .NET artifact adapters.";
 
 // START_public_api
 
@@ -648,8 +659,19 @@ mod tests {
         let section =
             static_inventory_section("local-adapters", "tracked", false, LOCAL_ADAPTERS, &[]);
 
-        assert_eq!(section.synapse_count, 7);
-        for adapter in ["json", "deps", "env", "wc", "pipe", "log", "smart"] {
+        assert_eq!(section.synapse_count, 10);
+        for adapter in [
+            "json",
+            "deps",
+            "env",
+            "wc",
+            "pipe",
+            "log",
+            "smart",
+            "binlog",
+            "dotnet-format-report",
+            "dotnet-trx",
+        ] {
             assert!(section.items.contains(&adapter.to_string()), "{adapter}");
         }
     }

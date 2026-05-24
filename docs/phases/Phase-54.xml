@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-54" status="active">
+<PHASE id="Phase-54" status="done">
   <NAME>Ecosystem RTK Adapter Parity</NAME>
   <GOAL>Close RTK command-specific adapter gaps across JavaScript, Python, Rust, cloud, data, and infrastructure ecosystems.</GOAL>
   <MODULE_REFS>
@@ -9,17 +9,19 @@
   </MODULE_REFS>
   <STEPS>
     <step-1 module="M-CLI-RTK-COMMANDS" status="done">Port or prove equivalence for JS/TS adapters such as jest, vitest, tsc, next, lint, format, prisma, and playwright.</step-1>
-    <step-2 module="M-CLI-RTK-COMMANDS" status="active">Port or prove equivalence for Python, Rust, Go, Ruby, .NET, JVM/build, infrastructure, and Graphite adapters; generic proxy-equivalent modules are now classified, with only binlog, dotnet report/TRX, and local-llm still missing.</step-2>
+    <step-2 module="M-CLI-RTK-COMMANDS" status="done">Port or prove equivalence for Python, Rust, Go, Ruby, .NET, JVM/build, infrastructure, and Graphite adapters; proxy-equivalent modules are classified, .NET artifact adapters are implemented, and local-llm maps to smart.</step-2>
     <step-3 module="M-PROXY-FILTER" status="done">Add missing TOML filters only where command-specific parsing is not required; Graphite log/submit/sync filters now verify inline.</step-3>
   </STEPS>
   <VERIFICATION>
     <CHECK status="passed">cargo test cli::rtk_parity::tests --lib</CHECK>
     <CHECK status="passed">cargo test cli::rtk_full_parity::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_dotnet_artifacts::tests --lib</CHECK>
     <CHECK status="passed">cargo test proxy::router::tests --lib</CHECK>
     <CHECK status="passed">cargo run --quiet -- filters verify --filter gt-log</CHECK>
     <CHECK status="passed">cargo run --quiet -- filters verify --filter gt-submit</CHECK>
     <CHECK status="passed">cargo run --quiet -- filters verify --filter gt-sync</CHECK>
     <CHECK status="passed">cargo run --quiet -- gt --route log</CHECK>
     <CHECK status="passed">cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --full</CHECK>
+    <CHECK status="passed">cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --full --ci</CHECK>
   </VERIFICATION>
 </PHASE>

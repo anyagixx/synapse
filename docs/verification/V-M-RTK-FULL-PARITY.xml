@@ -12,7 +12,7 @@
     <ASSERTION>Full parity mode must distinguish implemented, equivalent, superseded, and missing RTK coverage.</ASSERTION>
     <ASSERTION>Full parity mode must classify proxy-equivalent command modules separately from truly missing specialized RTK modules.</ASSERTION>
     <ASSERTION>Integration parity --ci remains backwards-compatible and does not fail because future full-RTK work is still planned.</ASSERTION>
-    <ASSERTION>Full parity --ci fails while any RTK command, hook processor, or command-module surface remains missing.</ASSERTION>
+    <ASSERTION>Full parity --ci fails while any RTK command, hook processor, or command-module surface remains missing and passes when missing_total is zero.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-51</PHASE_GATE>
 </VERIFICATION>

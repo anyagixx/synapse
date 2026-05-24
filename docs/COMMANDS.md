@@ -102,6 +102,9 @@ This page lists shipped CLI commands only.
 | `syn discover --json --limit 10` | Render bounded discovery diagnostics as JSON |
 | `syn learn` | Show bounded RTK learning guidance for recurring misses |
 | `syn learn --json` | Render bounded RTK learning guidance as JSON |
+| `syn binlog <path>` | Summarize MSBuild binary log diagnostics |
+| `syn dotnet-format-report <path>` | Summarize dotnet format JSON reports |
+| `syn dotnet-trx <path-or-dir>` | Summarize dotnet TRX test results |
 | `syn session` | Show tracked RTK session token savings |
 | `syn session --json` | Render tracked RTK session savings as JSON |
 | `syn cc-economics --format json` | Render local token economics from Synapse tracking |
