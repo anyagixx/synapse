@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TRACKING
 // PURPOSE: SQLite tracking and provenance ledger — records route-aware token usage plus autonomous run events by canonical project identity and provides stats
-// SCOPE: Tracker struct, canonical project identity, SQLite schema, route-aware token recording, provenance event recording, session/adapter stats querying, TrackingStats and RunEvent models
+// SCOPE: Tracker struct, canonical project identity, SQLite schema, route-aware token recording, provenance event recording, RTK coverage counts, session/adapter stats querying, TrackingStats and RunEvent models
 // DEPENDS: M-CONFIG
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - adapter and route metadata source
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Added adapter and session token economy tracking]
+// LAST_CHANGE: [v3.1.0 — Added RTK adapter/session coverage counts to token economics]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -286,6 +286,25 @@ impl Tracker {
         })?;
 
         let mut stmt = conn.prepare(
+            "SELECT
+                COUNT(DISTINCT CASE
+                    WHEN adapter IS NOT NULL AND adapter != '' THEN adapter
+                    ELSE 'passthrough'
+                END),
+                COUNT(DISTINCT CASE
+                    WHEN session_id IS NOT NULL AND session_id != '' THEN session_id
+                    ELSE 'local'
+                END)
+             FROM commands
+             WHERE project_path = ?1",
+        )?;
+        stmt.query_row(rusqlite::params![project.clone()], |row| {
+            stats.adapter_groups = row.get(0)?;
+            stats.session_groups = row.get(1)?;
+            Ok(())
+        })?;
+
+        let mut stmt = conn.prepare(
             "SELECT CASE
                     WHEN route_key IS NOT NULL AND route_key != '' THEN route_key
                     WHEN instr(original_cmd, ' ') > 0 THEN substr(original_cmd, 1, instr(original_cmd, ' ') - 1)
@@ -298,7 +317,7 @@ impl Tracker {
              WHERE project_path = ?1
              GROUP BY command_name
              ORDER BY saved DESC, count DESC
-             LIMIT 5",
+             LIMIT 12",
         )?;
         let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
             Ok(TrackingCommandStat {
@@ -324,7 +343,7 @@ impl Tracker {
              WHERE project_path = ?1
              GROUP BY adapter_name
              ORDER BY saved DESC, count DESC
-             LIMIT 8",
+             LIMIT 12",
         )?;
         let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
             Ok(TrackingAdapterStat {
@@ -353,7 +372,7 @@ impl Tracker {
              WHERE project_path = ?1
              GROUP BY session_name
              ORDER BY last_seen DESC
-             LIMIT 8",
+             LIMIT 12",
         )?;
         let rows = stmt.query_map(rusqlite::params![project], |row| {
             Ok(TrackingSessionStat {
@@ -543,6 +562,8 @@ pub struct TrackingStats {
     pub total_output_tokens: u64,
     pub total_saved_tokens: u64,
     pub avg_savings_pct: f64,
+    pub adapter_groups: u64,
+    pub session_groups: u64,
     pub top_commands: Vec<TrackingCommandStat>,
     pub top_adapters: Vec<TrackingAdapterStat>,
     pub recent_sessions: Vec<TrackingSessionStat>,
@@ -610,6 +631,10 @@ mod tests {
             .record_routed("cargo test --all", 100, 25, "rust-cargo", "cargo test")
             .await
             .unwrap();
+        tracker
+            .record_routed("docker ps", 80, 20, "infra-cli", "docker ps")
+            .await
+            .unwrap();
 
         let stats = tracker.get_stats().await.unwrap();
         std::env::set_current_dir(old_cwd).unwrap();
@@ -617,11 +642,13 @@ mod tests {
             std::env::remove_var("SYNAPSE_SESSION_ID");
         }
 
-        assert_eq!(stats.total_commands, 1);
+        assert_eq!(stats.total_commands, 2);
+        assert_eq!(stats.adapter_groups, 2);
+        assert_eq!(stats.session_groups, 1);
         assert_eq!(stats.top_commands[0].command, "cargo test");
         assert_eq!(stats.top_adapters[0].adapter, "rust-cargo");
         assert_eq!(stats.recent_sessions[0].session_id, "session-router-test");
-        assert_eq!(stats.recent_sessions[0].saved_tokens, 75);
+        assert_eq!(stats.recent_sessions[0].saved_tokens, 135);
     }
 }
 

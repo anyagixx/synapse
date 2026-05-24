@@ -4,6 +4,7 @@
     <COMMAND>SYN_RELEASE_TAG=v2.6.0 bash scripts/release_version_guard.sh</COMMAND>
     <COMMAND>SYN_RELEASE_TAG=v2.6.0 bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
+    <COMMAND>bash scripts/rtk_release_gate.sh</COMMAND>
     <COMMAND>cargo test --test docs_parity</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
@@ -15,11 +16,16 @@
     <MARKER>[CI][release_install_smoke][PACKAGE]</MARKER>
     <MARKER>[CI][release_install_smoke][CHECKSUM]</MARKER>
     <MARKER>[CI][release_install_smoke][RUN]</MARKER>
+    <MARKER>[CI][rtk_release_gate][PARITY]</MARKER>
+    <MARKER>[CI][rtk_release_gate][HOOKS]</MARKER>
+    <MARKER>[CI][rtk_release_gate][ECONOMICS]</MARKER>
+    <MARKER>[CI][rtk_release_gate][PASS]</MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Release version guard rejects tags that differ from v&lt;Cargo.toml package.version&gt; before release packaging.</ASSERTION>
     <ASSERTION>Release freshness guard rejects stale already-published tags and requires exact tag checkout in release context.</ASSERTION>
     <ASSERTION>Release smoke builds with locked dependencies, packages installer-facing Linux/macOS target tarballs, verifies checksum sidecars, extracts artifacts, and asserts packaged syn --version equals Cargo.toml package.version on runnable host targets.</ASSERTION>
+    <ASSERTION>RTK release gate checks parity inventory, representative filters, rewrite outputs, isolated hook install/audit, discover/learn diagnostics, gain economics, verify, and full review.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-15</PHASE_GATE>
+  <PHASE_GATE>Phase-50</PHASE_GATE>
 </VERIFICATION>

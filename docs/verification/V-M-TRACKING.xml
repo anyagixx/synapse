@@ -14,7 +14,8 @@
     <ASSERTION>SQLite open, schema, insert, and query errors are returned to callers.</ASSERTION>
     <ASSERTION>Run-event reads and writes use the same canonical project identity under isolated cwd test execution.</ASSERTION>
     <ASSERTION>Route-aware tracking stores adapter, route_key, and session_id and reports adapter/session aggregate savings.</ASSERTION>
+    <ASSERTION>Token economics include adapter_groups and session_groups so RTK coverage can be audited in gain output.</ASSERTION>
     <ASSERTION>Local RTK adapters and system adapters record adapter-level savings through the shared tracking path.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-46</PHASE_GATE>
+  <PHASE_GATE>Phase-50</PHASE_GATE>
 </VERIFICATION>

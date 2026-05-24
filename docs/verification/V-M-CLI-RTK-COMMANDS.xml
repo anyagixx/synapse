@@ -7,6 +7,7 @@
     <COMMAND>cargo test cli::rtk_system_adapters::tests --lib</COMMAND>
     <COMMAND>cargo test cli::rtk_parity::tests --lib</COMMAND>
     <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
+    <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --json --ci</COMMAND>
     <COMMAND>cargo run --quiet -- make --route test</COMMAND>
     <COMMAND>cargo run --quiet -- dotnet --route test</COMMAND>
     <COMMAND>cargo run --quiet -- ruff --route check .</COMMAND>
@@ -41,7 +42,7 @@
     <ASSERTION>syn rewrite preserves safe fd-merge redirects such as 2&gt;&amp;1 after proxied commands while keeping file redirects and non-trailing redirect tokens pass-through.</ASSERTION>
     <ASSERTION>syn rewrite preserves transparent shell prefix builtins including builtin and nocorrect before proxied commands.</ASSERTION>
     <ASSERTION>syn rewrite treats expanded Synapse shortcuts such as syn gh, syn aws, syn go, syn make, syn helm, syn kubectl, syn docker, syn podman, syn pipe, syn log, syn smart, syn ruff, syn tsc, and syn vitest as already token-safe.</ASSERTION>
-    <ASSERTION>syn rtk-parity emits a machine-checkable inventory and fails CI when critical filter or router-family parity gaps exist.</ASSERTION>
+    <ASSERTION>syn rtk-parity emits a machine-checkable inventory, reports Synapse RTK integration readiness, tracks discover/learn, hook audit, and analytics surfaces as implemented, and fails CI when critical filter or router-family parity gaps exist.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-49</PHASE_GATE>
+  <PHASE_GATE>Phase-50</PHASE_GATE>
 </VERIFICATION>

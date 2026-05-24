@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-HOOKS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy
+    Module responsibility: Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: Implement only the declared scope while preserving dependencies: M-CONFIG
+      - PROCESSING: Install OpenCode rules/plugin/MCP/shell hook files, audit trusted syn rewrite/session markers, and preserve dependencies: M-CONFIG, M-CLI-RTK-COMMANDS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, route-aware plugin and shell hook generation
+      - Scope remains bounded to: HookManager struct, install/uninstall/status/audit for opencode agent, JSONC-aware MCP config merge, route-aware plugin and shell hook generation, and trust-marker diagnostics
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -16,6 +16,7 @@
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - hook audit fails closed on missing/stale OpenCode files and passes for generated install assets
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

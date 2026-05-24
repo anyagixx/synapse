@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn flags, public docs, install docs, Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit flags, public docs, install docs, Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-CLI, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
 // LINKS: docs/phases/Phase-27.xml
 
@@ -27,7 +27,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.0.0 - Recognized RTK discover/learn command flags]
+// LAST_CHANGE: [v5.1.0 - Recognized hooks audit JSON flag]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -126,6 +126,7 @@ fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
         "discover" => &["--json", "--limit"],
         "env" => &["--filter", "--show-all"],
         "filters" => &["--filter", "--require-all"],
+        "hooks" => &["--json"],
         "json" => &["--depth", "--keys-only"],
         "learn" => &["--json"],
         "pipe" => &["--filter"],

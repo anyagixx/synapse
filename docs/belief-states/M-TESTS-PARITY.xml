@@ -7,7 +7,7 @@
       - PROCESSING: Compare public docs against capability metadata, command flags, installer truth, release workflows, and support promises while preserving dependencies: M-CAPABILITIES, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Compare MCP capability counts including cascade_impact, cascade_execute, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, and submit_test_report, CLI command and flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn flags, public install URLs, Linux/macOS release artifact matrix, checksum integrity, release tag/version/freshness policy, release-candidate dry-run policy and summary evidence, public fresh-install smoke evidence pinned to commit source refs, install support diagnostics, pre-tag source fallback, generated release notes, strict cargo audit policy, platform support claims, package naming truth, and release smoke coverage
+      - Scope remains bounded to: Compare MCP capability counts including cascade_impact, cascade_execute, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, and submit_test_report, CLI command and flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit flags, public install URLs, Linux/macOS release artifact matrix, checksum integrity, release tag/version/freshness policy, release-candidate dry-run policy and summary evidence, public fresh-install smoke evidence pinned to commit source refs, install support diagnostics, pre-tag source fallback, generated release notes, strict cargo audit policy, platform support claims, package naming truth, and release smoke coverage
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Let docs_parity fail closed on public command docs and add allowed flags only for shipped commands
@@ -16,7 +16,7 @@
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
-    - docs_parity accepts discover/learn/pipe/rtk-parity flags only through explicit allowed flag metadata
+    - docs_parity accepts discover/learn/hooks-audit/pipe/rtk-parity flags only through explicit allowed flag metadata
     - docs_parity, verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - Over-broad allowed flags can hide real public docs drift

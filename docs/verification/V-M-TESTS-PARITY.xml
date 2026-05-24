@@ -13,10 +13,10 @@
     <ASSERTION>Docs parity tests block ghost CLI commands, unimplemented MCP flags, unsupported command flags including proxy/gain/rewrite/filter/local RTK adapter/discover/learn flags, unsupported installer URLs, obsolete synapse-ai release paths, unsupported Windows install claims, and public docs that drift from the latest published release installer URL across README, INSTALL, COMMANDS, FAQ, QUICKSTART, WORKFLOW, and SUPPORT.</ASSERTION>
     <ASSERTION>Docs parity tests require package metadata to avoid the crates.io syn parser conflict while preserving syn binary/library names.</ASSERTION>
     <ASSERTION>Docs parity tests require installer dry-run mapping, release workflow artifacts, checksum aggregation, tag/version/freshness guards, generated release notes, strict cargo audit warnings, pre-tag source fallback, and release smoke artifact naming to describe the same Linux/macOS release matrix.</ASSERTION>
-    <ASSERTION>Docs parity accepts documented RTK discover, learn, pipe, and rtk-parity flags only when they are published in the capabilities registry.</ASSERTION>
+    <ASSERTION>Docs parity accepts documented RTK discover, learn, pipe, hooks audit, and rtk-parity flags only when they are published in the capabilities registry.</ASSERTION>
     <ASSERTION>Docs parity tests require push CI to declare Linux/macOS public-installer fresh install evidence pinned to SYN_INSTALL_SOURCE_REF.</ASSERTION>
     <ASSERTION>Release candidate parity tests require manual dry-run workflow permissions to stay read-only, checkout the requested candidate ref, validate release tag/notes/checksums/installer mapping, capture fresh-install evidence, and block publishing actions before the actual release workflow runs.</ASSERTION>
     <ASSERTION>Support readiness tests require installer diagnose mode, precise OS/architecture diagnostic status, actionable unsupported-platform guidance, and support docs that keep Windows packaging deferred until release artifacts exist.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-49</PHASE_GATE>
+  <PHASE_GATE>Phase-50</PHASE_GATE>
 </VERIFICATION>

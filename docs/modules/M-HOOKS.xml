@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-HOOKS" type="INTEGRATION" status="active">
   <NAME>M-HOOKS</NAME>
-  <PURPOSE>Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy</PURPOSE>
-  <SCOPE>HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation</SCOPE>
+  <PURPOSE>Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy</PURPOSE>
+  <SCOPE>HookManager struct, install/uninstall/status/audit for opencode agent, JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation, and trusted hook marker diagnostics</SCOPE>
   <FILES>
     <FILE>src/hooks/mod.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-CLI-RTK-COMMANDS</DEPENDS>
-  <LINKS>.opencode/,docs/phases/Phase-21.xml,docs/phases/Phase-27.xml</LINKS>
+  <LINKS>.opencode/,docs/phases/Phase-21.xml,docs/phases/Phase-27.xml,docs/phases/Phase-50.xml</LINKS>
   <VERIFICATION_REF>V-M-HOOKS</VERIFICATION_REF>
 </MODULE>

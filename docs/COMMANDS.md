@@ -11,6 +11,7 @@ This page lists shipped CLI commands only.
 | `syn doctor --deps` | Include Python/pip and requirements dependency diagnostics |
 | `syn hooks install` | Install Synapse hooks for supported agents |
 | `syn hooks status` | Show hook installation status |
+| `syn hooks audit --json` | Audit OpenCode hook trust markers and MCP/rewrite/session wiring |
 
 ## Code Navigation
 

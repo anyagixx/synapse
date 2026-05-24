@@ -109,6 +109,11 @@
     <REL source="M-CI" target="M-TESTS-PARITY" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-BUILD" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-INSTALL" type="DEPENDS" />
+    <REL source="M-CI-RELEASE-SMOKE" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
+    <REL source="M-CI-RELEASE-SMOKE" target="M-HOOKS" type="DEPENDS" />
+    <REL source="M-CI-RELEASE-SMOKE" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-CI-RELEASE-SMOKE" target="M-GRACE-VERIFY" type="DEPENDS" />
+    <REL source="M-CI-RELEASE-SMOKE" target="M-GRACE-REVIEW" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-SETUP-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-CODE-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-GRACE-COMMANDS" type="DEPENDS" />
@@ -143,6 +148,7 @@
     <REL source="M-CLI-RTK-COMMANDS" target="M-PROXY-ROUTER" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-PROXY-FILTER" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-CLI-RTK-COMMANDS" target="M-HOOKS" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-UTILS" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-BOOTSTRAP" type="DEPENDS" />

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
 // PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, filter lifecycle, and clean-bootstrap reporting
-// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, ConfigCmd, HooksCmd status/audit, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
 // DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-PROXY-FILTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - route preview for proxied commands
@@ -33,7 +33,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.1.0 — Added proxy raw evidence hint rendering]
+// LAST_CHANGE: [v5.2.0 — Added hook audit dispatch and RTK coverage summary in gain]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -251,6 +251,10 @@ impl GainCmd {
         println!("Output tokens:       {}", stats.total_output_tokens);
         println!("Tokens saved:        {}", stats.total_saved_tokens);
         println!("Average savings:     {:.1}%", stats.avg_savings_pct);
+        if self.adapters || self.sessions {
+            println!("Adapter groups:      {}", stats.adapter_groups);
+            println!("Session groups:      {}", stats.session_groups);
+        }
         if stats.total_commands > 0 {
             let est_cost_saved = stats.total_saved_tokens as f64 * 0.000003;
             println!("Est. cost saved:     ${:.4}", est_cost_saved);
@@ -607,7 +611,7 @@ impl ConfigCmd {
 
 impl HooksCmd {
     // START_CONTRACT_HooksCmd::run
-    // PURPOSE: Install, uninstall, or report Synapse hook status
+    // PURPOSE: Install, uninstall, audit, or report Synapse hook status
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: may write or remove hook files
@@ -618,7 +622,10 @@ impl HooksCmd {
             "install" => manager.install(&self.agent),
             "uninstall" => manager.uninstall(&self.agent),
             "status" => manager.status(),
-            _ => anyhow::bail!("Usage: syn hooks install|uninstall|status [opencode|all]"),
+            "audit" | "check" => manager.audit(&self.agent, self.json),
+            _ => anyhow::bail!(
+                "Usage: syn hooks install|uninstall|status|audit|check [opencode|all] [--json]"
+            ),
         }
     }
     // END_hooks_run

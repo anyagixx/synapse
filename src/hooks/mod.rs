@@ -1,19 +1,21 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-HOOKS
-// PURPOSE: Hook manager for AI agents — installs/uninstalls Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy
-// SCOPE: HookManager struct, install/uninstall/status for opencode agent, JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation
+// PURPOSE: Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode with safe MCP config merge and RTK-style shell autoproxy
+// SCOPE: HookManager struct, install/uninstall/status/audit for opencode agent, JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation
 // DEPENDS: M-CONFIG, M-CLI-RTK-COMMANDS
 // LINKS: .opencode/, docs/phases/Phase-27.xml
 
 // START_MODULE_MAP
 // HookManager — Manages Synapse hook files for AI agent integration
+// HookAuditReport — Reports trusted hook installation checks for agents
+// HookAuditItem — One hook audit check result
 // merge_synapse_mcp_config — Adds mcp.synapse to an existing OpenCode config without dropping sibling keys
 // strip_jsonc_comments — Removes JSONC comments before safe config parsing
 // strip_trailing_commas — Removes JSONC trailing commas before safe config parsing
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Delegated OpenCode shell autoproxy decisions to syn rewrite]
+// LAST_CHANGE: [v3.2.0 — Added RTK-style OpenCode hook audit and trust diagnostics]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -191,6 +193,27 @@ pub struct HookManager {
 }
 // END_HookManager
 
+// START_HookAuditReport
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct HookAuditReport {
+    pub agent: String,
+    pub root: String,
+    pub ok: bool,
+    pub checks: Vec<HookAuditItem>,
+}
+// END_HookAuditReport
+
+// START_HookAuditItem
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct HookAuditItem {
+    pub name: String,
+    pub path: String,
+    pub ok: bool,
+    pub status: String,
+    pub detail: String,
+}
+// END_HookAuditItem
+
 impl HookManager {
     // START_CONTRACT_HookManager::new
     // PURPOSE: Create a new HookManager
@@ -228,6 +251,45 @@ impl HookManager {
         }
     }
     // END_hookmanager_install
+
+    // START_CONTRACT_HookManager::audit
+    // PURPOSE: Audit OpenCode hook installation and trusted content markers
+    // INPUTS: { agent: &str — target agent name }, { json: bool — render machine-readable output }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: prints audit report and fails when required hook trust checks fail
+    // LINKS:
+    //   → M-HOOK-OPENCODE-REWRITE (depends) - audit verifies syn rewrite delegation markers
+    //   → NFR-003 (traces_to) - audit confirms shell commands are auto-proxied for token savings
+    // START_hookmanager_audit
+    pub fn audit(&self, agent: &str, json: bool) -> anyhow::Result<()> {
+        let report = self.audit_report(agent)?;
+        if json {
+            println!("{}", serde_json::to_string_pretty(&report)?);
+        } else {
+            print_hook_audit_report(&report);
+        }
+        if !report.ok {
+            anyhow::bail!("hook audit failed for {}", report.agent);
+        }
+        Ok(())
+    }
+    // END_hookmanager_audit
+
+    // START_CONTRACT_HookManager::audit_report
+    // PURPOSE: Build an OpenCode hook audit report without printing
+    // INPUTS: { agent: &str — target agent name }
+    // OUTPUTS: { anyhow::Result<HookAuditReport> }
+    // LINKS:
+    //   → M-HOOKS (depends) - reuses installed OpenCode hook contract
+    // START_hookmanager_audit_report
+    pub fn audit_report(&self, agent: &str) -> anyhow::Result<HookAuditReport> {
+        let root = std::env::current_dir()?;
+        match agent {
+            "opencode" | "all" => self.audit_opencode(&root),
+            _ => anyhow::bail!("Unknown agent: {}. Supported: opencode, all", agent),
+        }
+    }
+    // END_hookmanager_audit_report
 
     // START_CONTRACT_HookManager::install_opencode
     // PURPOSE: Generate OpenCode rules, MCP config, plugin, package metadata, and shell proxy hook
@@ -337,6 +399,74 @@ echo "[synapse] Shell proxy hooks loaded (session ${SYNAPSE_SESSION_ID})"
     }
     // END_hookmanager_install_opencode
 
+    // START_CONTRACT_HookManager::audit_opencode
+    // PURPOSE: Check OpenCode hook files, MCP config, and trusted rewrite/session markers
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<HookAuditReport> }
+    // LINKS:
+    //   → M-HOOK-OPENCODE-REWRITE (depends) - trusted markers prove hooks delegate to syn rewrite
+    // START_hookmanager_audit_opencode
+    fn audit_opencode(&self, root: &Path) -> anyhow::Result<HookAuditReport> {
+        let mut checks = vec![
+            audit_file_exists(
+                root,
+                ".opencode/rules/synapse.md",
+                "rules-file",
+                "OpenCode has the Synapse/MyGRACE operating rules.",
+            ),
+            audit_file_contains(
+                root,
+                ".opencode/plugins/synapse.ts",
+                "plugin-rewrite",
+                "syn rewrite",
+                "OpenCode plugin delegates command routing to syn rewrite.",
+            ),
+            audit_file_contains(
+                root,
+                ".opencode/plugins/synapse.ts",
+                "plugin-session",
+                "SYNAPSE_SESSION_ID",
+                "OpenCode plugin propagates session identity for economics.",
+            ),
+            audit_file_contains(
+                root,
+                ".opencode/hooks/synapse-proxy.sh",
+                "shell-rewrite",
+                "syn rewrite",
+                "Shell hook delegates routing to syn rewrite.",
+            ),
+            audit_file_contains(
+                root,
+                ".opencode/hooks/synapse-proxy.sh",
+                "shell-session",
+                "SYNAPSE_SESSION_ID",
+                "Shell hook creates or propagates a token-economy session id.",
+            ),
+            audit_file_contains(
+                root,
+                ".opencode/hooks/synapse-proxy.sh",
+                "shell-container-alias",
+                "alias docker='syn_proxy_exec docker'",
+                "Shell hook covers container commands added for RTK parity.",
+            ),
+            audit_file_exists(
+                root,
+                ".opencode/package.json",
+                "plugin-dependencies",
+                "OpenCode plugin dependency metadata is present.",
+            ),
+        ];
+        checks.push(audit_opencode_mcp_config(root));
+        let ok = checks.iter().all(|item| item.ok);
+        Ok(HookAuditReport {
+            agent: "opencode".into(),
+            root: root.display().to_string(),
+            ok,
+            checks,
+        })
+    }
+    // END_hookmanager_audit_opencode
+
     // START_CONTRACT_HookManager::uninstall
     // PURPOSE: Uninstall Synapse hooks for a given agent
     // INPUTS: { agent: &str — target agent name }
@@ -437,6 +567,124 @@ echo "[synapse] Shell proxy hooks loaded (session ${SYNAPSE_SESSION_ID})"
 }
 // END_public_api
 
+// START_CONTRACT_audit_file_exists
+// PURPOSE: Create a hook audit result for a required file
+// INPUTS: { root: &Path }, { path: &str }, { name: &str }, { detail: &str }
+// OUTPUTS: { HookAuditItem }
+// START_audit_file_exists
+fn audit_file_exists(root: &Path, path: &str, name: &str, detail: &str) -> HookAuditItem {
+    let full = root.join(path);
+    HookAuditItem {
+        name: name.into(),
+        path: path.into(),
+        ok: full.exists(),
+        status: if full.exists() { "trusted" } else { "missing" }.into(),
+        detail: detail.into(),
+    }
+}
+// END_audit_file_exists
+
+// START_CONTRACT_audit_file_contains
+// PURPOSE: Create a hook audit result for trusted content marker presence
+// INPUTS: { root: &Path }, { path: &str }, { name: &str }, { marker: &str }, { detail: &str }
+// OUTPUTS: { HookAuditItem }
+// START_audit_file_contains
+fn audit_file_contains(
+    root: &Path,
+    path: &str,
+    name: &str,
+    marker: &str,
+    detail: &str,
+) -> HookAuditItem {
+    let full = root.join(path);
+    let status = match std::fs::read_to_string(&full) {
+        Ok(content) if content.contains(marker) => ("trusted", true),
+        Ok(_) => ("stale", false),
+        Err(_) => ("missing", false),
+    };
+    HookAuditItem {
+        name: name.into(),
+        path: path.into(),
+        ok: status.1,
+        status: status.0.into(),
+        detail: detail.into(),
+    }
+}
+// END_audit_file_contains
+
+// START_CONTRACT_audit_opencode_mcp_config
+// PURPOSE: Validate opencode.jsonc contains a trusted Synapse MCP server declaration
+// INPUTS: { root: &Path }
+// OUTPUTS: { HookAuditItem }
+// LINKS:
+//   → M-MCP (depends) - OpenCode auto-starts syn mcp from this config
+// START_audit_opencode_mcp_config
+fn audit_opencode_mcp_config(root: &Path) -> HookAuditItem {
+    let path = "opencode.jsonc";
+    let full = root.join(path);
+    let Ok(existing) = std::fs::read_to_string(&full) else {
+        return HookAuditItem {
+            name: "mcp-config".into(),
+            path: path.into(),
+            ok: false,
+            status: "missing".into(),
+            detail: "OpenCode MCP config is missing.".into(),
+        };
+    };
+    let without_comments = strip_jsonc_comments(&existing);
+    let normalized = strip_trailing_commas(&without_comments);
+    let value = serde_json::from_str::<serde_json::Value>(&normalized);
+    let ok = value
+        .ok()
+        .and_then(|value| {
+            let synapse = value.get("mcp")?.get("synapse")?;
+            let command = synapse.get("command")?.as_array()?;
+            let enabled = synapse
+                .get("enabled")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(true);
+            let matches_command = command.len() == 2
+                && command[0].as_str() == Some("syn")
+                && command[1].as_str() == Some("mcp");
+            Some(enabled && matches_command)
+        })
+        .unwrap_or(false);
+
+    HookAuditItem {
+        name: "mcp-config".into(),
+        path: path.into(),
+        ok,
+        status: if ok { "trusted" } else { "stale" }.into(),
+        detail: "OpenCode config starts Synapse MCP with command [\"syn\", \"mcp\"].".into(),
+    }
+}
+// END_audit_opencode_mcp_config
+
+// START_CONTRACT_print_hook_audit_report
+// PURPOSE: Render a compact human-readable hook audit report
+// INPUTS: { report: &HookAuditReport }
+// OUTPUTS: { stdout audit lines }
+// SIDE_EFFECTS: writes to stdout
+// START_print_hook_audit_report
+fn print_hook_audit_report(report: &HookAuditReport) {
+    println!("Synapse Hook Audit for {} at {}", report.agent, report.root);
+    for item in &report.checks {
+        println!(
+            "  [{}] {} — {} ({})",
+            item.status.to_ascii_uppercase(),
+            item.path,
+            item.name,
+            item.detail
+        );
+    }
+    if report.ok {
+        println!("\nHook audit passed. OpenCode hooks are trusted for RTK routing.");
+    } else {
+        println!("\nHook audit failed. Run `syn hooks install opencode`, then rerun audit.");
+    }
+}
+// END_print_hook_audit_report
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -487,5 +735,36 @@ mod tests {
         let value = value.unwrap_or_default();
         assert!(value["mcp"]["other"].is_object());
         assert_eq!(value["mcp"]["synapse"]["enabled"], true);
+    }
+
+    #[test]
+    fn test_hook_audit_reports_missing_opencode_assets() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = HookManager::new(&Config::default());
+        let report = manager.audit_opencode(root.path()).unwrap();
+
+        assert!(!report.ok);
+        assert!(report
+            .checks
+            .iter()
+            .any(|item| item.name == "mcp-config" && item.status == "missing"));
+    }
+
+    #[test]
+    fn test_hook_audit_trusts_generated_opencode_assets() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = HookManager::new(&Config::default());
+        manager.install_opencode(root.path()).unwrap();
+        let report = manager.audit_opencode(root.path()).unwrap();
+
+        assert!(report.ok);
+        assert!(report
+            .checks
+            .iter()
+            .any(|item| item.name == "shell-container-alias" && item.ok));
+        assert!(report
+            .checks
+            .iter()
+            .any(|item| item.name == "mcp-config" && item.status == "trusted"));
     }
 }

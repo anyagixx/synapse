@@ -1,22 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-50" status="planned">
+<PHASE id="Phase-50" status="done">
   <NAME>RTK Hook Audit Economics Release Gate</NAME>
   <GOAL>Close full RTK integration with hook audit/trust, economics/session analytics parity, and a release-grade verification gate.</GOAL>
   <MODULE_REFS>
     <MODULE_REF id="M-HOOKS" />
     <MODULE_REF id="M-HOOK-OPENCODE-REWRITE" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
     <MODULE_REF id="M-TRACKING" />
     <MODULE_REF id="M-CI-RELEASE-SMOKE" />
   </MODULE_REFS>
   <STEPS>
-    <step-1 module="M-HOOKS" status="planned">Port RTK hook audit/check/trust concepts into Synapse hook management where they fit existing agent integrations.</step-1>
-    <step-2 module="M-TRACKING" status="planned">Extend session and adapter economics reports to cover full RTK parity scenarios.</step-2>
-    <step-3 module="M-CI-RELEASE-SMOKE" status="planned">Add a release smoke gate that exercises filter parity, rewrite hooks, representative shortcuts, gain analytics, and MyGRACE verification.</step-3>
+    <step-1 module="M-HOOKS" status="done">Ported RTK hook audit/check/trust concepts into Synapse hook management with JSON output and fail-closed trusted marker checks.</step-1>
+    <step-2 module="M-TRACKING" status="done">Extended session and adapter economics reports with RTK adapter_groups and session_groups coverage counts.</step-2>
+    <step-3 module="M-CLI-RTK-COMMANDS" status="done">Synchronized rtk-parity inventory with implemented discover/learn, hook audit, analytics, and Synapse integration readiness surfaces.</step-3>
+    <step-4 module="M-CI-RELEASE-SMOKE" status="done">Added a release smoke gate that exercises filter parity, rewrite hooks, representative shortcuts, gain analytics, isolated hook audit, and MyGRACE verification.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test --all-targets --no-fail-fast</CHECK>
-    <CHECK status="planned">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
-    <CHECK status="planned">cargo run --quiet -- review --mode full --ci</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">bash scripts/rtk_release_gate.sh</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
   </VERIFICATION>
 </PHASE>

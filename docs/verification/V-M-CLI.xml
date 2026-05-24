@@ -19,6 +19,7 @@
     <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
     <COMMAND>cargo run --quiet -- discover docker ps</COMMAND>
     <COMMAND>cargo run --quiet -- learn --json</COMMAND>
+    <COMMAND>cargo test hooks::tests::test_hook_audit_trusts_generated_opencode_assets --lib</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
   </UNIT_TESTS>
@@ -31,6 +32,7 @@
     <ASSERTION>CLI schema accepts local RTK adapters json, deps, env, and wc with documented flags.</ASSERTION>
     <ASSERTION>CLI schema accepts local RTK system adapters pipe, log, and smart with documented flags.</ASSERTION>
     <ASSERTION>CLI schema accepts bounded RTK discover and learn diagnostics with documented JSON/limit flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts hooks audit/check with --json for trusted OpenCode hook diagnostics.</ASSERTION>
     <ASSERTION>CLI schema accepts rtk-parity with --source, --json, and --ci flags.</ASSERTION>
     <ASSERTION>CLI schema accepts rewrite as a hook-facing dry-run command.</ASSERTION>
     <ASSERTION>CLI schema accepts syn run --scenario happy|blocked-review with phase/module/objective/json flags.</ASSERTION>
@@ -38,5 +40,5 @@
     <ASSERTION>CLI schema accepts verify/review --profile and doctor --deps as documented flags.</ASSERTION>
     <ASSERTION>CLI schema exposes syn mcp as stdio-only until HTTP/LSP transport flags are implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-49</PHASE_GATE>
+  <PHASE_GATE>Phase-50</PHASE_GATE>
 </VERIFICATION>

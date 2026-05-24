@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including container shortcuts, local RTK adapters, local RTK system adapters, discovery/learning diagnostics, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including container shortcuts, local RTK adapters, local RTK system adapters, discovery/learning diagnostics, hooks audit JSON flag, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
@@ -13,12 +13,13 @@
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
 // PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
 // DiscoverCmd/LearnCmd — Bounded RTK discovery and learning diagnostics
+// HooksCmd — Agent hook install/status/audit schema
 // RtkParityCmd — Machine-checkable RTK parity inventory report
 // RewriteCmd — Hook-facing command rewrite dry run
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.0.0 — Added bounded RTK discover/learn diagnostics]
+// LAST_CHANGE: [v5.1.0 — Added hooks audit JSON flag for RTK trust diagnostics]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -516,6 +517,8 @@ pub struct HooksCmd {
     pub action: String,
     #[arg(default_value = "opencode")]
     pub agent: String,
+    #[arg(long)]
+    pub json: bool,
 }
 // END_HooksCmd
 

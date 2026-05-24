@@ -3,11 +3,11 @@
   UNDERSTANDING:
     Module responsibility: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
     Key data flows:
-      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-49 adds bounded RTK discover/learn diagnostics while preserving the existing clap facade.
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-50 adds hooks audit --json and RTK release-gate economics while preserving the existing clap facade.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: SynCli, Command enum, command argument structs including GRACE --profile flags, expanded RTK proxy shortcuts including container shortcuts, local RTK adapters, local RTK system adapters, discover/learn diagnostics, rtk-parity inventory gate, doctor --deps, gain --graph/--sessions/--adapters, proxy --route, stdio-only mcp command, and CI action enum
+      - Scope remains bounded to: SynCli, Command enum, command argument structs including GRACE --profile flags, expanded RTK proxy shortcuts including container shortcuts, local RTK adapters, local RTK system adapters, discover/learn diagnostics, hooks audit --json, rtk-parity inventory gate, doctor --deps, gain --graph/--sessions/--adapters, proxy --route, stdio-only mcp command, and CI action enum
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -21,6 +21,7 @@
     - syn ruff, syn mypy, syn uv, syn tsc, syn vitest, and syn gradlew parse as language ecosystem shortcuts
     - syn docker and syn podman parse as RTK container shortcuts with --route support
     - syn discover and syn learn parse as bounded RTK diagnostics with JSON output support
+    - syn hooks audit --json parses for RTK trust diagnostics
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

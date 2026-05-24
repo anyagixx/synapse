@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-CLI-RUNTIME-COMMANDS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting
+    Module responsibility: CLI runtime, integration, and diagnostic command handlers with storage health, hook audit dispatch, RTK economics coverage, dependency, and clean-bootstrap reporting
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: run token-economy queries, render route previews through M-PROXY-ROUTER, execute proxied commands through M-PROXY, and preserve existing diagnostics
+      - PROCESSING: run token-economy queries, render adapter/session coverage counts, dispatch hook audit/check through M-HOOKS, render route previews through M-PROXY-ROUTER, execute proxied commands through M-PROXY, and preserve existing diagnostics
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+      - Scope remains bounded to: GainCmd with graph/session/adapter output and RTK coverage counts, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd status/audit dispatch, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -16,6 +16,8 @@
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - gain --sessions --adapters prints adapter_groups and session_groups
+    - hooks audit/check dispatches to M-HOOKS and supports JSON output
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

@@ -1,16 +1,20 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
-// PURPOSE: RTK parity inventory gate — compares Synapse RTK coverage against source and planned parity domains
-// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including container shortcuts, compact/JSON report rendering
-// DEPENDS: M-CLI, M-PROXY-FILTER, M-PROXY-ROUTER
+// PURPOSE: RTK parity inventory gate — compares Synapse RTK coverage against source and release-gated parity domains
+// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including container shortcuts, discover/learn, hook audit, analytics inventory, compact/JSON report rendering
+// DEPENDS: M-CLI, M-PROXY-FILTER, M-PROXY-ROUTER, M-HOOKS, M-TRACKING
 // LINKS:
 //   -> M-CLI (depends) - exposes the rtk-parity command schema
 //   -> M-PROXY-FILTER (depends) - reads built-in RTK filter inventory
 //   -> M-PROXY-ROUTER (depends) - reads routed adapter family catalogue
+//   -> M-HOOKS (depends) - tracks hook audit/check parity surface
+//   -> M-TRACKING (depends) - tracks adapter/session analytics parity surface
 //   -> Phase-44 (implements) - machine-checkable RTK parity inventory gate
 //   -> Phase-45 (implements) - expanded first-class RTK proxy shortcut parity
 //   -> Phase-46 (implements) - local RTK system adapter inventory
 //   -> Phase-48 (implements) - cloud/container/VCS adapter parity inventory
+//   -> Phase-49 (implements) - discover/learn diagnostic parity
+//   -> Phase-50 (implements) - hook audit and economics release gate
 //   -> NFR-003 (traces_to) - parity gates protect token-saving coverage
 
 // START_MODULE_MAP
@@ -22,7 +26,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.3.0 - Added cloud/container shortcut inventory]
+// LAST_CHANGE: [v1.4.0 - Marked discover/learn, hook audit, and analytics as release-gated RTK parity surfaces]
 // END_CHANGE_SUMMARY
 
 use super::RtkParityCmd;
@@ -93,8 +97,29 @@ const PROXY_SHORTCUTS: &[&str] = &[
     "vitest",
 ];
 const LOCAL_ADAPTERS: &[&str] = &["json", "deps", "env", "wc", "pipe", "log", "smart"];
-const HOOKS: &[&str] = &["opencode-rewrite"];
-const ANALYTICS: &[&str] = &["gain", "gain --graph", "gain --sessions", "gain --adapters"];
+const HOOKS: &[&str] = &[
+    "opencode-rewrite",
+    "hooks install",
+    "hooks status",
+    "hooks audit",
+    "hooks check",
+    "hooks audit --json",
+];
+const DISCOVERY_LEARN: &[&str] = &[
+    "discover",
+    "discover --json",
+    "discover --limit",
+    "learn",
+    "learn --json",
+];
+const ANALYTICS: &[&str] = &[
+    "gain",
+    "gain --graph",
+    "gain --sessions",
+    "gain --adapters",
+    "adapter_groups",
+    "session_groups",
+];
 const PROXY_SHORTCUTS_NOTE: &str =
     "Phase-45 adds common proxy shortcuts; Phase-47 adds language ecosystem shortcuts; Phase-48 adds container shortcuts.";
 const LOCAL_ADAPTERS_NOTE: &str =
@@ -134,6 +159,7 @@ impl RtkParityCmd {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct RtkParityReport {
     critical_passed: bool,
+    synapse_integration_ready: bool,
     full_standalone_parity: bool,
     source_path: Option<String>,
     sections: Vec<RtkParitySection>,
@@ -188,21 +214,21 @@ fn build_rtk_parity_report(explicit_source: Option<&Path>) -> anyhow::Result<Rtk
             "tracked",
             false,
             HOOKS,
-            &["Phase-50 expands hook audit/trust parity."],
+            &["Phase-50 release-gates OpenCode rewrite hook audit/trust parity."],
         ),
         static_inventory_section(
             "discovery-learn",
-            "planned",
+            "tracked",
             false,
-            &[],
-            &["Phase-49 brings RTK discover/learn concepts into Synapse diagnostics."],
+            DISCOVERY_LEARN,
+            &["Phase-49 implements bounded RTK discover/learn diagnostics."],
         ),
         static_inventory_section(
             "analytics",
             "tracked",
             false,
             ANALYTICS,
-            &["Phase-50 extends session and adapter economics release gates."],
+            &["Phase-50 release-gates session and adapter economics analytics."],
         ),
     ];
     if let Some(path) = source_path.as_deref() {
@@ -212,8 +238,13 @@ fn build_rtk_parity_report(explicit_source: Option<&Path>) -> anyhow::Result<Rtk
         .iter()
         .filter(|section| section.critical)
         .all(|section| section.status == "pass");
+    let synapse_integration_ready = critical_passed
+        && sections
+            .iter()
+            .all(|section| section.status != "planned" && section.status != "unknown");
     Ok(RtkParityReport {
         critical_passed,
+        synapse_integration_ready,
         full_standalone_parity: false,
         source_path: source_path.map(|path| path.display().to_string()),
         sections,
@@ -489,7 +520,15 @@ fn print_rtk_parity_report(report: &RtkParityReport) {
             println!("  note: {note}");
         }
     }
-    println!("full-standalone-parity: planned");
+    println!(
+        "synapse-rtk-integration: {}",
+        if report.synapse_integration_ready {
+            "pass"
+        } else {
+            "partial"
+        }
+    );
+    println!("full-standalone-parity: not-targeted");
 }
 // END_print_rtk_parity_report
 
@@ -509,6 +548,8 @@ mod tests {
         let report = build_rtk_parity_report(Some(source.path())).expect("report");
 
         assert!(report.critical_passed);
+        assert!(report.synapse_integration_ready);
+        assert!(!report.full_standalone_parity);
         let filters = report
             .sections
             .iter()
@@ -571,5 +612,23 @@ mod tests {
         for adapter in ["json", "deps", "env", "wc", "pipe", "log", "smart"] {
             assert!(section.items.contains(&adapter.to_string()), "{adapter}");
         }
+    }
+
+    #[test]
+    fn release_inventory_covers_phase49_and_phase50_surfaces() {
+        let discovery =
+            static_inventory_section("discovery-learn", "tracked", false, DISCOVERY_LEARN, &[]);
+        assert_eq!(discovery.synapse_count, 5);
+        assert!(discovery.items.contains(&"discover --json".to_string()));
+        assert!(discovery.items.contains(&"learn --json".to_string()));
+
+        let hooks = static_inventory_section("hooks", "tracked", false, HOOKS, &[]);
+        assert_eq!(hooks.synapse_count, 6);
+        assert!(hooks.items.contains(&"hooks audit --json".to_string()));
+
+        let analytics = static_inventory_section("analytics", "tracked", false, ANALYTICS, &[]);
+        assert_eq!(analytics.synapse_count, 6);
+        assert!(analytics.items.contains(&"adapter_groups".to_string()));
+        assert!(analytics.items.contains(&"session_groups".to_string()));
     }
 }
