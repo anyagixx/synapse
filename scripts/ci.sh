@@ -2,8 +2,8 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
 # PURPOSE: CI quality gate — runs Rust checks and MyGRACE truth gates in one reproducible entrypoint
-# SCOPE: Formatting, linting, runtime panic guard, tests, isolated XDG data path, release tag and freshness guards, release-candidate dry-run, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
-# DEPENDS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
+# SCOPE: Formatting, linting, runtime panic guard, tests, isolated XDG data path, release tag and freshness guards, release-candidate dry-run, optional full RTK release gate, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
+# DEPENDS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-RTK-FULL-PARITY, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
 # LINKS: .github/workflows/ci.yml, docs/verification-index.xml
 
 # START_MODULE_MAP
@@ -11,11 +11,12 @@
 # ci_runtime_guard.py — Blocks production panic markers outside tests
 # release_freshness_guard.sh — Prevents stale release tags from masquerading as current Cargo versions
 # release_candidate_dry_run.sh — Validates release-candidate metadata and installer truth before publishing
+# rtk_full_release_gate.sh — Validates source-derived full RTK release parity when explicitly enabled
 # release_install_smoke.sh — Builds and validates the packaged release artifact
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.7.0 - Migrated semantic LINKS to typed format]
+# LAST_CHANGE: [v1.8.0 - Added optional full RTK release gate wiring]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_ci_gate
@@ -55,7 +56,14 @@ echo "[CI][run_ci_gate][RELEASE_FRESHNESS] Checking release tag freshness"
 bash scripts/release_freshness_guard.sh
 
 echo "[CI][run_ci_gate][RELEASE_CANDIDATE] Checking release candidate policy"
-SYN_RC_SKIP_SMOKE=1 bash scripts/release_candidate_dry_run.sh
+SYN_RC_SKIP_SMOKE=1 SYN_RC_SKIP_FULL_RTK=1 bash scripts/release_candidate_dry_run.sh
+
+if [[ "${SYN_CI_RUN_FULL_RTK:-0}" = "1" ]]; then
+    echo "[CI][run_ci_gate][RTK_FULL] Running full RTK release gate"
+    bash scripts/rtk_full_release_gate.sh
+else
+    echo "[CI][run_ci_gate][RTK_FULL] Skipping full RTK release gate in general CI; release candidate workflow runs it by default"
+fi
 
 echo "[CI][run_ci_gate][RELEASE_SMOKE] Running release/install smoke"
 bash scripts/release_install_smoke.sh

@@ -2,13 +2,13 @@
 <MODULE id="M-RTK-FULL-PARITY" type="CORE_LOGIC" status="active">
   <NAME>M-RTK-FULL-PARITY</NAME>
   <PURPOSE>Full RTK parity matrix — compares rtk-develop command, hook, and command-module surfaces against Synapse implemented, equivalent, superseded, and missing coverage.</PURPOSE>
-  <SCOPE>Source-derived RTK top-level command parsing, hook processor parsing, multi-agent hook install target coverage, command-module inventory, Synapse implemented/equivalent/superseded/missing coverage classification including proxy-equivalent RTK command modules, full parity JSON/text rendering, and CI failure semantics for --full.</SCOPE>
+  <SCOPE>Source-derived RTK top-level command parsing, hook processor parsing, multi-agent hook install target coverage, command-module inventory, Synapse implemented/equivalent/superseded/missing coverage classification including proxy-equivalent RTK command modules, full parity JSON/text rendering, CI failure semantics for --full, and release-blocking Phase-57 parity requirements.</SCOPE>
   <FILES>
     <FILE>src/cli/rtk_full_parity.rs</FILE>
     <FILE>src/cli/rtk_parity.rs</FILE>
     <FILE>src/cli.rs</FILE>
   </FILES>
   <DEPENDS>M-CLI,M-CLI-RTK-COMMANDS,M-PROXY-FILTER,M-PROXY-ROUTER,M-HOOKS</DEPENDS>
-  <LINKS>docs/phases/Phase-51.xml,docs/phases/Phase-54.xml,docs/phases/Phase-55.xml,docs/phases/Phase-56.xml,docs/verification/V-M-RTK-FULL-PARITY.xml</LINKS>
+  <LINKS>docs/phases/Phase-51.xml,docs/phases/Phase-54.xml,docs/phases/Phase-55.xml,docs/phases/Phase-56.xml,docs/phases/Phase-57.xml,docs/verification/V-M-RTK-FULL-PARITY.xml</LINKS>
   <VERIFICATION_REF>V-M-RTK-FULL-PARITY</VERIFICATION_REF>
 </MODULE>

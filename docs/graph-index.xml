@@ -110,8 +110,10 @@
     <REL source="M-CI" target="M-TESTS-PARITY" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-BUILD" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-INSTALL" type="DEPENDS" />
+    <REL source="M-CI-RELEASE-SMOKE" target="M-RTK-FULL-PARITY" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-HOOKS" type="DEPENDS" />
+    <REL source="M-CI-RELEASE-SMOKE" target="M-PROXY-RUNNER" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-GRACE-VERIFY" type="DEPENDS" />
     <REL source="M-CI-RELEASE-SMOKE" target="M-GRACE-REVIEW" type="DEPENDS" />
@@ -426,6 +428,7 @@
     <REL source="M-TESTS-PARITY" target="M-INSTALL" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-CI" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-CI-RELEASE-SMOKE" type="DEPENDS" />
+    <REL source="M-TESTS-PARITY" target="M-RTK-FULL-PARITY" type="DEPENDS" />
     <REL source="M-TESTS-RELIABILITY" target="M-CLI" type="DEPENDS" />
     <REL source="M-TESTS-RELIABILITY" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-TESTS-RELIABILITY" target="M-INDEXER-STORAGE" type="DEPENDS" />

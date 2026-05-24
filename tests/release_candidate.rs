@@ -1,14 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure release-candidate automation remains a dry-run truth gate before publishing.
-// SCOPE: Validate RC workflow permissions, candidate ref checkout, release metadata checks, fresh install smoke, installer matrix smoke, GitHub step-summary evidence, and CI integration.
-// DEPENDS: M-CI, M-INSTALL, M-CI-RELEASE-SMOKE
-// LINKS: scripts/release_candidate_dry_run.sh, .github/workflows/release-candidate.yml
+// SCOPE: Validate RC workflow permissions, candidate ref checkout, release metadata checks, full RTK gate policy, fresh install smoke, installer matrix smoke, GitHub step-summary evidence, and CI integration.
+// DEPENDS: M-CI, M-INSTALL, M-CI-RELEASE-SMOKE, M-RTK-FULL-PARITY
+// LINKS: scripts/release_candidate_dry_run.sh, scripts/rtk_full_release_gate.sh, .github/workflows/release-candidate.yml
 
 // START_MODULE_MAP
 // test_release_candidate_workflow_is_dry_run_only - Workflow must not publish releases
 // test_release_candidate_checks_out_candidate_ref - Workflow must checkout the requested candidate tag
-// test_release_candidate_script_checks_release_truth - Script must validate tag, freshness, notes, checksums, and installer mapping
+// test_release_candidate_script_checks_release_truth - Script must validate tag, freshness, notes, checksums, installer mapping, and full RTK policy
 // test_release_candidate_fresh_install_evidence - Workflow must run public installer fresh smoke on Linux/macOS
 // test_ci_invokes_release_candidate_gate - Local CI must include the lightweight RC policy gate
 // test_release_candidate_script_executes_without_publishing - Script dry-run must pass with the package tag
@@ -16,13 +16,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.3.0 - Added release freshness policy checks]
+// LAST_CHANGE: [v1.4.0 - Added full RTK release gate policy checks]
 // END_CHANGE_SUMMARY
 
 const RELEASE_CANDIDATE_WORKFLOW: &str = include_str!("../.github/workflows/release-candidate.yml");
 const RELEASE_WORKFLOW: &str = include_str!("../.github/workflows/release.yml");
 const CI_SCRIPT: &str = include_str!("../scripts/ci.sh");
 const RELEASE_CANDIDATE_SCRIPT: &str = include_str!("../scripts/release_candidate_dry_run.sh");
+const RTK_FULL_RELEASE_GATE_SCRIPT: &str = include_str!("../scripts/rtk_full_release_gate.sh");
 const FRESH_INSTALL_SCRIPT: &str = include_str!("../scripts/fresh_install_smoke.sh");
 
 #[test]
@@ -89,12 +90,26 @@ fn test_release_candidate_script_checks_release_truth() {
         "sha256sum -c SHA256SUMS",
         "SYN_INSTALL_UNAME_S",
         "scripts/release_install_smoke.sh",
+        "scripts/rtk_full_release_gate.sh",
+        "[CI][release_candidate][RTK_FULL]",
+        "SYN_RC_SKIP_FULL_RTK",
         "GITHUB_STEP_SUMMARY",
         "[CI][release_candidate][SUMMARY]",
     ] {
         assert!(
             RELEASE_CANDIDATE_SCRIPT.contains(marker),
             "release candidate script must validate {marker}"
+        );
+    }
+    for marker in [
+        "SYNAPSE_RTK_SOURCE_REF",
+        "https://github.com/rtk-ai/rtk",
+        "v0.34.3",
+        "git clone --depth 1 --branch",
+    ] {
+        assert!(
+            RTK_FULL_RELEASE_GATE_SCRIPT.contains(marker),
+            "full RTK release gate must support hosted source fallback marker {marker}"
         );
     }
     for artifact in [
@@ -110,6 +125,11 @@ fn test_release_candidate_script_checks_release_truth() {
             "release candidate, release workflow, and publishing workflow must agree on {artifact}"
         );
     }
+    assert!(
+        !RELEASE_CANDIDATE_WORKFLOW.contains("SYN_RC_SKIP_FULL_RTK")
+            && !RELEASE_WORKFLOW.contains("SYN_RC_SKIP_FULL_RTK"),
+        "release workflows must not skip the full RTK gate"
+    );
 }
 
 #[test]
@@ -151,12 +171,18 @@ fn test_release_candidate_fresh_install_evidence() {
 // PURPOSE: Verify local CI includes release-candidate validation without duplicating matrix smoke.
 fn test_ci_invokes_release_candidate_gate() {
     assert!(
-        CI_SCRIPT.contains("SYN_RC_SKIP_SMOKE=1 bash scripts/release_candidate_dry_run.sh"),
+        CI_SCRIPT.contains(
+            "SYN_RC_SKIP_SMOKE=1 SYN_RC_SKIP_FULL_RTK=1 bash scripts/release_candidate_dry_run.sh"
+        ),
         "scripts/ci.sh must run the lightweight release candidate gate"
     );
     assert!(
         CI_SCRIPT.contains("[CI][run_ci_gate][RELEASE_CANDIDATE]"),
         "scripts/ci.sh must emit a stable release-candidate log marker"
+    );
+    assert!(
+        CI_SCRIPT.contains("[CI][run_ci_gate][RTK_FULL]"),
+        "scripts/ci.sh must emit a stable full RTK gate marker"
     );
 }
 
@@ -169,6 +195,7 @@ fn test_release_candidate_script_executes_without_publishing() {
         .arg("scripts/release_candidate_dry_run.sh")
         .env("SYN_RELEASE_TAG", expected_tag)
         .env("SYN_RC_SKIP_SMOKE", "1")
+        .env("SYN_RC_SKIP_FULL_RTK", "1")
         .output()
         .expect("release candidate script should execute");
 
@@ -198,6 +225,7 @@ fn test_release_candidate_step_summary_is_written() {
         .arg("scripts/release_candidate_dry_run.sh")
         .env("SYN_RELEASE_TAG", expected_tag)
         .env("SYN_RC_SKIP_SMOKE", "1")
+        .env("SYN_RC_SKIP_FULL_RTK", "1")
         .env("GITHUB_STEP_SUMMARY", &summary_path)
         .output()
         .expect("release candidate script should execute with summary path");
@@ -216,6 +244,7 @@ fn test_release_candidate_step_summary_is_written() {
         "Cargo version",
         "SHA256SUMS aggregation and verification checked",
         "Installer matrix: Linux x86_64, Linux aarch64, macOS x86_64, macOS arm64",
+        "Full RTK gate: skipped by SYN_RC_SKIP_FULL_RTK",
         "Publishing: not performed by this dry-run",
     ] {
         assert!(

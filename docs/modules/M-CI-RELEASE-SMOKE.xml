@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-CI-RELEASE-SMOKE" type="UTILITY" status="active">
   <NAME>M-CI-RELEASE-SMOKE</NAME>
-  <PURPOSE>Release/install smoke gate — validates release tag freshness, packaged Synapse checksum, RTK parity readiness, layout, and executable behavior</PURPOSE>
-  <SCOPE>Linux/macOS target-aware release build, release tag versus Cargo.toml guard, stale-tag freshness guard, tarball packaging, SHA256 checksum verification, extraction, executable check, Cargo.toml version smoke, and RTK release gate coverage for parity, filters, rewrite hooks, discover/learn, economics, verify, and review</SCOPE>
+  <PURPOSE>Release/install smoke gate — validates release tag freshness, packaged Synapse checksum, full RTK parity readiness, layout, and executable behavior</PURPOSE>
+  <SCOPE>Linux/macOS target-aware release build, release tag versus Cargo.toml guard, stale-tag freshness guard, tarball packaging, SHA256 checksum verification, extraction, executable check, Cargo.toml version smoke, lightweight RTK release gate coverage, and full RTK release gate coverage for local or pinned public source-derived parity, all-agent hooks, route previews, discover/learn, economics, clippy, verify, and review</SCOPE>
   <FILES>
     <FILE>scripts/release_install_smoke.sh</FILE>
     <FILE>scripts/release_version_guard.sh</FILE>
     <FILE>scripts/release_freshness_guard.sh</FILE>
     <FILE>scripts/rtk_release_gate.sh</FILE>
+    <FILE>scripts/rtk_full_release_gate.sh</FILE>
   </FILES>
-  <DEPENDS>M-BUILD,M-INSTALL,M-CLI-RTK-COMMANDS,M-HOOKS,M-TRACKING,M-GRACE-VERIFY,M-GRACE-REVIEW</DEPENDS>
-  <LINKS>.github/workflows/ci.yml,.github/workflows/release.yml,install.sh,docs/phases/Phase-50.xml</LINKS>
+  <DEPENDS>M-BUILD,M-INSTALL,M-RTK-FULL-PARITY,M-CLI-RTK-COMMANDS,M-HOOKS,M-PROXY-RUNNER,M-TRACKING,M-GRACE-VERIFY,M-GRACE-REVIEW</DEPENDS>
+  <LINKS>.github/workflows/ci.yml,.github/workflows/release.yml,install.sh,docs/phases/Phase-50.xml,docs/phases/Phase-57.xml</LINKS>
   <VERIFICATION_REF>V-M-CI-RELEASE-SMOKE</VERIFICATION_REF>
 </MODULE>

@@ -4,7 +4,8 @@
     <COMMAND>cargo test cli::rtk_full_parity::tests --lib</COMMAND>
     <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --full</COMMAND>
     <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --full --json</COMMAND>
-    <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
+    <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --full --ci</COMMAND>
+    <COMMAND>bash scripts/rtk_full_release_gate.sh</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -14,6 +15,7 @@
     <ASSERTION>Full parity mode must report hook-install-targets for opencode, claude, cursor, gemini, copilot, and all as release-gated Phase-55 coverage.</ASSERTION>
     <ASSERTION>Integration parity --ci remains backwards-compatible and does not fail because future full-RTK work is still planned.</ASSERTION>
     <ASSERTION>Full parity --ci fails while any RTK command, hook processor, or command-module surface remains missing and passes when missing_total is zero.</ASSERTION>
+    <ASSERTION>Phase-57 release gate requires missing_commands=0, missing_hooks=0, missing_filters=0, and full_standalone_parity=true before Synapse 2.6 release.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-51</PHASE_GATE>
+  <PHASE_GATE>Phase-57</PHASE_GATE>
 </VERIFICATION>
