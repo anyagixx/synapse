@@ -415,3 +415,230 @@ expected = """Request timeout for icmp_seq 0
 Request timeout for icmp_seq 1
 --- unreachable.example.com ping statistics ---
 2 packets transmitted, 0 packets received, 100.0% packet loss"""
+
+[filters.systemctl-status]
+description = "Compact systemctl status output - strip blank lines, limit to 20 lines"
+match_command = "^systemctl\\s+status\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+max_lines = 20
+
+[[tests.systemctl-status]]
+name = "verbose unit status stripped of blank lines"
+input = """
+nginx.service - A high performance web server
+     Loaded: loaded (/lib/systemd/system/nginx.service; enabled)
+     Active: active (running) since Mon 2024-01-15 10:30:00 UTC; 2h ago
+       Docs: man:nginx(8)
+   Main PID: 1234 (nginx)
+      Tasks: 3 (limit: 4915)
+     Memory: 8.5M
+
+     CGroup: /system.slice/nginx.service
+             1234 nginx: master process /usr/sbin/nginx
+             1235 nginx: worker process
+
+Jan 15 10:30:00 host nginx[1234]: nginx/1.24.0
+Jan 15 10:30:00 host systemd[1]: Started nginx.service
+"""
+expected = "nginx.service - A high performance web server\n     Loaded: loaded (/lib/systemd/system/nginx.service; enabled)\n     Active: active (running) since Mon 2024-01-15 10:30:00 UTC; 2h ago\n       Docs: man:nginx(8)\n   Main PID: 1234 (nginx)\n      Tasks: 3 (limit: 4915)\n     Memory: 8.5M\n     CGroup: /system.slice/nginx.service\n             1234 nginx: master process /usr/sbin/nginx\n             1235 nginx: worker process\nJan 15 10:30:00 host nginx[1234]: nginx/1.24.0\nJan 15 10:30:00 host systemd[1]: Started nginx.service"
+
+[[tests.systemctl-status]]
+name = "empty input passes through"
+input = ""
+expected = ""
+
+[filters.rsync]
+description = "Compact rsync output - short-circuit on success, strip progress"
+match_command = "^rsync\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^sending incremental file list",
+  "^sent \\d",
+]
+match_output = [
+  { pattern = "total size is", message = "ok (synced)", unless = "error|failed|No such file" },
+]
+max_lines = 20
+
+[[tests.rsync]]
+name = "successful sync short-circuits to ok"
+input = """
+sending incremental file list
+./
+file1.txt
+file2.txt
+
+sent 1,234 bytes  received 42 bytes  2,552.00 bytes/sec
+total size is 98,765  speedup is 77.31
+"""
+expected = "ok (synced)"
+
+[[tests.rsync]]
+name = "error lines pass through"
+input = """
+sending incremental file list
+rsync: [Receiver] mkdir "/remote/path" failed: Permission denied (13)
+rsync error: error in file system (code 11) at receiver.c(741) [Receiver=3.2.7]
+"""
+expected = """rsync: [Receiver] mkdir "/remote/path" failed: Permission denied (13)
+rsync error: error in file system (code 11) at receiver.c(741) [Receiver=3.2.7]"""
+
+[[tests.rsync]]
+name = "errors not swallowed when total size present"
+input = """
+rsync: [sender] error
+error in rsync protocol data stream (code 12)
+sent 100 bytes  received 200 bytes  60.00 bytes/sec
+total size is 1000  speedup is 3.33
+"""
+expected = """rsync: [sender] error
+error in rsync protocol data stream (code 12)
+total size is 1000  speedup is 3.33"""
+
+[filters.ssh]
+description = "Compact ssh output - strip connection banners, keep command output"
+match_command = "^ssh\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Warning: Permanently added",
+  "^Connection to .+ closed",
+  "^Authenticated to",
+  "^debug1:",
+  "^OpenSSH_",
+  "^Pseudo-terminal",
+]
+max_lines = 200
+truncate_lines_at = 120
+
+[[tests.ssh]]
+name = "strips connection banners, keeps command output"
+input = """
+Warning: Permanently added '192.168.1.10' (ED25519) to the list of known hosts.
+
+total 32
+drwxr-xr-x 4 user user 4096 Mar 10 12:00 app
+-rw-r--r-- 1 user user 1234 Mar 10 11:00 config.yaml
+
+Connection to 192.168.1.10 closed.
+"""
+expected = "total 32\ndrwxr-xr-x 4 user user 4096 Mar 10 12:00 app\n-rw-r--r-- 1 user user 1234 Mar 10 11:00 config.yaml"
+
+[[tests.ssh]]
+name = "verbose debug lines stripped"
+input = """
+debug1: Connecting to host.example.com port 22.
+debug1: Connection established.
+Authenticated to host.example.com ([1.2.3.4]:22).
+uptime: 12:00:00 up 42 days, load average: 0.10, 0.15, 0.12
+Connection to host.example.com closed.
+"""
+expected = "uptime: 12:00:00 up 42 days, load average: 0.10, 0.15, 0.12"
+
+[[tests.ssh]]
+name = "empty input passes through"
+input = ""
+expected = ""
+
+[filters.brew-install]
+description = "Compact brew install/upgrade output - strip downloads, short-circuit when already installed"
+match_command = "^brew\\s+(install|upgrade)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^==> Downloading",
+  "^==> Pouring",
+  "^Already downloaded:",
+  "^###",
+  "^==> Fetching",
+]
+match_output = [
+  { pattern = "already installed", message = "ok (already installed)" },
+]
+max_lines = 20
+
+[[tests.brew-install]]
+name = "already installed short-circuits"
+input = """
+Warning: rtk 0.27.1 is already installed and up-to-date.
+To reinstall 0.27.1, run:
+  brew reinstall rtk
+"""
+expected = "ok (already installed)"
+
+[[tests.brew-install]]
+name = "install strips download lines"
+input = """
+==> Fetching jq
+==> Downloading https://homebrew.bintray.com/bottles/jq-1.7.1.arm64_sonoma.bottle.tar.gz
+######################################################################## 100.0%
+==> Pouring jq-1.7.1.arm64_sonoma.bottle.tar.gz
+==> Summary
+/opt/homebrew/Cellar/jq/1.7.1: 18 files, 1.2MB
+"""
+expected = "==> Summary\n/opt/homebrew/Cellar/jq/1.7.1: 18 files, 1.2MB"
+
+[filters.uv-sync]
+description = "Compact uv sync/pip install output - strip downloads, short-circuit when up-to-date"
+match_command = "^uv\\s+(sync|pip\\s+install)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s+Downloading ",
+  "^\\s+Using cached ",
+  "^\\s+Preparing ",
+]
+match_output = [
+  { pattern = "Audited \\d+ package", message = "ok (up to date)" },
+]
+max_lines = 20
+
+[[tests.uv-sync]]
+name = "audited packages short-circuits to ok"
+input = """
+Resolved 42 packages in 123ms
+Audited 42 packages in 0.05ms
+"""
+expected = "ok (up to date)"
+
+[[tests.uv-sync]]
+name = "install strips download and cached lines"
+input = """
+  Downloading requests-2.31.0-py3-none-any.whl (62.6 kB)
+  Using cached certifi-2023.11.17-py3-none-any.whl (162 kB)
+  Preparing packages...
+Installed 5 packages in 23ms
+ + certifi==2023.11.17
+ + charset-normalizer==3.3.2
+ + idna==3.6
+ + requests==2.31.0
+ + urllib3==2.1.0
+"""
+expected = "Installed 5 packages in 23ms\n + certifi==2023.11.17\n + charset-normalizer==3.3.2\n + idna==3.6\n + requests==2.31.0\n + urllib3==2.1.0"
+
+[filters.gcloud]
+description = "Compact gcloud output"
+match_command = "^gcloud\\b"
+strip_ansi = true
+strip_lines_matching = ["^\\s*$"]
+truncate_lines_at = 120
+max_lines = 30
+
+[[tests.gcloud]]
+name = "strips blank lines, preserves output"
+input = """
+Updated property [core/project].
+
+NAME        REGION        STATUS
+my-cluster  us-central1   RUNNING
+"""
+expected = "Updated property [core/project].\nNAME        REGION        STATUS\nmy-cluster  us-central1   RUNNING"
+
+[[tests.gcloud]]
+name = "single line passthrough"
+input = "Listed 0 items."
+expected = "Listed 0 items."
