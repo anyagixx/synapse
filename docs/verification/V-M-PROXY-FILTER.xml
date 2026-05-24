@@ -9,6 +9,10 @@
     <COMMAND>cargo test proxy::toml_filter::tests::test_project_filters_require_trust --lib</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter dotnet-build</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter markdownlint</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter df</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter du</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ps</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ping</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
     <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
@@ -21,6 +25,7 @@
     <ASSERTION>Project-local filters are skipped until the exact file hash is trusted or an explicit environment override is set.</ASSERTION>
     <ASSERTION>RTK-style named filters can define guarded match_output rules and inline tests that syn filters verify executes.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack loads beside legacy built-ins and verifies dotnet-build and markdownlint inline tests through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies system command filters for df, du, ps, and ping through the CLI.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-33</PHASE_GATE>
+  <PHASE_GATE>Phase-34</PHASE_GATE>
 </VERIFICATION>
