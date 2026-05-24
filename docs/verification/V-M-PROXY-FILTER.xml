@@ -54,6 +54,8 @@
     <COMMAND>cargo run --quiet -- filters verify --filter shopify-theme</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter ollama</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter stat</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter basedpyright</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ty</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
     <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
@@ -75,6 +77,7 @@
     <ASSERTION>The RTK built-in filter pack verifies platform and tooling filters for xcodebuild, spring-boot, pio-run, trunk-build, quarto-render, and nx through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies operations/admin filters for sops, skopeo, iptables, fail2ban-client, liquibase, mise, and yadm through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies developer-service filters for jj, jira, shopify-theme, ollama, and stat through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies Python type-checker filters for basedpyright and ty through the CLI.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-41</PHASE_GATE>
+  <PHASE_GATE>Phase-42</PHASE_GATE>
 </VERIFICATION>
