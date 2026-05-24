@@ -2011,3 +2011,97 @@ expected = "All checks passed!"
 name = "empty input returns on_empty message"
 input = ""
 expected = "ty: ok"
+
+[filters.helm]
+description = "Compact helm output"
+match_command = "^helm\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^W\\d{4}",
+]
+truncate_lines_at = 120
+max_lines = 40
+
+[[tests.helm]]
+name = "strips blank lines, preserves release info"
+input = """
+NAME: my-release
+LAST DEPLOYED: Mon Jan 15 10:30:00 2024
+NAMESPACE: default
+STATUS: deployed
+REVISION: 3
+
+NOTES:
+Application is running.
+"""
+expected = "NAME: my-release\nLAST DEPLOYED: Mon Jan 15 10:30:00 2024\nNAMESPACE: default\nSTATUS: deployed\nREVISION: 3\nNOTES:\nApplication is running."
+
+[[tests.helm]]
+name = "strips glog W-prefix warnings"
+input = "W0115 10:30:00 warning message from internal\nNAME: my-chart\nSTATUS: deployed"
+expected = "NAME: my-chart\nSTATUS: deployed"
+
+[filters.just]
+description = "Compact just task runner output - strip recipe headers, keep command output"
+match_command = "^just\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*Available recipes:",
+  "^\\s*just --list",
+]
+truncate_lines_at = 150
+max_lines = 50
+
+[[tests.just]]
+name = "preserves command output"
+input = "cargo test\n\ntest result: ok. 42 passed; 0 failed\n"
+expected = "cargo test\ntest result: ok. 42 passed; 0 failed"
+
+[[tests.just]]
+name = "preserves error output"
+input = "error: Compilation failed\nsrc/main.rs:10: expected `;`"
+expected = "error: Compilation failed\nsrc/main.rs:10: expected `;`"
+
+[[tests.just]]
+name = "empty input"
+input = ""
+expected = ""
+
+[filters.make]
+description = "Compact make output"
+match_command = "^make\\b"
+strip_lines_matching = [
+  "^make\\[\\d+\\]:",
+  "^\\s*$",
+  "^Nothing to be done",
+]
+max_lines = 50
+on_empty = "make: ok"
+
+[[tests.make]]
+name = "strips entering/leaving lines"
+input = """
+make[1]: Entering directory '/home/user'
+gcc -O2 foo.c
+make[1]: Leaving directory '/home/user'
+"""
+expected = "gcc -O2 foo.c"
+
+[[tests.make]]
+name = "strips blank lines"
+input = """
+gcc -O2 foo.c
+
+gcc -O2 bar.c
+"""
+expected = "gcc -O2 foo.c\ngcc -O2 bar.c"
+
+[[tests.make]]
+name = "on_empty when all stripped"
+input = """
+make[1]: Entering directory '/home/user'
+make[1]: Leaving directory '/home/user'
+"""
+expected = "make: ok"

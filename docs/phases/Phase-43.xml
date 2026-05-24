@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-43" status="done">
+  <NAME>RTK Filter Pack Full Parity</NAME>
+  <GOAL>Close the remaining RTK TOML filter gap so Synapse has one-to-one named filter coverage with rtk-develop.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-FILTER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-FILTER" status="done">Add RTK-style named filters and inline tests for helm, just, and make.</step-1>
+    <step-2 module="M-PROXY-FILTER" status="done">Verify source RTK filter coverage is 59/59 and no named filters are missing.</step-2>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter helm</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter just</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter make</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify</CHECK>
+    <CHECK status="passed">comm-based RTK filter parity check reports no missing filters</CHECK>
+    <CHECK status="passed">cargo test proxy::toml_filter::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

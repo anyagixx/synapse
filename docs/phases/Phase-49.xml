@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-49" status="planned">
+  <NAME>RTK Discovery And Learning Parity</NAME>
+  <GOAL>Bring RTK discover/learn concepts into Synapse as bounded, MyGRACE-compatible diagnostics instead of ungoverned heuristic code.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-GRACE-STATUS" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="planned">Expose discovery of likely token-heavy commands and suggested RTK/Synapse replacements.</step-1>
+    <step-2 module="M-CAPABILITIES" status="planned">Publish discover/learn capability metadata for MCP and CLI consumers.</step-2>
+    <step-3 module="M-GRACE-STATUS" status="planned">Surface RTK adoption gaps in project status without weakening existing MyGRACE gates.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test capabilities --lib</CHECK>
+    <CHECK status="planned">cargo run --quiet -- status --json</CHECK>
+    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

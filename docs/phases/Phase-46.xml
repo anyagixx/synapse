@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-46" status="planned">
+  <NAME>RTK Structured System Adapter Expansion</NAME>
+  <GOAL>Port high-value standalone RTK system adapters where local processing is materially better than proxying raw shell output.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-TRACKING" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="planned">Evaluate and port compact local adapters for summary, smart/read modes, log, pipe, and format flows where they fit Synapse boundaries.</step-1>
+    <step-2 module="M-TRACKING" status="planned">Record adapter-level savings consistently for new local adapters.</step-2>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test cli::rtk_adapters::tests --lib</CHECK>
+    <CHECK status="planned">cargo test tracking --lib</CHECK>
+    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

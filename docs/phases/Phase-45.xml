@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-45" status="planned">
+  <NAME>RTK First-Class Proxy Shortcut Expansion</NAME>
+  <GOAL>Add low-risk first-class Synapse shortcuts for RTK command families that can safely delegate to syn proxy without bespoke parsers.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-MAIN" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-PROXY-ROUTER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI" status="planned">Add CLI schemas for common RTK proxy shortcuts such as gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, and kubectl.</step-1>
+    <step-2 module="M-MAIN" status="planned">Dispatch new shortcuts through the existing RtkProxyCmd::run_as path.</step-2>
+    <step-3 module="M-CLI-RTK-COMMANDS" status="planned">Extend rewrite token-safe detection and tests for the expanded shortcut surface.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test cli::rtk_commands::tests --lib</CHECK>
+    <CHECK status="planned">cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</CHECK>
+    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

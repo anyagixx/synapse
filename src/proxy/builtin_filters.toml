@@ -184,14 +184,6 @@ strip_ansi = true
 max_lines = 2
 
 [[filters]]
-match_command = "make"
-strip_ansi = true
-strip_lines = ["^\\s*$", "make\\["]
-tail_lines = 5
-max_lines = 15
-on_empty = "Make completed"
-
-[[filters]]
 match_command = "go build"
 strip_ansi = true
 max_lines = 15
@@ -314,24 +306,6 @@ head_lines = 20
 tail_lines = 20
 max_lines = 45
 on_empty = "OpenTofu plan: no changes detected"
-
-[[filters]]
-match_command = "helm"
-strip_ansi = true
-keep_lines = ["Error:", "WARNING", "STATUS:", "REVISION:", "NAME:", "LAST DEPLOYED:"]
-head_lines = 20
-tail_lines = 20
-max_lines = 40
-on_empty = "Helm command completed"
-
-[[filters]]
-match_command = "just"
-strip_ansi = true
-keep_lines = ["error", "failed", "FAILED", "PASS", "passed", "Finished", "test result"]
-head_lines = 10
-tail_lines = 15
-max_lines = 35
-on_empty = "Just command completed"
 
 [[filters]]
 match_command = "bun test"
