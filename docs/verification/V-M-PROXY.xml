@@ -16,6 +16,7 @@
     <ASSERTION>Proxy preserves the wrapped command exit status while still emitting filtered output.</ASSERTION>
     <ASSERTION>Proxy passthrough truncation is Unicode-safe and does not split UTF-8 characters.</ASSERTION>
     <ASSERTION>Proxy records adapter and route metadata from M-PROXY-ROUTER for token-economy analytics.</ASSERTION>
+    <ASSERTION>Proxy only applies project-local filters after M-PROXY-FILTER trust checks pass.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-21</PHASE_GATE>
+  <PHASE_GATE>Phase-24</PHASE_GATE>
 </VERIFICATION>

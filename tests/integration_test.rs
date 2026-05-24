@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, route preview, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, route preview, filter trust/verification, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
@@ -12,6 +12,8 @@
 // test_init_and_index — Verifies init, index, search, verify, and status
 // test_proxy_and_gain — Verifies proxy execution and token savings output
 // test_proxy_route_preview_for_rtk_like_command — Verifies route preview without execution
+// test_proxy_project_filter_requires_trust — Verifies project-local proxy filters are trust gated
+// test_filters_verify_cli_runs_inline_tests — Verifies filter inline tests run through CLI
 // test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
 // test_run_action_cli_plans_and_replays_run — Verifies run action queue CLI plan/replay output
 // test_doctor_and_hooks — Verifies setup diagnostics and hook status
@@ -22,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Added bounded run action queue CLI coverage]
+// LAST_CHANGE: [v4.0.0 — Added RTK filter trust and verification CLI coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -389,6 +391,7 @@ fn test_proxy_tracking_records_positive_savings_and_gain_graph() {
         .args(["proxy", "--", "printf", "%s"])
         .arg(&noisy)
         .env("XDG_DATA_HOME", data_home.path())
+        .env("SYNAPSE_TRUST_PROJECT_FILTERS", "1")
         .env("SYNAPSE_SESSION_ID", "integration-route-session")
         .current_dir(dir.path())
         .output()
@@ -433,6 +436,148 @@ fn test_proxy_tracking_records_positive_savings_and_gain_graph() {
     );
 }
 // END_test_proxy_tracking_records_positive_savings_and_gain_graph
+
+// START_CONTRACT_test_proxy_project_filter_requires_trust
+// PURPOSE: Verify project-local proxy filters are skipped until trusted and then applied
+// SIDE_EFFECTS: creates isolated project filter and trust store, runs syn filters/proxy
+// LINKS:
+//   → M-PROXY-FILTER (depends) - project filter trust gate
+//   ← V-M-PROXY-FILTER (verified_by) - trust-gated filter assertion
+// START_test_proxy_project_filter_requires_trust
+#[test]
+fn test_proxy_project_filter_requires_trust() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+    let filter_dir = dir.path().join(".synapse");
+    std::fs::create_dir(&filter_dir).unwrap();
+    std::fs::write(
+        filter_dir.join("filters.toml"),
+        "[[filters]]\nmatch_command = \"printf\"\nmax_lines = 1\n",
+    )
+    .unwrap();
+    let noisy = (1..=5).map(|i| format!("line {i}\n")).collect::<String>();
+
+    let untrusted = Command::new(&syn)
+        .args(["proxy", "--", "printf", "%s"])
+        .arg(&noisy)
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        untrusted.status.success(),
+        "untrusted proxy failed: {}",
+        String::from_utf8_lossy(&untrusted.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&untrusted.stdout);
+    assert!(
+        stdout.contains("line 5"),
+        "untrusted project filter should not truncate output: {stdout}"
+    );
+
+    let trust = Command::new(&syn)
+        .args(["filters", "trust"])
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        trust.status.success(),
+        "filters trust failed: {}",
+        String::from_utf8_lossy(&trust.stderr)
+    );
+
+    let trusted = Command::new(&syn)
+        .args(["proxy", "--", "printf", "%s"])
+        .arg(&noisy)
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        trusted.status.success(),
+        "trusted proxy failed: {}",
+        String::from_utf8_lossy(&trusted.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&trusted.stdout);
+    assert!(
+        stdout.contains("line 1") && !stdout.contains("line 5"),
+        "trusted project filter should truncate output: {stdout}"
+    );
+}
+// END_test_proxy_project_filter_requires_trust
+
+// START_CONTRACT_test_filters_verify_cli_runs_inline_tests
+// PURPOSE: Verify syn filters verify runs RTK-style inline TOML filter tests
+// SIDE_EFFECTS: creates isolated project filter and trust store, runs syn filters trust/verify
+// LINKS:
+//   → M-CLI-RUNTIME-COMMANDS (depends) - filter verification CLI handler
+//   → M-PROXY-FILTER (depends) - inline test execution
+//   ← V-M-CLI-RUNTIME-COMMANDS (verified_by) - CLI filter verification assertion
+// START_test_filters_verify_cli_runs_inline_tests
+#[test]
+fn test_filters_verify_cli_runs_inline_tests() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+    let filter_dir = dir.path().join(".synapse");
+    std::fs::create_dir(&filter_dir).unwrap();
+    std::fs::write(
+        filter_dir.join("filters.toml"),
+        r#"schema_version = 1
+
+[filters.local-clean]
+match_command = "^printf"
+keep_lines_matching = ["^KEEP"]
+max_lines = 1
+
+[[tests.local-clean]]
+name = "keeps-first-line"
+input = "DROP\nKEEP one\nKEEP two"
+expected = "KEEP one\n..."
+"#,
+    )
+    .unwrap();
+
+    let trust = Command::new(&syn)
+        .args(["filters", "trust"])
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        trust.status.success(),
+        "filters trust failed: {}",
+        String::from_utf8_lossy(&trust.stderr)
+    );
+
+    let verify = Command::new(&syn)
+        .args([
+            "filters",
+            "verify",
+            "--filter",
+            "local-clean",
+            "--require-all",
+        ])
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        verify.status.success(),
+        "filters verify failed: {}\nstdout: {}",
+        String::from_utf8_lossy(&verify.stderr),
+        String::from_utf8_lossy(&verify.stdout)
+    );
+    let stdout = String::from_utf8_lossy(&verify.stdout);
+    assert!(
+        stdout.contains("PASS local-clean::keeps-first-line")
+            && stdout.contains("Filter verification passed"),
+        "verify should report inline test pass: {stdout}"
+    );
+}
+// END_test_filters_verify_cli_runs_inline_tests
 
 // START_CONTRACT_test_proxy_route_preview_for_rtk_like_command
 // PURPOSE: Verify syn proxy --route reports an RTK-style adapter decision without executing the command

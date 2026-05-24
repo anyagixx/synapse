@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY
-// PURPOSE: Proxy executor — routes shell commands, applies TOML filters, and reports token tracking degradation
-// SCOPE: Proxy struct, command-router integration, FilterEngine integration, CommandRunner integration, token tracking with degraded-mode logging
+// PURPOSE: Proxy executor — routes shell commands, applies trusted TOML filters, and reports token tracking degradation
+// SCOPE: Proxy struct, command-router integration, trusted FilterEngine integration, CommandRunner integration, token tracking with degraded-mode logging
 // DEPENDS: M-CONFIG, M-TRACKING, M-PROXY-ROUTER, M-PROXY-RUNNER, M-PROXY-FILTER, M-UTILS
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - RTK-style command classification
@@ -16,9 +16,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Added RTK-style command routing and adapter-aware tracking]
+// LAST_CHANGE: [v4.0.0 — Use trust-gated RTK-style filter engine]
 // END_CHANGE_SUMMARY
 
+pub mod filter_trust;
 pub mod router;
 pub mod runner;
 pub mod toml_filter;

@@ -7,6 +7,6 @@
     <FILE>src/proxy/mod.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-TRACKING,M-PROXY-ROUTER,M-PROXY-RUNNER,M-PROXY-FILTER,M-UTILS</DEPENDS>
-  <LINKS>filters.toml,docs/phases/Phase-21.xml</LINKS>
+  <LINKS>filters.toml,docs/phases/Phase-21.xml,docs/phases/Phase-24.xml</LINKS>
   <VERIFICATION_REF>V-M-PROXY</VERIFICATION_REF>
 </MODULE>

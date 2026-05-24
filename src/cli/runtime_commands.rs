@@ -1,10 +1,11 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
-// PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting
-// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
-// DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
+// PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, filter lifecycle, and clean-bootstrap reporting
+// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-PROXY-FILTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - route preview for proxied commands
+//   → M-PROXY-FILTER (depends) - filter verification and project trust lifecycle
 //   → M-TRACKING (depends) - token economy analytics
 //   → UC-002 (implements) - CLI exposes bounded execution diagnostics
 //   → NFR-003 (traces_to) - command analytics quantify token savings
@@ -21,6 +22,7 @@
 // print_session_stats — Prints session-level savings
 // ProxyCmd::run — Runs proxied shell commands
 // print_route_decision — Prints command-router decision without execution
+// FiltersCmd::run — Verifies, trusts, untrusts, and reports proxy filter status
 // CompressCmd::run — Compresses or restores files
 // McpCmd::run — Starts MCP server
 // ConfigCmd::run — Prints or opens config
@@ -31,11 +33,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.2.0 — Added bounded run action queue CLI controls]
+// LAST_CHANGE: [v5.0.0 — Added RTK-style filter lifecycle command handlers]
 // END_CHANGE_SUMMARY
 
 use super::{
-    CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, RunCmd, ServeCmd,
+    CompressCmd, ConfigCmd, DoctorCmd, FiltersAction, FiltersCmd, GainCmd, HooksCmd, McpCmd,
+    ProxyCmd, RunCmd, ServeCmd,
 };
 use crate::config::Config;
 use crate::run::scenario::{RunScenarioMode, RunScenarioRequest, RunScenarioResult};
@@ -404,6 +407,105 @@ impl ProxyCmd {
     }
     // END_proxy_run
 }
+
+impl FiltersCmd {
+    // START_CONTRACT_FiltersCmd::run
+    // PURPOSE: Verify inline filter tests and manage trust for project-local proxy filters
+    // INPUTS: { config: Config }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: may write or remove filter trust metadata
+    // LINKS:
+    //   → M-PROXY-FILTER (depends) - delegates filter verification and trust state
+    //   → Phase-24 (implements) - RTK-style filter lifecycle management
+    // START_filters_run
+    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
+        match &self.action {
+            FiltersAction::Verify(cmd) => {
+                let engine = crate::proxy::toml_filter::FilterEngine::new();
+                let results = engine
+                    .verify(cmd.filter.as_deref(), cmd.require_all)
+                    .map_err(|err| anyhow::anyhow!(err))?;
+                print_filter_verify_results(&results, cmd.require_all);
+                if !results.passed(cmd.require_all) {
+                    anyhow::bail!("filter verification failed");
+                }
+                Ok(())
+            }
+            FiltersAction::Trust => {
+                let entry = crate::proxy::filter_trust::trust_project_filters()?;
+                println!("Trusted project filters:");
+                println!("path:   {}", entry.path);
+                println!("sha256: {}", entry.sha256);
+                Ok(())
+            }
+            FiltersAction::Untrust => {
+                let removed = crate::proxy::filter_trust::untrust_project_filters()?;
+                if removed {
+                    println!("Project filter trust removed");
+                } else {
+                    println!("No project filter trust entry found");
+                }
+                Ok(())
+            }
+            FiltersAction::Status => {
+                let status = crate::proxy::filter_trust::project_filter_status()?;
+                println!("Project filter status: {}", status.label());
+                if let crate::proxy::filter_trust::TrustStatus::ContentChanged {
+                    trusted_sha256,
+                    current_sha256,
+                } = status
+                {
+                    println!("trusted_sha256: {}", trusted_sha256);
+                    println!("current_sha256: {}", current_sha256);
+                }
+                Ok(())
+            }
+        }
+    }
+    // END_filters_run
+}
+
+// START_CONTRACT_print_filter_verify_results
+// PURPOSE: Render filter inline-test verification results for CLI users and agents
+// INPUTS: { results: &FilterVerifyResults }, { require_all: bool }
+// OUTPUTS: { stdout verification summary }
+// SIDE_EFFECTS: writes to stdout
+// LINKS:
+//   → M-PROXY-FILTER (depends) - renders verification outcomes
+// START_print_filter_verify_results
+fn print_filter_verify_results(
+    results: &crate::proxy::toml_filter::FilterVerifyResults,
+    require_all: bool,
+) {
+    println!("=== Synapse Filter Verification ===");
+    for warning in &results.warnings {
+        println!("WARN {}", warning);
+    }
+    if results.outcomes.is_empty() {
+        println!("No inline filter tests found.");
+    } else {
+        for outcome in &results.outcomes {
+            let status = if outcome.passed { "PASS" } else { "FAIL" };
+            println!("{} {}::{}", status, outcome.filter_name, outcome.test_name);
+            if !outcome.passed {
+                println!("  expected: {}", outcome.expected);
+                println!("  actual:   {}", outcome.actual);
+            }
+        }
+    }
+    if require_all && !results.filters_without_tests.is_empty() {
+        println!(
+            "Filters without tests: {}",
+            results.filters_without_tests.join(", ")
+        );
+    }
+    if results.passed(require_all) {
+        println!("Filter verification passed");
+    } else {
+        println!("Filter verification failed");
+    }
+}
+// END_print_filter_verify_results
 
 // START_CONTRACT_print_route_decision
 // PURPOSE: Render a command-router decision for dry-run diagnostics

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS
 // LINKS: Cargo.toml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Added bounded run action queue flags]
+// LAST_CHANGE: [v4.0.0 — Added RTK-style filter lifecycle command schema]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -56,6 +56,7 @@ pub enum Command {
     Status(StatusCmd),
     Run(RunCmd),
     Proxy(ProxyCmd),
+    Filters(FiltersCmd),
     Gain(GainCmd),
     Compress(CompressCmd),
     Mcp(McpCmd),
@@ -208,6 +209,31 @@ pub struct GainCmd {
     pub adapters: bool,
 }
 // END_GainCmd
+
+// START_FiltersCmd
+#[derive(clap::Args)]
+#[command(about = "Verify and trust token-saving proxy filters")]
+pub struct FiltersCmd {
+    #[command(subcommand)]
+    pub action: FiltersAction,
+}
+
+#[derive(Subcommand)]
+pub enum FiltersAction {
+    Verify(FiltersVerifyCmd),
+    Trust,
+    Untrust,
+    Status,
+}
+
+#[derive(clap::Args)]
+pub struct FiltersVerifyCmd {
+    #[arg(long)]
+    pub filter: Option<String>,
+    #[arg(long)]
+    pub require_all: bool,
+}
+// END_FiltersCmd
 
 // START_HooksCmd
 #[derive(clap::Args)]

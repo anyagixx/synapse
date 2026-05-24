@@ -128,6 +128,7 @@
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-PROXY" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-PROXY-ROUTER" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-PROXY-FILTER" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-COMPRESS" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-MCP" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-HOOKS" type="DEPENDS" />

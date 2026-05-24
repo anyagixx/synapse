@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Dispatch bounded run scenario command]
+// LAST_CHANGE: [v4.0.0 — Dispatch filter lifecycle command]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -45,6 +45,7 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Status(cmd) => cmd.run(config).await,
             syn::cli::Command::Run(cmd) => cmd.run(config).await,
             syn::cli::Command::Proxy(cmd) => cmd.run(config).await,
+            syn::cli::Command::Filters(cmd) => cmd.run(config).await,
             syn::cli::Command::Gain(cmd) => cmd.run(config).await,
             syn::cli::Command::Compress(cmd) => cmd.run(config).await,
             syn::cli::Command::Mcp(cmd) => cmd.run(config).await,
