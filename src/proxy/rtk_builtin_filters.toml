@@ -642,3 +642,188 @@ expected = "Updated property [core/project].\nNAME        REGION        STATUS\n
 name = "single line passthrough"
 input = "Listed 0 items."
 expected = "Listed 0 items."
+
+[filters.gradle]
+description = "Compact Gradle build output - strip progress, keep tasks and errors"
+match_command = "^(gradle|gradlew|\\./)gradlew?\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^> Configuring project",
+  "^> Resolving dependencies",
+  "^> Transform ",
+  "^Download(ing)?\\s+http",
+  "^\\s*<-+>\\s*$",
+  "^> Task :.*UP-TO-DATE$",
+  "^> Task :.*NO-SOURCE$",
+  "^> Task :.*FROM-CACHE$",
+  "^Starting a Gradle Daemon",
+  "^Daemon will be stopped",
+]
+truncate_lines_at = 150
+max_lines = 50
+on_empty = "gradle: ok"
+
+[[tests.gradle]]
+name = "strips up-to-date tasks, keeps build result"
+input = "> Configuring project :app\n> Task :app:compileJava UP-TO-DATE\n> Task :app:compileKotlin UP-TO-DATE\n> Task :app:test\n\n3 tests completed, 1 failed\n\nBUILD FAILED in 12s"
+expected = "> Task :app:test\n3 tests completed, 1 failed\nBUILD FAILED in 12s"
+
+[[tests.gradle]]
+name = "clean build preserved"
+input = "BUILD SUCCESSFUL in 8s\n7 actionable tasks: 7 executed"
+expected = "BUILD SUCCESSFUL in 8s\n7 actionable tasks: 7 executed"
+
+[[tests.gradle]]
+name = "empty after stripping"
+input = "> Configuring project :app\n"
+expected = "gradle: ok"
+
+[filters.mvn-build]
+description = "Compact Maven build output"
+match_command = "^mvn\\s+(compile|package|clean|install)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\[INFO\\] ---",
+  "^\\[INFO\\] Building\\s",
+  "^\\[INFO\\] Downloading\\s",
+  "^\\[INFO\\] Downloaded\\s",
+  "^\\[INFO\\]\\s*$",
+  "^\\s*$",
+  "^Downloading:",
+  "^Downloaded:",
+  "^Progress",
+]
+max_lines = 50
+on_empty = "mvn: ok"
+
+[[tests.mvn-build]]
+name = "strips info noise, preserves errors and summary"
+input = """
+[INFO] ---
+[INFO] Building myapp 1.0-SNAPSHOT
+[INFO] Downloading org.apache.maven.plugins:maven-compiler-plugin:3.11.0
+[INFO] Downloaded org.apache.maven.plugins:maven-compiler-plugin:3.11.0
+[INFO]
+[ERROR] /src/main/java/Main.java:[10,5] cannot find symbol
+  symbol: method foo()
+[INFO] BUILD FAILURE
+[INFO] Total time: 2.543 s
+"""
+expected = "[ERROR] /src/main/java/Main.java:[10,5] cannot find symbol\n  symbol: method foo()\n[INFO] BUILD FAILURE\n[INFO] Total time: 2.543 s"
+
+[[tests.mvn-build]]
+name = "successful build keeps build success line"
+input = """
+[INFO] ---
+[INFO] Building myapp 1.0-SNAPSHOT
+[INFO]
+[INFO] BUILD SUCCESS
+[INFO] Total time: 4.123 s
+[INFO] Finished at: 2024-01-15T10:30:00Z
+"""
+expected = "[INFO] BUILD SUCCESS\n[INFO] Total time: 4.123 s\n[INFO] Finished at: 2024-01-15T10:30:00Z"
+
+[filters.gcc]
+description = "Compact gcc/g++ compiler output - strip notes, keep errors and warnings"
+match_command = "^g(cc|\\+\\+)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s+\\|\\s*$",
+  "^In file included from",
+  "^\\s+from\\s",
+  "^\\d+ warnings? generated",
+  "^\\d+ errors? generated",
+]
+max_lines = 50
+on_empty = "gcc: ok"
+
+[[tests.gcc]]
+name = "strips include chain, keeps errors and warnings"
+input = """
+In file included from /usr/include/stdio.h:42:
+                 from main.c:1:
+main.c:10:5: error: use of undeclared identifier 'foo'
+    foo();
+    ^
+main.c:15:12: warning: unused variable 'x' [-Wunused-variable]
+    int x = 42;
+        ^
+2 warnings generated.
+1 error generated.
+"""
+expected = "main.c:10:5: error: use of undeclared identifier 'foo'\n    foo();\n    ^\nmain.c:15:12: warning: unused variable 'x' [-Wunused-variable]\n    int x = 42;\n        ^"
+
+[[tests.gcc]]
+name = "clean compilation"
+input = """
+"""
+expected = "gcc: ok"
+
+[[tests.gcc]]
+name = "linker error kept"
+input = """
+/usr/bin/ld: /tmp/main.o: undefined reference to 'missing_func'
+collect2: error: ld returned 1 exit status
+"""
+expected = "/usr/bin/ld: /tmp/main.o: undefined reference to 'missing_func'\ncollect2: error: ld returned 1 exit status"
+
+[filters.task]
+description = "Compact go-task output - strip task headers, keep command results"
+match_command = "^task\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^task: \\[.*\\] ",
+  "^task: Task .* is up to date",
+]
+truncate_lines_at = 150
+max_lines = 50
+on_empty = "task: ok"
+
+[[tests.task]]
+name = "strips task headers, keeps output"
+input = "task: [build] go build ./...\n\ntask: [test] go test ./...\nok  myapp 0.5s\n\ntask: Task \"lint\" is up to date"
+expected = "ok  myapp 0.5s"
+
+[[tests.task]]
+name = "preserves error output"
+input = "task: [build] go build ./...\n./main.go:10: undefined: foo\ntask: Failed to run task \"build\": exit status 1"
+expected = "./main.go:10: undefined: foo\ntask: Failed to run task \"build\": exit status 1"
+
+[[tests.task]]
+name = "all up to date"
+input = "task: Task \"build\" is up to date\ntask: Task \"lint\" is up to date\n"
+expected = "task: ok"
+
+[filters.turbo]
+description = "Compact Turborepo output - strip cache status noise, keep task results"
+match_command = "^turbo\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*cache (hit|miss|bypass)",
+  "^\\s*\\d+ packages in scope",
+  "^\\s*Tasks:\\s+\\d+",
+  "^\\s*Duration:\\s+",
+  "^\\s*Remote caching (enabled|disabled)",
+]
+truncate_lines_at = 150
+max_lines = 50
+on_empty = "turbo: ok"
+
+[[tests.turbo]]
+name = "strips cache noise, keeps task output"
+input = " cache hit, replaying logs abc123\n cache miss, executing abc456\n\n3 packages in scope\n\n> myapp:build\n\nCompiled successfully.\n\nTasks:    2 successful, 2 total (1 cached)\nDuration: 3.2s"
+expected = "> myapp:build\nCompiled successfully."
+
+[[tests.turbo]]
+name = "preserves error output"
+input = "> myapp:lint\n\nError: src/index.ts(5,1): error TS2304\n\nTasks:    0 successful, 1 total\nDuration: 1.1s"
+expected = "> myapp:lint\nError: src/index.ts(5,1): error TS2304"
+
+[[tests.turbo]]
+name = "empty after stripping"
+input = " cache hit, replaying logs abc\n\n"
+expected = "turbo: ok"

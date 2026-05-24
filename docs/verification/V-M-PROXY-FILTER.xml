@@ -19,6 +19,11 @@
     <COMMAND>cargo run --quiet -- filters verify --filter brew-install</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter uv-sync</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter gcloud</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gradle</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter mvn-build</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gcc</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter task</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter turbo</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
     <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
@@ -33,6 +38,7 @@
     <ASSERTION>The RTK built-in filter pack loads beside legacy built-ins and verifies dotnet-build and markdownlint inline tests through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies system command filters for df, du, ps, and ping through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies DevOps and package-management filters for systemctl-status, rsync, ssh, brew-install, uv-sync, and gcloud through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies build and compiler filters for gradle, mvn-build, gcc, task, and turbo through the CLI.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-35</PHASE_GATE>
+  <PHASE_GATE>Phase-36</PHASE_GATE>
 </VERIFICATION>
