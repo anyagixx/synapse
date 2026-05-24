@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
 // PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, filter lifecycle, and clean-bootstrap reporting
-// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
 // DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-PROXY-FILTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - route preview for proxied commands
@@ -33,7 +33,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.0.0 — Added RTK-style filter lifecycle command handlers]
+// LAST_CHANGE: [v5.1.0 — Added proxy raw evidence hint rendering]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -374,7 +374,7 @@ fn print_session_stats(items: &[crate::tracking::TrackingSessionStat]) {
 
 impl ProxyCmd {
     // START_CONTRACT_ProxyCmd::run
-    // PURPOSE: Execute or preview a command through the token-saving proxy
+    // PURPOSE: Execute or preview a command through the token-saving proxy with optional raw evidence hint
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: may run external command through proxy
@@ -398,6 +398,18 @@ impl ProxyCmd {
         {
             let mut stdout = std::io::stdout().lock();
             writeln!(stdout, "{}", output.text)?;
+            if self.evidence {
+                if let Some(path) = &output.evidence_path {
+                    writeln!(
+                        stdout,
+                        "Raw output evidence: {} ({} bytes)",
+                        path.display(),
+                        output.raw_bytes
+                    )?;
+                } else {
+                    writeln!(stdout, "Raw output evidence: none")?;
+                }
+            }
             stdout.flush()?;
         }
         if !output.success {

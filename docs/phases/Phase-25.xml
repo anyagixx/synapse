@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-25" status="done">
+  <NAME>RTK Streaming Runner and Raw Evidence</NAME>
+  <GOAL>Move Synapse proxy execution closer to RTK runner behavior by streaming child stdout/stderr, teeing complete raw output into evidence artifacts, and exposing an optional CLI evidence hint without inflating normal filtered output.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-RUNNER" />
+    <MODULE_REF id="M-PROXY" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-RUNNER" status="done">Replaced wait_with_output capture with streaming stdout/stderr readers that tee complete raw output into XDG data evidence files.</step-1>
+    <step-2 module="M-PROXY" status="done">Propagated raw evidence metadata through ProxyOutput while preserving filtered output and exit status behavior.</step-2>
+    <step-3 module="M-CLI" status="done">Exposed syn proxy --evidence for explicit raw-output artifact hints.</step-3>
+    <step-4 module="M-CLI-RUNTIME-COMMANDS" status="done">Rendered evidence path only when requested so normal token-saving output remains compact.</step-4>
+    <step-5 module="M-TESTS-INTEGRATION" status="done">Verified evidence files contain full raw output even when proxy output is filtered.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo test proxy::runner::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_proxy_evidence_hint_writes_raw_output</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_proxy_preserves_nonzero_exit_status</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

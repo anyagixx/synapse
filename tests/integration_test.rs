@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, route preview, filter trust/verification, gain, doctor, hooks, compress
-// DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
+// DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG, M-PROXY, M-PROXY-RUNNER
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
 //   ← V-M-PROXY-ROUTER (verified_by) - route preview integration coverage
@@ -14,6 +14,7 @@
 // test_proxy_route_preview_for_rtk_like_command — Verifies route preview without execution
 // test_proxy_project_filter_requires_trust — Verifies project-local proxy filters are trust gated
 // test_filters_verify_cli_runs_inline_tests — Verifies filter inline tests run through CLI
+// test_proxy_evidence_hint_writes_raw_output — Verifies explicit raw evidence artifact contains full unfiltered output
 // test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
 // test_run_action_cli_plans_and_replays_run — Verifies run action queue CLI plan/replay output
 // test_doctor_and_hooks — Verifies setup diagnostics and hook status
@@ -24,7 +25,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 — Added RTK filter trust and verification CLI coverage]
+// LAST_CHANGE: [v4.1.0 — Added proxy raw evidence integration coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -578,6 +579,62 @@ expected = "KEEP one\n..."
     );
 }
 // END_test_filters_verify_cli_runs_inline_tests
+
+// START_CONTRACT_test_proxy_evidence_hint_writes_raw_output
+// PURPOSE: Verify syn proxy --evidence writes full raw output artifact while stdout remains filtered
+// SIDE_EFFECTS: creates isolated project filter, tracking/evidence data dir, and raw evidence file
+// LINKS:
+//   → M-PROXY-RUNNER (depends) - raw evidence artifact writer
+//   → M-CLI-RUNTIME-COMMANDS (depends) - --evidence hint rendering
+//   ← V-M-PROXY-RUNNER (verified_by) - evidence artifact assertion
+// START_test_proxy_evidence_hint_writes_raw_output
+#[test]
+fn test_proxy_evidence_hint_writes_raw_output() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+    let filter_dir = dir.path().join(".synapse");
+    std::fs::create_dir(&filter_dir).unwrap();
+    std::fs::write(
+        filter_dir.join("filters.toml"),
+        "[[filters]]\nmatch_command = \"printf\"\nmax_lines = 1\n",
+    )
+    .unwrap();
+    let noisy = (1..=6).map(|i| format!("line {i}\n")).collect::<String>();
+
+    let out = Command::new(&syn)
+        .args(["proxy", "--evidence", "--", "printf", "%s"])
+        .arg(&noisy)
+        .env("XDG_DATA_HOME", data_home.path())
+        .env("SYNAPSE_TRUST_PROJECT_FILTERS", "1")
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "proxy --evidence failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        stdout.contains("line 1") && !stdout.contains("line 6"),
+        "stdout should stay filtered: {stdout}"
+    );
+    let evidence_path = stdout
+        .lines()
+        .find_map(|line| {
+            line.strip_prefix("Raw output evidence: ")
+                .and_then(|rest| rest.split_once(" ("))
+                .map(|(path, _)| path.to_string())
+        })
+        .expect("evidence path in stdout");
+    let evidence = std::fs::read_to_string(&evidence_path).unwrap();
+    assert!(
+        evidence.contains("line 1") && evidence.contains("line 6"),
+        "evidence should contain full raw output: {evidence}"
+    );
+}
+// END_test_proxy_evidence_hint_writes_raw_output
 
 // START_CONTRACT_test_proxy_route_preview_for_rtk_like_command
 // PURPOSE: Verify syn proxy --route reports an RTK-style adapter decision without executing the command

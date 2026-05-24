@@ -383,6 +383,7 @@
     <REL source="M-TESTS-INTEGRATION" target="M-GRACE" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-TESTS-INTEGRATION" target="M-PROXY-RUNNER" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-RUNNER" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-CLI" type="DEPENDS" />

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY
 // PURPOSE: Proxy executor — routes shell commands, applies trusted TOML filters, and reports token tracking degradation
-// SCOPE: Proxy struct, command-router integration, trusted FilterEngine integration, CommandRunner integration, token tracking with degraded-mode logging
+// SCOPE: Proxy struct, command-router integration, trusted FilterEngine integration, streaming CommandRunner integration, raw evidence metadata, token tracking with degraded-mode logging
 // DEPENDS: M-CONFIG, M-TRACKING, M-PROXY-ROUTER, M-PROXY-RUNNER, M-PROXY-FILTER, M-UTILS
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - RTK-style command classification
@@ -12,11 +12,11 @@
 
 // START_MODULE_MAP
 // Proxy — Command proxy combining router, filter engine, command runner, and token tracker
-// ProxyOutput — Filtered output plus original command exit status
+// ProxyOutput — Filtered output plus original command exit status and raw evidence metadata
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 — Use trust-gated RTK-style filter engine]
+// LAST_CHANGE: [v5.0.0 — Propagate streaming runner raw evidence metadata]
 // END_CHANGE_SUMMARY
 
 pub mod filter_trust;
@@ -37,6 +37,8 @@ pub struct ProxyOutput {
     pub text: String,
     pub status_code: i32,
     pub success: bool,
+    pub evidence_path: Option<std::path::PathBuf>,
+    pub raw_bytes: u64,
 }
 // END_ProxyOutput
 
@@ -68,7 +70,7 @@ impl Proxy {
     // END_proxy_new
 
     // START_CONTRACT_Proxy::execute
-    // PURPOSE: Execute a shell command through the proxy: run, filter output, track tokens
+    // PURPOSE: Execute a shell command through the proxy: run with evidence tee, filter output, track tokens
     // INPUTS: { cmd_parts: &[String] — command and args }
     // OUTPUTS: { anyhow::Result<ProxyOutput> — filtered output and original exit status }
     // SIDE_EFFECTS: runs external command, writes tracking data
@@ -152,6 +154,8 @@ impl Proxy {
             text: output,
             status_code: raw.status_code,
             success: raw.success,
+            evidence_path: raw.evidence_path,
+            raw_bytes: raw.raw_bytes,
         })
     }
     // END_proxy_execute

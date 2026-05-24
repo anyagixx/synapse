@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-PROXY-RUNNER" type="INTEGRATION" status="active">
   <NAME>M-PROXY-RUNNER</NAME>
-  <PURPOSE>Command runner — executes shell commands and captures stdout/stderr with exit status</PURPOSE>
-  <SCOPE>CommandRunner struct, CommandOutput status model, execute via std::process::Command</SCOPE>
+  <PURPOSE>Streaming command runner — executes shell commands, captures stdout/stderr with exit status, and tees raw output into evidence artifacts</PURPOSE>
+  <SCOPE>CommandRunner struct, CommandOutput status/evidence model, streaming stdout/stderr capture via std::process::Command, XDG data raw-output evidence files</SCOPE>
   <FILES>
     <FILE>src/proxy/runner.rs</FILE>
   </FILES>
   <DEPENDS></DEPENDS>
-  <LINKS></LINKS>
+  <LINKS>docs/phases/Phase-25.xml</LINKS>
   <VERIFICATION_REF>V-M-PROXY-RUNNER</VERIFICATION_REF>
 </MODULE>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS
 // LINKS: Cargo.toml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 — Added RTK-style filter lifecycle command schema]
+// LAST_CHANGE: [v4.1.0 — Added proxy raw evidence flag]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -287,6 +287,8 @@ pub struct GrepCmd {
 pub struct ProxyCmd {
     #[arg(long)]
     pub route: bool,
+    #[arg(long)]
+    pub evidence: bool,
     #[arg(trailing_var_arg = true)]
     pub args: Vec<String>,
 }

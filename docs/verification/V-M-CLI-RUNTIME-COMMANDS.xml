@@ -5,6 +5,7 @@
     <COMMAND>cargo test --test integration_test test_proxy_preserves_nonzero_exit_status</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_evidence_hint_writes_raw_output</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
@@ -20,11 +21,12 @@
     <ASSERTION>Doctor dependency diagnostics parse requirements.txt package names without following nested or remote specs.</ASSERTION>
     <ASSERTION>ProxyCmd propagates wrapped command exit status after printing filtered output.</ASSERTION>
     <ASSERTION>ProxyCmd supports --route and prints adapter decisions without command execution.</ASSERTION>
+    <ASSERTION>ProxyCmd supports --evidence and prints raw-output artifact location only when explicitly requested.</ASSERTION>
     <ASSERTION>GainCmd supports --graph, --sessions, and --adapters and renders tracked savings bars plus economics summaries.</ASSERTION>
     <ASSERTION>FiltersCmd exposes verify, trust, untrust, and status controls for RTK-style filter lifecycle management.</ASSERTION>
     <ASSERTION>RunCmd creates a bounded scenario run from project gates and emits replay-capable JSON.</ASSERTION>
     <ASSERTION>RunCmd action mode plans, steps, loops, retries, and replays persisted run queues.</ASSERTION>
     <ASSERTION>McpCmd starts the stdio MCP server only; HTTP/LSP options are not public flags until implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-24</PHASE_GATE>
+  <PHASE_GATE>Phase-25</PHASE_GATE>
 </VERIFICATION>
