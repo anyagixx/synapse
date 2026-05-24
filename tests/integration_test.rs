@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, local RTK adapters, rewrite hook decisions including safe shell chains, pipelines, and fd redirects, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, local RTK adapters, rewrite hook decisions including safe shell chains, pipelines, fd redirects, and shell prefixes, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG, M-PROXY, M-PROXY-RUNNER
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
@@ -17,7 +17,7 @@
 // test_proxy_evidence_hint_writes_raw_output — Verifies explicit raw evidence artifact contains full unfiltered output
 // test_rtk_read_shortcut_filters_and_preserves_evidence — Verifies first-class read shortcut delegates to proxy
 // test_rtk_local_adapters_compact_structured_outputs — Verifies json/deps/env/wc direct adapters
-// test_rewrite_cli_delegates_to_router — Verifies hook-facing command rewrites, safe chains, pipelines, and fd redirects use proxy router decisions
+// test_rewrite_cli_delegates_to_router — Verifies hook-facing command rewrites, safe chains, pipelines, fd redirects, and shell prefixes use proxy router decisions
 // test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
 // test_run_action_cli_plans_and_replays_run — Verifies run action queue CLI plan/replay output
 // test_doctor_and_hooks — Verifies setup diagnostics and hook status
@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.7.0 — Added fd-redirect RTK rewrite integration coverage]
+// LAST_CHANGE: [v4.8.0 — Added shell-prefix RTK rewrite integration coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -808,7 +808,7 @@ tokio = { version = "1", features = ["full"] }
 // END_test_rtk_local_adapters_compact_structured_outputs
 
 // START_CONTRACT_test_rewrite_cli_delegates_to_router
-// PURPOSE: Verify syn rewrite prints routeable proxy commands, rewrites safe shell chains/pipelines/fd redirects, and skips unsupported commands for thin hooks
+// PURPOSE: Verify syn rewrite prints routeable proxy commands, rewrites safe shell chains/pipelines/fd redirects/shell prefixes, and skips unsupported commands for thin hooks
 // SIDE_EFFECTS: runs syn rewrite without executing rewritten commands
 // LINKS:
 //   → M-CLI-RTK-COMMANDS (depends) - rewrite command implementation
@@ -876,6 +876,20 @@ fn test_rewrite_cli_delegates_to_router() {
     assert_eq!(
         String::from_utf8_lossy(&out.stdout).trim(),
         "RUST_BACKTRACE=1 syn proxy -- cargo test 2>&1 | grep FAILED && syn proxy -- git stash"
+    );
+
+    let out = Command::new(&syn)
+        .args(["rewrite", "sudo nocorrect git status && builtin cargo test"])
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "syn rewrite shell prefix command failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&out.stdout).trim(),
+        "sudo nocorrect syn proxy -- git status && builtin syn proxy -- cargo test"
     );
 
     let out = Command::new(&syn)

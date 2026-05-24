@@ -10,6 +10,7 @@
     <ASSERTION>OpenCode rewrite hook receives expanded safe chain rewrite behavior through syn rewrite without hook-side command parsing.</ASSERTION>
     <ASSERTION>OpenCode rewrite hook receives pipeline-left-edge rewrite behavior through syn rewrite without hook-side pipeline parsing.</ASSERTION>
     <ASSERTION>OpenCode rewrite hook receives safe fd-merge redirect preservation through syn rewrite without hook-side redirect parsing.</ASSERTION>
+    <ASSERTION>OpenCode rewrite hook receives transparent shell prefix preservation through syn rewrite without hook-side prefix parsing.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-31</PHASE_GATE>
+  <PHASE_GATE>Phase-32</PHASE_GATE>
 </VERIFICATION>

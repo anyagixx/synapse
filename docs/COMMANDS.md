@@ -61,7 +61,7 @@ This page lists shipped CLI commands only.
 | `syn deps [path]` | Summarize dependency manifests without dumping full files |
 | `syn env --filter <name>` | Show filtered environment variables with secrets masked |
 | `syn wc <file>` | Count text locally with compact wc-style output |
-| `syn rewrite <cmd>` | Print the hook rewrite for routeable commands, safe command chains, pipeline left edges, and safe fd redirects without executing it |
+| `syn rewrite <cmd>` | Print the hook rewrite for routeable commands, safe command chains, pipeline left edges, safe fd redirects, and shell prefixes without executing it |
 | `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |
 | `syn proxy --route -- <cmd>` | Preview the selected token-saving adapter without executing the command |
 | `syn gain` | Show token savings analytics |

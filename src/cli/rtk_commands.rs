@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
-// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, and fd-merge redirects
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, and transparent shell prefix builtins
 // DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
@@ -18,11 +18,12 @@
 // split_shell_segments — Splits safe shell sequences on &&, ||, ;, and | without executing shell syntax
 // is_pipe_incompatible_segment — Guards pipeline sources that must keep native raw output
 // split_trailing_safe_redirects — Separates safe fd-merge redirects from route tokens
+// is_transparent_shell_prefix — Identifies shell modifiers preserved before syn proxy
 // split_route_tokens — Separates transparent shell prefixes from routeable command tokens
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.4.0 — Added RTK fd-redirect rewrite parity]
+// LAST_CHANGE: [v1.5.0 — Added RTK shell prefix builtin parity]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
@@ -277,7 +278,7 @@ fn split_route_tokens(tokens: &[String]) -> (Vec<String>, Vec<String>) {
     let mut index = 0;
     while index < tokens.len() {
         let token = tokens[index].as_str();
-        if is_env_assignment(token) || matches!(token, "sudo" | "command" | "noglob" | "exec") {
+        if is_env_assignment(token) || is_transparent_shell_prefix(token) {
             index += 1;
             continue;
         }
@@ -290,6 +291,19 @@ fn split_route_tokens(tokens: &[String]) -> (Vec<String>, Vec<String>) {
     (tokens[..index].to_vec(), tokens[index..].to_vec())
 }
 // END_split_route_tokens
+
+// START_CONTRACT_is_transparent_shell_prefix
+// PURPOSE: Identify shell modifiers that should be preserved before a proxied route command
+// INPUTS: { token: &str }
+// OUTPUTS: { bool }
+// START_is_transparent_shell_prefix
+fn is_transparent_shell_prefix(token: &str) -> bool {
+    matches!(
+        token,
+        "sudo" | "command" | "noglob" | "exec" | "builtin" | "nocorrect"
+    )
+}
+// END_is_transparent_shell_prefix
 
 // START_CONTRACT_split_trailing_safe_redirects
 // PURPOSE: Remove safe trailing fd-merge redirect tokens before router classification while preserving them for rendering
@@ -684,6 +698,36 @@ mod tests {
         assert_eq!(
             rewrite_command(&args),
             Some("FOO=1 syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_builtin_prefix_before_proxy() {
+        let args = vec!["builtin git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("builtin syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_nocorrect_prefix_before_proxy() {
+        let args = vec!["nocorrect git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("nocorrect syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_composed_shell_prefixes() {
+        let args = vec!["sudo nocorrect git status && builtin cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some(
+                "sudo nocorrect syn proxy -- git status && builtin syn proxy -- cargo test"
+                    .to_string()
+            )
         );
     }
 

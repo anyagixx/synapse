@@ -5,18 +5,18 @@
     Key data flows:
       - INPUT: RtkProxyCmd flags, JsonCmd/DepsCmd/EnvCmd/WcCmd args, RewriteCmd trailing args, and raw command strings from agent hooks.
       - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, and use CommandRouter for per-segment rewrite decisions.
-      - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, local compact adapter output, and hook rewrite strings, safe shell chains, pipeline-left-edge rewrites, or safe fd-redirect-preserving rewrites as syn proxy.
+      - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, local compact adapter output, and hook rewrite strings, safe shell chains, pipeline-left-edge rewrites, safe fd-redirect-preserving rewrites, or shell-prefix-preserving rewrites as syn proxy.
     Critical invariants:
       - Shortcuts must not bypass M-PROXY filtering, tracking, or evidence capture.
       - Direct local adapters must record adapter-level token economics through M-TRACKING.
       - Hooks must use syn rewrite instead of maintaining separate command-family or chain-rewrite lists.
-      - Shell-aware rewrite may only handle safe &&, ||, ;, pipeline-left-edge sequences, and trailing fd-merge redirects; pipe filter segments, file redirection, heredoc, and substitution constructs stay pass-through.
+      - Shell-aware rewrite may only handle safe &&, ||, ;, pipeline-left-edge sequences, trailing fd-merge redirects, and known transparent shell prefix builtins; pipe filter segments, file redirection, heredoc, and substitution constructs stay pass-through.
       - Shortcut flags --route and --evidence remain behaviorally identical to syn proxy.
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized.
   IMPLEMENTATION_STRATEGY:
     Approach: Keep shell-backed shortcuts as thin CLI wrappers over ProxyCmd, implement structured-data adapters locally, and keep hooks as thin delegates to shell-aware rewrite_command.
-    Complexity_areas: clap trailing args, command flags beginning with hyphen, shell quoting, shell operator safety, pipeline stream semantics, fd redirect preservation, exit-code propagation, safe environment masking, bounded JSON/dependency summaries.
-    Patterns_applied: explicit delegation, typed links, shared proxy execution path, router-backed per-segment rewrite decisions, pipeline target preservation, safe redirect suffix preservation, direct adapter tracking.
+    Complexity_areas: clap trailing args, command flags beginning with hyphen, shell quoting, shell operator safety, pipeline stream semantics, fd redirect preservation, shell prefix layering, exit-code propagation, safe environment masking, bounded JSON/dependency summaries.
+    Patterns_applied: explicit delegation, typed links, shared proxy execution path, router-backed per-segment rewrite decisions, pipeline target preservation, safe redirect suffix preservation, transparent prefix preservation, direct adapter tracking.
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - syn read --evidence filters stdout with the cat filter and writes complete raw evidence.
@@ -26,9 +26,10 @@
     - syn rewrite "git status && cargo test" prints a proxied command chain without executing it.
     - syn rewrite "git log | head -5 && git stash" proxies the git log and stash segments while leaving head raw.
     - syn rewrite "RUST_BACKTRACE=1 cargo test 2&gt;&amp;1 | grep FAILED && git stash" preserves the fd redirect and proxies routeable segments.
+    - syn rewrite "sudo nocorrect git status && builtin cargo test" preserves shell prefixes before proxied segments.
     - verify_project and review_code pass with no MyGRACE drift.
   RISKS_ACKNOWLEDGED:
     - Native command availability differs by host; integration tests should use POSIX-stable cat behavior.
     - Additional specialized command-specific adapters may still be needed after local JSON/deps/env/wc parity.
-    - Full shell language support is intentionally out of scope for Phase-31; unsupported constructs must fail closed.
+    - Full shell language support is intentionally out of scope for Phase-32; unsupported constructs must fail closed.
 </BELIEF_STATE>
