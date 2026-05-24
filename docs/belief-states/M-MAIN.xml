@@ -3,11 +3,11 @@
   UNDERSTANDING:
     Module responsibility: Binary entry point — parses CLI, resolves runtime config, initializes stderr tracing, dispatches commands via tokio runtime
     Key data flows:
-      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-45 expands RTK shortcut dispatch through the existing proxy path.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-LIB, M-CLI, M-CONFIG
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: CLI argument parsing, stderr tracing init, command dispatch including RTK proxy shortcuts, local RTK adapters, RTK parity inventory, and hook rewrites
+      - Scope remains bounded to: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts, local RTK adapters, RTK parity inventory, and hook rewrites
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -17,6 +17,7 @@
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
     - syn rtk-parity --source ../GRACEme/rtk-develop --ci dispatches through main and passes
+    - expanded shortcuts dispatch through RtkProxyCmd::run_as instead of executing native commands directly
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

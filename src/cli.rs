@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, first-class RTK shortcut commands, local RTK adapters, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands, local RTK adapters, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.5.0 — Added RTK parity inventory command schema]
+// LAST_CHANGE: [v4.6.0 — Added expanded RTK proxy shortcut command schemas]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -88,6 +88,45 @@ pub enum Command {
     Npx(RtkProxyCmd),
     #[command(about = "Run pytest through the token-saving proxy")]
     Pytest(RtkProxyCmd),
+    #[command(name = "gh", about = "Run GitHub CLI through the token-saving proxy")]
+    Gh(RtkProxyCmd),
+    #[command(name = "glab", about = "Run GitLab CLI through the token-saving proxy")]
+    Glab(RtkProxyCmd),
+    #[command(name = "aws", about = "Run AWS CLI through the token-saving proxy")]
+    Aws(RtkProxyCmd),
+    #[command(name = "psql", about = "Run psql through the token-saving proxy")]
+    Psql(RtkProxyCmd),
+    #[command(name = "curl", about = "Run curl through the token-saving proxy")]
+    Curl(RtkProxyCmd),
+    #[command(name = "wget", about = "Run wget through the token-saving proxy")]
+    Wget(RtkProxyCmd),
+    #[command(name = "jq", about = "Run jq through the token-saving proxy")]
+    Jq(RtkProxyCmd),
+    #[command(name = "go", about = "Run Go tooling through the token-saving proxy")]
+    Go(RtkProxyCmd),
+    #[command(
+        name = "golangci",
+        about = "Run golangci-lint through the token-saving proxy"
+    )]
+    Golangci(RtkProxyCmd),
+    #[command(name = "dotnet", about = "Run dotnet through the token-saving proxy")]
+    Dotnet(RtkProxyCmd),
+    #[command(name = "rake", about = "Run rake through the token-saving proxy")]
+    Rake(RtkProxyCmd),
+    #[command(name = "rspec", about = "Run rspec through the token-saving proxy")]
+    Rspec(RtkProxyCmd),
+    #[command(name = "rubocop", about = "Run rubocop through the token-saving proxy")]
+    Rubocop(RtkProxyCmd),
+    #[command(name = "gradle", about = "Run Gradle through the token-saving proxy")]
+    Gradle(RtkProxyCmd),
+    #[command(name = "make", about = "Run make through the token-saving proxy")]
+    Make(RtkProxyCmd),
+    #[command(name = "just", about = "Run just through the token-saving proxy")]
+    Just(RtkProxyCmd),
+    #[command(name = "helm", about = "Run Helm through the token-saving proxy")]
+    Helm(RtkProxyCmd),
+    #[command(name = "kubectl", about = "Run kubectl through the token-saving proxy")]
+    Kubectl(RtkProxyCmd),
     #[command(about = "Inspect JSON with compact values or keys-only schema")]
     Json(JsonCmd),
     #[command(about = "Summarize dependency manifests without dumping full files")]

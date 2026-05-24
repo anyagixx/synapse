@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
 // PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
-// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including RTK proxy shortcuts, local RTK adapters, parity inventory, and hook rewrites
+// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts, local RTK adapters, parity inventory, and hook rewrites
 // DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.4.0 — Dispatch RTK parity inventory command]
+// LAST_CHANGE: [v4.5.0 — Dispatch expanded RTK proxy shortcut commands]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -89,6 +89,83 @@ fn main() -> anyhow::Result<()> {
             }
             syn::cli::Command::Pytest(cmd) => {
                 cmd.run_as(config, "pytest", false, "Usage: syn pytest [args...]")
+                    .await
+            }
+            syn::cli::Command::Gh(cmd) => {
+                cmd.run_as(config, "gh", false, "Usage: syn gh [args...]")
+                    .await
+            }
+            syn::cli::Command::Glab(cmd) => {
+                cmd.run_as(config, "glab", false, "Usage: syn glab [args...]")
+                    .await
+            }
+            syn::cli::Command::Aws(cmd) => {
+                cmd.run_as(config, "aws", false, "Usage: syn aws [args...]")
+                    .await
+            }
+            syn::cli::Command::Psql(cmd) => {
+                cmd.run_as(config, "psql", false, "Usage: syn psql [args...]")
+                    .await
+            }
+            syn::cli::Command::Curl(cmd) => {
+                cmd.run_as(config, "curl", true, "Usage: syn curl <url-or-args>...")
+                    .await
+            }
+            syn::cli::Command::Wget(cmd) => {
+                cmd.run_as(config, "wget", true, "Usage: syn wget <url-or-args>...")
+                    .await
+            }
+            syn::cli::Command::Jq(cmd) => {
+                cmd.run_as(config, "jq", false, "Usage: syn jq [args...]")
+                    .await
+            }
+            syn::cli::Command::Go(cmd) => {
+                cmd.run_as(config, "go", false, "Usage: syn go [args...]")
+                    .await
+            }
+            syn::cli::Command::Golangci(cmd) => {
+                cmd.run_as(
+                    config,
+                    "golangci-lint",
+                    false,
+                    "Usage: syn golangci [args...]",
+                )
+                .await
+            }
+            syn::cli::Command::Dotnet(cmd) => {
+                cmd.run_as(config, "dotnet", false, "Usage: syn dotnet [args...]")
+                    .await
+            }
+            syn::cli::Command::Rake(cmd) => {
+                cmd.run_as(config, "rake", false, "Usage: syn rake [args...]")
+                    .await
+            }
+            syn::cli::Command::Rspec(cmd) => {
+                cmd.run_as(config, "rspec", false, "Usage: syn rspec [args...]")
+                    .await
+            }
+            syn::cli::Command::Rubocop(cmd) => {
+                cmd.run_as(config, "rubocop", false, "Usage: syn rubocop [args...]")
+                    .await
+            }
+            syn::cli::Command::Gradle(cmd) => {
+                cmd.run_as(config, "gradle", false, "Usage: syn gradle [args...]")
+                    .await
+            }
+            syn::cli::Command::Make(cmd) => {
+                cmd.run_as(config, "make", false, "Usage: syn make [args...]")
+                    .await
+            }
+            syn::cli::Command::Just(cmd) => {
+                cmd.run_as(config, "just", false, "Usage: syn just [args...]")
+                    .await
+            }
+            syn::cli::Command::Helm(cmd) => {
+                cmd.run_as(config, "helm", false, "Usage: syn helm [args...]")
+                    .await
+            }
+            syn::cli::Command::Kubectl(cmd) => {
+                cmd.run_as(config, "kubectl", false, "Usage: syn kubectl [args...]")
                     .await
             }
             syn::cli::Command::Json(cmd) => cmd.run(config).await,

@@ -2,11 +2,11 @@
 <MODULE id="M-CLI" type="ENTRY_POINT" status="active">
   <NAME>M-CLI</NAME>
   <PURPOSE>CLI schema facade — clap-powered top-level parser, command enum, and command argument structs</PURPOSE>
-  <SCOPE>SynCli, Command enum, command argument structs including GRACE --profile flags, run scenario/action flags, RTK shortcuts, local RTK adapters, rtk-parity inventory gate, rewrite hook decisions, doctor --deps, gain --graph/--sessions/--adapters, proxy --route/--evidence, filters verify/trust controls, stdio-only mcp command, and CI action enum</SCOPE>
+  <SCOPE>SynCli, Command enum, command argument structs including GRACE --profile flags, run scenario/action flags, expanded RTK proxy shortcuts, local RTK adapters, rtk-parity inventory gate, rewrite hook decisions, doctor --deps, gain --graph/--sessions/--adapters, proxy --route/--evidence, filters verify/trust controls, stdio-only mcp command, and CI action enum</SCOPE>
   <FILES>
     <FILE>src/cli.rs</FILE>
   </FILES>
   <DEPENDS>M-CLI-SETUP-COMMANDS,M-CLI-CODE-COMMANDS,M-CLI-GRACE-COMMANDS,M-CLI-RUNTIME-COMMANDS,M-CLI-RTK-COMMANDS</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml</LINKS>
+  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml</LINKS>
   <VERIFICATION_REF>V-M-CLI</VERIFICATION_REF>
 </MODULE>

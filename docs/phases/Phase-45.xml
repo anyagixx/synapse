@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-45" status="planned">
+<PHASE id="Phase-45" status="done">
   <NAME>RTK First-Class Proxy Shortcut Expansion</NAME>
   <GOAL>Add low-risk first-class Synapse shortcuts for RTK command families that can safely delegate to syn proxy without bespoke parsers.</GOAL>
   <MODULE_REFS>
@@ -9,13 +9,20 @@
     <MODULE_REF id="M-PROXY-ROUTER" />
   </MODULE_REFS>
   <STEPS>
-    <step-1 module="M-CLI" status="planned">Add CLI schemas for common RTK proxy shortcuts such as gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, and kubectl.</step-1>
-    <step-2 module="M-MAIN" status="planned">Dispatch new shortcuts through the existing RtkProxyCmd::run_as path.</step-2>
-    <step-3 module="M-CLI-RTK-COMMANDS" status="planned">Extend rewrite token-safe detection and tests for the expanded shortcut surface.</step-3>
+    <step-1 module="M-CLI" status="done">Added CLI schemas for common RTK proxy shortcuts: gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, and kubectl.</step-1>
+    <step-2 module="M-MAIN" status="done">Dispatched new shortcuts through the existing RtkProxyCmd::run_as path.</step-2>
+    <step-3 module="M-CLI-RTK-COMMANDS" status="done">Extended rewrite token-safe detection, parity inventory, and tests for the expanded shortcut surface.</step-3>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test cli::rtk_commands::tests --lib</CHECK>
-    <CHECK status="planned">cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_commands::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_parity::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</CHECK>
+    <CHECK status="passed">cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --json --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- gh --route pr checks</CHECK>
+    <CHECK status="passed">cargo run --quiet -- kubectl --route get pods</CHECK>
+    <CHECK status="passed">cargo run --quiet -- golangci --route run</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
   </VERIFICATION>
 </PHASE>

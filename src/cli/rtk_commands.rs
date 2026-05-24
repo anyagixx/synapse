@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
-// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, and transparent shell prefix builtins
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, and kubectl; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, and expanded token-safe Synapse shortcuts
 // DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
@@ -19,11 +19,12 @@
 // is_pipe_incompatible_segment — Guards pipeline sources that must keep native raw output
 // split_trailing_safe_redirects — Separates safe fd-merge redirects from route tokens
 // is_transparent_shell_prefix — Identifies shell modifiers preserved before syn proxy
+// is_already_token_safe — Detects Synapse/RTK commands that already save tokens
 // split_route_tokens — Separates transparent shell prefixes from routeable command tokens
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.5.0 — Added RTK shell prefix builtin parity]
+// LAST_CHANGE: [v1.6.0 — Expanded token-safe detection for RTK shortcut parity]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
@@ -41,6 +42,13 @@ struct SegmentRewrite {
     rendered: String,
     changed: bool,
 }
+
+const SYN_TOKEN_SAFE_COMMANDS: &[&str] = &[
+    "proxy", "read", "ls", "tree", "find", "rg", "grep", "git", "cargo", "npm", "pnpm", "npx",
+    "pytest", "gh", "glab", "aws", "psql", "curl", "wget", "jq", "go", "golangci", "dotnet",
+    "rake", "rspec", "rubocop", "gradle", "make", "just", "helm", "kubectl", "json", "deps", "env",
+    "wc", "gain", "compress",
+];
 
 // START_public_api
 
@@ -361,19 +369,16 @@ fn format_rewritten_command(
 // OUTPUTS: { bool }
 // START_is_already_token_safe
 fn is_already_token_safe(command: &str) -> bool {
-    command.starts_with("syn proxy ")
-        || command.starts_with("syn proxy --")
-        || command.starts_with("syn read ")
-        || command.starts_with("syn ls")
-        || command.starts_with("syn rg ")
-        || command.starts_with("syn grep ")
-        || command.starts_with("syn git ")
-        || command.starts_with("syn cargo ")
-        || command.starts_with("syn npm ")
-        || command.starts_with("syn pnpm ")
-        || command.starts_with("syn npx ")
-        || command.starts_with("syn pytest")
-        || command.starts_with("rtk ")
+    if command == "rtk" || command.starts_with("rtk ") {
+        return true;
+    }
+    let Some(rest) = command.strip_prefix("syn ") else {
+        return false;
+    };
+    let Some(command_name) = rest.split_whitespace().next() else {
+        return false;
+    };
+    SYN_TOKEN_SAFE_COMMANDS.contains(&command_name)
 }
 // END_is_already_token_safe
 
@@ -761,6 +766,42 @@ mod tests {
         assert_eq!(
             rewrite_command(&args),
             Some("syn proxy -- git status && syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn token_safe_detection_covers_expanded_synapse_shortcuts() {
+        for command in [
+            "syn gh pr checks",
+            "syn glab mr list",
+            "syn aws sts get-caller-identity",
+            "syn psql -c select",
+            "syn curl https://example.test",
+            "syn wget https://example.test",
+            "syn jq .",
+            "syn go test ./...",
+            "syn golangci run",
+            "syn dotnet test",
+            "syn rake test",
+            "syn rspec",
+            "syn rubocop",
+            "syn gradle test",
+            "syn make test",
+            "syn just check",
+            "syn helm list",
+            "syn kubectl get pods",
+        ] {
+            assert!(is_already_token_safe(command), "{command}");
+        }
+        assert!(!is_already_token_safe("syn ghfake pr checks"));
+    }
+
+    #[test]
+    fn rewrite_command_preserves_expanded_token_safe_segment_in_sequence() {
+        let args = vec!["syn gh pr checks && aws sts get-caller-identity".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn gh pr checks && syn proxy -- aws sts get-caller-identity".to_string())
         );
     }
 

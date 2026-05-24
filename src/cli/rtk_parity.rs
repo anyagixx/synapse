@@ -1,13 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: RTK parity inventory gate — compares Synapse RTK coverage against source and planned parity domains
-// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, compact/JSON report rendering
+// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory, compact/JSON report rendering
 // DEPENDS: M-CLI, M-PROXY-FILTER, M-PROXY-ROUTER
 // LINKS:
 //   -> M-CLI (depends) - exposes the rtk-parity command schema
 //   -> M-PROXY-FILTER (depends) - reads built-in RTK filter inventory
 //   -> M-PROXY-ROUTER (depends) - reads routed adapter family catalogue
 //   -> Phase-44 (implements) - machine-checkable RTK parity inventory gate
+//   -> Phase-45 (implements) - expanded first-class RTK proxy shortcut parity
 //   -> NFR-003 (traces_to) - parity gates protect token-saving coverage
 
 // START_MODULE_MAP
@@ -19,7 +20,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added RTK parity inventory gate]
+// LAST_CHANGE: [v1.1.0 - Added expanded RTK proxy shortcut inventory]
 // END_CHANGE_SUMMARY
 
 use super::RtkParityCmd;
@@ -45,6 +46,8 @@ const REQUIRED_ROUTER_FAMILIES: &[&str] = &[
 ];
 const PROXY_SHORTCUTS: &[&str] = &[
     "read", "ls", "tree", "find", "rg", "grep", "git", "cargo", "npm", "pnpm", "npx", "pytest",
+    "gh", "glab", "aws", "psql", "curl", "wget", "jq", "go", "golangci", "dotnet", "rake", "rspec",
+    "rubocop", "gradle", "make", "just", "helm", "kubectl",
 ];
 const LOCAL_ADAPTERS: &[&str] = &["json", "deps", "env", "wc"];
 const HOOKS: &[&str] = &["opencode-rewrite"];
@@ -496,5 +499,18 @@ mod tests {
         assert!(section.missing.is_empty());
         assert!(section.items.contains(&"python".to_string()));
         assert!(section.items.contains(&"cloud".to_string()));
+    }
+
+    #[test]
+    fn proxy_shortcut_inventory_covers_expanded_phase45_surface() {
+        let section =
+            static_inventory_section("proxy-shortcuts", "tracked", false, PROXY_SHORTCUTS, &[]);
+
+        assert_eq!(section.synapse_count, 30);
+        for shortcut in [
+            "gh", "aws", "go", "golangci", "dotnet", "make", "helm", "kubectl",
+        ] {
+            assert!(section.items.contains(&shortcut.to_string()), "{shortcut}");
+        }
     }
 }
