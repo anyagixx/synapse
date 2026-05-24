@@ -59,6 +59,12 @@
     <COMMAND>cargo run --quiet -- filters verify --filter helm</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter just</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter make</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter container-ps</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter container-images</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter container-logs</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter kubectl-get</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter kubectl-logs</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter psql-table</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
     <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
@@ -82,6 +88,7 @@
     <ASSERTION>The RTK built-in filter pack verifies developer-service filters for jj, jira, shopify-theme, ollama, and stat through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies Python type-checker filters for basedpyright and ty through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies the final RTK parity filters for helm, just, and make through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies Phase-48 cloud/container filters for Docker/Podman listings, container logs, kubectl listings/logs, and psql tables through the CLI.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-43</PHASE_GATE>
+  <PHASE_GATE>Phase-48</PHASE_GATE>
 </VERIFICATION>

@@ -3,7 +3,7 @@
   UNDERSTANDING:
     Module responsibility: Provide RTK-style first-class command shortcuts, direct local adapters, machine-checkable parity inventory gates, and shell-aware hook-facing rewrite decisions that route or compact token-heavy command surfaces.
     Key data flows:
-      - INPUT: RtkProxyCmd flags for original, expanded, and language ecosystem shortcut families, JsonCmd/DepsCmd/EnvCmd/WcCmd/PipeCmd/LogCmd/SmartCmd args, RtkParityCmd source/json/ci flags, RewriteCmd trailing args, and raw command strings from agent hooks.
+      - INPUT: RtkProxyCmd flags for original, expanded, language ecosystem, and container shortcut families, JsonCmd/DepsCmd/EnvCmd/WcCmd/PipeCmd/LogCmd/SmartCmd args, RtkParityCmd source/json/ci flags, RewriteCmd trailing args, and raw command strings from agent hooks.
       - PROCESSING: Validate required shortcut args, prefix native executables, delegate shortcuts to ProxyCmd, render local adapter summaries directly, apply trusted TOML filters to stdin, compact logs, summarize source structure, compare RTK source-derived inventory with Synapse coverage, track expanded proxy/local adapter inventory, and use CommandRouter for per-segment rewrite decisions.
       - OUTPUT: Same filtered output, route preview, raw evidence hint, tracking, exit-code behavior, local compact adapter output, parity report/CI gate, and hook rewrite strings, safe shell chains, pipeline-left-edge rewrites, safe fd-redirect-preserving rewrites, or shell-prefix-preserving rewrites as syn proxy.
     Critical invariants:
@@ -32,14 +32,15 @@
     - syn rewrite "RUST_BACKTRACE=1 cargo test 2&gt;&amp;1 | grep FAILED && git stash" preserves the fd redirect and proxies routeable segments.
     - syn rewrite "sudo nocorrect git status && builtin cargo test" preserves shell prefixes before proxied segments.
     - syn rewrite "syn gh pr checks && aws sts get-caller-identity" preserves the token-safe syn gh segment and proxies the raw aws segment.
-    - syn gh, syn glab, syn aws, syn psql, syn curl, syn wget, syn jq, syn go, syn golangci, syn dotnet, syn rake, syn rspec, syn rubocop, syn gradle, syn make, syn just, syn helm, and syn kubectl expose --route via RtkProxyCmd.
-    - syn rtk-parity reports proxy-shortcuts synapse_count as 30.
+    - syn gh, syn glab, syn aws, syn psql, syn curl, syn wget, syn jq, syn go, syn golangci, syn dotnet, syn rake, syn rspec, syn rubocop, syn gradle, syn make, syn just, syn helm, syn kubectl, syn docker, and syn podman expose --route via RtkProxyCmd.
+    - syn rtk-parity reports proxy-shortcuts synapse_count as 44.
     - syn pipe --filter make filters stdin through the same TOML filter engine as syn proxy.
     - syn log deduplicates volatile repeated log lines and records rtk-log savings.
     - syn smart src/cli.rs emits source structure without printing full function bodies and records rtk-smart savings.
     - syn rtk-parity reports local-adapters synapse_count as 7.
     - syn ruff, syn mypy, syn basedpyright, syn pip, syn uv, syn next, syn playwright, syn prettier, syn prisma, syn tsc, syn vitest, and syn gradlew expose --route via RtkProxyCmd.
     - direct tsc and vitest commands route to js-tooling without requiring npx.
+    - syn rewrite treats syn docker and syn podman as already token-safe.
     - syn rtk-parity --source ../GRACEme/rtk-develop --ci passes with filters 59/59 and router families 12/12.
     - verify_project and review_code pass with no MyGRACE drift.
   RISKS_ACKNOWLEDGED:
@@ -48,5 +49,5 @@
     - Full shell language support is intentionally out of scope; unsupported constructs must fail closed.
     - Expanded shortcuts remain proxy delegates, not standalone semantic parsers; deeper RTK adapter parity remains for later phases.
     - summary/format command execution remains intentionally outside Phase-46 local adapters to avoid duplicating process runner semantics.
-    - Phase-47 still relies on trusted filters for output transformation; standalone parser parity remains scoped to commands where filters are insufficient.
+    - Phase-48 still relies on trusted filters for output transformation; standalone parser parity remains scoped to commands where filters are insufficient.
 </BELIEF_STATE>

@@ -3,11 +3,11 @@
   UNDERSTANDING:
     Module responsibility: Binary entry point — parses CLI, resolves runtime config, initializes stderr tracing, dispatches commands via tokio runtime
     Key data flows:
-      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-47 dispatches RTK language ecosystem shortcuts through the proxy path.
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-48 dispatches RTK Docker/Podman container shortcuts through the proxy path.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-LIB, M-CLI, M-CONFIG
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts, local RTK adapters, local RTK system adapters, RTK parity inventory, and hook rewrites
+      - Scope remains bounded to: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts and container shortcuts, local RTK adapters, local RTK system adapters, RTK parity inventory, and hook rewrites
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -20,6 +20,7 @@
     - expanded shortcuts dispatch through RtkProxyCmd::run_as instead of executing native commands directly
     - pipe, log, and smart dispatch without bypassing adapter-level token tracking
     - language ecosystem shortcuts dispatch through RtkProxyCmd::run_as rather than direct process execution
+    - Docker and Podman shortcuts dispatch through RtkProxyCmd::run_as rather than direct process execution
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

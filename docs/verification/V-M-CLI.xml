@@ -15,6 +15,8 @@
     <COMMAND>cargo run --quiet -- golangci --route run</COMMAND>
     <COMMAND>cargo run --quiet -- ruff --route check .</COMMAND>
     <COMMAND>cargo run --quiet -- tsc --route --noEmit</COMMAND>
+    <COMMAND>cargo run --quiet -- docker --route ps</COMMAND>
+    <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
   </UNIT_TESTS>
@@ -22,7 +24,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>CLI schema accepts gain --graph as a supported documented flag.</ASSERTION>
     <ASSERTION>CLI schema accepts gain --sessions, gain --adapters, and proxy --route as supported documented flags.</ASSERTION>
-    <ASSERTION>CLI schema accepts first-class RTK shortcuts including read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, and kubectl.</ASSERTION>
+    <ASSERTION>CLI schema accepts first-class RTK shortcuts including read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, kubectl, docker, and podman.</ASSERTION>
     <ASSERTION>CLI schema accepts RTK language ecosystem shortcuts including ruff, mypy, basedpyright, pip, uv, next, playwright, prettier, prisma, tsc, vitest, and gradlew.</ASSERTION>
     <ASSERTION>CLI schema accepts local RTK adapters json, deps, env, and wc with documented flags.</ASSERTION>
     <ASSERTION>CLI schema accepts local RTK system adapters pipe, log, and smart with documented flags.</ASSERTION>
@@ -33,5 +35,5 @@
     <ASSERTION>CLI schema accepts verify/review --profile and doctor --deps as documented flags.</ASSERTION>
     <ASSERTION>CLI schema exposes syn mcp as stdio-only until HTTP/LSP transport flags are implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-47</PHASE_GATE>
+  <PHASE_GATE>Phase-48</PHASE_GATE>
 </VERIFICATION>

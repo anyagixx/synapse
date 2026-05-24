@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands, local RTK adapters, local RTK system adapters, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including container shortcuts, local RTK adapters, local RTK system adapters, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.8.0 — Added RTK language ecosystem shortcut command schemas]
+// LAST_CHANGE: [v4.9.0 — Added RTK container shortcut command schemas]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -171,6 +171,10 @@ pub enum Command {
     Helm(RtkProxyCmd),
     #[command(name = "kubectl", about = "Run kubectl through the token-saving proxy")]
     Kubectl(RtkProxyCmd),
+    #[command(name = "docker", about = "Run Docker through the token-saving proxy")]
+    Docker(RtkProxyCmd),
+    #[command(name = "podman", about = "Run Podman through the token-saving proxy")]
+    Podman(RtkProxyCmd),
     #[command(about = "Inspect JSON with compact values or keys-only schema")]
     Json(JsonCmd),
     #[command(about = "Summarize dependency manifests without dumping full files")]

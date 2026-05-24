@@ -4,7 +4,7 @@
     Module responsibility: Classify shell commands into RTK-style adapter families before execution.
     Key data flows:
       - INPUT: argv tokens from syn proxy or route preview
-      - PROCESSING: normalize tokens, reject recursive proxy commands, map known command families and direct language tools to adapter/family/route_key metadata
+      - PROCESSING: normalize tokens, reject recursive proxy commands, map known command families, direct language tools, and Docker/Podman container commands to adapter/family/route_key metadata
       - OUTPUT: RouteDecision consumed by Proxy, expanded CLI route previews, tracking analytics, and RTK parity inventory
     Critical invariants:
       - routing never executes commands
@@ -20,6 +20,7 @@
     - common RTK families route to stable adapters
     - expanded shortcut families route through existing router families without adding duplicate parser logic
     - direct JavaScript language tools such as tsc and vitest route without requiring package-manager wrappers
+    - docker, docker compose, podman, and podman compose route to stable infrastructure adapter keys
     - syn proxy --route prints a decision without running the command
     - adapter metadata appears in token tracking stats
     - syn rtk-parity reports router-families as pass

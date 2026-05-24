@@ -2,7 +2,7 @@
 <MODULE id="M-CLI-RTK-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-RTK-COMMANDS</NAME>
   <PURPOSE>First-class RTK-style CLI shortcuts, local token-saving adapters, parity inventory gates, and shell-aware hook-facing rewrite decisions</PURPOSE>
-  <SCOPE>RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, ruff, mypy, basedpyright, pip, uv, next, playwright, prettier, prisma, tsc, vitest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, gradlew, make, just, helm, and kubectl; local JsonCmd, DepsCmd, EnvCmd, WcCmd, PipeCmd, LogCmd, and SmartCmd adapters; RtkParityCmd source-derived filter parity, router-family inventory gates, expanded proxy shortcut inventory, and local adapter inventory; RewriteCmd dry-run rewriting for simple commands, safe shell chains joined by &amp;&amp;, ||, and ;, RTK-style pipeline left edges, safe fd-merge redirects, transparent shell prefix builtins, and expanded token-safe shortcut detection</SCOPE>
+  <SCOPE>RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, ruff, mypy, basedpyright, pip, uv, next, playwright, prettier, prisma, tsc, vitest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, gradlew, make, just, helm, kubectl, docker, and podman; local JsonCmd, DepsCmd, EnvCmd, WcCmd, PipeCmd, LogCmd, and SmartCmd adapters; RtkParityCmd source-derived filter parity, router-family inventory gates, expanded proxy shortcut inventory including container shortcuts, and local adapter inventory; RewriteCmd dry-run rewriting for simple commands, safe shell chains joined by &amp;&amp;, ||, and ;, RTK-style pipeline left edges, safe fd-merge redirects, transparent shell prefix builtins, and expanded token-safe shortcut detection</SCOPE>
   <FILES>
     <FILE>src/cli/rtk_commands.rs</FILE>
     <FILE>src/cli/rtk_adapters.rs</FILE>
@@ -10,6 +10,6 @@
     <FILE>src/cli/rtk_parity.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-CLI-RUNTIME-COMMANDS,M-PROXY,M-PROXY-ROUTER,M-PROXY-FILTER,M-TRACKING,M-UTILS</DEPENDS>
-  <LINKS>docs/modules/M-CLI.xml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-29.xml,docs/phases/Phase-30.xml,docs/phases/Phase-31.xml,docs/phases/Phase-32.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml</LINKS>
+  <LINKS>docs/modules/M-CLI.xml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-29.xml,docs/phases/Phase-30.xml,docs/phases/Phase-31.xml,docs/phases/Phase-32.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml,docs/phases/Phase-48.xml</LINKS>
   <VERIFICATION_REF>V-M-CLI-RTK-COMMANDS</VERIFICATION_REF>
 </MODULE>

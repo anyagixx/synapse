@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: RTK parity inventory gate — compares Synapse RTK coverage against source and planned parity domains
-// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory, compact/JSON report rendering
+// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including container shortcuts, compact/JSON report rendering
 // DEPENDS: M-CLI, M-PROXY-FILTER, M-PROXY-ROUTER
 // LINKS:
 //   -> M-CLI (depends) - exposes the rtk-parity command schema
@@ -10,6 +10,7 @@
 //   -> Phase-44 (implements) - machine-checkable RTK parity inventory gate
 //   -> Phase-45 (implements) - expanded first-class RTK proxy shortcut parity
 //   -> Phase-46 (implements) - local RTK system adapter inventory
+//   -> Phase-48 (implements) - cloud/container/VCS adapter parity inventory
 //   -> NFR-003 (traces_to) - parity gates protect token-saving coverage
 
 // START_MODULE_MAP
@@ -21,7 +22,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 - Added local RTK system adapter inventory]
+// LAST_CHANGE: [v1.3.0 - Added cloud/container shortcut inventory]
 // END_CHANGE_SUMMARY
 
 use super::RtkParityCmd;
@@ -77,6 +78,8 @@ const PROXY_SHORTCUTS: &[&str] = &[
     "just",
     "helm",
     "kubectl",
+    "docker",
+    "podman",
     "ruff",
     "mypy",
     "basedpyright",
@@ -93,7 +96,7 @@ const LOCAL_ADAPTERS: &[&str] = &["json", "deps", "env", "wc", "pipe", "log", "s
 const HOOKS: &[&str] = &["opencode-rewrite"];
 const ANALYTICS: &[&str] = &["gain", "gain --graph", "gain --sessions", "gain --adapters"];
 const PROXY_SHORTCUTS_NOTE: &str =
-    "Phase-45 adds common proxy shortcuts; Phase-47 adds language ecosystem shortcuts.";
+    "Phase-45 adds common proxy shortcuts; Phase-47 adds language ecosystem shortcuts; Phase-48 adds container shortcuts.";
 const LOCAL_ADAPTERS_NOTE: &str =
     "Phase-46 adds pipe, log, and smart local system adapters; Phase-47 evaluates additional specialized adapters.";
 
@@ -550,10 +553,10 @@ mod tests {
         let section =
             static_inventory_section("proxy-shortcuts", "tracked", false, PROXY_SHORTCUTS, &[]);
 
-        assert_eq!(section.synapse_count, 42);
+        assert_eq!(section.synapse_count, 44);
         for shortcut in [
             "gh", "aws", "go", "golangci", "dotnet", "make", "helm", "kubectl", "ruff", "mypy",
-            "uv", "tsc", "vitest", "gradlew",
+            "uv", "tsc", "vitest", "gradlew", "docker", "podman",
         ] {
             assert!(section.items.contains(&shortcut.to_string()), "{shortcut}");
         }

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
-// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, and kubectl; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, expanded proxy shortcuts, and local system adapters treated as token-safe Synapse shortcuts
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, pytest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, kubectl, docker, and podman; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, expanded proxy shortcuts, and local system adapters treated as token-safe Synapse shortcuts
 // DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
@@ -24,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.8.0 — Added language ecosystem shortcuts to token-safe detection]
+// LAST_CHANGE: [v1.9.0 — Added container shortcuts to token-safe detection]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
@@ -76,6 +76,8 @@ const SYN_TOKEN_SAFE_COMMANDS: &[&str] = &[
     "just",
     "helm",
     "kubectl",
+    "docker",
+    "podman",
     "json",
     "deps",
     "env",
@@ -838,6 +840,8 @@ mod tests {
             "syn just check",
             "syn helm list",
             "syn kubectl get pods",
+            "syn docker ps",
+            "syn podman ps",
             "syn pipe --filter make",
             "syn log app.log",
             "syn smart src/main.rs",
@@ -865,6 +869,15 @@ mod tests {
         assert_eq!(
             rewrite_command(&args),
             Some("syn gh pr checks && syn proxy -- aws sts get-caller-identity".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_container_segments() {
+        let args = vec!["docker ps && podman ps".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- docker ps && syn proxy -- podman ps".to_string())
         );
     }
 

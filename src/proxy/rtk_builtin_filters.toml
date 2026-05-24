@@ -1543,6 +1543,147 @@ name = "preserves non-blank output unchanged"
 input = "mac: abc123\nversion: 3.8.1"
 expected = "mac: abc123\nversion: 3.8.1"
 
+[filters.container-ps]
+description = "Compact Docker/Podman ps output - strip headers and cap long container listings"
+match_command = "^(docker|podman)\\s+((container\\s+)?ps|container\\s+ls)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^CONTAINER ID\\s+",
+]
+max_lines = 40
+truncate_lines_at = 180
+on_empty = "container ps: no containers"
+
+[[tests.container-ps]]
+name = "docker ps strips header and keeps rows"
+input = """
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                  NAMES
+abc123def456   nginx:1.25     "/docker-entrypoint..."   2 hours ago      Up 2 hours      0.0.0.0:8080->80/tcp   web
+fed987654321   postgres:16    "docker-entrypoint.s..."  10 minutes ago   Up 10 minutes   5432/tcp               db
+"""
+expected = "abc123def456   nginx:1.25     \"/docker-entrypoint...\"   2 hours ago      Up 2 hours      0.0.0.0:8080->80/tcp   web\nfed987654321   postgres:16    \"docker-entrypoint.s...\"  10 minutes ago   Up 10 minutes   5432/tcp               db"
+
+[[tests.container-ps]]
+name = "header only becomes empty listing message"
+input = "CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES\n"
+expected = "container ps: no containers"
+
+[filters.container-images]
+description = "Compact Docker/Podman images output - strip headers and cap long image listings"
+match_command = "^(docker|podman)\\s+((image\\s+)?images|image\\s+ls)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^REPOSITORY\\s+TAG\\s+IMAGE ID\\s+",
+]
+max_lines = 40
+truncate_lines_at = 160
+on_empty = "container images: none"
+
+[[tests.container-images]]
+name = "docker images strips header"
+input = """
+REPOSITORY    TAG       IMAGE ID       CREATED        SIZE
+nginx         1.25      abc123def456   3 weeks ago    187MB
+postgres      16        fed987654321   2 months ago   432MB
+"""
+expected = "nginx         1.25      abc123def456   3 weeks ago    187MB\npostgres      16        fed987654321   2 months ago   432MB"
+
+[[tests.container-images]]
+name = "podman image ls empty listing"
+input = "REPOSITORY    TAG       IMAGE ID       CREATED        SIZE\n"
+expected = "container images: none"
+
+[filters.container-logs]
+description = "Compact Docker/Podman logs output - strip blank lines and cap high-volume logs"
+match_command = "^(docker|podman)\\s+((container\\s+)?logs|compose\\s+logs)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+max_lines = 80
+truncate_lines_at = 180
+on_empty = "container logs: empty"
+
+[[tests.container-logs]]
+name = "container logs strip blank lines"
+input = """
+web-1  | starting server
+
+web-1  | ready on :8080
+db-1   | database system is ready to accept connections
+"""
+expected = "web-1  | starting server\nweb-1  | ready on :8080\ndb-1   | database system is ready to accept connections"
+
+[filters.kubectl-get]
+description = "Compact kubectl get output - cap common cluster listings"
+match_command = "^kubectl\\s+get\\s+(pods?|services?|deployments?|events?)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+max_lines = 60
+truncate_lines_at = 180
+
+[[tests.kubectl-get]]
+name = "kubectl get pods strips blank lines"
+input = """
+NAME                       READY   STATUS    RESTARTS   AGE
+web-5d9f9c7d8d-abc12       1/1     Running   0          5m
+
+worker-6c7d8f9d9f-def34    1/1     Running   2          1h
+"""
+expected = "NAME                       READY   STATUS    RESTARTS   AGE\nweb-5d9f9c7d8d-abc12       1/1     Running   0          5m\nworker-6c7d8f9d9f-def34    1/1     Running   2          1h"
+
+[filters.kubectl-logs]
+description = "Compact kubectl logs output - strip blank lines and cap high-volume pod logs"
+match_command = "^kubectl\\s+logs\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+max_lines = 80
+truncate_lines_at = 180
+on_empty = "kubectl logs: empty"
+
+[[tests.kubectl-logs]]
+name = "kubectl logs strip blank lines"
+input = """
+2026-05-24T12:00:00Z app starting
+
+2026-05-24T12:00:01Z app ready
+"""
+expected = "2026-05-24T12:00:00Z app starting\n2026-05-24T12:00:01Z app ready"
+
+[filters.psql-table]
+description = "Compact psql table output - remove separators, row-count footers, and padding around pipes"
+match_command = "^psql\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^[-+]+$",
+  "^\\(\\d+ rows?\\)$",
+]
+replace = [
+  { pattern = "^\\s+", replacement = "" },
+  { pattern = "\\s+$", replacement = "" },
+  { pattern = "\\s+\\|\\s+", replacement = "\t" },
+]
+max_lines = 60
+truncate_lines_at = 180
+
+[[tests.psql-table]]
+name = "psql default table becomes compact tab-separated output"
+input = """
+ id | username     | status
+----+--------------+--------
+  1 | alice_smith  | active
+  2 | bob_jones    | active
+(2 rows)
+"""
+expected = "id\tusername\tstatus\n1\talice_smith\tactive\n2\tbob_jones\tactive"
+
 [filters.skopeo]
 description = "Compact skopeo output - truncate large manifests, strip verbosity"
 match_command = "^skopeo\\b"

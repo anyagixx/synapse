@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-ROUTER
 // PURPOSE: RTK-style command router — classifies shell commands into token-saving adapter families
-// SCOPE: CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue, direct language tool routing, RTK parity router-family coverage gate
+// SCOPE: CommandRouter, RouteDecision, SupportedAdapter, route normalization, adapter support catalogue, direct language tool routing, container command routing, RTK parity router-family coverage gate
 // DEPENDS: N/A
 // LINKS:
 //   → UC-002 (implements) - command routing makes token-saving behavior machine-checkable
@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 — Added direct JavaScript language tool routing]
+// LAST_CHANGE: [v1.3.0 — Added Docker and Podman container routing]
 // END_CHANGE_SUMMARY
 
 // START_public_api
@@ -138,8 +138,8 @@ fn route_parts(parts: &[String]) -> RouteDecision {
     ) {
         return route_two_token("python-tooling", "python", &tokens, "python tooling");
     }
-    if tokens[0] == "docker" {
-        return route_docker(&tokens);
+    if matches!(tokens[0].as_str(), "docker" | "podman") {
+        return route_container(&tokens);
     }
     if matches!(
         tokens[0].as_str(),
@@ -228,7 +228,12 @@ fn supported_adapters() -> Vec<SupportedAdapter> {
         SupportedAdapter {
             adapter: "infra-cli",
             family: "infrastructure",
-            examples: &["docker compose logs", "kubectl get pods", "terraform plan"],
+            examples: &[
+                "docker compose logs",
+                "podman ps",
+                "kubectl get pods",
+                "terraform plan",
+            ],
         },
         SupportedAdapter {
             adapter: "vcs-hosting",
@@ -385,31 +390,32 @@ fn route_js(tokens: &[String]) -> RouteDecision {
 }
 // END_route_js
 
-// START_CONTRACT_route_docker
-// PURPOSE: Route Docker and Docker Compose commands to infrastructure adapter keys
+// START_CONTRACT_route_container
+// PURPOSE: Route Docker, Podman, and compose commands to infrastructure adapter keys
 // INPUTS: { tokens: &[String] }
 // OUTPUTS: { RouteDecision }
 // LINKS:
 //   → NFR-003 (traces_to) - container listings and logs are high-volume shell output
-// START_route_docker
-fn route_docker(tokens: &[String]) -> RouteDecision {
-    if matches_prefix(tokens, &["docker", "compose"]) {
+// START_route_container
+fn route_container(tokens: &[String]) -> RouteDecision {
+    let binary = tokens.first().map(String::as_str).unwrap_or("container");
+    if tokens.get(1).map(String::as_str) == Some("compose") {
         let subcommand = tokens.get(2).map(String::as_str).unwrap_or("");
         let key = if subcommand.is_empty() {
-            "docker compose".into()
+            format!("{binary} compose")
         } else {
-            format!("docker compose {}", subcommand)
+            format!("{binary} compose {}", subcommand)
         };
         return route(
             "infra-cli",
             "infrastructure",
             &key,
-            "docker compose command",
+            "container compose command",
         );
     }
-    route_two_token("infra-cli", "infrastructure", tokens, "docker command")
+    route_two_token("infra-cli", "infrastructure", tokens, "container command")
 }
-// END_route_docker
+// END_route_container
 
 // START_CONTRACT_route_system
 // PURPOSE: Route text-heavy system commands to stable adapter keys
@@ -503,6 +509,13 @@ mod tests {
                 vec!["docker", "compose", "logs"],
                 "infra-cli",
                 "docker compose logs",
+            ),
+            (vec!["docker", "ps"], "infra-cli", "docker ps"),
+            (vec!["podman", "ps"], "infra-cli", "podman ps"),
+            (
+                vec!["podman", "compose", "logs"],
+                "infra-cli",
+                "podman compose logs",
             ),
             (vec!["terraform", "plan"], "infra-cli", "terraform plan"),
             (vec!["tsc", "--noEmit"], "js-tooling", "tsc"),
