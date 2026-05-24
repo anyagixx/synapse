@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, and rewrite, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.25.0 - Added local RTK adapter command capabilities]
+// LAST_CHANGE: [v2.26.0 - Added filters command capability parity]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -65,6 +65,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
         "Rewrite a shell command to its Synapse proxy form for agent hooks",
     ),
     ("proxy", "Run command through token-saving proxy"),
+    ("filters", "Verify and trust token-saving proxy filters"),
     ("gain", "View token savings analytics"),
     ("compress", "Compress files for AI context"),
     ("mcp", "Start MCP server"),

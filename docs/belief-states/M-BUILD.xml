@@ -7,7 +7,7 @@
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-PROXY-FILTER, M-HOOKS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Cargo.toml package metadata and Cargo.lock dependency lock state for the publishable synapse-agent crate while preserving syn binary/library names, dependency policy, and build.rs rerun-if-changed directives for embedded proxy filters and OpenCode assets
+      - Scope remains bounded to: Cargo.toml package metadata and Cargo.lock dependency lock state for the publishable synapse-agent crate while preserving syn binary/library names, dependency policy, and build.rs rerun-if-changed directives for embedded Synapse/RTK proxy filters and OpenCode assets
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

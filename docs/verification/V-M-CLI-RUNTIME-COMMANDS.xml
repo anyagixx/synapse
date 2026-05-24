@@ -10,6 +10,7 @@
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
     <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter dotnet-build</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
     <COMMAND>cargo test --test reliability_test test_clean_init_doctor_accepts_default_config</COMMAND>
     <COMMAND>cargo test cli::runtime_commands::tests::test_parse_requirement_imports_skips_non_packages --lib</COMMAND>
@@ -23,10 +24,10 @@
     <ASSERTION>ProxyCmd supports --route and prints adapter decisions without command execution.</ASSERTION>
     <ASSERTION>ProxyCmd supports --evidence and prints raw-output artifact location only when explicitly requested.</ASSERTION>
     <ASSERTION>GainCmd supports --graph, --sessions, and --adapters and renders tracked savings bars plus economics summaries.</ASSERTION>
-    <ASSERTION>FiltersCmd exposes verify, trust, untrust, and status controls for RTK-style filter lifecycle management.</ASSERTION>
+    <ASSERTION>FiltersCmd exposes verify, trust, untrust, and status controls for RTK-style filter lifecycle management, including built-in RTK pack inline tests.</ASSERTION>
     <ASSERTION>RunCmd creates a bounded scenario run from project gates and emits replay-capable JSON.</ASSERTION>
     <ASSERTION>RunCmd action mode plans, steps, loops, retries, and replays persisted run queues.</ASSERTION>
     <ASSERTION>McpCmd starts the stdio MCP server only; HTTP/LSP options are not public flags until implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-25</PHASE_GATE>
+  <PHASE_GATE>Phase-33</PHASE_GATE>
 </VERIFICATION>

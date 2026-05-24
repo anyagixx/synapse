@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-FILTER
 // PURPOSE: TOML filter engine — applies regex-based output transformations from trusted TOML filter definitions
-// SCOPE: FilterDef, ReplaceRule, MatchOutputRule, FilterFile, FilterEngine with find_filter/apply/verify, project-local trust gating, expanded built-in filter catalogue, 8-stage pipeline
+// SCOPE: FilterDef, ReplaceRule, MatchOutputRule, FilterFile, FilterEngine with find_filter/apply/verify, project-local trust gating, split Synapse/RTK built-in filter catalogues, 8-stage pipeline
 // DEPENDS: M-UTILS
 // LINKS:
 //   → M-UTILS (depends) - Unicode-safe truncation helpers
@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 — Added RTK-style schema, inline verification, and trusted project filters]
+// LAST_CHANGE: [v4.1.0 — Added separate RTK built-in filter pack loading]
 // END_CHANGE_SUMMARY
 
 use regex::Regex;
@@ -378,6 +378,8 @@ impl FilterEngine {
 
     fn load_builtin_filters(&mut self) {
         let parsed = parse_filter_file(include_str!("builtin_filters.toml"), "builtin");
+        self.extend_from_parsed(parsed, FilterSource::BuiltIn);
+        let parsed = parse_filter_file(include_str!("rtk_builtin_filters.toml"), "rtk-builtin");
         self.extend_from_parsed(parsed, FilterSource::BuiltIn);
     }
 
@@ -757,6 +759,28 @@ mod tests {
             "Should find built-in filter for 'cargo test': {:?}",
             engine.warnings()
         );
+    }
+
+    #[test]
+    fn test_rtk_builtin_filter_pack_loads_and_verifies() {
+        let engine = FilterEngine::new();
+        let filter = engine
+            .find_filter("dotnet build")
+            .expect("dotnet-build RTK filter should load");
+        let output = engine.apply(
+            filter,
+            "Microsoft (R) Build Engine\n\nBuild succeeded.\n    0 Warning(s)\n    0 Error(s)",
+        );
+
+        assert_eq!(output, "ok (build succeeded)");
+        assert!(
+            engine.find_filter("markdownlint README.md").is_some(),
+            "markdownlint RTK filter should load"
+        );
+        let results = engine
+            .verify(Some("dotnet-build"), true)
+            .expect("verify dotnet-build");
+        assert!(results.passed(true), "{results:?}");
     }
 
     #[test]

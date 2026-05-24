@@ -64,6 +64,7 @@ This page lists shipped CLI commands only.
 | `syn rewrite <cmd>` | Print the hook rewrite for routeable commands, safe command chains, pipeline left edges, safe fd redirects, and shell prefixes without executing it |
 | `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |
 | `syn proxy --route -- <cmd>` | Preview the selected token-saving adapter without executing the command |
+| `syn filters verify --filter <name>` | Run inline tests for project, user, or built-in RTK-style proxy filters |
 | `syn gain` | Show token savings analytics |
 | `syn gain --graph` | Show token savings analytics with ASCII bars |
 | `syn gain --sessions --adapters` | Show session-level and adapter-level token economics |

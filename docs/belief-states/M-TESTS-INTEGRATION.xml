@@ -4,10 +4,10 @@
     Module responsibility: End-to-end integration tests for Synapse CLI commands
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: verify CLI flows including proxy route preview, adapter-aware gain output, and canonical tracking isolation while preserving existing end-to-end coverage
+      - PROCESSING: verify CLI flows including proxy route preview, filter verification, adapter-aware gain output, and canonical tracking isolation while preserving existing end-to-end coverage
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: init, clean config bootstrap, tracking identity, index, search, verify, status, proxy exit status, proxy route preview, Unicode proxy truncation, gain graph/session/adapter analytics, doctor, hooks, compress
+      - Scope remains bounded to: init, clean config bootstrap, tracking identity, index, search, verify, status, proxy exit status, proxy route preview, RTK built-in filter verification, Unicode proxy truncation, gain graph/session/adapter analytics, doctor, hooks, compress
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

@@ -3,21 +3,21 @@
   UNDERSTANDING:
     Module responsibility: TOML filter engine — applies regex-based output transformations from TOML filter definitions
     Key data flows:
-      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: Implement only the declared scope while preserving dependencies: M-UTILS
-      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+      - INPUT: Synapse legacy built-in filters, the RTK named filter pack, user filters, and trusted project filters
+      - PROCESSING: Load sources in priority order, parse legacy/named TOML schemas, apply the 8-stage filter pipeline, and execute inline filter tests
+      - OUTPUT: Filtered command output plus verification results for project/user/built-in filters
     Critical invariants:
-      - Scope remains bounded to: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter and apply, expanded RTK-style built-in filters, Unicode-safe truncation, 8-stage pipeline
+      - Scope remains bounded to: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter/apply/verify, split Synapse/RTK built-in filter packs, Unicode-safe truncation, 8-stage pipeline
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
-    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
-    Complexity_areas: artifact drift, backward compatibility, verification coverage
-    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+    Approach: Keep the existing legacy built-in file stable and add RTK parity through a separate named filter pack loaded by the same engine
+    Complexity_areas: TOML schema compatibility, filter priority, inline verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks, side-by-side built-in packs
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
-    - verify_project, review_code, and relevant unit tests pass after implementation
+    - proxy::toml_filter tests, syn filters verify --filter dotnet-build, syn filters verify --filter markdownlint, verify_project, and review_code pass after implementation
   RISKS_ACKNOWLEDGED:
-    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
-    - Incomplete module artifacts can make the first belief state too generic
+    - Loading RTK filters after legacy built-ins avoids behavior churn but means existing Synapse filters keep priority over overlapping RTK patterns
+    - Large filter-pack expansion should remain verified by inline tests to avoid silent output loss
 </BELIEF_STATE>

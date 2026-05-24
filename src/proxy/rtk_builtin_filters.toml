@@ -1,0 +1,302 @@
+# RTK-style named filters embedded beside Synapse legacy built-ins.
+# Source parity target: RTK src/filters pack.
+
+schema_version = 1
+
+[filters.dotnet-build]
+description = "Compact dotnet build output - short-circuit on success, strip banners"
+match_command = "^dotnet\\s+build\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Microsoft \\(R\\)",
+  "^Copyright \\(C\\)",
+  "^  Determining projects",
+]
+match_output = [
+  { pattern = "0 Warning\\(s\\)\\n\\s+0 Error\\(s\\)", message = "ok (build succeeded)" },
+]
+max_lines = 40
+
+[[tests.dotnet-build]]
+name = "successful build short-circuits to ok"
+input = """
+Microsoft (R) Build Engine version 17.8.3+195e7f5a3
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  MyApp -> /home/user/MyApp/bin/Debug/net8.0/MyApp.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.34
+"""
+expected = "ok (build succeeded)"
+
+[[tests.dotnet-build]]
+name = "build with warnings not short-circuited"
+input = """
+Microsoft (R) Build Engine version 17.8.3+195e7f5a3
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+  Determining projects to restore...
+  MyApp -> /home/user/MyApp/bin/Debug/net8.0/MyApp.dll
+
+Build succeeded.
+    3 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:01.87
+"""
+expected = "  MyApp -> /home/user/MyApp/bin/Debug/net8.0/MyApp.dll\nBuild succeeded.\n    3 Warning(s)\n    0 Error(s)\nTime Elapsed 00:00:01.87"
+
+[[tests.dotnet-build]]
+name = "build errors pass through"
+input = """
+Microsoft (R) Build Engine version 17.8.3+195e7f5a3
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+  Determining projects to restore...
+src/Program.cs(10,5): error CS1002: ; expected [/home/user/MyApp/MyApp.csproj]
+
+Build FAILED.
+    0 Warning(s)
+    1 Error(s)
+"""
+expected = "src/Program.cs(10,5): error CS1002: ; expected [/home/user/MyApp/MyApp.csproj]\nBuild FAILED.\n    0 Warning(s)\n    1 Error(s)"
+
+[filters.markdownlint]
+description = "Compact markdownlint output - strip blank lines, limit rows"
+match_command = "^markdownlint\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+max_lines = 50
+truncate_lines_at = 120
+
+[[tests.markdownlint]]
+name = "linting errors stripped of blank lines"
+input = """
+README.md:1:1 MD041/first-line-heading/first-line-h1 First line in file should be a top level heading
+README.md:10:1 MD022/blanks-around-headings Headings should be surrounded by blank lines
+
+README.md:15:80 MD013/line-length Line length [Expected: 80; Actual: 95]
+"""
+expected = "README.md:1:1 MD041/first-line-heading/first-line-h1 First line in file should be a top level heading\nREADME.md:10:1 MD022/blanks-around-headings Headings should be surrounded by blank lines\nREADME.md:15:80 MD013/line-length Line length [Expected: 80; Actual: 95]"
+
+[[tests.markdownlint]]
+name = "empty input passes through"
+input = ""
+expected = ""
+
+[filters.shellcheck]
+description = "Compact shellcheck output - strip blank lines, keep caret indicators"
+match_command = "^shellcheck\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+max_lines = 50
+
+[[tests.shellcheck]]
+name = "multi-warning output stripped of blank lines only"
+input = """
+In script.sh line 3:
+if [[ $1 == "" ]]
+     ^-- SC2236: Use -z instead of ! -n.
+
+In script.sh line 7:
+echo $var
+     ^-- SC2086: Double quote to prevent globbing.
+
+"""
+expected = "In script.sh line 3:\nif [[ $1 == \"\" ]]\n     ^-- SC2236: Use -z instead of ! -n.\nIn script.sh line 7:\necho $var\n     ^-- SC2086: Double quote to prevent globbing."
+
+[[tests.shellcheck]]
+name = "empty input passes through"
+input = ""
+expected = ""
+
+[filters.hadolint]
+description = "Compact hadolint Dockerfile linting output"
+match_command = "^hadolint\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+truncate_lines_at = 120
+max_lines = 40
+
+[[tests.hadolint]]
+name = "Dockerfile warnings kept, blank lines stripped"
+input = """
+Dockerfile:3 DL3008 warning: Pin versions in apt-get install
+Dockerfile:5 DL3009 info: Delete apt-get lists after installing
+
+Dockerfile:8 DL4006 warning: Set SHELL option -o pipefail before RUN with pipe
+"""
+expected = "Dockerfile:3 DL3008 warning: Pin versions in apt-get install\nDockerfile:5 DL3009 info: Delete apt-get lists after installing\nDockerfile:8 DL4006 warning: Set SHELL option -o pipefail before RUN with pipe"
+
+[[tests.hadolint]]
+name = "empty input passes through"
+input = ""
+expected = ""
+
+[filters.yamllint]
+description = "Compact yamllint output - strip blank lines, limit rows"
+match_command = "^yamllint\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+max_lines = 50
+truncate_lines_at = 120
+
+[[tests.yamllint]]
+name = "multi-warning output stripped of blank lines"
+input = """
+config.yml
+  3:1     warning  missing document start "---"  (document-start)
+  5:12    error    too many spaces inside braces  (braces)
+
+  8:1     error    wrong indentation: expected 2 but found 4  (indentation)
+"""
+expected = "config.yml\n  3:1     warning  missing document start \"---\"  (document-start)\n  5:12    error    too many spaces inside braces  (braces)\n  8:1     error    wrong indentation: expected 2 but found 4  (indentation)"
+
+[[tests.yamllint]]
+name = "empty input passes through"
+input = ""
+expected = ""
+
+[filters.pre-commit]
+description = "Compact pre-commit output"
+match_command = "^pre-commit\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\[INFO\\] Installing environment",
+  "^\\[INFO\\] Once installed this environment will be reused",
+  "^\\[INFO\\] This may take a few minutes",
+  "^\\s*$",
+]
+max_lines = 40
+
+[[tests.pre-commit]]
+name = "strips INFO install noise, keeps hook results"
+input = """
+[INFO] Installing environment for https://github.com/psf/black.
+[INFO] Once installed this environment will be reused.
+[INFO] This may take a few minutes...
+Trim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................Passed
+Check Yaml...............................................................Failed
+- hook id: check-yaml
+- exit code: 1
+"""
+expected = "Trim Trailing Whitespace.................................................Passed\nFix End of Files.........................................................Passed\nCheck Yaml...............................................................Failed\n- hook id: check-yaml\n- exit code: 1"
+
+[[tests.pre-commit]]
+name = "all passed - no INFO noise"
+input = """
+[INFO] Installing environment for https://github.com/pre-commit/mirrors-isort.
+[INFO] Once installed this environment will be reused.
+isort....................................................................Passed
+black....................................................................Passed
+"""
+expected = "isort....................................................................Passed\nblack....................................................................Passed"
+
+[filters.jq]
+description = "Compact jq output - truncate large JSON results"
+match_command = "^jq\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+]
+max_lines = 40
+truncate_lines_at = 120
+
+[[tests.jq]]
+name = "short output passes through"
+input = """
+{
+  "name": "test",
+  "version": "1.0"
+}
+"""
+expected = "{\n  \"name\": \"test\",\n  \"version\": \"1.0\"\n}"
+
+[[tests.jq]]
+name = "empty input passes through"
+input = ""
+expected = ""
+
+[filters.biome]
+description = "Compact Biome lint/format output - strip blank lines, keep diagnostics"
+match_command = "^biome\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Checked \\d+ file",
+  "^Fixed \\d+ file",
+  "^The following command",
+  "^Run it with",
+]
+max_lines = 50
+on_empty = "biome: ok"
+
+[[tests.biome]]
+name = "lint strips noise, keeps diagnostics"
+input = """
+Checked 42 files in 0.5s
+
+src/app.tsx:5:3 lint/suspicious/noExplicitAny
+  error Unexpected any. Specify a different type.
+  3 | interface Props {
+  4 |   data: any;
+  5 |         ^^^
+
+Found 1 error.
+"""
+expected = "src/app.tsx:5:3 lint/suspicious/noExplicitAny\n  error Unexpected any. Specify a different type.\n  3 | interface Props {\n  4 |   data: any;\n  5 |         ^^^\nFound 1 error."
+
+[[tests.biome]]
+name = "clean check"
+input = """
+Checked 42 files in 0.3s
+"""
+expected = "biome: ok"
+
+[filters.oxlint]
+description = "Compact oxlint output - strip blank lines, keep diagnostics"
+match_command = "^oxlint\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Finished in \\d+",
+  "^Found \\d+ warning",
+]
+max_lines = 50
+on_empty = "oxlint: ok"
+
+[[tests.oxlint]]
+name = "strips noise, keeps diagnostics"
+input = """
+error eslint(no-console): Unexpected console statement.
+src/app.ts:5:3
+ 5 |   console.log("debug");
+   |   ^^^^^^^^^^^
+
+Found 1 warning on 1 file.
+Finished in 12ms on 100 files.
+"""
+expected = "error eslint(no-console): Unexpected console statement.\nsrc/app.ts:5:3\n 5 |   console.log(\"debug\");\n   |   ^^^^^^^^^^^"
+
+[[tests.oxlint]]
+name = "clean output"
+input = """
+Finished in 5ms on 100 files.
+"""
+expected = "oxlint: ok"

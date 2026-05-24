@@ -13,7 +13,7 @@
 // test_proxy_and_gain — Verifies proxy execution and token savings output
 // test_proxy_route_preview_for_rtk_like_command — Verifies route preview without execution
 // test_proxy_project_filter_requires_trust — Verifies project-local proxy filters are trust gated
-// test_filters_verify_cli_runs_inline_tests — Verifies filter inline tests run through CLI
+// test_filters_verify_cli_runs_inline_tests — Verifies project and RTK built-in filter inline tests run through CLI
 // test_proxy_evidence_hint_writes_raw_output — Verifies explicit raw evidence artifact contains full unfiltered output
 // test_rtk_read_shortcut_filters_and_preserves_evidence — Verifies first-class read shortcut delegates to proxy
 // test_rtk_local_adapters_compact_structured_outputs — Verifies json/deps/env/wc direct adapters
@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.8.0 — Added shell-prefix RTK rewrite integration coverage]
+// LAST_CHANGE: [v4.9.0 — Added RTK built-in filter pack integration coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -513,7 +513,7 @@ fn test_proxy_project_filter_requires_trust() {
 // END_test_proxy_project_filter_requires_trust
 
 // START_CONTRACT_test_filters_verify_cli_runs_inline_tests
-// PURPOSE: Verify syn filters verify runs RTK-style inline TOML filter tests
+// PURPOSE: Verify syn filters verify runs project-local and RTK built-in inline TOML filter tests
 // SIDE_EFFECTS: creates isolated project filter and trust store, runs syn filters trust/verify
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - filter verification CLI handler
@@ -579,6 +579,31 @@ expected = "KEEP one\n..."
         stdout.contains("PASS local-clean::keeps-first-line")
             && stdout.contains("Filter verification passed"),
         "verify should report inline test pass: {stdout}"
+    );
+
+    let builtin_verify = Command::new(&syn)
+        .args([
+            "filters",
+            "verify",
+            "--filter",
+            "dotnet-build",
+            "--require-all",
+        ])
+        .env("XDG_DATA_HOME", data_home.path())
+        .current_dir(dir.path())
+        .output()
+        .unwrap();
+    assert!(
+        builtin_verify.status.success(),
+        "built-in filters verify failed: {}\nstdout: {}",
+        String::from_utf8_lossy(&builtin_verify.stderr),
+        String::from_utf8_lossy(&builtin_verify.stdout)
+    );
+    let builtin_stdout = String::from_utf8_lossy(&builtin_verify.stdout);
+    assert!(
+        builtin_stdout.contains("PASS dotnet-build::successful build short-circuits to ok")
+            && builtin_stdout.contains("Filter verification passed"),
+        "built-in verify should report RTK filter pass: {builtin_stdout}"
     );
 }
 // END_test_filters_verify_cli_runs_inline_tests

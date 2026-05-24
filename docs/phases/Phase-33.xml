@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-33" status="done">
+  <NAME>RTK Built-in Filter Pack Loader</NAME>
+  <GOAL>Load an additional RTK-style named TOML filter pack beside Synapse legacy built-ins to expand token-saving coverage for lint, build, and ops commands.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-FILTER" />
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-FILTER" status="done">Load a separate RTK named filter pack after existing built-in filters without changing project/user priority.</step-1>
+    <step-2 module="M-BUILD" status="done">Declare Cargo rebuild tracking for the new embedded filter pack.</step-2>
+    <step-3 module="M-CAPABILITIES" status="done">Expose the shipped filters command in the machine-readable capability registry.</step-3>
+    <step-4 module="M-CLI-RUNTIME-COMMANDS" status="done">Verify syn filters can run inline tests from the RTK pack.</step-4>
+    <step-5 module="M-TESTS-INTEGRATION" status="done">Add regression coverage for RTK pack verification through CLI.</step-5>
+    <step-6 module="M-TESTS-PARITY" status="done">Keep public command documentation aligned with the filters capability surface.</step-6>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo check --all-targets</CHECK>
+    <CHECK status="passed">cargo test proxy::toml_filter::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter dotnet-build</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter markdownlint</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity test_no_ghost_commands</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>
