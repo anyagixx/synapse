@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
-// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for simple commands and safe shell command chains
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, and pipeline left edges
 // DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
@@ -15,12 +15,13 @@
 // rewrite_command — Converts routeable shell commands or safe chains to syn proxy invocations
 // rewrite_shell_segments — Rewrites quote-aware shell command sequences segment by segment
 // rewrite_segment — Rewrites one routeable shell segment while preserving unsupported segments
-// split_shell_segments — Splits safe shell sequences on &&, ||, and ; without executing shell syntax
+// split_shell_segments — Splits safe shell sequences on &&, ||, ;, and | without executing shell syntax
+// is_pipe_incompatible_segment — Guards pipeline sources that must keep native raw output
 // split_route_tokens — Separates transparent shell prefixes from routeable command tokens
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 — Added shell-aware RTK rewrite chains]
+// LAST_CHANGE: [v1.3.0 — Added RTK pipeline rewrite parity]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
@@ -125,7 +126,7 @@ pub(crate) fn rewrite_command(args: &[String]) -> Option<String> {
 // END_rewrite_command
 
 // START_CONTRACT_rewrite_shell_segments
-// PURPOSE: Rewrite each safe shell chain segment independently while preserving operators and unsupported commands
+// PURPOSE: Rewrite safe shell chain segments while preserving pipe filter segments and unsupported commands
 // INPUTS: { command: &str }
 // OUTPUTS: { Option<String> }
 // START_rewrite_shell_segments
@@ -137,20 +138,46 @@ fn rewrite_shell_segments(command: &str) -> Option<String> {
     let mut rendered = String::new();
     let mut changed = false;
     let mut single_token_safe = false;
+    let mut previous_operator: Option<&str> = None;
 
     for segment in &segments {
-        let rewrite = rewrite_segment(&segment.tokens, &segment.original)?;
+        let rewrite = if previous_operator == Some("|") || is_pipe_incompatible_segment(segment) {
+            SegmentRewrite {
+                rendered: segment.original.clone(),
+                changed: false,
+            }
+        } else {
+            rewrite_segment(&segment.tokens, &segment.original)?
+        };
         changed |= rewrite.changed;
         single_token_safe |= !has_chain && is_already_token_safe(segment.original.as_str());
         rendered.push_str(&rewrite.rendered);
         if let Some(operator) = segment.operator_after {
             render_shell_operator(&mut rendered, operator);
         }
+        previous_operator = segment.operator_after;
     }
 
     (changed || single_token_safe).then_some(rendered.trim_end().to_string())
 }
 // END_rewrite_shell_segments
+
+// START_CONTRACT_is_pipe_incompatible_segment
+// PURPOSE: Keep pipeline sources raw when proxy filtering would change stream-oriented command semantics
+// INPUTS: { segment: &ShellSegment }
+// OUTPUTS: { bool }
+// START_is_pipe_incompatible_segment
+fn is_pipe_incompatible_segment(segment: &ShellSegment) -> bool {
+    if segment.operator_after != Some("|") {
+        return false;
+    }
+    let (_prefix_tokens, route_tokens) = split_route_tokens(&segment.tokens);
+    matches!(
+        route_tokens.first().map(String::as_str),
+        Some("find" | "fd")
+    )
+}
+// END_is_pipe_incompatible_segment
 
 // START_CONTRACT_rewrite_segment
 // PURPOSE: Rewrite a single routeable shell segment and return unchanged text for unsupported safe segments
@@ -367,12 +394,14 @@ fn split_shell_segments(input: &str) -> Option<Vec<ShellSegment>> {
                 segment_start = next_index + 1;
             }
             '|' if !in_single && !in_double => {
-                let Some((next_index, '|')) = chars.peek().copied() else {
-                    return None;
-                };
-                push_shell_segment(&mut segments, input, segment_start, index, Some("||"))?;
-                chars.next();
-                segment_start = next_index + 1;
+                if let Some((next_index, '|')) = chars.peek().copied() {
+                    push_shell_segment(&mut segments, input, segment_start, index, Some("||"))?;
+                    chars.next();
+                    segment_start = next_index + 1;
+                } else {
+                    push_shell_segment(&mut segments, input, segment_start, index, Some("|"))?;
+                    segment_start = index + 1;
+                }
             }
             ';' if !in_single && !in_double => {
                 push_shell_segment(&mut segments, input, segment_start, index, Some(";"))?;
@@ -580,8 +609,57 @@ mod tests {
     }
 
     #[test]
+    fn rewrite_command_routes_pipeline_left_edge() {
+        let args = vec!["cargo test | grep FAILED".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- cargo test | grep FAILED".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_after_pipeline_group() {
+        let args = vec!["git log | head -5 && git stash".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git log | head -5 && syn proxy -- git stash".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_pipe_after_chain_operator() {
+        let args = vec!["git status && cargo test | grep FAIL".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status && syn proxy -- cargo test | grep FAIL".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_multi_pipe_targets() {
+        let args = vec!["git log | head | tail && git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git log | head | tail && syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_keeps_find_pipeline_source_raw() {
+        let args = vec!["find . -name '*.rs' | xargs grep run && git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("find . -name '*.rs' | xargs grep run && syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_skips_pipeline_without_routeable_segments() {
+        assert_eq!(rewrite_command(&["htop | head".to_string()]), None);
+    }
+
+    #[test]
     fn rewrite_command_skips_unsupported_shell_constructs() {
-        assert_eq!(rewrite_command(&["git status | head".to_string()]), None);
         assert_eq!(rewrite_command(&["git status > out.txt".to_string()]), None);
         assert_eq!(
             rewrite_command(&["git status $(printf branch)".to_string()]),
