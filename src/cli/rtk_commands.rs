@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
-// PURPOSE: First-class RTK-style CLI shortcuts and hook-facing rewrite decisions
-// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for agent hooks
-// DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY-ROUTER
+// PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest; RewriteCmd dry-run rewriting for simple commands and safe shell command chains
+// DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
 // LINKS:
 //   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
 //   → M-PROXY (depends) - proxy execution, filtering, tracking, and evidence
@@ -12,16 +12,32 @@
 // START_MODULE_MAP
 // RtkProxyCmd::run_as — Prefixes a native command and delegates to ProxyCmd
 // RewriteCmd::run — Prints a hook rewrite decision or exits 1 when unsupported
-// rewrite_command — Converts routeable shell commands to syn proxy invocations
+// rewrite_command — Converts routeable shell commands or safe chains to syn proxy invocations
+// rewrite_shell_segments — Rewrites quote-aware shell command sequences segment by segment
+// rewrite_segment — Rewrites one routeable shell segment while preserving unsupported segments
+// split_shell_segments — Splits safe shell sequences on &&, ||, and ; without executing shell syntax
 // split_route_tokens — Separates transparent shell prefixes from routeable command tokens
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 — Added syn rewrite hook decision path]
+// LAST_CHANGE: [v1.2.0 — Added shell-aware RTK rewrite chains]
 // END_CHANGE_SUMMARY
 
 use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
 use crate::config::Config;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ShellSegment {
+    original: String,
+    tokens: Vec<String>,
+    operator_after: Option<&'static str>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct SegmentRewrite {
+    rendered: String,
+    changed: bool,
+}
 
 // START_public_api
 
@@ -84,7 +100,7 @@ impl RewriteCmd {
 }
 
 // START_CONTRACT_rewrite_command
-// PURPOSE: Convert a routeable raw shell command into a syn proxy invocation for thin agent hooks
+// PURPOSE: Convert a routeable raw shell command or safe shell chain into syn proxy invocations for thin agent hooks
 // INPUTS: { args: &[String] - raw command as one shell string or argv tokens }
 // OUTPUTS: { Option<String> - rewritten command when supported }
 // LINKS:
@@ -97,29 +113,86 @@ pub(crate) fn rewrite_command(args: &[String]) -> Option<String> {
     if trimmed.is_empty() {
         return None;
     }
-    if is_already_token_safe(trimmed) {
-        return Some(trimmed.to_string());
+
+    if args.len() == 1 {
+        return rewrite_shell_segments(trimmed);
     }
 
     let tokens = command_tokens(args, trimmed)?;
-    if has_shell_operator(&tokens) {
-        return None;
+    let rewritten = rewrite_segment(&tokens, trimmed)?;
+    (rewritten.changed || is_already_token_safe(trimmed)).then_some(rewritten.rendered)
+}
+// END_rewrite_command
+
+// START_CONTRACT_rewrite_shell_segments
+// PURPOSE: Rewrite each safe shell chain segment independently while preserving operators and unsupported commands
+// INPUTS: { command: &str }
+// OUTPUTS: { Option<String> }
+// START_rewrite_shell_segments
+fn rewrite_shell_segments(command: &str) -> Option<String> {
+    let segments = split_shell_segments(command)?;
+    let has_chain = segments
+        .iter()
+        .any(|segment| segment.operator_after.is_some());
+    let mut rendered = String::new();
+    let mut changed = false;
+    let mut single_token_safe = false;
+
+    for segment in &segments {
+        let rewrite = rewrite_segment(&segment.tokens, &segment.original)?;
+        changed |= rewrite.changed;
+        single_token_safe |= !has_chain && is_already_token_safe(segment.original.as_str());
+        rendered.push_str(&rewrite.rendered);
+        if let Some(operator) = segment.operator_after {
+            render_shell_operator(&mut rendered, operator);
+        }
     }
 
-    let (prefix_tokens, route_tokens) = split_route_tokens(&tokens);
+    (changed || single_token_safe).then_some(rendered.trim_end().to_string())
+}
+// END_rewrite_shell_segments
+
+// START_CONTRACT_rewrite_segment
+// PURPOSE: Rewrite a single routeable shell segment and return unchanged text for unsupported safe segments
+// INPUTS: { tokens: &[String] }, { original: &str }
+// OUTPUTS: { Option<SegmentRewrite> }
+// LINKS:
+//   → M-PROXY-ROUTER (depends) - route decisions define whether a segment should proxy
+// START_rewrite_segment
+fn rewrite_segment(tokens: &[String], original: &str) -> Option<SegmentRewrite> {
+    let original = original.trim();
+    if tokens.is_empty() {
+        return None;
+    }
+    if is_already_token_safe(original) {
+        return Some(SegmentRewrite {
+            rendered: original.to_string(),
+            changed: false,
+        });
+    }
+
+    let (prefix_tokens, route_tokens) = split_route_tokens(tokens);
     if route_tokens.is_empty() {
-        return None;
+        return Some(SegmentRewrite {
+            rendered: original.to_string(),
+            changed: false,
+        });
     }
-
     let router = crate::proxy::router::CommandRouter::new();
     let decision = router.route(&route_tokens);
     if decision.should_proxy {
-        Some(format_rewritten_command(&prefix_tokens, &route_tokens))
+        Some(SegmentRewrite {
+            rendered: format_rewritten_command(&prefix_tokens, &route_tokens),
+            changed: true,
+        })
     } else {
-        None
+        Some(SegmentRewrite {
+            rendered: original.to_string(),
+            changed: false,
+        })
     }
 }
-// END_rewrite_command
+// END_rewrite_segment
 
 // END_public_api
 
@@ -178,18 +251,6 @@ fn split_route_tokens(tokens: &[String]) -> (Vec<String>, Vec<String>) {
     (tokens[..index].to_vec(), tokens[index..].to_vec())
 }
 // END_split_route_tokens
-
-// START_CONTRACT_has_shell_operator
-// PURPOSE: Detect shell command composition that this minimal rewrite path intentionally leaves untouched
-// INPUTS: { tokens: &[String] }
-// OUTPUTS: { bool }
-// START_has_shell_operator
-fn has_shell_operator(tokens: &[String]) -> bool {
-    tokens
-        .iter()
-        .any(|token| matches!(token.as_str(), "&&" | "||" | ";" | "|" | "&"))
-}
-// END_has_shell_operator
 
 // START_CONTRACT_format_rewritten_command
 // PURPOSE: Render a shell-safe rewrite while preserving env/transparent prefixes before syn proxy
@@ -270,6 +331,111 @@ fn shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\\''"))
 }
 // END_shell_quote
+
+// START_CONTRACT_split_shell_segments
+// PURPOSE: Split a raw shell string into safe command segments without executing or accepting complex shell syntax
+// INPUTS: { input: &str }
+// OUTPUTS: { Option<Vec<ShellSegment>> }
+// START_split_shell_segments
+fn split_shell_segments(input: &str) -> Option<Vec<ShellSegment>> {
+    let mut segments = Vec::new();
+    let mut chars = input.char_indices().peekable();
+    let mut segment_start = 0;
+    let mut in_single = false;
+    let mut in_double = false;
+
+    while let Some((index, ch)) = chars.next() {
+        match ch {
+            '\'' if !in_double => in_single = !in_single,
+            '"' if !in_single => in_double = !in_double,
+            '\\' if !in_single => {
+                chars.next();
+            }
+            '$' if !in_single => {
+                if matches!(chars.peek(), Some((_, '('))) {
+                    return None;
+                }
+            }
+            '`' if !in_single => return None,
+            '<' | '>' if !in_single && !in_double => return None,
+            '&' if !in_single && !in_double => {
+                let Some((next_index, '&')) = chars.peek().copied() else {
+                    return None;
+                };
+                push_shell_segment(&mut segments, input, segment_start, index, Some("&&"))?;
+                chars.next();
+                segment_start = next_index + 1;
+            }
+            '|' if !in_single && !in_double => {
+                let Some((next_index, '|')) = chars.peek().copied() else {
+                    return None;
+                };
+                push_shell_segment(&mut segments, input, segment_start, index, Some("||"))?;
+                chars.next();
+                segment_start = next_index + 1;
+            }
+            ';' if !in_single && !in_double => {
+                push_shell_segment(&mut segments, input, segment_start, index, Some(";"))?;
+                segment_start = index + 1;
+            }
+            _ => {}
+        }
+    }
+
+    if in_single || in_double {
+        return None;
+    }
+
+    push_shell_segment(&mut segments, input, segment_start, input.len(), None)?;
+    Some(segments)
+}
+// END_split_shell_segments
+
+// START_CONTRACT_push_shell_segment
+// PURPOSE: Convert one raw segment slice into tokens and attach the following shell operator
+// INPUTS: { segments: &mut Vec<ShellSegment> }, { input: &str }, { start: usize }, { end: usize }, { operator_after: Option<&'static str> }
+// OUTPUTS: { Option<()> }
+// START_push_shell_segment
+fn push_shell_segment(
+    segments: &mut Vec<ShellSegment>,
+    input: &str,
+    start: usize,
+    end: usize,
+    operator_after: Option<&'static str>,
+) -> Option<()> {
+    let original = input.get(start..end)?.trim();
+    if original.is_empty() {
+        return None;
+    }
+    let tokens = split_shell_words(original)?;
+    if tokens.is_empty() {
+        return None;
+    }
+    segments.push(ShellSegment {
+        original: original.to_string(),
+        tokens,
+        operator_after,
+    });
+    Some(())
+}
+// END_push_shell_segment
+
+// START_CONTRACT_render_shell_operator
+// PURPOSE: Append normalized shell chain operator spacing to a rendered rewrite string
+// INPUTS: { output: &mut String }, { operator: &str }
+// OUTPUTS: { () }
+// START_render_shell_operator
+fn render_shell_operator(output: &mut String, operator: &str) {
+    match operator {
+        ";" => output.push_str("; "),
+        _ => {
+            output.push(' ');
+            output.push_str(operator);
+            output.push(' ');
+        }
+    }
+}
+// END_render_shell_operator
 
 // START_CONTRACT_split_shell_words
 // PURPOSE: Parse a minimal POSIX-like shell string for router classification without executing it
@@ -354,9 +520,77 @@ mod tests {
     }
 
     #[test]
-    fn rewrite_command_skips_shell_composition() {
+    fn rewrite_command_routes_shell_sequence() {
         let args = vec!["git status && cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status && syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_unknown_segment_in_sequence() {
+        let args = vec!["cargo test && htop".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- cargo test && htop".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_skips_sequence_without_routeable_segments() {
+        let args = vec!["htop && top".to_string()];
         assert_eq!(rewrite_command(&args), None);
+    }
+
+    #[test]
+    fn rewrite_command_preserves_token_safe_segment_in_sequence() {
+        let args = vec!["syn proxy -- git status && cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status && syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_or_sequence() {
+        let args = vec!["git status||cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status || syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_semicolon_sequence() {
+        let args = vec!["git status;cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status; syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_does_not_split_quoted_operator() {
+        let args = vec!["git commit -m 'a && b' && cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git commit -m 'a && b' && syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_skips_unsupported_shell_constructs() {
+        assert_eq!(rewrite_command(&["git status | head".to_string()]), None);
+        assert_eq!(rewrite_command(&["git status > out.txt".to_string()]), None);
+        assert_eq!(
+            rewrite_command(&["git status $(printf branch)".to_string()]),
+            None
+        );
+        assert_eq!(
+            rewrite_command(&["git status `printf branch`".to_string()]),
+            None
+        );
     }
 
     #[test]

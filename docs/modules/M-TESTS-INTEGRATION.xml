@@ -2,11 +2,11 @@
 <MODULE id="M-TESTS-INTEGRATION" type="UTILITY" status="active">
   <NAME>M-TESTS-INTEGRATION</NAME>
   <PURPOSE>End-to-end integration tests for Synapse CLI commands</PURPOSE>
-  <SCOPE>init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue CLI JSON, proxy exit status, RTK shortcut coverage, local RTK adapter coverage, rewrite hook decision coverage, proxy route preview, proxy raw evidence, Unicode proxy truncation, gain graph/session/adapter analytics, doctor, hooks, compress</SCOPE>
+  <SCOPE>init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue CLI JSON, proxy exit status, RTK shortcut coverage, local RTK adapter coverage, rewrite hook decision and safe chain coverage, proxy route preview, proxy raw evidence, Unicode proxy truncation, gain graph/session/adapter analytics, doctor, hooks, compress</SCOPE>
   <FILES>
     <FILE>tests/integration_test.rs</FILE>
   </FILES>
   <DEPENDS>M-CLI,M-CLI-RTK-COMMANDS,M-INDEXER,M-GRACE,M-RUNNER,M-CONFIG,M-PROXY,M-PROXY-RUNNER,M-PROXY-ROUTER,M-TRACKING</DEPENDS>
-  <LINKS>docs/phases/Phase-23.xml,docs/phases/Phase-25.xml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml</LINKS>
+  <LINKS>docs/phases/Phase-23.xml,docs/phases/Phase-25.xml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-29.xml</LINKS>
   <VERIFICATION_REF>V-M-TESTS-INTEGRATION</VERIFICATION_REF>
 </MODULE>

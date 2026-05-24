@@ -15,6 +15,7 @@
     <ASSERTION>Shortcut --route and --evidence flags use the same behavior as syn proxy.</ASSERTION>
     <ASSERTION>syn json, syn deps, syn env, and syn wc run as direct local adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn rewrite uses CommandRouter as the hook rewrite source of truth and exits non-zero without stdout for unsupported commands.</ASSERTION>
+    <ASSERTION>syn rewrite rewrites safe shell chains joined by &amp;&amp;, ||, and ; segment by segment, preserves unsupported segments, and skips unsafe pipe, redirection, and substitution constructs.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-28</PHASE_GATE>
+  <PHASE_GATE>Phase-29</PHASE_GATE>
 </VERIFICATION>

@@ -7,6 +7,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>OpenCode rewrite hook delegates routeable command decisions to syn rewrite instead of maintaining a separate command-family list.</ASSERTION>
+    <ASSERTION>OpenCode rewrite hook receives expanded safe chain rewrite behavior through syn rewrite without hook-side command parsing.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-27</PHASE_GATE>
+  <PHASE_GATE>Phase-29</PHASE_GATE>
 </VERIFICATION>
