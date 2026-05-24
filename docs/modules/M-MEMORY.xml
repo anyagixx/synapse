@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MEMORY" type="DATA_LAYER" status="active">
+  <NAME>M-MEMORY</NAME>
+  <PURPOSE>Durable project memory — persists reusable lessons learned from bounded agent work</PURPOSE>
+  <SCOPE>Lesson record schema, project-local JSON persistence, deterministic list/load/save helpers</SCOPE>
+  <FILES>
+    <FILE>src/memory/mod.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>docs/verification/V-M-MEMORY.xml,docs/phases/Phase-20.xml</LINKS>
+  <VERIFICATION_REF>V-M-MEMORY</VERIFICATION_REF>
+</MODULE>

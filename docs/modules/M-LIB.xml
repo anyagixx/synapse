@@ -2,7 +2,7 @@
 <MODULE id="M-LIB" type="CORE_LOGIC" status="active">
   <NAME>M-LIB</NAME>
   <PURPOSE>Crate root — declares all public modules, version, and crate-level lints</PURPOSE>
-  <SCOPE>Module declarations, VERSION/NAME constants, clippy allows</SCOPE>
+  <SCOPE>Module declarations, including durable memory, VERSION/NAME constants, clippy allows</SCOPE>
   <FILES>
     <FILE>src/lib.rs</FILE>
   </FILES>

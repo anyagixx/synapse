@@ -1,16 +1,16 @@
 # Synapse Upgrade Plan to 2.6
 
-Status: active
+Status: done
 Mode: balanced
 Primary goal: make Synapse better for autonomous agents
 Checkpoint owner: OpenCode
 Last updated: 2026-05-24
 
 ## Current checkpoint
-- Active program: Phase 4 — Dashboard as Agent Cockpit
-- Current subphase: Review/approve and replay surface
-- Last completed activity: added durable blocked-run review decisions, approve/reject helpers, review-gated blocked resume behavior, deterministic run replay events, and dashboard/API review actions
-- Next recommended activity: close Phase 5 with durable lessons memory, then mark this upgrade plan complete
+- Active program: Synapse Upgrade Plan to 2.6
+- Current subphase: Closed
+- Last completed activity: added durable lessons memory in `M-MEMORY`, exposed it through the crate root, and verified the full plan closure with format, full tests, clippy, MyGRACE verify, and full review
+- Next recommended activity: treat future integrations, richer write tools, and dashboard polish as post-2.6 backlog, not as open scope in this plan
 
 ## North Star
 Turn Synapse from strong governance/verification toolkit into controlled autonomous agent platform.
@@ -279,16 +279,16 @@ Planned work:
 12. Phase 5
 
 ## Current stop point
-Stopped after Phase 4 review/approve and replay implementation.
-Phase 1 run model through bounded recovery, Phase 2 graph/search improvements, Phase 3 tester evidence additions, and Phase 4 cockpit queue/review/replay surfaces now exist in code.
+Stopped after full plan closure.
+Phase 1 run model through bounded recovery, Phase 2 graph/search improvements, Phase 3 tester evidence additions, Phase 4 cockpit queue/review/replay surfaces, and Phase 5 durable lessons memory now exist in code.
 
 ## Next exact step
-Create execution-level implementation checklist for Phase 5 durable lessons memory:
-- define a small `LessonRecord` schema for reusable project memory
-- persist lessons under sharded project docs without coupling to global token tracking
-- add list/save behavior and tests
-- expose enough API surface for future MCP/CLI use
-- update MyGRACE artifacts and close this upgrade plan once verification passes
+No remaining step in this plan.
+Post-2.6 backlog candidates:
+- add CLI/MCP commands over `M-MEMORY`
+- add dashboard lesson browser
+- extend review approvals with signed reviewer identity
+- split remaining near-limit large files before adding major runtime features
 
 ## Notes for future sessions
 When resuming:

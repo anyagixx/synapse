@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-MEMORY" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Durable project memory persists reusable lessons learned from bounded agent work.
+    Key data flows:
+      - INPUT: lesson title, summary, source, module id, tags, and evidence refs from completed or reviewed agent work
+      - PROCESSING: normalize stable lesson ids, serialize lessons as project-local JSON, and list records deterministically
+      - OUTPUT: docs/memory/lessons/*.json records for future CLI/MCP/dashboard use
+    Critical invariants:
+      - lesson files stay inside docs/memory/lessons
+      - list ordering is deterministic
+      - persistence failures return errors instead of being hidden
+  IMPLEMENTATION_STRATEGY:
+    Approach: keep a small project-local JSON store before adding richer integrations.
+    Complexity_areas: filename safety, deterministic ordering, schema compatibility
+    Patterns_applied: explicit flow, typed links, bounded persistence helpers
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - lessons can be saved, loaded, and listed from a clean project root
+    - MyGRACE traceability remains at 100%
+  RISKS_ACKNOWLEDGED:
+    - initial memory surface is library-level; CLI/MCP commands can layer on top later
+</BELIEF_STATE>

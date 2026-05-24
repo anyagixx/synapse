@@ -72,6 +72,7 @@
     <VERIFICATION id="V-M-MCP-SERVER-GRACE-TOOLS" module="M-MCP-SERVER-GRACE-TOOLS" path="docs/verification/V-M-MCP-SERVER-GRACE-TOOLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-RESPONSE" module="M-MCP-SERVER-RESPONSE" path="docs/verification/V-M-MCP-SERVER-RESPONSE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-TOOLS" module="M-MCP-SERVER-TOOLS" path="docs/verification/V-M-MCP-SERVER-TOOLS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-MEMORY" module="M-MEMORY" path="docs/verification/V-M-MEMORY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-PLUGIN" module="M-PLUGIN" path="docs/verification/V-M-PLUGIN.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-PROXY" module="M-PROXY" path="docs/verification/V-M-PROXY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-PROXY-FILTER" module="M-PROXY-FILTER" path="docs/verification/V-M-PROXY-FILTER.xml" priority="normal" status="active" />

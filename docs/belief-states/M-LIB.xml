@@ -7,7 +7,7 @@
       - PROCESSING: Implement only the declared scope while preserving dependencies: all sub-modules
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Module declarations, VERSION/NAME constants, clippy allows
+      - Scope remains bounded to: Module declarations including durable memory, VERSION/NAME constants, clippy allows
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

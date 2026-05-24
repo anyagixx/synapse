@@ -72,6 +72,7 @@
     <MODULE id="M-MCP-SERVER-GRACE-TOOLS" path="docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml" status="active" />
     <MODULE id="M-MCP-SERVER-RESPONSE" path="docs/modules/M-MCP-SERVER-RESPONSE.xml" status="active" />
     <MODULE id="M-MCP-SERVER-TOOLS" path="docs/modules/M-MCP-SERVER-TOOLS.xml" status="active" />
+    <MODULE id="M-MEMORY" path="docs/modules/M-MEMORY.xml" status="active" />
     <MODULE id="M-PLUGIN" path="docs/modules/M-PLUGIN.xml" status="active" />
     <MODULE id="M-PROXY" path="docs/modules/M-PROXY.xml" status="active" />
     <MODULE id="M-PROXY-FILTER" path="docs/modules/M-PROXY-FILTER.xml" status="active" />
