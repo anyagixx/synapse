@@ -7,7 +7,7 @@
       - PROCESSING: Load sources in priority order, parse legacy/named TOML schemas, apply the 8-stage filter pipeline, and execute inline filter tests
       - OUTPUT: Filtered command output plus verification results for project/user/built-in filters
     Critical invariants:
-      - Scope remains bounded to: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter/apply/verify, split Synapse/RTK built-in filter packs including lint, build, compiler, language ecosystem, platform tooling, system, DevOps, infrastructure/IaC, and package-management filters, RTK-first built-in precedence, Unicode-safe truncation, 8-stage pipeline
+      - Scope remains bounded to: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter/apply/verify, split Synapse/RTK built-in filter packs including lint, build, compiler, language ecosystem, operations/admin, platform tooling, system, DevOps, infrastructure/IaC, and package-management filters, RTK-first built-in precedence, Unicode-safe truncation, 8-stage pipeline
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Keep the existing legacy built-in file stable and add RTK parity through a separate named filter pack that loads before legacy built-ins for overlapping command patterns
@@ -16,7 +16,7 @@
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
-    - proxy::toml_filter tests, syn filters verify for dotnet-build, markdownlint, df, du, ps, ping, systemctl-status, rsync, ssh, brew-install, uv-sync, gcloud, gradle, mvn-build, gcc, task, turbo, terraform-plan, tofu-init, tofu-plan, tofu-validate, tofu-fmt, ansible-playbook, poetry-install, composer-install, bundle-install, swift-build, mix-compile, mix-format, xcodebuild, spring-boot, pio-run, trunk-build, quarto-render, nx, verify_project, and review_code pass after implementation
+    - proxy::toml_filter tests, syn filters verify for dotnet-build, markdownlint, df, du, ps, ping, systemctl-status, rsync, ssh, brew-install, uv-sync, gcloud, gradle, mvn-build, gcc, task, turbo, terraform-plan, tofu-init, tofu-plan, tofu-validate, tofu-fmt, ansible-playbook, poetry-install, composer-install, bundle-install, swift-build, mix-compile, mix-format, xcodebuild, spring-boot, pio-run, trunk-build, quarto-render, nx, sops, skopeo, iptables, fail2ban-client, liquibase, mise, yadm, verify_project, and review_code pass after implementation
   RISKS_ACKNOWLEDGED:
     - Loading RTK filters before legacy built-ins improves RTK parity but needs runtime routing tests for overlapping command patterns
     - Large filter-pack expansion should remain verified by inline tests to avoid silent output loss

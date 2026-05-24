@@ -1525,3 +1525,241 @@ expected = "Compiled successfully.\nOutput: dist/apps/myapp"
 name = "preserves error output"
 input = "ERROR: Cannot find module '@myapp/shared'\n\n   > NX   Running target build for project myapp\n\nFailed at step: build"
 expected = "ERROR: Cannot find module '@myapp/shared'\nFailed at step: build"
+
+[filters.sops]
+description = "Compact sops output"
+match_command = "^sops\\b"
+strip_ansi = true
+strip_lines_matching = ["^\\s*$"]
+max_lines = 40
+
+[[tests.sops]]
+name = "strips blank lines"
+input = "mac: xyz123\n\nversion: 3.8.1"
+expected = "mac: xyz123\nversion: 3.8.1"
+
+[[tests.sops]]
+name = "preserves non-blank output unchanged"
+input = "mac: abc123\nversion: 3.8.1"
+expected = "mac: abc123\nversion: 3.8.1"
+
+[filters.skopeo]
+description = "Compact skopeo output - truncate large manifests, strip verbosity"
+match_command = "^skopeo\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Getting image source signatures",
+  "^Copying blob",
+  "^Copying config",
+  "^Writing manifest",
+  "^Storing signatures",
+]
+max_lines = 30
+truncate_lines_at = 120
+on_empty = "skopeo: ok"
+
+[[tests.skopeo]]
+name = "copy strips progress, keeps result"
+input = """
+Getting image source signatures
+Copying blob sha256:abc123 done
+Copying blob sha256:def456 done
+Copying config sha256:789ghi done
+Writing manifest to image destination
+Storing signatures
+"""
+expected = "skopeo: ok"
+
+[[tests.skopeo]]
+name = "inspect keeps output"
+input = """
+{
+    "Name": "docker.io/library/nginx",
+    "Tag": "latest",
+    "Digest": "sha256:abc123",
+    "RepoTags": ["latest", "1.25"],
+    "Created": "2026-01-01T00:00:00Z"
+}
+"""
+expected = "{\n    \"Name\": \"docker.io/library/nginx\",\n    \"Tag\": \"latest\",\n    \"Digest\": \"sha256:abc123\",\n    \"RepoTags\": [\"latest\", \"1.25\"],\n    \"Created\": \"2026-01-01T00:00:00Z\"\n}"
+
+[[tests.skopeo]]
+name = "empty input returns on_empty message"
+input = ""
+expected = "skopeo: ok"
+
+[filters.iptables]
+description = "Compact iptables output"
+match_command = "^iptables\\b"
+strip_lines_matching = [
+  "^\\s*$",
+  "^Chain DOCKER",
+  "^Chain BR-",
+]
+max_lines = 50
+truncate_lines_at = 120
+
+[[tests.iptables]]
+name = "strips Docker chains, preserves real rules"
+input = """
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination
+1    ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0
+Chain DOCKER (1 references)
+    DOCKER     all  --  0.0.0.0/0            0.0.0.0/0
+Chain BR-abcdef (0 references)
+"""
+expected = "Chain INPUT (policy ACCEPT)\nnum  target     prot opt source               destination\n1    ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0\n    DOCKER     all  --  0.0.0.0/0            0.0.0.0/0"
+
+[[tests.iptables]]
+name = "preserves FORWARD and OUTPUT chains"
+input = "Chain FORWARD (policy DROP)\n1 ACCEPT tcp\nChain OUTPUT (policy ACCEPT)\n1 ACCEPT all"
+expected = "Chain FORWARD (policy DROP)\n1 ACCEPT tcp\nChain OUTPUT (policy ACCEPT)\n1 ACCEPT all"
+
+[filters.fail2ban-client]
+description = "Compact fail2ban-client output"
+match_command = "^fail2ban-client\\b"
+strip_lines_matching = ["^\\s*$"]
+max_lines = 30
+
+[[tests.fail2ban-client]]
+name = "strips blank lines"
+input = "Status for the jail: sshd\n|- Filter\n|  |- Currently failed: 3\n\n|- Actions\n   `- Total banned: 42"
+expected = "Status for the jail: sshd\n|- Filter\n|  |- Currently failed: 3\n|- Actions\n   `- Total banned: 42"
+
+[[tests.fail2ban-client]]
+name = "single line passthrough"
+input = "Shutdown successful"
+expected = "Shutdown successful"
+
+[filters.liquibase]
+description = "Compact liquibase output - strip headers and generic info"
+match_command = "(?:^|/)liquibase(?:\\s|$)"
+strip_ansi = true
+filter_stderr = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Starting Liquibase at",
+  "^Liquibase (?:Community|Open Source)",
+  "^Liquibase Home:",
+  "^Java Home",
+  "^Libraries:",
+  "^\\s*-\\s+\\S+\\.jar",
+  "^INFO \\[liquibase\\.integration\\]",
+  "^INFO \\[liquibase\\.core\\] Reading resource",
+  "^INFO \\[liquibase\\.core\\] Parsing",
+  "^(?:\\[?INFO\\]?\\s*)?#+$",
+  "^\\s*##",
+]
+on_empty = "liquibase: ok"
+max_lines = 200
+
+[[tests.liquibase]]
+name = "strip ascii banner and info logs from subcommand"
+input = """
+####################################################
+##   _     _             _ _                      ##
+##  | |   (_)           (_) |                     ##
+####################################################
+Starting Liquibase at 10:12:11 (version 4.29.1)
+Liquibase Version: 4.29.1
+Liquibase Open Source 4.29.1 by Liquibase
+INFO [liquibase.integration] Starting command
+INFO [liquibase.core] Reading resource db/changelog.xml
+INFO [liquibase.core] Parsing db/changelog.xml
+Running Changeset: filepath::id::author
+Changeset filepath::id::author ran successfully
+"""
+expected = "Liquibase Version: 4.29.1\nRunning Changeset: filepath::id::author\nChangeset filepath::id::author ran successfully"
+
+[[tests.liquibase]]
+name = "strip version noise, keep only version line"
+input = """
+####################################################
+##   _     _             _ _                      ##
+####################################################
+Starting Liquibase at 13:45:24 using Java 17.0.15 (version 4.30.0 #4943 built at 2024-10-31 17:00+0000)
+Liquibase Home: D:\\mcp\\bash\\lbr\\third-party
+Java Home C:\\Program Files\\Java\\jdk-17.0.15 (Version 17.0.15)
+Libraries:
+  - internal\\lib\\commons-io.jar: Apache Commons IO 2.17.0 By The Apache Software Foundation
+  - internal\\lib\\picocli.jar: picocli 4.7.6 By Remko Popma
+  - lib\\ojdbc10-19.30.0.0.jar: JDBC 19.30.0.0.0 By Oracle Corporation
+
+Liquibase Version: 4.30.0
+Liquibase Open Source 4.30.0 by Liquibase
+"""
+expected = "Liquibase Version: 4.30.0"
+
+[[tests.liquibase]]
+name = "keep status and error lines"
+input = """
+####################################################
+##   _     _             _ _                      ##
+####################################################
+Starting Liquibase at 10:00:00 (version 4.30.0)
+Liquibase Version: 4.30.0
+Liquibase Open Source 4.30.0 by Liquibase
+HR@jdbc:oracle:thin:@localhost:1523:XE is up to date
+Liquibase command 'status' was executed successfully.
+"""
+expected = "Liquibase Version: 4.30.0\nHR@jdbc:oracle:thin:@localhost:1523:XE is up to date\nLiquibase command 'status' was executed successfully."
+
+[[tests.liquibase]]
+name = "empty input"
+input = ""
+expected = "liquibase: ok"
+
+[filters.mise]
+description = "Compact mise task runner output - strip status lines, keep task results"
+match_command = "^mise\\s+(run|exec|install|upgrade)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^mise\\s+(trust|install|upgrade).*\\u2713",
+  "^mise\\s+Installing\\s",
+  "^mise\\s+Downloading\\s",
+  "^mise\\s+Extracting\\s",
+  "^mise\\s+\\w+@[\\d.]+ installed",
+]
+truncate_lines_at = 150
+max_lines = 50
+on_empty = "mise: ok"
+
+[[tests.mise]]
+name = "strips install noise, keeps task output"
+input = "mise Installing node@20.0.0\nmise Downloading node@20.0.0\nmise Extracting node@20.0.0\nmise node@20.0.0 installed\n\nlint check passed\n2 warnings found"
+expected = "lint check passed\n2 warnings found"
+
+[[tests.mise]]
+name = "preserves error output"
+input = "mise run lint\nError: biome check failed\nsrc/index.ts:5 \u2014 unused variable"
+expected = "mise run lint\nError: biome check failed\nsrc/index.ts:5 \u2014 unused variable"
+
+[[tests.mise]]
+name = "empty after stripping"
+input = "mise trust ~/dev/.mise.toml \u2713\nmise install node@20 \u2713\n"
+expected = "mise: ok"
+
+[filters.yadm]
+description = "Compact yadm git wrapper output"
+match_command = "^yadm\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*\\(use \"git ",
+  "^\\s*\\(use \"yadm ",
+]
+truncate_lines_at = 120
+max_lines = 40
+
+[[tests.yadm]]
+name = "strips hint lines"
+input = "On branch main\nYour branch is up to date with 'origin/main'.\n\n  (use \"yadm add\" to update what will be committed)\n\nChanges not staged for commit:\n  modified:   .bashrc"
+expected = "On branch main\nYour branch is up to date with 'origin/main'.\nChanges not staged for commit:\n  modified:   .bashrc"
+
+[[tests.yadm]]
+name = "short output preserved"
+input = "Already up to date."
+expected = "Already up to date."
