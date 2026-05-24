@@ -2,11 +2,11 @@
 <MODULE id="M-CLI" type="ENTRY_POINT" status="active">
   <NAME>M-CLI</NAME>
   <PURPOSE>CLI schema facade — clap-powered top-level parser, command enum, and command argument structs</PURPOSE>
-  <SCOPE>SynCli, Command enum, command argument structs including GRACE --profile flags, run scenario/action flags, doctor --deps, gain --graph/--sessions/--adapters, proxy --route/--evidence, filters verify/trust controls, stdio-only mcp command, and CI action enum</SCOPE>
+  <SCOPE>SynCli, Command enum, command argument structs including GRACE --profile flags, run scenario/action flags, RTK shortcuts, doctor --deps, gain --graph/--sessions/--adapters, proxy --route/--evidence, filters verify/trust controls, stdio-only mcp command, and CI action enum</SCOPE>
   <FILES>
     <FILE>src/cli.rs</FILE>
   </FILES>
-  <DEPENDS>M-CLI-SETUP-COMMANDS,M-CLI-CODE-COMMANDS,M-CLI-GRACE-COMMANDS,M-CLI-RUNTIME-COMMANDS</DEPENDS>
+  <DEPENDS>M-CLI-SETUP-COMMANDS,M-CLI-CODE-COMMANDS,M-CLI-GRACE-COMMANDS,M-CLI-RUNTIME-COMMANDS,M-CLI-RTK-COMMANDS</DEPENDS>
   <LINKS>Cargo.toml</LINKS>
   <VERIFICATION_REF>V-M-CLI</VERIFICATION_REF>
 </MODULE>

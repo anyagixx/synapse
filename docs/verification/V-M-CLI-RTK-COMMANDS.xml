@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CLI-RTK-COMMANDS" module="M-CLI-RTK-COMMANDS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>First-class RTK shortcuts prefix native commands and delegate execution to ProxyCmd without duplicating filter logic.</ASSERTION>
+    <ASSERTION>syn read --evidence applies the built-in cat filter while preserving complete raw output in the evidence artifact.</ASSERTION>
+    <ASSERTION>Shortcut --route and --evidence flags use the same behavior as syn proxy.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-26</PHASE_GATE>
+</VERIFICATION>

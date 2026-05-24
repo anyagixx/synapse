@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
 // PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
-// SCOPE: CLI argument parsing, stderr tracing init, command dispatch
+// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including RTK proxy shortcuts
 // DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 — Dispatch filter lifecycle command]
+// LAST_CHANGE: [v4.1.0 — Dispatch first-class RTK proxy shortcuts]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -43,6 +43,54 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Verify(cmd) => cmd.run(config).await,
             syn::cli::Command::Review(cmd) => cmd.run(config).await,
             syn::cli::Command::Status(cmd) => cmd.run(config).await,
+            syn::cli::Command::Read(cmd) => {
+                cmd.run_as(config, "cat", true, "Usage: syn read <file>...")
+                    .await
+            }
+            syn::cli::Command::Ls(cmd) => {
+                cmd.run_as(config, "ls", false, "Usage: syn ls [args...]")
+                    .await
+            }
+            syn::cli::Command::Tree(cmd) => {
+                cmd.run_as(config, "tree", false, "Usage: syn tree [args...]")
+                    .await
+            }
+            syn::cli::Command::Find(cmd) => {
+                cmd.run_as(config, "find", false, "Usage: syn find [args...]")
+                    .await
+            }
+            syn::cli::Command::Rg(cmd) => {
+                cmd.run_as(config, "rg", true, "Usage: syn rg <pattern> [path...]")
+                    .await
+            }
+            syn::cli::Command::Grep(cmd) => {
+                cmd.run_as(config, "grep", true, "Usage: syn grep <pattern> [path...]")
+                    .await
+            }
+            syn::cli::Command::Git(cmd) => {
+                cmd.run_as(config, "git", false, "Usage: syn git [args...]")
+                    .await
+            }
+            syn::cli::Command::Cargo(cmd) => {
+                cmd.run_as(config, "cargo", false, "Usage: syn cargo [args...]")
+                    .await
+            }
+            syn::cli::Command::Npm(cmd) => {
+                cmd.run_as(config, "npm", false, "Usage: syn npm [args...]")
+                    .await
+            }
+            syn::cli::Command::Pnpm(cmd) => {
+                cmd.run_as(config, "pnpm", false, "Usage: syn pnpm [args...]")
+                    .await
+            }
+            syn::cli::Command::Npx(cmd) => {
+                cmd.run_as(config, "npx", false, "Usage: syn npx [args...]")
+                    .await
+            }
+            syn::cli::Command::Pytest(cmd) => {
+                cmd.run_as(config, "pytest", false, "Usage: syn pytest [args...]")
+                    .await
+            }
             syn::cli::Command::Run(cmd) => cmd.run(config).await,
             syn::cli::Command::Proxy(cmd) => cmd.run(config).await,
             syn::cli::Command::Filters(cmd) => cmd.run(config).await,

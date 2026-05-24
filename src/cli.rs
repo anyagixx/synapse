@@ -1,22 +1,24 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, proxy evidence flag, filter lifecycle commands, CI action enum
-// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, first-class RTK shortcut commands, proxy evidence flag, filter lifecycle commands, CI action enum
+// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
 // SynCli — Top-level CLI parser struct
 // Command — Enum of all supported CLI commands
 // *Cmd structs — Clap argument schemas for supported commands
+// RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.1.0 — Added proxy raw evidence flag]
+// LAST_CHANGE: [v4.2.0 — Added first-class RTK proxy shortcuts]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
 mod grace_commands;
+mod rtk_commands;
 mod runtime_commands;
 mod setup_commands;
 
@@ -54,6 +56,33 @@ pub enum Command {
     Verify(VerifyCmd),
     Review(ReviewCmd),
     Status(StatusCmd),
+    #[command(about = "Read files through the token-saving proxy")]
+    Read(RtkProxyCmd),
+    #[command(about = "List directory contents through the token-saving proxy")]
+    Ls(RtkProxyCmd),
+    #[command(about = "Show directory tree through the token-saving proxy")]
+    Tree(RtkProxyCmd),
+    #[command(about = "Find files through the token-saving proxy")]
+    Find(RtkProxyCmd),
+    #[command(
+        name = "rg",
+        about = "Search with ripgrep through the token-saving proxy"
+    )]
+    Rg(RtkProxyCmd),
+    #[command(about = "Search with grep through the token-saving proxy")]
+    Grep(RtkProxyCmd),
+    #[command(about = "Run git through the token-saving proxy")]
+    Git(RtkProxyCmd),
+    #[command(about = "Run cargo through the token-saving proxy")]
+    Cargo(RtkProxyCmd),
+    #[command(about = "Run npm through the token-saving proxy")]
+    Npm(RtkProxyCmd),
+    #[command(about = "Run pnpm through the token-saving proxy")]
+    Pnpm(RtkProxyCmd),
+    #[command(about = "Run npx through the token-saving proxy")]
+    Npx(RtkProxyCmd),
+    #[command(about = "Run pytest through the token-saving proxy")]
+    Pytest(RtkProxyCmd),
     Run(RunCmd),
     Proxy(ProxyCmd),
     Filters(FiltersCmd),
@@ -158,6 +187,18 @@ pub struct StatusCmd {
     pub ci: bool,
 }
 // END_StatusCmd
+
+// START_RtkProxyCmd
+#[derive(clap::Args)]
+pub struct RtkProxyCmd {
+    #[arg(long)]
+    pub route: bool,
+    #[arg(long)]
+    pub evidence: bool,
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub args: Vec<String>,
+}
+// END_RtkProxyCmd
 
 // START_RunCmd
 #[derive(clap::Args)]

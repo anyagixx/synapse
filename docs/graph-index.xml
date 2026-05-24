@@ -13,6 +13,7 @@
     <MODULE id="M-CLI-CODE-COMMANDS" path="docs/modules/M-CLI-CODE-COMMANDS.xml" status="active" />
     <MODULE id="M-CLI-GRACE-COMMANDS" path="docs/modules/M-CLI-GRACE-COMMANDS.xml" status="active" />
     <MODULE id="M-CLI-RUNTIME-COMMANDS" path="docs/modules/M-CLI-RUNTIME-COMMANDS.xml" status="active" />
+    <MODULE id="M-CLI-RTK-COMMANDS" path="docs/modules/M-CLI-RTK-COMMANDS.xml" status="active" />
     <MODULE id="M-CLI-SETUP-COMMANDS" path="docs/modules/M-CLI-SETUP-COMMANDS.xml" status="active" />
     <MODULE id="M-COMPRESS" path="docs/modules/M-COMPRESS.xml" status="active" />
     <MODULE id="M-CONFIG" path="docs/modules/M-CONFIG.xml" status="active" />
@@ -112,6 +113,7 @@
     <REL source="M-CLI" target="M-CLI-CODE-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-GRACE-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI-CODE-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-CODE-COMMANDS" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-CLI-CODE-COMMANDS" target="M-GRAPHRAG" type="DEPENDS" />
@@ -135,6 +137,9 @@
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-DASHBOARD" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-CLI-RTK-COMMANDS" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-CLI-RTK-COMMANDS" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI-RTK-COMMANDS" target="M-PROXY" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-BOOTSTRAP" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-LAYOUT" type="DEPENDS" />
@@ -379,6 +384,7 @@
     <REL source="M-SKILLS-REGISTRY" target="M-SKILLS-TYPES" type="DEPENDS" />
     <REL source="M-SKILLS-TYPES" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-CLI" type="DEPENDS" />
+    <REL source="M-TESTS-INTEGRATION" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-GRACE" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-CONFIG" type="DEPENDS" />

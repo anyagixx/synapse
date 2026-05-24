@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-26" status="done">
+  <NAME>RTK First-Class Proxy Shortcuts</NAME>
+  <GOAL>Add RTK-style first-class Synapse commands for common token-heavy tools so agents can use concise commands without remembering syn proxy --.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-MAIN" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI" status="done">Expose read, ls, tree, find, rg, grep, git, cargo, npm, pnpm, npx, and pytest command variants with shared RTK proxy flags.</step-1>
+    <step-2 module="M-CLI-RTK-COMMANDS" status="done">Implement thin shortcut delegation to ProxyCmd so filtering, route preview, evidence, tracking, and exit-code behavior stay unified.</step-2>
+    <step-3 module="M-MAIN" status="done">Dispatch RTK shortcut commands to their native executable prefixes.</step-3>
+    <step-4 module="M-TESTS-INTEGRATION" status="done">Verify syn read --evidence filters stdout while raw evidence preserves complete output.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo check --all-targets</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>
