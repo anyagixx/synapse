@@ -30,6 +30,12 @@
     <COMMAND>cargo run --quiet -- filters verify --filter tofu-validate</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter tofu-fmt</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter ansible-playbook</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter poetry-install</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter composer-install</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter bundle-install</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter swift-build</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter mix-compile</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter mix-format</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
     <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
@@ -47,6 +53,7 @@
     <ASSERTION>The RTK built-in filter pack verifies build and compiler filters for gradle, mvn-build, gcc, task, and turbo through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies infrastructure/IaC filters for terraform-plan, tofu-init, tofu-plan, tofu-validate, tofu-fmt, and ansible-playbook through the CLI.</ASSERTION>
     <ASSERTION>RTK built-in filters are loaded before legacy built-ins so overlapping terraform and tofu commands use RTK-specific filters at runtime.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies package-manager and language build filters for poetry-install, composer-install, bundle-install, swift-build, mix-compile, and mix-format through the CLI.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-37</PHASE_GATE>
+  <PHASE_GATE>Phase-38</PHASE_GATE>
 </VERIFICATION>

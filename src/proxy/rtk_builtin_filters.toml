@@ -1008,3 +1008,243 @@ expected = "PLAY [all] *********************************************************
 name = "failed task preserved"
 input = "TASK [Start service] ***\nfailed: [web01] => {\"msg\": \"Service not found\"}\nPLAY RECAP ***\nweb01 : ok=1 failed=1"
 expected = "TASK [Start service] ***\nfailed: [web01] => {\"msg\": \"Service not found\"}\nPLAY RECAP ***\nweb01 : ok=1 failed=1"
+
+[filters.poetry-install]
+description = "Compact poetry install/lock/update output - strip downloads, short-circuit when up-to-date"
+match_command = "^poetry\\s+(install|lock|update)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^  [-\\u2022] Downloading ",
+  "^  [-\\u2022] Installing .* \\(",
+  "^Creating virtualenv",
+  "^Using virtualenv",
+]
+match_output = [
+  { pattern = "No dependencies to install or update|No changes\\.", message = "ok (up to date)" },
+]
+max_lines = 30
+
+[[tests.poetry-install]]
+name = "up to date short-circuits"
+input = """
+Installing dependencies from lock file
+
+No dependencies to install or update
+"""
+expected = "ok (up to date)"
+
+[[tests.poetry-install]]
+name = "poetry 2.x bullet syntax short-circuits to ok"
+input = """
+\u2022 Installing requests (2.31.0)
+\u2022 Installing certifi (2023.11.17)
+
+No changes.
+"""
+expected = "ok (up to date)"
+
+[[tests.poetry-install]]
+name = "install strips download lines"
+input = """
+Installing dependencies from lock file
+
+  - Downloading requests-2.31.0-py3-none-any.whl (62.6 kB)
+  - Installing certifi (2023.11.17)
+  - Installing charset-normalizer (3.3.2)
+  - Installing idna (3.6)
+  - Installing urllib3 (2.1.0)
+  - Installing requests (2.31.0)
+
+Writing lock file
+"""
+expected = "Installing dependencies from lock file\nWriting lock file"
+
+[filters.composer-install]
+description = "Compact composer install/update/require output - strip downloads, short-circuit when up-to-date"
+match_command = "^composer\\s+(install|update|require)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^  - Downloading ",
+  "^  - Installing ",
+  "^Loading composer",
+  "^Updating dependencies",
+]
+match_output = [
+  { pattern = "Nothing to install, update or remove", message = "ok (up to date)" },
+]
+max_lines = 30
+
+[[tests.composer-install]]
+name = "nothing to do short-circuits"
+input = """
+Loading composer repositories with package information
+Updating dependencies
+Lock file operations: 0 installs, 0 updates, 0 removals
+Nothing to install, update or remove
+Generating autoload files
+"""
+expected = "ok (up to date)"
+
+[[tests.composer-install]]
+name = "install strips download lines"
+input = """
+Loading composer repositories with package information
+Updating dependencies
+  - Downloading symfony/console (v6.4.0)
+  - Installing symfony/console (v6.4.0): Extracting archive
+  - Downloading psr/log (3.0.0)
+  - Installing psr/log (3.0.0): Extracting archive
+Writing lock file
+Generating autoload files
+"""
+expected = "Writing lock file\nGenerating autoload files"
+
+[filters.bundle-install]
+description = "Compact bundle install/update - strip Using lines, keep installs and errors"
+match_command = "^bundle\\s+(install|update)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^Using ",
+  "^\\s*$",
+  "^Fetching gem metadata",
+  "^Resolving dependencies",
+]
+match_output = [
+  { pattern = "Bundle complete!", message = "ok bundle: complete" },
+  { pattern = "Bundle updated!", message = "ok bundle: updated" },
+]
+max_lines = 30
+
+[[tests.bundle-install]]
+name = "all cached short-circuits"
+input = """
+Using bundler 2.5.6
+Using rake 13.1.0
+Using ast 2.4.2
+Using base64 0.2.0
+Using minitest 5.22.2
+Bundle complete! 85 Gemfile dependencies, 200 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+"""
+expected = "ok bundle: complete"
+
+[[tests.bundle-install]]
+name = "mixed install keeps Fetching and Installing lines"
+input = """
+Fetching gem metadata from https://rubygems.org/.........
+Resolving dependencies...
+Using rake 13.1.0
+Using ast 2.4.2
+Fetching rspec 3.13.0
+Installing rspec 3.13.0
+Using rubocop 1.62.0
+Fetching simplecov 0.22.0
+Installing simplecov 0.22.0
+Bundle complete! 85 Gemfile dependencies, 202 gems now installed.
+"""
+expected = "ok bundle: complete"
+
+[[tests.bundle-install]]
+name = "update output"
+input = """
+Fetching gem metadata from https://rubygems.org/.........
+Resolving dependencies...
+Using rake 13.1.0
+Fetching rspec 3.14.0 (was 3.13.0)
+Installing rspec 3.14.0 (was 3.13.0)
+Bundle updated!
+"""
+expected = "ok bundle: updated"
+
+[[tests.bundle-install]]
+name = "empty output"
+input = ""
+expected = ""
+
+[filters.swift-build]
+description = "Compact swift build output - short-circuit on success, strip Compiling/Linking"
+match_command = "^swift\\s+build\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Compiling ",
+  "^Linking ",
+]
+match_output = [
+  { pattern = "Build complete!", message = "ok (build complete)", unless = "warning:|error:" },
+]
+max_lines = 40
+
+[[tests.swift-build]]
+name = "successful build short-circuits to ok"
+input = """
+Build complete!
+"""
+expected = "ok (build complete)"
+
+[[tests.swift-build]]
+name = "build errors pass through after stripping noise"
+input = """
+Compiling MyApp MyApp.swift
+/home/user/MyApp/Sources/MyApp/main.swift:5:1: error: use of unresolved identifier 'foo'
+foo()
+^~~
+Linking MyApp
+error: build had 1 command failure
+"""
+expected = "/home/user/MyApp/Sources/MyApp/main.swift:5:1: error: use of unresolved identifier 'foo'\nfoo()\n^~~\nerror: build had 1 command failure"
+
+[[tests.swift-build]]
+name = "warnings not swallowed when Build complete present"
+input = """
+CompileSwift normal x86_64 MyFile.swift
+/path/to/MyFile.swift:42:10: warning: unused variable 'x'
+Build complete! (with warnings)
+"""
+expected = "CompileSwift normal x86_64 MyFile.swift\n/path/to/MyFile.swift:42:10: warning: unused variable 'x'\nBuild complete! (with warnings)"
+
+[filters.mix-compile]
+description = "Compact mix compile output"
+match_command = "^mix\\s+compile(\\s|$)"
+strip_ansi = true
+strip_lines_matching = [
+  "^Compiling \\d+ file",
+  "^\\s*$",
+  "^Generated\\s",
+]
+max_lines = 40
+on_empty = "mix compile: ok"
+
+[[tests.mix-compile]]
+name = "strips compile noise, preserves warnings"
+input = """
+Compiling 12 files (.ex)
+Generated my_app app
+
+warning: variable "conn" is unused
+  lib/router.ex:42
+"""
+expected = "warning: variable \"conn\" is unused\n  lib/router.ex:42"
+
+[[tests.mix-compile]]
+name = "on_empty when only noise"
+input = "Compiling 3 files (.ex)\nGenerated my_app app\n"
+expected = "mix compile: ok"
+
+[filters.mix-format]
+description = "Compact mix format output"
+match_command = "^mix\\s+format(\\s|$)"
+on_empty = "mix format: ok"
+max_lines = 20
+
+[[tests.mix-format]]
+name = "empty output returns ok"
+input = ""
+expected = "mix format: ok"
+
+[[tests.mix-format]]
+name = "changed files pass through"
+input = "lib/my_app.ex\ntest/my_app_test.exs"
+expected = "lib/my_app.ex\ntest/my_app_test.exs"
