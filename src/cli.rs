@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including container shortcuts, local RTK adapters, local RTK system adapters, discovery/learning diagnostics, hooks audit JSON flag, rewrite hook decisions, parity inventory gate, proxy evidence flag, filter lifecycle commands, CI action enum
-// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem and container shortcuts, local RTK adapters, local RTK system adapters, core RTK adapters, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle commands, CI action enum
+// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
@@ -12,27 +12,33 @@
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
 // PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
+// ErrCmd/TestCmd/DiffCmd/SummaryCmd — Core RTK-style adapters
 // DiscoverCmd/LearnCmd — Bounded RTK discovery and learning diagnostics
 // HooksCmd — Agent hook install/status/audit schema
-// RtkParityCmd — Machine-checkable RTK parity inventory report
+// HookCmd/HookProcessorAction — RTK-style hook processor schema
+// RtkParityCmd — Machine-checkable RTK parity inventory and full parity matrix report
 // RewriteCmd — Hook-facing command rewrite dry run
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.1.0 — Added hooks audit JSON flag for RTK trust diagnostics]
+// LAST_CHANGE: [v5.5.0 — Added RTK-style hook processor schemas]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
 mod grace_commands;
 mod rtk_adapters;
 mod rtk_commands;
+mod rtk_core_adapters;
 mod rtk_discovery;
+mod rtk_full_parity;
+mod rtk_hook_processors;
 mod rtk_parity;
 mod rtk_system_adapters;
 mod runtime_commands;
 mod setup_commands;
 
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 // START_public_api
 
@@ -130,6 +136,12 @@ pub enum Command {
     Tsc(RtkProxyCmd),
     #[command(name = "vitest", about = "Run Vitest through the token-saving proxy")]
     Vitest(RtkProxyCmd),
+    #[command(name = "jest", about = "Run Jest through the token-saving proxy")]
+    Jest(RtkProxyCmd),
+    #[command(name = "lint", about = "Run ESLint through the token-saving proxy")]
+    Lint(RtkProxyCmd),
+    #[command(name = "format", about = "Run Prettier through the token-saving proxy")]
+    Format(RtkProxyCmd),
     #[command(name = "gh", about = "Run GitHub CLI through the token-saving proxy")]
     Gh(RtkProxyCmd),
     #[command(name = "glab", about = "Run GitLab CLI through the token-saving proxy")]
@@ -186,6 +198,14 @@ pub enum Command {
     Env(EnvCmd),
     #[command(about = "Count text locally with compact wc-style output")]
     Wc(WcCmd),
+    #[command(about = "Run a command and show only errors and warnings")]
+    Err(ErrCmd),
+    #[command(about = "Run tests and show compact failure output")]
+    Test(TestCmd),
+    #[command(about = "Summarize file or unified diff output")]
+    Diff(DiffCmd),
+    #[command(about = "Summarize text from a file or stdin")]
+    Summary(SummaryCmd),
     #[command(about = "Filter stdin through Synapse RTK filters")]
     Pipe(PipeCmd),
     #[command(about = "Deduplicate and summarize log output from a file or stdin")]
@@ -203,6 +223,8 @@ pub enum Command {
     RtkParity(RtkParityCmd),
     #[command(about = "Rewrite a shell command to its Synapse proxy form for agent hooks")]
     Rewrite(RewriteCmd),
+    #[command(about = "Process RTK-style agent hook JSON or dry-run hook rewrites")]
+    Hook(HookCmd),
     Run(RunCmd),
     Proxy(ProxyCmd),
     Filters(FiltersCmd),
@@ -369,6 +391,41 @@ pub struct WcCmd {
 }
 // END_WcCmd
 
+// START_ErrCmd
+#[derive(clap::Args)]
+#[command(about = "Run a command and show only errors and warnings")]
+pub struct ErrCmd {
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub command: Vec<String>,
+}
+// END_ErrCmd
+
+// START_TestCmd
+#[derive(clap::Args)]
+#[command(about = "Run tests and show compact failure output")]
+pub struct TestCmd {
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    pub command: Vec<String>,
+}
+// END_TestCmd
+
+// START_DiffCmd
+#[derive(clap::Args)]
+#[command(about = "Summarize file or unified diff output")]
+pub struct DiffCmd {
+    pub file1: Option<PathBuf>,
+    pub file2: Option<PathBuf>,
+}
+// END_DiffCmd
+
+// START_SummaryCmd
+#[derive(clap::Args)]
+#[command(about = "Summarize text from a file or stdin")]
+pub struct SummaryCmd {
+    pub input: Option<PathBuf>,
+}
+// END_SummaryCmd
+
 // START_PipeCmd
 #[derive(clap::Args)]
 #[command(about = "Filter stdin through Synapse RTK filters")]
@@ -431,6 +488,8 @@ pub struct RtkParityCmd {
     pub json: bool,
     #[arg(long)]
     pub ci: bool,
+    #[arg(long)]
+    pub full: bool,
 }
 // END_RtkParityCmd
 
@@ -521,6 +580,31 @@ pub struct HooksCmd {
     pub json: bool,
 }
 // END_HooksCmd
+
+// START_HookCmd
+#[derive(clap::Args)]
+#[command(about = "Process RTK-style agent hook JSON or dry-run hook rewrites")]
+pub struct HookCmd {
+    #[command(subcommand)]
+    pub command: HookProcessorAction,
+}
+// END_HookCmd
+
+// START_HookProcessorAction
+#[derive(Subcommand)]
+pub enum HookProcessorAction {
+    Claude,
+    Cursor,
+    Gemini,
+    Copilot,
+    Check {
+        #[arg(long, default_value = "claude")]
+        agent: String,
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        command: Vec<String>,
+    },
+}
+// END_HookProcessorAction
 
 // START_SearchCmd
 #[derive(clap::Args)]

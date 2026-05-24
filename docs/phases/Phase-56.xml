@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-56" status="planned">
+  <NAME>RTK Session Learn Economics Parity</NAME>
+  <GOAL>Move Synapse discover, learn, session, and economics from static guidance to measured RTK-style adoption analytics with explicit privacy boundaries.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-TRACKING" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-TRACKING" status="planned">Add session adoption and missed-route query surfaces backed by the tracking database.</step-1>
+    <step-2 module="M-CLI-RTK-COMMANDS" status="planned">Add session, discover history, learn corrections, and economics command surfaces.</step-2>
+    <step-3 module="M-CLI-RTK-COMMANDS" status="planned">Keep private agent history opt-in and documented in CLI output.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test tracking::tests --lib</CHECK>
+    <CHECK status="planned">cargo test cli::rtk_discovery::tests --lib</CHECK>
+  </VERIFICATION>
+</PHASE>

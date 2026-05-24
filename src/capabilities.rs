@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, discover/learn diagnostics, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, core RTK adapters, discover/learn diagnostics, hook processors, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.27.0 - Added RTK discover/learn capability metadata]
+// LAST_CHANGE: [v2.30.0 - Added RTK-style hook processor command]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -68,6 +68,9 @@ pub const COMMANDS: &[(&str, &str)] = &[
         "Run TypeScript compiler through the token-saving proxy",
     ),
     ("vitest", "Run Vitest through the token-saving proxy"),
+    ("jest", "Run Jest through the token-saving proxy"),
+    ("lint", "Run ESLint through the token-saving proxy"),
+    ("format", "Run Prettier through the token-saving proxy"),
     ("gh", "Run GitHub CLI through the token-saving proxy"),
     ("glab", "Run GitLab CLI through the token-saving proxy"),
     ("aws", "Run AWS CLI through the token-saving proxy"),
@@ -108,6 +111,10 @@ pub const COMMANDS: &[(&str, &str)] = &[
         "Show filtered environment variables with secrets masked",
     ),
     ("wc", "Count text locally with compact wc-style output"),
+    ("err", "Run a command and show only errors and warnings"),
+    ("test", "Run tests and show compact failure output"),
+    ("diff", "Summarize file or unified diff output"),
+    ("summary", "Summarize text from a file or stdin"),
     ("pipe", "Filter stdin through Synapse RTK filters"),
     (
         "log",
@@ -132,6 +139,10 @@ pub const COMMANDS: &[(&str, &str)] = &[
     (
         "rewrite",
         "Rewrite a shell command to its Synapse proxy form for agent hooks",
+    ),
+    (
+        "hook",
+        "Process RTK-style agent hook JSON or dry-run rewrites",
     ),
     ("proxy", "Run command through token-saving proxy"),
     ("filters", "Verify and trust token-saving proxy filters"),

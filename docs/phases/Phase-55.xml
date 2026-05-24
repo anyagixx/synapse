@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-55" status="planned">
+  <NAME>Full Agent Hook Parity</NAME>
+  <GOAL>Expand Synapse auto-proxy hooks from OpenCode-focused integration to RTK-level multi-agent hook processors.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-HOOKS" />
+    <MODULE_REF id="M-HOOK-CLAUDE" />
+    <MODULE_REF id="M-HOOK-CURSOR" />
+    <MODULE_REF id="M-HOOK-OPENCODE-REWRITE" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-HOOKS" status="done">Add hook processors for Claude, Cursor, Gemini, Copilot, and generic check mode.</step-1>
+    <step-2 module="M-HOOKS" status="planned">Expand hooks install/audit targets beyond opencode/all.</step-2>
+    <step-3 module="M-RTK-FULL-PARITY" status="planned">Promote hook processor coverage in the full parity matrix.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test hooks::tests --lib</CHECK>
+    <CHECK status="planned">cargo run --quiet -- hooks audit all --json</CHECK>
+  </VERIFICATION>
+</PHASE>

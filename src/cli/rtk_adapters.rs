@@ -1130,7 +1130,7 @@ fn wc_display_name(stats: &WcStats) -> String {
 // OUTPUTS: { () }
 // SIDE_EFFECTS: may write tracking database
 // START_record_adapter_savings
-pub(super) async fn record_adapter_savings(
+pub(crate) async fn record_adapter_savings(
     config: &Config,
     command: &str,
     raw: &str,

@@ -5,11 +5,13 @@
     <COMMAND>cargo test proxy::runner::tests --lib</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_preserves_nonzero_exit_status</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_evidence_hint_writes_raw_output</COMMAND>
+    <COMMAND>cargo test proxy::runner::tests::test_spawn_capture_caps_large_stream_without_losing_raw_count --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>CommandRunner returns captured output together with success and exit status for proxy propagation.</ASSERTION>
     <ASSERTION>CommandRunner writes full raw stdout/stderr evidence to an XDG data artifact while preserving compact captured output.</ASSERTION>
+    <ASSERTION>CommandRunner caps captured stdout/stderr and evidence payloads while preserving raw byte accounting for token economics and diagnostics.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-25</PHASE_GATE>
+  <PHASE_GATE>Phase-52</PHASE_GATE>
 </VERIFICATION>

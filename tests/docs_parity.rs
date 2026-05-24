@@ -126,6 +126,7 @@ fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
         "discover" => &["--json", "--limit"],
         "env" => &["--filter", "--show-all"],
         "filters" => &["--filter", "--require-all"],
+        "hook" => &["--agent"],
         "hooks" => &["--json"],
         "json" => &["--depth", "--keys-only"],
         "learn" => &["--json"],
@@ -133,7 +134,7 @@ fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
         "proxy" => &["--", "--route"],
         "refresh" => &["--fix"],
         "review" => &["--mode", "--profile"],
-        "rtk-parity" => &["--source", "--json", "--ci"],
+        "rtk-parity" => &["--source", "--json", "--ci", "--full"],
         "verify" => &["--profile"],
         _ => &[],
     }

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-RTK-FULL-PARITY" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Turn RTK full parity from a subjective claim into a source-derived, machine-checkable matrix that shows what Synapse has implemented, what is equivalent, what is intentionally superseded, and what is still missing.
+    Key data flows:
+      - INPUT: rtk-develop source path, Synapse rtk-parity flags, current Synapse CLI coverage, and RTK source command/hook/module declarations.
+      - PROCESSING: Parse bounded Rust enum declarations and command-module filenames, normalize names, classify coverage, and render text/JSON reports.
+      - OUTPUT: Full parity report and CI failure semantics for --full.
+    Critical invariants:
+      - Full parity mode must not silently pass with missing RTK surfaces.
+      - Existing integration parity mode must remain stable for current release gates.
+      - Source parsing must be bounded to known RTK files and must not recursively scan unrelated project content.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Add a separate RTK full parity module and integrate it into rtk-parity with an opt-in --full flag.
+    Complexity_areas: Clap enum name normalization, command aliases, explicit equivalence vs missing gaps, and backwards-compatible JSON output.
+    Patterns_applied: source-derived inventory, explicit classification, typed links, and release-gate separation.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - syn rtk-parity --source ../GRACEme/rtk-develop --ci remains green for current integration readiness.
+    - syn rtk-parity --source ../GRACEme/rtk-develop --full reports missing full-RTK gaps.
+    - syn rtk-parity --source ../GRACEme/rtk-develop --full --ci fails until Phase-52..57 close those gaps.
+    - verify_project and review_code remain green after the new module is registered.
+  RISKS_ACKNOWLEDGED:
+    - RTK source structure can change; parser tests must cover the enum/attribute shapes used by rtk-develop.
+    - Some RTK commands may be intentionally superseded by Synapse privacy or MyGRACE semantics; these must be explicit, not hidden.
+</BELIEF_STATE>

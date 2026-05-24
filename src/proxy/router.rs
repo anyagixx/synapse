@@ -120,7 +120,7 @@ fn route_parts(parts: &[String]) -> RouteDecision {
     }
     if matches!(
         tokens[0].as_str(),
-        "next" | "playwright" | "prettier" | "prisma" | "tsc" | "vitest"
+        "next" | "playwright" | "prettier" | "prisma" | "tsc" | "vitest" | "jest" | "eslint"
     ) {
         return route_js(&tokens);
     }

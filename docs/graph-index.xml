@@ -80,6 +80,7 @@
     <MODULE id="M-PROXY-ROUTER" path="docs/modules/M-PROXY-ROUTER.xml" status="active" />
     <MODULE id="M-PROXY-RUNNER" path="docs/modules/M-PROXY-RUNNER.xml" status="active" />
     <MODULE id="M-RUNNER" path="docs/modules/M-RUNNER.xml" status="active" />
+    <MODULE id="M-RTK-FULL-PARITY" path="docs/modules/M-RTK-FULL-PARITY.xml" status="active" />
     <MODULE id="M-SKILLS" path="docs/modules/M-SKILLS.xml" status="active" />
     <MODULE id="M-SKILLS-ENGINE" path="docs/modules/M-SKILLS-ENGINE.xml" status="active" />
     <MODULE id="M-SKILLS-REGISTRY" path="docs/modules/M-SKILLS-REGISTRY.xml" status="active" />
@@ -119,6 +120,7 @@
     <REL source="M-CLI" target="M-CLI-GRACE-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI" target="M-RTK-FULL-PARITY" type="DEPENDS" />
     <REL source="M-CLI-CODE-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-CODE-COMMANDS" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-CLI-CODE-COMMANDS" target="M-GRAPHRAG" type="DEPENDS" />
@@ -145,6 +147,7 @@
     <REL source="M-CLI-RTK-COMMANDS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-CLI-RTK-COMMANDS" target="M-PROXY-RUNNER" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-PROXY-ROUTER" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-PROXY-FILTER" type="DEPENDS" />
     <REL source="M-CLI-RTK-COMMANDS" target="M-TRACKING" type="DEPENDS" />
@@ -310,9 +313,11 @@
     <REL source="M-GRAPHRAG-BUILDER" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-HOOK-CLAUDE" target="M-PROXY" type="DEPENDS" />
     <REL source="M-HOOK-CURSOR" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-HOOKS" target="M-CLI" type="DEPENDS" />
+    <REL source="M-HOOKS" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
+    <REL source="M-HOOKS" target="M-HOOK-OPENCODE-REWRITE" type="DEPENDS" />
     <REL source="M-HOOK-OPENCODE-REWRITE" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-HOOK-OPENCODE-REWRITE" target="M-PROXY" type="DEPENDS" />
-    <REL source="M-HOOKS" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-HOOKS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-PARSER" type="DEPENDS" />
@@ -378,6 +383,11 @@
     <REL source="M-PROXY" target="M-PROXY-FILTER" type="DEPENDS" />
     <REL source="M-PROXY" target="M-UTILS" type="DEPENDS" />
     <REL source="M-PROXY-FILTER" target="M-UTILS" type="DEPENDS" />
+    <REL source="M-RTK-FULL-PARITY" target="M-CLI" type="DEPENDS" />
+    <REL source="M-RTK-FULL-PARITY" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
+    <REL source="M-RTK-FULL-PARITY" target="M-PROXY-FILTER" type="DEPENDS" />
+    <REL source="M-RTK-FULL-PARITY" target="M-PROXY-ROUTER" type="DEPENDS" />
+    <REL source="M-RTK-FULL-PARITY" target="M-HOOKS" type="DEPENDS" />
     <REL source="M-SKILLS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-SKILLS" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-SKILLS" target="M-SKILLS-ENGINE" type="DEPENDS" />

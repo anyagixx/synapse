@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MAIN
 // PURPOSE: Binary entry point — parses CLI, resolves runtime config, dispatches commands via tokio runtime
-// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts and container shortcuts, local RTK adapters, local RTK system adapters, discovery/learning diagnostics, parity inventory, and hook rewrites
+// SCOPE: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts, ecosystem shortcuts, and container shortcuts, local RTK adapters, local RTK system adapters, core RTK adapters, discovery/learning diagnostics, parity inventory, hook processors, and hook rewrites
 // DEPENDS: M-LIB, M-CLI, M-CONFIG
 // LINKS: Cargo.toml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.9.0 — Dispatch RTK discover/learn diagnostics]
+// LAST_CHANGE: [v5.2.0 — Dispatch RTK-style hook processor command]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -145,6 +145,18 @@ fn main() -> anyhow::Result<()> {
                 cmd.run_as(config, "vitest", false, "Usage: syn vitest [args...]")
                     .await
             }
+            syn::cli::Command::Jest(cmd) => {
+                cmd.run_as(config, "jest", false, "Usage: syn jest [args...]")
+                    .await
+            }
+            syn::cli::Command::Lint(cmd) => {
+                cmd.run_as(config, "eslint", false, "Usage: syn lint [args...]")
+                    .await
+            }
+            syn::cli::Command::Format(cmd) => {
+                cmd.run_as(config, "prettier", false, "Usage: syn format [args...]")
+                    .await
+            }
             syn::cli::Command::Gh(cmd) => {
                 cmd.run_as(config, "gh", false, "Usage: syn gh [args...]")
                     .await
@@ -238,6 +250,10 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Deps(cmd) => cmd.run(config).await,
             syn::cli::Command::Env(cmd) => cmd.run(config).await,
             syn::cli::Command::Wc(cmd) => cmd.run(config).await,
+            syn::cli::Command::Err(cmd) => cmd.run(config).await,
+            syn::cli::Command::Test(cmd) => cmd.run(config).await,
+            syn::cli::Command::Diff(cmd) => cmd.run(config).await,
+            syn::cli::Command::Summary(cmd) => cmd.run(config).await,
             syn::cli::Command::Pipe(cmd) => cmd.run(config).await,
             syn::cli::Command::Log(cmd) => cmd.run(config).await,
             syn::cli::Command::Smart(cmd) => cmd.run(config).await,
@@ -245,6 +261,7 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Learn(cmd) => cmd.run(config).await,
             syn::cli::Command::RtkParity(cmd) => cmd.run(config).await,
             syn::cli::Command::Rewrite(cmd) => cmd.run(config).await,
+            syn::cli::Command::Hook(cmd) => cmd.run(config).await,
             syn::cli::Command::Run(cmd) => cmd.run(config).await,
             syn::cli::Command::Proxy(cmd) => cmd.run(config).await,
             syn::cli::Command::Filters(cmd) => cmd.run(config).await,

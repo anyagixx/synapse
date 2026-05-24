@@ -1,14 +1,15 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: RTK parity inventory gate — compares Synapse RTK coverage against source and release-gated parity domains
-// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including container shortcuts, discover/learn, hook audit, analytics inventory, compact/JSON report rendering
-// DEPENDS: M-CLI, M-PROXY-FILTER, M-PROXY-ROUTER, M-HOOKS, M-TRACKING
+// SCOPE: RtkParityCmd execution, source filter inventory, Synapse filter inventory, router family gate, expanded first-class proxy shortcut inventory including container shortcuts, discover/learn, hook audit, analytics inventory, optional full RTK parity matrix handoff, compact/JSON report rendering
+// DEPENDS: M-CLI, M-PROXY-FILTER, M-PROXY-ROUTER, M-HOOKS, M-TRACKING, M-RTK-FULL-PARITY
 // LINKS:
 //   -> M-CLI (depends) - exposes the rtk-parity command schema
 //   -> M-PROXY-FILTER (depends) - reads built-in RTK filter inventory
 //   -> M-PROXY-ROUTER (depends) - reads routed adapter family catalogue
 //   -> M-HOOKS (depends) - tracks hook audit/check parity surface
 //   -> M-TRACKING (depends) - tracks adapter/session analytics parity surface
+//   -> M-RTK-FULL-PARITY (depends) - expands optional --full matrix reporting
 //   -> Phase-44 (implements) - machine-checkable RTK parity inventory gate
 //   -> Phase-45 (implements) - expanded first-class RTK proxy shortcut parity
 //   -> Phase-46 (implements) - local RTK system adapter inventory
@@ -26,9 +27,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.4.0 - Marked discover/learn, hook audit, and analytics as release-gated RTK parity surfaces]
+// LAST_CHANGE: [v1.5.0 - Added optional --full standalone RTK parity matrix mode]
 // END_CHANGE_SUMMARY
 
+use super::rtk_full_parity::{build_full_rtk_parity_report, print_full_rtk_parity_report};
 use super::RtkParityCmd;
 use crate::config::Config;
 use serde::Serialize;
@@ -95,6 +97,9 @@ const PROXY_SHORTCUTS: &[&str] = &[
     "prisma",
     "tsc",
     "vitest",
+    "jest",
+    "lint",
+    "format",
 ];
 const LOCAL_ADAPTERS: &[&str] = &["json", "deps", "env", "wc", "pipe", "log", "smart"];
 const HOOKS: &[&str] = &[
@@ -140,13 +145,37 @@ impl RtkParityCmd {
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let explicit_source = self.source.as_deref().map(Path::new);
         let report = build_rtk_parity_report(explicit_source)?;
+        let full_report = if self.full {
+            let source_path = report.source_path.as_deref().map(Path::new);
+            Some(build_full_rtk_parity_report(source_path)?)
+        } else {
+            None
+        };
         if self.json {
-            println!("{}", serde_json::to_string_pretty(&report)?);
+            if let Some(full) = full_report.as_ref() {
+                let combined = CombinedRtkParityReport {
+                    integration: &report,
+                    full: Some(full),
+                };
+                println!("{}", serde_json::to_string_pretty(&combined)?);
+            } else {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            }
         } else {
             print_rtk_parity_report(&report);
+            if let Some(full) = full_report.as_ref() {
+                print_full_rtk_parity_report(full);
+            }
         }
         if self.ci && !report.critical_passed {
             anyhow::bail!("RTK parity critical gate failed");
+        }
+        if self.ci
+            && full_report
+                .as_ref()
+                .is_some_and(|report| !report.full_standalone_parity)
+        {
+            anyhow::bail!("full RTK parity gate failed");
         }
         Ok(())
     }
@@ -165,6 +194,14 @@ struct RtkParityReport {
     sections: Vec<RtkParitySection>,
 }
 // END_RtkParityReport
+
+// START_CombinedRtkParityReport
+#[derive(Serialize)]
+struct CombinedRtkParityReport<'a> {
+    integration: &'a RtkParityReport,
+    full: Option<&'a super::rtk_full_parity::FullRtkParityReport>,
+}
+// END_CombinedRtkParityReport
 
 // START_RtkParitySection
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -594,10 +631,10 @@ mod tests {
         let section =
             static_inventory_section("proxy-shortcuts", "tracked", false, PROXY_SHORTCUTS, &[]);
 
-        assert_eq!(section.synapse_count, 44);
+        assert_eq!(section.synapse_count, 47);
         for shortcut in [
             "gh", "aws", "go", "golangci", "dotnet", "make", "helm", "kubectl", "ruff", "mypy",
-            "uv", "tsc", "vitest", "gradlew", "docker", "podman",
+            "uv", "tsc", "vitest", "jest", "lint", "format", "gradlew", "docker", "podman",
         ] {
             assert!(section.items.contains(&shortcut.to_string()), "{shortcut}");
         }

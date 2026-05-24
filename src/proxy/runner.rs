@@ -1,20 +1,22 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-RUNNER
-// PURPOSE: Streaming command runner — executes shell commands, captures stdout/stderr with exit status, and tees raw output into evidence artifacts
-// SCOPE: CommandRunner struct, CommandOutput status/evidence model, streaming stdout/stderr capture via std::process::Command, XDG data raw-output evidence files
+// PURPOSE: Streaming command runner — executes shell commands, captures capped stdout/stderr with exit status, and tees bounded raw output into evidence artifacts
+// SCOPE: CommandRunner struct, CommandOutput status/evidence model, RTK-style capped streaming stdout/stderr capture via std::process::Command, XDG data raw-output evidence files
 // DEPENDS: N/A
 // LINKS:
 //   → Phase-25 (implements) - RTK streaming runner and raw evidence
+//   → Phase-52 (implements) - RTK-style raw capture caps
 //   ← V-M-PROXY-RUNNER (verified_by) - runner verification shard
 
 // START_MODULE_MAP
 // CommandOutput — Captured command output plus success, exit status, and raw evidence metadata
-// CommandRunner — Executes a shell command and returns combined stdout/stderr
+// CommandRunner — Executes a shell command and returns combined capped stdout/stderr
 // EvidenceSink — Best-effort writer for raw command output artifacts
+// CaptureResult — Bounded stream capture plus raw byte accounting
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Stream stdout/stderr and tee raw output into evidence artifacts]
+// LAST_CHANGE: [v3.1.0 — Added RTK-style raw capture cap for stdout/stderr and evidence]
 // END_CHANGE_SUMMARY
 
 use std::fs::File;
@@ -27,6 +29,8 @@ use std::thread::JoinHandle;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 static EVIDENCE_COUNTER: AtomicU64 = AtomicU64::new(0);
+const RAW_CAPTURE_CAP_BYTES: usize = 10_485_760;
+const CAPTURE_BUFFER_BYTES: usize = 8192;
 
 // START_public_api
 
@@ -70,6 +74,7 @@ impl CommandRunner {
     // SIDE_EFFECTS: spawns child process, writes raw output evidence when data directory is available
     // LINKS:
     //   → Phase-25 (implements) - streaming runner and raw evidence
+    //   → Phase-52 (implements) - bounded raw capture
     // START_runner_execute
     pub fn execute(&self) -> anyhow::Result<CommandOutput> {
         let mut child = Command::new(&self.cmd)
@@ -83,20 +88,21 @@ impl CommandRunner {
         let stdout_handle = child
             .stdout
             .take()
-            .map(|stdout| spawn_capture(stdout, evidence.writer()));
+            .map(|stdout| spawn_capture(stdout, evidence.writer(), "stdout"));
         let stderr_handle = child
             .stderr
             .take()
-            .map(|stderr| spawn_capture(stderr, evidence.writer()));
+            .map(|stderr| spawn_capture(stderr, evidence.writer(), "stderr"));
 
         let status = child.wait()?;
         let stdout = join_capture(stdout_handle)?;
         let stderr = join_capture(stderr_handle)?;
         let status_code = status.code().unwrap_or(1);
         let success = status.success();
-        let raw_bytes = (stdout.len() + stderr.len()) as u64;
-        let evidence_path = evidence.finish(raw_bytes)?;
-        let text = combine_output(stdout, stderr, success, status_code);
+        let raw_bytes = stdout.raw_bytes.saturating_add(stderr.raw_bytes);
+        let evidence_bytes = stdout.evidence_bytes.saturating_add(stderr.evidence_bytes);
+        let evidence_path = evidence.finish(evidence_bytes)?;
+        let text = combine_output(stdout.captured, stderr.captured, success, status_code);
 
         Ok(CommandOutput {
             text,
@@ -109,6 +115,14 @@ impl CommandRunner {
     // END_runner_execute
 }
 // END_public_api
+
+// START_CaptureResult
+struct CaptureResult {
+    captured: Vec<u8>,
+    raw_bytes: u64,
+    evidence_bytes: u64,
+}
+// END_CaptureResult
 
 // START_EvidenceSink
 struct EvidenceSink {
@@ -179,45 +193,77 @@ impl EvidenceSink {
 }
 
 // START_CONTRACT_spawn_capture
-// PURPOSE: Read one child output stream in chunks, tee chunks to evidence, and return captured bytes
-// INPUTS: { stream: impl Read }, { writer: Option<Arc<Mutex<File>>> }
-// OUTPUTS: { JoinHandle<anyhow::Result<Vec<u8>>> }
-// SIDE_EFFECTS: writes raw bytes to evidence file
+// PURPOSE: Read one child output stream in chunks, tee bounded chunks to evidence, and return capped captured bytes with raw byte accounting
+// INPUTS: { stream: impl Read }, { writer: Option<Arc<Mutex<File>>> }, { stream_name: &'static str }
+// OUTPUTS: { JoinHandle<anyhow::Result<CaptureResult>> }
+// SIDE_EFFECTS: writes bounded raw bytes and a truncation marker to evidence file
 // START_spawn_capture
 fn spawn_capture<R>(
     mut stream: R,
     writer: Option<Arc<Mutex<File>>>,
-) -> JoinHandle<anyhow::Result<Vec<u8>>>
+    stream_name: &'static str,
+) -> JoinHandle<anyhow::Result<CaptureResult>>
 where
     R: Read + Send + 'static,
 {
     std::thread::spawn(move || {
         let mut captured = Vec::new();
-        let mut buf = [0_u8; 8192];
+        let mut raw_bytes = 0_u64;
+        let mut evidence_bytes = 0_u64;
+        let mut truncated = false;
+        let mut buf = [0_u8; CAPTURE_BUFFER_BYTES];
         loop {
             let read = stream.read(&mut buf)?;
             if read == 0 {
                 break;
             }
-            if let Some(writer) = &writer {
-                writer
-                    .lock()
-                    .map_err(|_| anyhow::anyhow!("raw evidence writer lock poisoned"))?
-                    .write_all(&buf[..read])?;
+            raw_bytes = raw_bytes.saturating_add(read as u64);
+            let remaining = RAW_CAPTURE_CAP_BYTES.saturating_sub(captured.len());
+            let keep = remaining.min(read);
+            if keep > 0 {
+                if let Some(writer) = &writer {
+                    writer
+                        .lock()
+                        .map_err(|_| anyhow::anyhow!("raw evidence writer lock poisoned"))?
+                        .write_all(&buf[..keep])?;
+                    evidence_bytes = evidence_bytes.saturating_add(keep as u64);
+                }
+                captured.extend_from_slice(&buf[..keep]);
             }
-            captured.extend_from_slice(&buf[..read]);
+            if keep < read && !truncated {
+                truncated = true;
+                let marker = truncation_marker(stream_name);
+                if let Some(writer) = &writer {
+                    writer
+                        .lock()
+                        .map_err(|_| anyhow::anyhow!("raw evidence writer lock poisoned"))?
+                        .write_all(marker.as_bytes())?;
+                    evidence_bytes = evidence_bytes.saturating_add(marker.len() as u64);
+                }
+                captured.extend_from_slice(marker.as_bytes());
+            }
         }
-        Ok(captured)
+        Ok(CaptureResult {
+            captured,
+            raw_bytes,
+            evidence_bytes,
+        })
     })
 }
 // END_spawn_capture
 
-fn join_capture(handle: Option<JoinHandle<anyhow::Result<Vec<u8>>>>) -> anyhow::Result<Vec<u8>> {
+fn join_capture(
+    handle: Option<JoinHandle<anyhow::Result<CaptureResult>>>,
+) -> anyhow::Result<CaptureResult> {
     match handle {
         Some(handle) => handle
             .join()
             .map_err(|_| anyhow::anyhow!("command output capture thread panicked"))?,
-        None => Ok(Vec::new()),
+        None => Ok(CaptureResult {
+            captured: Vec::new(),
+            raw_bytes: 0,
+            evidence_bytes: 0,
+        }),
     }
 }
 
@@ -252,13 +298,33 @@ fn evidence_file_name() -> String {
     format!("proxy-{millis}-{}-{seq}.log", std::process::id())
 }
 
+fn truncation_marker(stream_name: &str) -> String {
+    format!(
+        "\n[synapse] warning: {stream_name} capture exceeded {RAW_CAPTURE_CAP_BYTES} bytes; output truncated\n"
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Cursor;
 
     #[test]
     fn test_combine_output_preserves_exit_fallback() {
         let text = combine_output(Vec::new(), Vec::new(), false, 17);
         assert_eq!(text, "Exit code: 17");
+    }
+
+    #[test]
+    fn test_spawn_capture_caps_large_stream_without_losing_raw_count() {
+        let raw_len = RAW_CAPTURE_CAP_BYTES + 1024;
+        let input = vec![b'a'; raw_len];
+        let result =
+            join_capture(Some(spawn_capture(Cursor::new(input), None, "stdout"))).expect("capture");
+
+        assert_eq!(result.raw_bytes, raw_len as u64);
+        assert!(result.captured.len() < raw_len);
+        let text = String::from_utf8_lossy(&result.captured);
+        assert!(text.contains("stdout capture exceeded"));
     }
 }

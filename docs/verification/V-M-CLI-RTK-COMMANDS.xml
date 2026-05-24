@@ -5,6 +5,7 @@
     <COMMAND>cargo test cli::rtk_commands::tests --lib</COMMAND>
     <COMMAND>cargo test cli::rtk_adapters::tests --lib</COMMAND>
     <COMMAND>cargo test cli::rtk_system_adapters::tests --lib</COMMAND>
+    <COMMAND>cargo test cli::rtk_core_adapters::tests --lib</COMMAND>
     <COMMAND>cargo test cli::rtk_parity::tests --lib</COMMAND>
     <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
     <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --json --ci</COMMAND>
@@ -31,9 +32,11 @@
     <ASSERTION>Shortcut --route and --evidence flags use the same behavior as syn proxy.</ASSERTION>
     <ASSERTION>Expanded RTK shortcuts for hosting, cloud/data, Go, .NET, Ruby, JVM/build, and Kubernetes/Helm families delegate through RtkProxyCmd::run_as.</ASSERTION>
     <ASSERTION>RTK language ecosystem shortcuts for Python, JavaScript/TypeScript, uv, and Gradle wrapper tooling delegate through RtkProxyCmd::run_as.</ASSERTION>
+    <ASSERTION>RTK ecosystem shortcuts for jest, lint, and format delegate through RtkProxyCmd::run_as and route to JavaScript tooling.</ASSERTION>
     <ASSERTION>RTK container shortcuts for docker and podman delegate through RtkProxyCmd::run_as and are treated as token-safe by syn rewrite.</ASSERTION>
     <ASSERTION>syn json, syn deps, syn env, and syn wc run as direct local adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn pipe, syn log, and syn smart run as direct local system adapters with compact output and adapter-level token tracking.</ASSERTION>
+    <ASSERTION>syn err, syn test, syn diff, and syn summary run as direct core RTK adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn discover reports routeable token-heavy commands and first-class Synapse replacement suggestions without scanning private session history.</ASSERTION>
     <ASSERTION>syn learn reports bounded advisory learning rules without mutating project rules.</ASSERTION>
     <ASSERTION>syn rewrite uses CommandRouter as the hook rewrite source of truth and exits non-zero without stdout for unsupported commands.</ASSERTION>

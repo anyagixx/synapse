@@ -6,6 +6,7 @@
     <COMMAND>cargo test hooks::tests::test_merge_synapse_mcp_config_accepts_jsonc_comments_and_trailing_commas --lib</COMMAND>
     <COMMAND>cargo test hooks::tests::test_hook_audit_reports_missing_opencode_assets --lib</COMMAND>
     <COMMAND>cargo test hooks::tests::test_hook_audit_trusts_generated_opencode_assets --lib</COMMAND>
+    <COMMAND>cargo test cli::rtk_hook_processors::tests --lib</COMMAND>
     <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
@@ -14,6 +15,7 @@
     <ASSERTION>OpenCode config merge accepts JSONC comments and trailing commas before writing normalized JSON.</ASSERTION>
     <ASSERTION>OpenCode plugin and shell hook delegate command-family decisions to syn rewrite and propagate SYNAPSE_SESSION_ID.</ASSERTION>
     <ASSERTION>Hook audit reports missing/stale OpenCode trust markers and passes for generated install assets including MCP config, syn rewrite delegation, SYNAPSE_SESSION_ID propagation, and container aliases.</ASSERTION>
+    <ASSERTION>syn hook claude, cursor, gemini, copilot, and check reuse syn rewrite as the single source of truth for token-saving command rewrites.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-50</PHASE_GATE>
+  <PHASE_GATE>Phase-55</PHASE_GATE>
 </VERIFICATION>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-53" status="done">
+  <NAME>Core RTK Command Adapters</NAME>
+  <GOAL>Implement command-specific RTK core adapters beyond thin proxy shortcuts.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="done">Add specialized err, test, diff, summary, and log rendering where proxy filters are insufficient.</step-1>
+    <step-2 module="M-CLI-RTK-COMMANDS" status="done">Add token-savings assertions for noisy representative outputs.</step-2>
+    <step-3 module="M-RTK-FULL-PARITY" status="done">Move covered core commands from missing to implemented or equivalent.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test cli::rtk_core_adapters::tests --lib</CHECK>
+    <CHECK status="passed">cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --full</CHECK>
+  </VERIFICATION>
+</PHASE>

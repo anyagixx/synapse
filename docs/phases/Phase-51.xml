@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-51" status="done">
+  <NAME>Full RTK Parity Matrix</NAME>
+  <GOAL>Create a source-derived full RTK parity gate so Synapse can distinguish integration readiness from complete standalone RTK parity.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-RTK-FULL-PARITY" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-RTK-FULL-PARITY" status="done">Add --full parity mode that parses rtk-develop top-level commands, hook processors, and command-module files.</step-1>
+    <step-2 module="M-RTK-FULL-PARITY" status="done">Classify coverage as implemented, equivalent, superseded, or missing and expose text/JSON output.</step-2>
+    <step-3 module="M-CLI-RTK-COMMANDS" status="done">Keep existing --ci integration gate green while --full --ci fails on missing full-RTK coverage.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test cli::rtk_full_parity::tests --lib</CHECK>
+    <CHECK status="passed">cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --full</CHECK>
+    <CHECK status="passed">cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</CHECK>
+    <CHECK status="pending">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="pending">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>
