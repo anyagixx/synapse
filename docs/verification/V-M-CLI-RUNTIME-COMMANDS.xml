@@ -6,6 +6,7 @@
     <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
+    <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
     <COMMAND>cargo test --test reliability_test test_clean_init_doctor_accepts_default_config</COMMAND>
     <COMMAND>cargo test cli::runtime_commands::tests::test_parse_requirement_imports_skips_non_packages --lib</COMMAND>
@@ -19,7 +20,8 @@
     <ASSERTION>ProxyCmd supports --route and prints adapter decisions without command execution.</ASSERTION>
     <ASSERTION>GainCmd supports --graph, --sessions, and --adapters and renders tracked savings bars plus economics summaries.</ASSERTION>
     <ASSERTION>RunCmd creates a bounded scenario run from project gates and emits replay-capable JSON.</ASSERTION>
+    <ASSERTION>RunCmd action mode plans, steps, loops, retries, and replays persisted run queues.</ASSERTION>
     <ASSERTION>McpCmd starts the stdio MCP server only; HTTP/LSP options are not public flags until implemented.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-22</PHASE_GATE>
+  <PHASE_GATE>Phase-23</PHASE_GATE>
 </VERIFICATION>

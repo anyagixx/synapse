@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
-// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, scenarios, and outcomes for controlled execution
-// SCOPE: Run state model, task model, step model, gate model, review model, replay model, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
+// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, action queues, scenarios, and outcomes for controlled execution
+// SCOPE: Run state model, task model, step model, gate model, review model, replay model, action queue executor, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
 // DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-TRACKING
 // LINKS:
 //   → M-SKILLS (depends) - future execution bridge
@@ -17,14 +17,15 @@
 // RunGate — Persisted gate requirement
 // RunReviewDecision — Persisted human review decision for blocked runs
 // RunReplay — Replayable run timeline assembled from persisted state
-// RunScenarioResult — End-to-end bounded objective scenario result
+// RunActionPlan / RunScenarioResult — End-to-end bounded action and scenario results
 // RunOutcome — Persisted run outcome
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.3.0 — Added autonomous E2E scenario harness export]
+// LAST_CHANGE: [v0.4.0 — Added durable action queue executor module]
 // END_CHANGE_SUMMARY
 
+pub mod actions;
 mod replay;
 mod review;
 pub mod scenario;

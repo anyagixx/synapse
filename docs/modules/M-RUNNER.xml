@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-RUNNER" type="RUNTIME" status="active">
   <NAME>M-RUNNER</NAME>
-  <PURPOSE>Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, scenarios, and outcomes for controlled execution</PURPOSE>
-  <SCOPE>Run state model, task model, step model, gate model, human review model, replay timeline model, autonomous scenario harness, outcome model, durable JSON persistence, run lifecycle helpers</SCOPE>
+  <PURPOSE>Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, action queues, scenarios, and outcomes for controlled execution</PURPOSE>
+  <SCOPE>Run state model, task model, step model, gate model, human review model, replay timeline model, durable action queue executor, autonomous scenario harness, outcome model, durable JSON persistence, run lifecycle helpers</SCOPE>
   <FILES>
     <FILE>src/run/mod.rs</FILE>
+    <FILE>src/run/actions.rs</FILE>
     <FILE>src/run/review.rs</FILE>
     <FILE>src/run/replay.rs</FILE>
     <FILE>src/run/scenario.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-STATUS,M-TRACKING</DEPENDS>
-  <LINKS>V-M-RUNNER,docs/phases/Phase-22.xml</LINKS>
+  <LINKS>V-M-RUNNER,docs/phases/Phase-23.xml</LINKS>
   <VERIFICATION_REF>V-M-RUNNER</VERIFICATION_REF>
 </MODULE>

@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-RUNNER" module="M-RUNNER" priority="critical" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test run::tests --lib</COMMAND>
+    <COMMAND>cargo test run::actions::tests --lib</COMMAND>
     <COMMAND>cargo test run::scenario::tests --lib</COMMAND>
     <COMMAND>cargo test run::tests::run_review_approval_allows_blocked_resume_and_replay --lib</COMMAND>
     <COMMAND>cargo test dashboard::tests::test_runs_payload_reports_runs_and_events --lib</COMMAND>
@@ -10,6 +11,9 @@
     <TEST>run manager persists records atomically</TEST>
     <TEST>run listing returns stable deterministic ordering</TEST>
     <TEST>run recovery retries once then escalates deterministically</TEST>
+    <TEST>run action loop completes ready runs with durable evidence</TEST>
+    <TEST>run action queue stops at await-review for unapproved blocked runs</TEST>
+    <TEST>run action queue resumes approved blocked runs before completion</TEST>
     <TEST>blocked run review approval persists and gates resume behavior</TEST>
     <TEST>run replay timeline includes review decisions and evidence</TEST>
     <TEST>autonomous E2E scenario completes happy path with evidence and replay</TEST>
@@ -21,7 +25,8 @@
     <ASSERTION>Autonomous run state stores goal, phase, module, objective, status, gates, steps, and outcome fields</ASSERTION>
     <ASSERTION>Blocked runs require an approved human review before dashboard-driven resume can continue.</ASSERTION>
     <ASSERTION>Replay events preserve state, gate, step, review, outcome, and evidence references.</ASSERTION>
+    <ASSERTION>Action queue exposes explicit plan, next action, bounded loop, retry, and replay controls for persisted runs.</ASSERTION>
     <ASSERTION>Scenario runs preserve bounded objective to gates, evidence, review, completion, and replay.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-22</PHASE_GATE>
+  <PHASE_GATE>Phase-23</PHASE_GATE>
 </VERIFICATION>

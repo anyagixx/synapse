@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario, proxy, route preview, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, route preview, gain, doctor, hooks, compress
 // DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
@@ -13,6 +13,7 @@
 // test_proxy_and_gain — Verifies proxy execution and token savings output
 // test_proxy_route_preview_for_rtk_like_command — Verifies route preview without execution
 // test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
+// test_run_action_cli_plans_and_replays_run — Verifies run action queue CLI plan/replay output
 // test_doctor_and_hooks — Verifies setup diagnostics and hook status
 // test_scoped_and_json_cli — Verifies scoped JSON GRACE gates
 // test_init_from_existing — Verifies existing repository bootstrap
@@ -21,7 +22,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Added bounded run scenario CLI coverage]
+// LAST_CHANGE: [v3.2.0 — Added bounded run action queue CLI coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -289,6 +290,82 @@ fn test_run_scenario_cli_reports_gate_and_replay_json() {
     assert!(dir.path().join("docs/runs").exists());
 }
 // END_test_run_scenario_cli_reports_gate_and_replay_json
+
+// START_CONTRACT_test_run_action_cli_plans_and_replays_run
+// PURPOSE: Verify syn run --action can plan and replay a persisted bounded run
+// SIDE_EFFECTS: initializes an isolated temp project and writes docs/runs/*.json there
+// START_test_run_action_cli_plans_and_replays_run
+#[test]
+fn test_run_action_cli_plans_and_replays_run() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+
+    let init = Command::new(&syn)
+        .arg("init")
+        .current_dir(&dir)
+        .env("XDG_DATA_HOME", data_home.path())
+        .output()
+        .unwrap();
+    assert!(
+        init.status.success(),
+        "init failed: {}",
+        String::from_utf8_lossy(&init.stderr)
+    );
+
+    let scenario = Command::new(&syn)
+        .args(["run", "--scenario", "happy", "--json"])
+        .current_dir(&dir)
+        .env("XDG_DATA_HOME", data_home.path())
+        .output()
+        .unwrap();
+    assert!(
+        scenario.status.success(),
+        "scenario failed: {}",
+        String::from_utf8_lossy(&scenario.stderr)
+    );
+    let scenario_json: serde_json::Value =
+        serde_json::from_slice(&scenario.stdout).expect("scenario json");
+    let run_id = scenario_json["run"]["run_id"]
+        .as_str()
+        .expect("run id in scenario output");
+
+    let plan = Command::new(&syn)
+        .args(["run", "--action", "plan", "--run-id", run_id, "--json"])
+        .current_dir(&dir)
+        .env("XDG_DATA_HOME", data_home.path())
+        .output()
+        .unwrap();
+    assert!(
+        plan.status.success(),
+        "action plan failed: {}",
+        String::from_utf8_lossy(&plan.stderr)
+    );
+    let plan_json: serde_json::Value = serde_json::from_slice(&plan.stdout).expect("plan json");
+    assert_eq!(plan_json["run_id"].as_str(), Some(run_id));
+    assert!(plan_json["actions"]
+        .as_array()
+        .is_some_and(|items| !items.is_empty()));
+
+    let replay = Command::new(&syn)
+        .args(["run", "--action", "replay", "--run-id", run_id, "--json"])
+        .current_dir(&dir)
+        .env("XDG_DATA_HOME", data_home.path())
+        .output()
+        .unwrap();
+    assert!(
+        replay.status.success(),
+        "action replay failed: {}",
+        String::from_utf8_lossy(&replay.stderr)
+    );
+    let replay_json: serde_json::Value =
+        serde_json::from_slice(&replay.stdout).expect("replay json");
+    assert_eq!(replay_json["run_id"].as_str(), Some(run_id));
+    assert!(replay_json["events"]
+        .as_array()
+        .is_some_and(|items| !items.is_empty()));
+}
+// END_test_run_action_cli_plans_and_replays_run
 
 // START_CONTRACT_test_proxy_tracking_records_positive_savings_and_gain_graph
 // PURPOSE: Verify project-local proxy filters produce tracked savings and gain --graph renders them

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario flags, RTK route/economics flags, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS
 // LINKS: Cargo.toml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Added bounded run scenario command flags]
+// LAST_CHANGE: [v3.2.0 — Added bounded run action queue flags]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -160,8 +160,14 @@ pub struct StatusCmd {
 
 // START_RunCmd
 #[derive(clap::Args)]
-#[command(about = "Run bounded autonomous workflow scenario")]
+#[command(about = "Run bounded autonomous workflow scenario or action queue")]
 pub struct RunCmd {
+    #[arg(long)]
+    pub action: Option<String>,
+    #[arg(long = "run-id")]
+    pub run_id: Option<String>,
+    #[arg(long, default_value_t = 8)]
+    pub max_actions: usize,
     #[arg(long, default_value = "happy")]
     pub scenario: String,
     #[arg(long, default_value = "Release-grade autonomous runtime")]

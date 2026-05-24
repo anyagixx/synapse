@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
 // PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting
-// SCOPE: RunCmd autonomous scenario smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
 // DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - route preview for proxied commands
@@ -10,8 +10,11 @@
 //   → NFR-003 (traces_to) - command analytics quantify token savings
 
 // START_MODULE_MAP
-// RunCmd::run — Runs a bounded autonomous E2E scenario
+// RunCmd::run — Runs a bounded autonomous E2E scenario or action queue command
+// run_action_command — Plans, steps, loops, retries, or replays a persisted run
+// latest_run_id — Resolves the most recently updated run when --run-id is omitted
 // print_run_scenario_result — Prints scenario gate/action/replay summary
+// print_run_action_value — Prints compact action command output
 // GainCmd::run — Prints token savings
 // print_savings_graph — Prints ASCII token-savings bars for top commands
 // print_adapter_stats — Prints adapter-level savings
@@ -28,7 +31,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.1.0 — Added bounded autonomous run scenario command]
+// LAST_CHANGE: [v4.2.0 — Added bounded run action queue CLI controls]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -48,7 +51,7 @@ const CONFIG_SET_ARG_COUNT: usize = 3;
 
 impl RunCmd {
     // START_CONTRACT_RunCmd::run
-    // PURPOSE: Run a bounded autonomous workflow scenario using current project gates and persisted replay evidence
+    // PURPOSE: Run a bounded autonomous workflow scenario or operate on a persisted run action queue
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: writes docs/runs/*.json when the scenario run is created
@@ -57,6 +60,9 @@ impl RunCmd {
     //   → M-GRACE-STATUS (depends) - builds scenario gate policy from project health
     // START_run_cmd_run
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
+        if let Some(action) = &self.action {
+            return run_action_command(self, action);
+        }
         let mode = RunScenarioMode::parse(&self.scenario)?;
         let root = std::env::current_dir()?;
         let report = crate::grace::status::StatusCollector::collect(&root).await?;
@@ -78,6 +84,72 @@ impl RunCmd {
     }
     // END_run_cmd_run
 }
+
+// START_CONTRACT_run_action_command
+// PURPOSE: Execute a run action command against a persisted bounded run
+// INPUTS: { cmd: &RunCmd }, { action: &str }
+// OUTPUTS: { anyhow::Result<()> }
+// LINKS:
+//   → M-RUNNER (depends) - action queue planner and executor
+// START_run_action_command
+fn run_action_command(cmd: &RunCmd, action: &str) -> anyhow::Result<()> {
+    let root = std::env::current_dir()?;
+    let manager = RunManager::new(&root);
+    let run_id = resolve_run_id(&manager, cmd.run_id.as_deref())?;
+    let normalized = action.trim().to_ascii_lowercase().replace('_', "-");
+    match normalized.as_str() {
+        "plan" => {
+            let plan = manager.plan_run_actions(&run_id)?;
+            print_run_action_value(cmd.json, "Action Plan", &plan)
+        }
+        "next" => {
+            let execution = manager.execute_next_action(&run_id)?;
+            print_run_action_value(cmd.json, "Action Execution", &execution)
+        }
+        "loop" => {
+            let result = manager.run_action_loop(&run_id, cmd.max_actions)?;
+            print_run_action_value(cmd.json, "Action Loop", &result)
+        }
+        "retry" => {
+            let recovery = manager.attempt_recovery(&run_id)?;
+            let run = manager.load(&run_id)?;
+            let plan = manager.plan_run_actions(&run_id)?;
+            let value = serde_json::json!({
+                "recovery": recovery,
+                "run": run,
+                "next_plan": plan,
+            });
+            print_run_action_value(cmd.json, "Action Retry", &value)
+        }
+        "replay" => {
+            let run = manager.load(&run_id)?;
+            print_run_action_value(cmd.json, "Action Replay", &run.replay())
+        }
+        other => anyhow::bail!(
+            "unknown run action '{}'; expected plan, next, loop, retry, or replay",
+            other
+        ),
+    }
+}
+// END_run_action_command
+
+// START_CONTRACT_resolve_run_id
+// PURPOSE: Resolve explicit run id or newest persisted run id for action commands
+// INPUTS: { manager: &RunManager }, { run_id: Option<&str> }
+// OUTPUTS: { anyhow::Result<String> }
+// START_resolve_run_id
+fn resolve_run_id(manager: &RunManager, run_id: Option<&str>) -> anyhow::Result<String> {
+    if let Some(run_id) = run_id.filter(|value| !value.trim().is_empty()) {
+        return Ok(run_id.to_string());
+    }
+    manager
+        .list()?
+        .into_iter()
+        .max_by(|left, right| left.updated_at.cmp(&right.updated_at))
+        .map(|run| run.run_id)
+        .ok_or_else(|| anyhow::anyhow!("no persisted runs found; pass --run-id or create a run"))
+}
+// END_resolve_run_id
 
 // START_CONTRACT_print_run_scenario_result
 // PURPOSE: Print a compact autonomous scenario summary suitable for release smoke checks
@@ -122,6 +194,41 @@ fn print_run_scenario_result(result: &RunScenarioResult) {
     println!("replay_events:         {}", result.replay.events.len());
 }
 // END_print_run_scenario_result
+
+// START_CONTRACT_print_run_action_value
+// PURPOSE: Print action command output as JSON or compact text
+// INPUTS: { json: bool }, { title: &str }, { value: &T }
+// OUTPUTS: { anyhow::Result<()> }
+// START_print_run_action_value
+fn print_run_action_value<T>(json: bool, title: &str, value: &T) -> anyhow::Result<()>
+where
+    T: serde::Serialize,
+{
+    if json {
+        println!("{}", serde_json::to_string_pretty(value)?);
+        return Ok(());
+    }
+    let value = serde_json::to_value(value)?;
+    println!("=== {} ===", title);
+    if let Some(plan) = value
+        .as_object()
+        .and_then(|object| object.get("actions"))
+        .and_then(|actions| actions.as_array())
+    {
+        println!("actions: {}", plan.len());
+        for action in plan.iter().take(8) {
+            println!(
+                "  - {} {:?}",
+                action["id"].as_str().unwrap_or("unknown"),
+                action["kind"]
+            );
+        }
+    } else {
+        println!("{}", serde_json::to_string_pretty(&value)?);
+    }
+    Ok(())
+}
+// END_print_run_action_value
 
 impl GainCmd {
     // START_CONTRACT_GainCmd::run
