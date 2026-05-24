@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-22" status="done">
+  <NAME>Autonomous End-to-End Run Scenario</NAME>
+  <GOAL>Turn Synapse autonomous runtime from a control-plane scaffold into a reproducible bounded objective scenario with gates, evidence, review, completion, and replay.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-RUNNER" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-RUNNER" status="done">Added autonomous scenario harness for happy-path and blocked-review bounded runs.</step-1>
+    <step-2 module="M-RUNNER" status="done">Persisted scenario metadata, evidence references, review decisions, completion outcome, and replay timeline.</step-2>
+    <step-3 module="M-CLI" status="done">Added syn run --scenario happy|blocked-review with phase/module/objective/json flags.</step-3>
+    <step-4 module="M-CLI-RUNTIME-COMMANDS" status="done">Connected run scenario CLI to StatusCollector gates and RunManager persistence.</step-4>
+    <step-5 module="M-TESTS-INTEGRATION" status="done">Added CLI JSON smoke coverage for bounded scenario creation and replay output.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-scenario cargo test run::scenario::tests --lib</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-scenario cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-scenario cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-scenario cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-scenario cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-scenario cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

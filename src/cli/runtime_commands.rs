@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
 // PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting
-// SCOPE: GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
-// DEPENDS: M-CONFIG, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
+// SCOPE: RunCmd autonomous scenario smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview and wrapped exit-code propagation, CompressCmd, McpCmd, ConfigCmd, HooksCmd, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - route preview for proxied commands
 //   → M-TRACKING (depends) - token economy analytics
@@ -10,6 +10,8 @@
 //   → NFR-003 (traces_to) - command analytics quantify token savings
 
 // START_MODULE_MAP
+// RunCmd::run — Runs a bounded autonomous E2E scenario
+// print_run_scenario_result — Prints scenario gate/action/replay summary
 // GainCmd::run — Prints token savings
 // print_savings_graph — Prints ASCII token-savings bars for top commands
 // print_adapter_stats — Prints adapter-level savings
@@ -26,11 +28,15 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 — Added RTK route preview and adapter/session gain analytics]
+// LAST_CHANGE: [v4.1.0 — Added bounded autonomous run scenario command]
 // END_CHANGE_SUMMARY
 
-use super::{CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, ServeCmd};
+use super::{
+    CompressCmd, ConfigCmd, DoctorCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, RunCmd, ServeCmd,
+};
 use crate::config::Config;
+use crate::run::scenario::{RunScenarioMode, RunScenarioRequest, RunScenarioResult};
+use crate::run::RunManager;
 use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -39,6 +45,83 @@ const CONFIG_SINGLE_ARG_COUNT: usize = 1;
 const CONFIG_SET_ARG_COUNT: usize = 3;
 
 // START_public_api
+
+impl RunCmd {
+    // START_CONTRACT_RunCmd::run
+    // PURPOSE: Run a bounded autonomous workflow scenario using current project gates and persisted replay evidence
+    // INPUTS: { config: Config }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes docs/runs/*.json when the scenario run is created
+    // LINKS:
+    //   → M-RUNNER (depends) - creates durable run scenario state
+    //   → M-GRACE-STATUS (depends) - builds scenario gate policy from project health
+    // START_run_cmd_run
+    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
+        let mode = RunScenarioMode::parse(&self.scenario)?;
+        let root = std::env::current_dir()?;
+        let report = crate::grace::status::StatusCollector::collect(&root).await?;
+        let manager = RunManager::new(&root);
+        let request = RunScenarioRequest::new(
+            &self.goal,
+            &self.phase,
+            &self.module_id,
+            &self.objective,
+            mode,
+        );
+        let result = manager.run_scenario_from_report(request, &report)?;
+        if self.json {
+            println!("{}", serde_json::to_string_pretty(&result)?);
+        } else {
+            print_run_scenario_result(&result);
+        }
+        Ok(())
+    }
+    // END_run_cmd_run
+}
+
+// START_CONTRACT_print_run_scenario_result
+// PURPOSE: Print a compact autonomous scenario summary suitable for release smoke checks
+// INPUTS: { result: &RunScenarioResult }
+// OUTPUTS: { stdout summary }
+// START_print_run_scenario_result
+fn print_run_scenario_result(result: &RunScenarioResult) {
+    println!("=== Run Scenario ===");
+    println!("mode:                  {}", result.mode.as_str());
+    println!("run_id:                {}", result.run.run_id);
+    println!("status:                {:?}", result.run.status);
+    println!("phase:                 {}", result.run.phase);
+    println!("module:                {}", result.run.module_id);
+    println!("objective:             {}", result.run.objective);
+    println!(
+        "gate_decision:         {}",
+        if result.decision.blocked {
+            "blocked"
+        } else {
+            "passed"
+        }
+    );
+    if let Some(reason) = &result.decision.reason {
+        println!("blocked_reason:        {}", reason);
+    }
+    if let Some(action) = &result.decision.next_action {
+        println!("next_action:           {}", action);
+    }
+    println!("blocked_before_review: {}", result.blocked_before_review);
+    println!(
+        "latest_review:         {}",
+        result
+            .run
+            .latest_review_status()
+            .map(|status| format!("{:?}", status))
+            .unwrap_or_else(|| "none".into())
+    );
+    println!("evidence_refs:         {}", result.evidence_refs.len());
+    for evidence in result.evidence_refs.iter().take(8) {
+        println!("  - {}", evidence);
+    }
+    println!("replay_events:         {}", result.replay.events.len());
+}
+// END_print_run_scenario_result
 
 impl GainCmd {
     // START_CONTRACT_GainCmd::run

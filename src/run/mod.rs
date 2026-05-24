@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
-// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, and outcomes for controlled execution
-// SCOPE: Run state model, task model, step model, gate model, review model, replay model, outcome model, durable JSON persistence, run lifecycle helpers
-// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-TRACKING
+// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, scenarios, and outcomes for controlled execution
+// SCOPE: Run state model, task model, step model, gate model, review model, replay model, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
+// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-TRACKING
 // LINKS:
 //   → M-SKILLS (depends) - future execution bridge
 //   → UC-002 (implements) - verify and review bounded autonomous changes
@@ -17,15 +17,17 @@
 // RunGate — Persisted gate requirement
 // RunReviewDecision — Persisted human review decision for blocked runs
 // RunReplay — Replayable run timeline assembled from persisted state
+// RunScenarioResult — End-to-end bounded objective scenario result
 // RunOutcome — Persisted run outcome
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.2.0 — Added human review decisions and replay timeline support]
+// LAST_CHANGE: [v0.3.0 — Added autonomous E2E scenario harness export]
 // END_CHANGE_SUMMARY
 
 mod replay;
 mod review;
+pub mod scenario;
 
 pub use replay::{RunReplay, RunReplayEvent};
 pub use review::{RunReviewDecision, RunReviewStatus};
@@ -320,7 +322,6 @@ impl RunManager {
     // END_run_manager_attempt_recovery
 
     // START_CONTRACT_RunManager::traceability_plan
-
     // PURPOSE: Convert traceability gaps into bounded planning hints and next actions
     // INPUTS: { report: &crate::grace::traceability::TraceabilityReport }
     // OUTPUTS: { RunPlanningHint }
@@ -389,7 +390,6 @@ impl RunManager {
     // END_run_manager_traceability_plan
 
     // START_CONTRACT_RunManager::build_gate_policy
-
     // PURPOSE: Build machine-readable gate policy for a bounded autonomous run from current project health
     // INPUTS: { phase: &str }, { module_id: &str }, { report: &crate::grace::status::StatusReport }
     // OUTPUTS: { RunGatePolicy }

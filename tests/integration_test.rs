@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, proxy, route preview, gain, doctor, hooks, compress
-// DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-CONFIG
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario, proxy, route preview, gain, doctor, hooks, compress
+// DEPENDS: M-CLI, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
 //   ← V-M-PROXY-ROUTER (verified_by) - route preview integration coverage
@@ -12,6 +12,7 @@
 // test_init_and_index — Verifies init, index, search, verify, and status
 // test_proxy_and_gain — Verifies proxy execution and token savings output
 // test_proxy_route_preview_for_rtk_like_command — Verifies route preview without execution
+// test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
 // test_doctor_and_hooks — Verifies setup diagnostics and hook status
 // test_scoped_and_json_cli — Verifies scoped JSON GRACE gates
 // test_init_from_existing — Verifies existing repository bootstrap
@@ -20,7 +21,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Added proxy route preview and session gain coverage]
+// LAST_CHANGE: [v3.1.0 — Added bounded run scenario CLI coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -234,6 +235,60 @@ fn test_proxy_unicode_passthrough_truncates_without_panic() {
     );
 }
 // END_test_proxy_unicode_passthrough_truncates_without_panic
+
+// START_CONTRACT_test_run_scenario_cli_reports_gate_and_replay_json
+// PURPOSE: Verify syn run creates a bounded scenario record and emits gate/replay JSON
+// SIDE_EFFECTS: initializes an isolated temp project and writes docs/runs/*.json there
+// START_test_run_scenario_cli_reports_gate_and_replay_json
+#[test]
+fn test_run_scenario_cli_reports_gate_and_replay_json() {
+    let dir = tempfile::tempdir().unwrap();
+    let data_home = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+
+    let init = Command::new(&syn)
+        .arg("init")
+        .current_dir(&dir)
+        .env("XDG_DATA_HOME", data_home.path())
+        .output()
+        .unwrap();
+    assert!(
+        init.status.success(),
+        "init failed: {}",
+        String::from_utf8_lossy(&init.stderr)
+    );
+
+    let out = Command::new(&syn)
+        .args([
+            "run",
+            "--scenario",
+            "happy",
+            "--json",
+            "--goal",
+            "prove autonomous runtime",
+            "--phase",
+            "Phase-22",
+            "--mod",
+            "M-RUNNER",
+            "--objective",
+            "bounded objective to replay",
+        ])
+        .current_dir(&dir)
+        .env("XDG_DATA_HOME", data_home.path())
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "run scenario failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("\"run_id\""), "scenario json: {}", stdout);
+    assert!(stdout.contains("\"decision\""), "scenario json: {}", stdout);
+    assert!(stdout.contains("\"replay\""), "scenario json: {}", stdout);
+    assert!(dir.path().join("docs/runs").exists());
+}
+// END_test_run_scenario_cli_reports_gate_and_replay_json
 
 // START_CONTRACT_test_proxy_tracking_records_positive_savings_and_gain_graph
 // PURPOSE: Verify project-local proxy filters produce tracked savings and gain --graph renders them

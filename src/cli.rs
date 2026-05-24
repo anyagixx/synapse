@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, RTK route/economics flags, CI action enum
+// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario flags, RTK route/economics flags, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS
 // LINKS: Cargo.toml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Added proxy route preview and session/adapter gain flags]
+// LAST_CHANGE: [v3.1.0 — Added bounded run scenario command flags]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -54,6 +54,7 @@ pub enum Command {
     Verify(VerifyCmd),
     Review(ReviewCmd),
     Status(StatusCmd),
+    Run(RunCmd),
     Proxy(ProxyCmd),
     Gain(GainCmd),
     Compress(CompressCmd),
@@ -156,6 +157,25 @@ pub struct StatusCmd {
     pub ci: bool,
 }
 // END_StatusCmd
+
+// START_RunCmd
+#[derive(clap::Args)]
+#[command(about = "Run bounded autonomous workflow scenario")]
+pub struct RunCmd {
+    #[arg(long, default_value = "happy")]
+    pub scenario: String,
+    #[arg(long, default_value = "Release-grade autonomous runtime")]
+    pub goal: String,
+    #[arg(long, default_value = "Phase-22")]
+    pub phase: String,
+    #[arg(long = "mod", default_value = "M-RUNNER")]
+    pub module_id: String,
+    #[arg(long, default_value = "bounded objective to replay")]
+    pub objective: String,
+    #[arg(long)]
+    pub json: bool,
+}
+// END_RunCmd
 
 cmd_struct!(ExplainCmd, "Explain code using indexed context",
     query: Vec<String>,

@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Route tracing output to stderr so MCP stdio stdout remains protocol-clean]
+// LAST_CHANGE: [v3.0.0 — Dispatch bounded run scenario command]
 // END_CHANGE_SUMMARY
 
 use clap::Parser;
@@ -43,6 +43,7 @@ fn main() -> anyhow::Result<()> {
             syn::cli::Command::Verify(cmd) => cmd.run(config).await,
             syn::cli::Command::Review(cmd) => cmd.run(config).await,
             syn::cli::Command::Status(cmd) => cmd.run(config).await,
+            syn::cli::Command::Run(cmd) => cmd.run(config).await,
             syn::cli::Command::Proxy(cmd) => cmd.run(config).await,
             syn::cli::Command::Gain(cmd) => cmd.run(config).await,
             syn::cli::Command::Compress(cmd) => cmd.run(config).await,

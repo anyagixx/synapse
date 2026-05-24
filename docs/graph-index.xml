@@ -123,6 +123,8 @@
     <REL source="M-CLI-GRACE-COMMANDS" target="M-GRACE-STATUS" type="DEPENDS" />
     <REL source="M-CLI-GRACE-COMMANDS" target="M-SKILLS" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-RUNNER" type="DEPENDS" />
+    <REL source="M-CLI-RUNTIME-COMMANDS" target="M-GRACE-STATUS" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-PROXY" type="DEPENDS" />
     <REL source="M-CLI-RUNTIME-COMMANDS" target="M-PROXY-ROUTER" type="DEPENDS" />
@@ -230,6 +232,7 @@
     <REL source="M-RUNNER" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
     <REL source="M-RUNNER" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
     <REL source="M-RUNNER" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-GRACE-STATUS" type="DEPENDS" />
     <REL source="M-RUNNER" target="M-SKILLS" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-ANCHOR" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-CONTRACT" type="DEPENDS" />
@@ -379,6 +382,7 @@
     <REL source="M-TESTS-INTEGRATION" target="M-GRACE" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-PROXY" type="DEPENDS" />
+    <REL source="M-TESTS-INTEGRATION" target="M-RUNNER" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-CLI" type="DEPENDS" />
     <REL source="M-TESTS-MCP" target="M-MCP" type="DEPENDS" />

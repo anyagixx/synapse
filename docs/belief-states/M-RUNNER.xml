@@ -1,25 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-RUNNER" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, and outcomes for controlled execution
+    Module responsibility: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, scenarios, and outcomes for controlled execution
     Key data flows:
       - INPUT: goal, phase, module_id, objective, and gate definitions from agent workflow and GRACE artifacts
-      - PROCESSING: create durable run state, track steps/gates/reviews/outcomes, assemble replay timelines, serialize and restore JSON records
-      - OUTPUT: run ledger files, review decisions, replay events, and machine-readable lifecycle state for future autonomous execution
+      - PROCESSING: create durable run state, track steps/gates/reviews/outcomes, drive deterministic scenario paths, assemble replay timelines, serialize and restore JSON records
+      - OUTPUT: run ledger files, review decisions, scenario evidence refs, replay events, and machine-readable lifecycle state for future autonomous execution
     Critical invariants:
       - run records remain durable, serializable, and resumable
       - runs keep bounded scope, explicit status transitions, and review-gated blocked resume behavior
       - persistence must not silently drop fields
+      - blocked scenario paths must require persisted approval before resume
   IMPLEMENTATION_STRATEGY:
-    Approach: start with minimal durable state model, then extend orchestration and gate enforcement in later subphases
-    Complexity_areas: serialization compatibility, lifecycle transitions, atomic persistence, future gate integration
+    Approach: keep the core state model stable, add scenario orchestration in a separate submodule, and drive it through existing gates/review/replay APIs
+    Complexity_areas: serialization compatibility, lifecycle transitions, atomic persistence, gate snapshots, blocked review replay
     Patterns_applied: explicit flow, typed links, bounded blocks
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - run records serialize and deserialize without loss
     - save/load/list behavior is deterministic
     - future autonomous workflow code can build on this state model
+    - a bounded objective can be replayed from persisted evidence after happy-path or blocked-review execution
   RISKS_ACKNOWLEDGED:
-    - this first scaffold is intentionally minimal and may need schema evolution later
-    - phase 1.1 only creates runtime foundation, not full orchestration
+    - scenario harness proves lifecycle behavior but is still not a general autonomous planner
+    - src/run/mod.rs remains near the 1300-line hard limit and should be split in a future maintainability phase
 </BELIEF_STATE>
