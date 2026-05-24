@@ -1248,3 +1248,280 @@ expected = "mix format: ok"
 name = "changed files pass through"
 input = "lib/my_app.ex\ntest/my_app_test.exs"
 expected = "lib/my_app.ex\ntest/my_app_test.exs"
+
+[filters.xcodebuild]
+description = "Compact xcodebuild output - strip build phases, keep errors/warnings/summary"
+match_command = "^xcodebuild\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^CompileC\\s",
+  "^CompileSwift\\s",
+  "^Ld\\s",
+  "^CreateBuildDirectory\\s",
+  "^MkDir\\s",
+  "^ProcessInfoPlistFile\\s",
+  "^CopySwiftLibs\\s",
+  "^CodeSign\\s",
+  "^Signing Identity:",
+  "^RegisterWithLaunchServices",
+  "^Validate\\s",
+  "^ProcessProductPackaging",
+  "^Touch\\s",
+  "^LinkStoryboards",
+  "^CompileStoryboard",
+  "^CompileAssetCatalog",
+  "^GenerateDSYMFile",
+  "^PhaseScriptExecution",
+  "^PBXCp\\s",
+  "^SetMode\\s",
+  "^SetOwnerAndGroup\\s",
+  "^Ditto\\s",
+  "^CpResource\\s",
+  "^CpHeader\\s",
+  "^\\s+cd\\s+/",
+  "^\\s+export\\s",
+  "^\\s+/Applications/Xcode",
+  "^\\s+/usr/bin/",
+  "^\\s+builtin-",
+  "^note: Using new build system",
+]
+max_lines = 60
+on_empty = "xcodebuild: ok"
+
+[[tests.xcodebuild]]
+name = "strips build phases, keeps errors and summary"
+input = """
+note: Using new build system
+CompileSwift normal arm64 /Users/dev/App/ViewController.swift
+    cd /Users/dev/App
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -c
+CompileSwift normal arm64 /Users/dev/App/AppDelegate.swift
+    cd /Users/dev/App
+    export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+Ld /Users/dev/Build/Products/Debug/App normal arm64
+    cd /Users/dev/App
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
+CodeSign /Users/dev/Build/Products/Debug/App.app
+    cd /Users/dev/App
+    builtin-codesign --force --sign
+
+/Users/dev/App/ViewController.swift:42:9: error: use of unresolved identifier 'foo'
+/Users/dev/App/Model.swift:18:5: warning: variable 'x' was never used
+
+** BUILD FAILED **
+"""
+expected = "/Users/dev/App/ViewController.swift:42:9: error: use of unresolved identifier 'foo'\n/Users/dev/App/Model.swift:18:5: warning: variable 'x' was never used\n** BUILD FAILED **"
+
+[[tests.xcodebuild]]
+name = "clean build success"
+input = """
+note: Using new build system
+CompileSwift normal arm64 /Users/dev/App/Main.swift
+    cd /Users/dev/App
+Ld /Users/dev/Build/Products/Debug/App normal arm64
+    cd /Users/dev/App
+CodeSign /Users/dev/Build/Products/Debug/App.app
+    cd /Users/dev/App
+    builtin-codesign --force --sign
+
+** BUILD SUCCEEDED **
+"""
+expected = "** BUILD SUCCEEDED **"
+
+[[tests.xcodebuild]]
+name = "test output keeps test results"
+input = """
+note: Using new build system
+CompileSwift normal arm64 /Users/dev/AppTests/Tests.swift
+    cd /Users/dev/App
+Test Suite 'All tests' started at 2026-03-10 12:00:00
+Test Suite 'AppTests' started at 2026-03-10 12:00:00
+Test Case '-[AppTests testExample]' passed (0.001 seconds).
+Test Case '-[AppTests testFailing]' failed (0.002 seconds).
+Test Suite 'AppTests' passed at 2026-03-10 12:00:01
+Executed 2 tests, with 1 failure in 0.003 seconds
+"""
+expected = "Test Suite 'All tests' started at 2026-03-10 12:00:00\nTest Suite 'AppTests' started at 2026-03-10 12:00:00\nTest Case '-[AppTests testExample]' passed (0.001 seconds).\nTest Case '-[AppTests testFailing]' failed (0.002 seconds).\nTest Suite 'AppTests' passed at 2026-03-10 12:00:01\nExecuted 2 tests, with 1 failure in 0.003 seconds"
+
+[[tests.xcodebuild]]
+name = "empty input returns on_empty message"
+input = ""
+expected = "xcodebuild: ok"
+
+[filters.spring-boot]
+description = "Compact Spring Boot output - strip banner and verbose startup logs, keep key events"
+match_command = "^(mvn\\s+spring-boot:run|java\\s+-jar.*\\.jar|gradle\\s+.*bootRun)"
+strip_ansi = true
+keep_lines_matching = [
+  "Started\\s.*\\sin\\s",
+  "Tomcat started on port",
+  "ERROR",
+  "WARN",
+  "Exception",
+  "Caused by:",
+  "Application run failed",
+  "BUILD\\s",
+  "Tests run:",
+  "FAILURE",
+  "listening on port",
+]
+max_lines = 30
+
+[[tests.spring-boot]]
+name = "keeps startup summary and errors"
+input = "  .   ____          _ \n /\\\\ / ___'_ __ _ _(_)_ __  \n( ( )\\___ | '_ | '_| | '_ \\ \n \\/  ___)| |_)| | | | | || )\n  '  |____| .__|_| |_|_| |_\\__|\n  :: Spring Boot ::  (v3.2.0)\n2024-01-01 INFO Initializing Spring\n2024-01-01 INFO Bean 'dataSource' created\n2024-01-01 INFO Tomcat started on port 8080\n2024-01-01 INFO Started MyApp in 3.2 seconds"
+expected = "2024-01-01 INFO Tomcat started on port 8080\n2024-01-01 INFO Started MyApp in 3.2 seconds"
+
+[[tests.spring-boot]]
+name = "preserves errors"
+input = "  :: Spring Boot ::  (v3.2.0)\n2024-01-01 INFO Initializing Spring\n2024-01-01 ERROR Application run failed\nCaused by: java.lang.NullPointerException"
+expected = "2024-01-01 ERROR Application run failed\nCaused by: java.lang.NullPointerException"
+
+[filters.pio-run]
+description = "Compact PlatformIO build output"
+match_command = "^pio\\s+run"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^Verbose mode",
+  "^CONFIGURATION:",
+  "^LDF:",
+  "^Library Manager:",
+  "^Compiling\\s",
+  "^Linking\\s",
+  "^Building\\s",
+  "^Checking size",
+]
+max_lines = 30
+on_empty = "pio run: ok"
+
+[[tests.pio-run]]
+name = "strips build noise, preserves errors"
+input = """
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+Compiling .pio/build/esp32dev/src/main.cpp.o
+Building .pio/build/esp32dev/firmware.elf
+Linking .pio/build/esp32dev/firmware.elf
+Checking size .pio/build/esp32dev/firmware.elf
+src/main.cpp:10:3: error: 'LED_BUILTINN' was not declared
+"""
+expected = "src/main.cpp:10:3: error: 'LED_BUILTINN' was not declared"
+
+[[tests.pio-run]]
+name = "on_empty when clean build with only noise"
+input = """
+Verbose mode can be enabled via `-v, --verbose` option
+Compiling .pio/build/esp32dev/src/main.cpp.o
+Linking .pio/build/esp32dev/firmware.elf
+"""
+expected = "pio run: ok"
+
+[filters.trunk-build]
+description = "Compact trunk build output"
+match_command = "^trunk\\s+build"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*Compiling\\s",
+  "^\\s*Downloading\\s",
+  "^\\s*Fetching\\s",
+  "^\\s*Fresh\\s",
+  "^\\s*Checking\\s",
+]
+tail_lines = 10
+max_lines = 30
+on_empty = "trunk build: ok"
+
+[[tests.trunk-build]]
+name = "strips compile noise, keeps tail summary"
+input = """
+   Compiling tokio v1.35.0
+   Compiling hyper v0.14.28
+   Compiling my-crate v0.1.0
+   Downloading serde v1.0.195
+   Fresh regex v1.10.2
+
+   Finished release [optimized] target(s) in 45.23s
+   Binary: target/release/my-crate (5.2MB)
+"""
+expected = "   Finished release [optimized] target(s) in 45.23s\n   Binary: target/release/my-crate (5.2MB)"
+
+[[tests.trunk-build]]
+name = "on_empty when all noise stripped"
+input = """
+   Compiling my-crate v0.1.0
+   Fresh serde v1.0
+   Checking tokio v1.35.0
+
+"""
+expected = "trunk build: ok"
+
+[filters.quarto-render]
+description = "Compact quarto render output"
+match_command = "^quarto\\s+render"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*processing file:",
+  "^\\s*\\d+/\\d+\\s",
+  "^\\s*running",
+  "^\\s*Rendering",
+  "^pandoc ",
+  "^  Validating",
+  "^  Resolving",
+]
+match_output = [
+  { pattern = "Output created:", message = "ok (output created)" },
+]
+max_lines = 20
+
+[[tests.quarto-render]]
+name = "success short-circuits to ok"
+input = """
+processing file: index.qmd
+  Validating schema
+  Resolving resources
+pandoc to html5
+Output created: _site/index.html
+"""
+expected = "ok (output created)"
+
+[[tests.quarto-render]]
+name = "error passes through"
+input = """
+processing file: broken.qmd
+  Validating schema
+ERROR: Render failed
+
+caused by:
+  syntax error at line 10
+"""
+expected = "ERROR: Render failed\ncaused by:\n  syntax error at line 10"
+
+[filters.nx]
+description = "Compact Nx monorepo output - strip task graph noise, keep results"
+match_command = "^(pnpm\\s+)?nx\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s*>\\s*NX\\s+Running target",
+  "^\\s*>\\s*NX\\s+Nx read the output",
+  "^\\s*>\\s*NX\\s+View logs",
+  "^\\u2014\\u2014\\u2014\\u2014\\u2014\\u2014\\u2014",
+  "^\\s+Nx \\(powered by",
+]
+truncate_lines_at = 150
+max_lines = 60
+
+[[tests.nx]]
+name = "strips Nx noise, keeps build output"
+input = "\n   > NX   Running target build for project myapp\n\n\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\nCompiled successfully.\nOutput: dist/apps/myapp\n\n   > NX   View logs at /tmp/.nx/runs/abc123\n\n   Nx (powered by computation caching)\n"
+expected = "Compiled successfully.\nOutput: dist/apps/myapp"
+
+[[tests.nx]]
+name = "preserves error output"
+input = "ERROR: Cannot find module '@myapp/shared'\n\n   > NX   Running target build for project myapp\n\nFailed at step: build"
+expected = "ERROR: Cannot find module '@myapp/shared'\nFailed at step: build"
