@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-DASHBOARD" type="UI_COMPONENT" status="active">
   <NAME>M-DASHBOARD</NAME>
-  <PURPOSE>Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, and cascade views/APIs</PURPOSE>
-  <SCOPE>HTTP server with health/status/graph/tokens APIs, GRACE state pages, traceability queries, run history, graph-aware search explanation, cascade previews, cascade history, and shared render helpers</SCOPE>
+  <PURPOSE>Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, cascade, and run cockpit views/APIs</PURPOSE>
+  <SCOPE>HTTP server with health/status/graph/tokens APIs, GRACE state pages, traceability queries, run queue/blocked cockpit views, run provenance timeline, graph-aware search explanation, cascade previews, cascade history, and shared render helpers</SCOPE>
   <FILES>
     <FILE>src/dashboard.rs</FILE>
     <FILE>src/dashboard/render.rs</FILE>
+    <FILE>src/dashboard/runs.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-STATUS,M-GRACE-BELIEF-STATE,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-CASCADE,M-GRACE-CASCADE-CHANGE,M-GRAPHRAG,M-TRACKING,M-CONFIG</DEPENDS>
-  <LINKS>docs/verification/V-M-DASHBOARD.xml,docs/phases/Phase-13.xml</LINKS>
+  <DEPENDS>M-GRACE-STATUS,M-GRACE-BELIEF-STATE,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-CASCADE,M-GRACE-CASCADE-CHANGE,M-GRAPHRAG,M-TRACKING,M-RUNNER,M-CONFIG</DEPENDS>
+  <LINKS>docs/verification/V-M-DASHBOARD.xml,docs/phases/Phase-13.xml,docs/phases/Phase-18.xml</LINKS>
   <VERIFICATION_REF>V-M-DASHBOARD</VERIFICATION_REF>
 </MODULE>

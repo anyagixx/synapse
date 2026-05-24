@@ -143,6 +143,7 @@
     <REL source="M-DASHBOARD" target="M-GRACE-CASCADE-CHANGE" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-GRAPHRAG" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-DASHBOARD" target="M-RUNNER" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-GRACE-ANCHOR" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-GRACE-BELIEF-STATE" target="M-GRACE-CONTRACT" type="DEPENDS" />

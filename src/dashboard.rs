@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-DASHBOARD
-// PURPOSE: Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, and cascade views/APIs
-// SCOPE: HTTP server with health/status/graph/tokens APIs, GRACE state pages, traceability queries, cascade previews, and cascade history
-// DEPENDS: M-GRACE-STATUS, M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRAPHRAG, M-TRACKING, M-CONFIG
+// PURPOSE: Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, cascade, and run cockpit views/APIs
+// SCOPE: HTTP server with health/status/graph/tokens APIs, GRACE state pages, traceability queries, run queue/blocked cockpit views, cascade previews, and cascade history
+// DEPENDS: M-GRACE-STATUS, M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRAPHRAG, M-TRACKING, M-RUNNER, M-CONFIG
 // LINKS:
 //   -> V-M-DASHBOARD (verified_by) - dashboard route and JSON payload tests
 
@@ -11,16 +11,18 @@
 // belief_states_payload — Build JSON for belief-state coverage and detail data
 // mental_tests_payload — Build JSON for MentalTest status and definitions
 // traceability_payload — Build JSON for full or artifact-scoped traceability chains
+// runs::runs_payload — Build JSON for run queue, blocked runs, and provenance timeline
 // cascade_impact_payload — Build JSON for cascade impact preview
 // cascade_history_payload — Build JSON for cascade changelog history
 // render_*_page — Render local HTML pages backed by the JSON payload helpers
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Split shared HTML rendering helpers into dashboard::render]
+// LAST_CHANGE: [v3.2.0 — Added run queue and blocked cockpit surface]
 // END_CHANGE_SUMMARY
 
 mod render;
+mod runs;
 
 use crate::grace::belief_state::collect_project_belief_states;
 use crate::grace::cascade::cascade_impact;
@@ -56,6 +58,7 @@ pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
         .route("/belief-state/{module_id}", get(belief_state_detail_html))
         .route("/mental-tests", get(mental_tests_html))
         .route("/runs", get(runs_html))
+        .route("/runs/queue", get(runs_html))
         .route("/traceability/{artifact_id}", get(traceability_html))
         .route("/search-explain", get(search_explain_html))
         .route("/cascade/preview", get(cascade_preview_html))
@@ -71,6 +74,7 @@ pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
         .route("/api/mental-tests", get(api_mental_tests))
         .route("/api/traceability", get(api_traceability))
         .route("/api/runs", get(api_runs))
+        .route("/api/runs/queue", get(api_runs))
         .route("/api/search-explain", get(api_search_explain))
         .route("/api/cascade-impact", get(api_cascade_impact))
         .route("/api/cascade-history", get(api_cascade_history));
@@ -228,7 +232,7 @@ async fn mental_tests_html() -> Html<String> {
 // OUTPUTS: { Html<String> }
 // START_runs_html
 async fn runs_html(Query(query): Query<RunsQuery>) -> Html<String> {
-    Html(render_runs_page(
+    Html(runs::render_runs_page(
         &current_root(),
         query.run_id.as_deref().unwrap_or(""),
     ))
@@ -387,7 +391,7 @@ async fn api_traceability(Query(query): Query<TraceabilityQuery>) -> Json<Value>
 // OUTPUTS: { Json<Value> }
 // START_api_runs
 async fn api_runs(Query(query): Query<RunsQuery>) -> Json<Value> {
-    Json(runs_payload(
+    Json(runs::runs_payload(
         &current_root(),
         query.run_id.as_deref().unwrap_or(""),
     ))
@@ -749,57 +753,6 @@ fn render_traceability_page(root: &Path, artifact_id: &str) -> String {
 }
 // END_render_traceability_page
 
-// START_CONTRACT_runs_payload
-// PURPOSE: Build JSON payload for bounded run records and provenance events
-// INPUTS: { root: &Path }, { run_id: &str }
-// OUTPUTS: { Value }
-// START_runs_payload
-fn runs_payload(root: &Path, run_id: &str) -> Value {
-    let runs_dir = root.join("docs/runs");
-    let run_records = std::fs::read_dir(&runs_dir)
-        .ok()
-        .into_iter()
-        .flat_map(|iter| iter.filter_map(|entry| entry.ok()))
-        .filter_map(|entry| std::fs::read_to_string(entry.path()).ok())
-        .filter_map(|content| serde_json::from_str::<crate::run::RunRecord>(&content).ok())
-        .collect::<Vec<_>>();
-    let events: Vec<Value> = Vec::new();
-    json!({
-        "run_id": run_id,
-        "runs": run_records.into_iter().map(|run| json!({
-            "run_id": run.run_id,
-            "goal": run.goal,
-            "phase": run.phase,
-            "module_id": run.module_id,
-            "objective": run.objective,
-            "status": format!("{:?}", run.status),
-            "blocked_reason": run.blocked_reason,
-            "escalation_reason": run.escalation_reason,
-            "traceability_summary": run.metadata.get("traceability_summary").cloned(),
-            "retry_count": run.metadata.get("retry_count").cloned(),
-        })).collect::<Vec<_>>(),
-        "events": events,
-    })
-}
-// END_runs_payload
-
-// START_CONTRACT_render_runs_page
-// PURPOSE: Render bounded run inventory and provenance timeline
-// INPUTS: { root: &Path }, { run_id: &str }
-// OUTPUTS: { String }
-// START_render_runs_page
-fn render_runs_page(root: &Path, run_id: &str) -> String {
-    let payload = runs_payload(root, run_id);
-    let body = format!(
-        "{}<h2>Runs</h2>{}<h2>Provenance</h2>{}",
-        primary_nav(),
-        json_pre(&payload["runs"]),
-        json_pre(&payload["events"])
-    );
-    page_shell("Runs", &body)
-}
-// END_render_runs_page
-
 // START_CONTRACT_render_search_explain_page
 // PURPOSE: Render graph-aware search explanation query and results
 // INPUTS: { root: &Path }, { query: &str }
@@ -1029,12 +982,30 @@ mod tests {
             "objective".into(),
         );
         manager.save(&run).unwrap();
-        let payload = runs_payload(dir.path(), &run.run_id);
-        let rendered = render_runs_page(dir.path(), &run.run_id);
-        assert_eq!(payload["run_id"], run.run_id);
+        let blocked = crate::run::RunRecord::new(
+            "blocked goal".into(),
+            "Phase-17".into(),
+            "M-RUNNER".into(),
+            "blocked objective".into(),
+        );
+        manager.save(&blocked).unwrap();
+        let blocked = manager
+            .block_run(
+                &blocked.run_id,
+                "verification gate blocked",
+                Some("verify.log"),
+            )
+            .unwrap();
+        let payload = runs::runs_payload(dir.path(), &blocked.run_id);
+        let rendered = runs::render_runs_page(dir.path(), &blocked.run_id);
+        assert_eq!(payload["run_id"], blocked.run_id);
         assert!(payload.get("runs").is_some());
+        assert_eq!(payload["summary"]["queue"], 1);
+        assert_eq!(payload["summary"]["blocked"], 1);
         assert!(payload.get("events").is_some());
-        assert!(rendered.contains("Runs"));
+        assert!(rendered.contains("Run Cockpit"));
+        assert!(rendered.contains("Blocked"));
+        assert!(rendered.contains("verification gate blocked"));
     }
 
     #[tokio::test]

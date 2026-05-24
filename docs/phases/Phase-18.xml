@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-18" status="done">
+  <NAME>Dashboard Agent Cockpit Queue</NAME>
+  <GOAL>Continue the 2.6 upgrade checkpoint by turning run history into an operational queue and blocked-workflow cockpit.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-DASHBOARD" />
+    <MODULE_REF id="M-RUNNER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-DASHBOARD" status="done">Added /runs and /runs/queue cockpit rendering backed by queue, blocked, completed, and provenance payload sections.</step-1>
+    <step-2 module="M-DASHBOARD" status="done">Moved run cockpit rendering into src/dashboard/runs.rs to preserve dashboard file-size gates.</step-2>
+    <step-3 module="M-RUNNER" status="done">Reused persisted RunRecord status, gates, steps, evidence refs, and blocked reasons as dashboard triage input.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">rtk cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-phase18 cargo test dashboard::tests::test_runs_payload_reports_runs_and_events --lib</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-phase18 cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-phase18 cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-phase18 cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+</PHASE>
