@@ -2,11 +2,11 @@
 <MODULE id="M-TRACKING" type="DATA_LAYER" status="active">
   <NAME>M-TRACKING</NAME>
   <PURPOSE>SQLite token tracker — records route-aware command token usage by canonical project identity and provides stats</PURPOSE>
-  <SCOPE>Tracker struct, canonical project identity, migration-safe SQLite schema, token recording with adapter/route/session metadata for proxy and local adapters, RTK adapter/session coverage counts, stats querying, TrackingStats model</SCOPE>
+  <SCOPE>Tracker struct, canonical project identity, migration-safe SQLite schema, token recording with adapter/route/session metadata for proxy and local adapters, RTK adapter/session coverage counts, route adoption counts, missed-route candidate querying, stats querying, TrackingStats model</SCOPE>
   <FILES>
     <FILE>src/tracking/mod.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG</DEPENDS>
-  <LINKS>tracking.db,docs/phases/Phase-21.xml,docs/phases/Phase-46.xml,docs/phases/Phase-50.xml</LINKS>
+  <LINKS>tracking.db,docs/phases/Phase-21.xml,docs/phases/Phase-46.xml,docs/phases/Phase-50.xml,docs/phases/Phase-56.xml</LINKS>
   <VERIFICATION_REF>V-M-TRACKING</VERIFICATION_REF>
 </MODULE>

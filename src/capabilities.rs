@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discover/learn diagnostics, hook processors and multi-agent hook install/audit targets, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics adoption analytics, tracking-backed discover/learn diagnostics, hook processors and multi-agent hook install/audit targets, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml, docs/phases/Phase-54.xml, docs/phases/Phase-56.xml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.33.0 - Added multi-agent hook install and audit surfaces]
+// LAST_CHANGE: [v2.34.0 - Added tracking-backed RTK adoption analytics surfaces]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -127,11 +127,11 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ),
     (
         "discover",
-        "Discover routeable token-heavy commands and Synapse replacements",
+        "Discover routeable token-heavy commands, local missed-route history, and Synapse replacements",
     ),
     (
         "learn",
-        "Show bounded RTK learning guidance for recurring misses",
+        "Show measured RTK learning guidance for recurring misses",
     ),
     ("binlog", "Summarize MSBuild binary log diagnostics"),
     (
@@ -141,11 +141,11 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("dotnet-trx", "Summarize dotnet TRX test result files"),
     (
         "session",
-        "Show RTK adoption and token savings by tracked Synapse session",
+        "Show RTK adoption, route coverage, and token savings by tracked Synapse session",
     ),
     (
         "cc-economics",
-        "Show local Claude Code token economics from Synapse tracking",
+        "Show local Claude Code token economics and route adoption from Synapse tracking",
     ),
     (
         "rtk-parity",

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: RTK-style session and economics analytics over Synapse's local token-savings tracker
-// SCOPE: SessionCmd and CcEconomicsCmd execution, compact text/JSON/CSV rendering, local savings estimates, and session-level token economy summaries
+// SCOPE: SessionCmd and CcEconomicsCmd execution, compact text/JSON/CSV rendering, local savings estimates, session-level token economy summaries, route adoption metrics, and missed-route candidates
 // DEPENDS: M-CONFIG, M-TRACKING
 // LINKS:
 //   -> M-CLI (depends) - exposes session and cc-economics command schemas
@@ -19,13 +19,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added RTK session and cc-economics analytics]
+// LAST_CHANGE: [v1.1.0 - Added tracking-backed route adoption analytics]
 // END_CHANGE_SUMMARY
 
 use super::{CcEconomicsCmd, SessionCmd};
 use crate::config::Config;
 use crate::tracking::{
-    TrackingAdapterStat, TrackingCommandStat, TrackingSessionStat, TrackingStats,
+    TrackingAdapterStat, TrackingAdoptionStats, TrackingCommandStat, TrackingMissedRouteStat,
+    TrackingSessionStat, TrackingStats,
 };
 use serde::Serialize;
 
@@ -91,6 +92,7 @@ struct SessionReport {
     total_commands: u64,
     total_saved_tokens: u64,
     avg_savings_pct: f64,
+    adoption: TrackingAdoptionStats,
     sessions: Vec<TrackingSessionStat>,
 }
 // END_SessionReport
@@ -107,9 +109,11 @@ struct EconomicsReport {
     avg_savings_pct: f64,
     adapter_groups: u64,
     session_groups: u64,
+    route_adoption_pct: f64,
     estimated_cost_saved_usd: f64,
     top_commands: Vec<TrackingCommandStat>,
     top_adapters: Vec<TrackingAdapterStat>,
+    missed_route_candidates: Vec<TrackingMissedRouteStat>,
 }
 // END_EconomicsReport
 
@@ -124,6 +128,7 @@ fn build_session_report(stats: &TrackingStats) -> SessionReport {
         total_commands: stats.total_commands,
         total_saved_tokens: stats.total_saved_tokens,
         avg_savings_pct: stats.avg_savings_pct,
+        adoption: stats.adoption.clone(),
         sessions: stats.recent_sessions.clone(),
     }
 }
@@ -145,9 +150,11 @@ fn build_economics_report(cmd: &CcEconomicsCmd, stats: &TrackingStats) -> Econom
         avg_savings_pct: stats.avg_savings_pct,
         adapter_groups: stats.adapter_groups,
         session_groups: stats.session_groups,
+        route_adoption_pct: stats.adoption.route_adoption_pct,
         estimated_cost_saved_usd: estimate_cost_saved(stats.total_saved_tokens),
         top_commands: stats.top_commands.clone(),
         top_adapters: stats.top_adapters.clone(),
+        missed_route_candidates: stats.adoption.missed_route_candidates.clone(),
     }
 }
 // END_build_economics_report
@@ -201,6 +208,7 @@ fn print_session_report(report: &SessionReport) {
     println!("commands: {}", report.total_commands);
     println!("tokens saved: {}", report.total_saved_tokens);
     println!("average savings: {:.1}%", report.avg_savings_pct);
+    println!("route adoption: {:.1}%", report.adoption.route_adoption_pct);
     if report.sessions.is_empty() {
         println!("No tracked Synapse RTK sessions yet.");
         return;
@@ -219,6 +227,17 @@ fn print_session_report(report: &SessionReport) {
             session.avg_savings_pct,
             compact_label(&session.last_seen, 20)
         );
+    }
+    if !report.adoption.missed_route_candidates.is_empty() {
+        println!();
+        println!("Missed-route candidates:");
+        for item in &report.adoption.missed_route_candidates {
+            println!(
+                "  - {}: {} passthrough runs",
+                compact_label(&item.command, 32),
+                item.count
+            );
+        }
     }
 }
 // END_print_session_report
@@ -240,6 +259,7 @@ fn print_economics_report(report: &EconomicsReport) {
     println!("average savings: {:.1}%", report.avg_savings_pct);
     println!("adapter groups: {}", report.adapter_groups);
     println!("session groups: {}", report.session_groups);
+    println!("route adoption: {:.1}%", report.route_adoption_pct);
     println!(
         "estimated cost saved: ${:.4}",
         report.estimated_cost_saved_usd
@@ -254,6 +274,13 @@ fn print_economics_report(report: &EconomicsReport) {
             );
         }
     }
+    if !report.missed_route_candidates.is_empty() {
+        println!();
+        println!("Missed-route candidates:");
+        for item in &report.missed_route_candidates {
+            println!("  - {}: {} passthrough runs", item.command, item.count);
+        }
+    }
 }
 // END_print_economics_report
 
@@ -264,9 +291,9 @@ fn print_economics_report(report: &EconomicsReport) {
 // SIDE_EFFECTS: writes stdout
 // START_print_economics_csv
 fn print_economics_csv(report: &EconomicsReport) {
-    println!("scope,total_commands,total_input_tokens,total_output_tokens,total_saved_tokens,avg_savings_pct,adapter_groups,session_groups,estimated_cost_saved_usd");
+    println!("scope,total_commands,total_input_tokens,total_output_tokens,total_saved_tokens,avg_savings_pct,adapter_groups,session_groups,route_adoption_pct,estimated_cost_saved_usd");
     println!(
-        "{},{},{},{},{},{:.1},{},{},{:.4}",
+        "{},{},{},{},{},{:.1},{},{},{:.1},{:.4}",
         report.scope,
         report.total_commands,
         report.total_input_tokens,
@@ -275,6 +302,7 @@ fn print_economics_csv(report: &EconomicsReport) {
         report.avg_savings_pct,
         report.adapter_groups,
         report.session_groups,
+        report.route_adoption_pct,
         report.estimated_cost_saved_usd
     );
 }
@@ -331,6 +359,17 @@ mod tests {
                 avg_savings_pct: 75.0,
                 last_seen: "2026-05-25 10:00:00".into(),
             }],
+            adoption: TrackingAdoptionStats {
+                total_commands: 3,
+                routed_commands: 2,
+                passthrough_commands: 1,
+                route_adoption_pct: 66.7,
+                missed_route_candidates: vec![TrackingMissedRouteStat {
+                    command: "git status".into(),
+                    count: 1,
+                    last_seen: "2026-05-25 10:00:00".into(),
+                }],
+            },
         }
     }
 
@@ -340,6 +379,7 @@ mod tests {
 
         assert_eq!(report.total_sessions, 1);
         assert_eq!(report.total_saved_tokens, 750);
+        assert_eq!(report.adoption.passthrough_commands, 1);
         assert_eq!(report.sessions[0].session_id, "session-1");
     }
 
@@ -356,6 +396,7 @@ mod tests {
 
         assert_eq!(report.scope, "daily");
         assert!(report.local_only);
+        assert_eq!(report.missed_route_candidates[0].command, "git status");
         assert!((report.estimated_cost_saved_usd - 0.00225).abs() < f64::EPSILON);
     }
 

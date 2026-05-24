@@ -20,11 +20,11 @@
     <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
     <COMMAND>cargo run --quiet -- session</COMMAND>
     <COMMAND>cargo run --quiet -- cc-economics --format json</COMMAND>
+    <COMMAND>cargo run --quiet -- discover --json --limit 3</COMMAND>
+    <COMMAND>cargo run --quiet -- learn --json</COMMAND>
     <COMMAND>cargo run --quiet -- smart src/cli.rs</COMMAND>
     <COMMAND>cargo test cli::rtk_discovery::tests --lib</COMMAND>
     <COMMAND>cargo run --quiet -- discover docker ps</COMMAND>
-    <COMMAND>cargo run --quiet -- discover --json --limit 3</COMMAND>
-    <COMMAND>cargo run --quiet -- learn --json</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
     <COMMAND>cargo test --test rtk_system_adapters_test</COMMAND>
@@ -42,8 +42,8 @@
     <ASSERTION>syn json, syn deps, syn env, and syn wc run as direct local adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn pipe, syn log, and syn smart run as direct local system adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn err, syn test, syn diff, and syn summary run as direct core RTK adapters with compact output and adapter-level token tracking.</ASSERTION>
-    <ASSERTION>syn discover reports routeable token-heavy commands and first-class Synapse replacement suggestions without scanning private session history.</ASSERTION>
-    <ASSERTION>syn learn reports bounded advisory learning rules without mutating project rules.</ASSERTION>
+    <ASSERTION>syn discover reports routeable token-heavy commands, first-class Synapse replacement suggestions, and tracking-backed missed-route history without scanning private session history.</ASSERTION>
+    <ASSERTION>syn learn reports bounded advisory learning rules plus measured local adoption signals without mutating project rules.</ASSERTION>
     <ASSERTION>syn rewrite uses CommandRouter as the hook rewrite source of truth and exits non-zero without stdout for unsupported commands.</ASSERTION>
     <ASSERTION>syn rewrite rewrites safe shell chains joined by &amp;&amp;, ||, and ; segment by segment, preserves unsupported segments, and skips unsafe redirection and substitution constructs.</ASSERTION>
     <ASSERTION>syn rewrite rewrites routeable pipeline left edges while preserving pipe filter segments raw and resuming rewrite after subsequent &amp;&amp;, ||, or ; operators.</ASSERTION>
@@ -53,7 +53,7 @@
     <ASSERTION>syn rtk-parity emits a machine-checkable inventory, reports Synapse RTK integration readiness, tracks discover/learn, hook audit, and analytics surfaces as implemented, and fails CI when critical filter or router-family parity gaps exist.</ASSERTION>
     <ASSERTION>syn gt delegates Graphite stacked-PR commands through RtkProxyCmd::run_as and routes them as vcs-graphite.</ASSERTION>
     <ASSERTION>syn binlog, syn dotnet-format-report, and syn dotnet-trx summarize .NET build/test artifacts without dumping full files.</ASSERTION>
-    <ASSERTION>syn session and syn cc-economics read local tracking stats and expose session/economics analytics without telemetry upload.</ASSERTION>
+    <ASSERTION>syn session and syn cc-economics read local tracking stats and expose session/economics/adoption analytics without telemetry upload.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-56</PHASE_GATE>
 </VERIFICATION>

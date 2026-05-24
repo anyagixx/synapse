@@ -1,12 +1,13 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: Bounded RTK discover/learn diagnostics for routeable token-heavy commands
-// SCOPE: DiscoverCmd, LearnCmd, route-aware missed-opportunity reports including Graphite shortcuts, static learning guidance, JSON/text rendering
-// DEPENDS: M-CONFIG, M-PROXY-ROUTER, M-CAPABILITIES
+// SCOPE: DiscoverCmd, LearnCmd, route-aware missed-opportunity reports including Graphite shortcuts, tracking-backed missed-route history, measured learning signals, JSON/text rendering
+// DEPENDS: M-CONFIG, M-PROXY-ROUTER, M-CAPABILITIES, M-TRACKING
 // LINKS:
 //   -> M-PROXY-ROUTER (depends) - uses route decisions as the source of truth for discovery
 //   -> M-CAPABILITIES (depends) - shares discover/learn capability metadata
 //   -> Phase-49 (implements) - RTK Discovery And Learning Parity
+//   -> Phase-56 (implements) - measured RTK learn/discover analytics
 //   -> NFR-003 (traces_to) - discovery reduces missed token-saving opportunities
 
 // START_MODULE_MAP
@@ -18,12 +19,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Added Graphite shortcut discovery]
+// LAST_CHANGE: [v1.2.0 - Added tracking-backed discovery and learning signals]
 // END_CHANGE_SUMMARY
 
 use super::{DiscoverCmd, LearnCmd};
 use crate::config::Config;
 use crate::proxy::router::CommandRouter;
+use crate::tracking::{TrackingAdoptionStats, TrackingMissedRouteStat};
 use serde::Serialize;
 
 const DEFAULT_DISCOVER_LIMIT: usize = 20;
@@ -36,6 +38,8 @@ const LEARN_RECOMMENDATION_HOOK_ADOPTION: &str =
     "Run syn hooks install opencode and keep .opencode/hooks/synapse-proxy.sh sourced for shell-level auto-proxying.";
 const LEARN_RECOMMENDATION_ECONOMICS: &str =
     "Run syn gain --sessions --adapters and compare high-volume adapters with syn discover catalogue suggestions.";
+const LEARN_RECOMMENDATION_MEASURED_MISSES: &str =
+    "Run syn discover --json and promote repeated routeable suggestions into agent instructions or hook setup.";
 
 // START_public_api
 
@@ -48,8 +52,10 @@ impl DiscoverCmd {
     // LINKS:
     //   -> M-PROXY-ROUTER (depends) - route catalogue and route previews drive recommendations
     // START_discover_cmd_run
-    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
-        let report = build_discovery_report(&self.command, self.limit);
+    pub async fn run(&self, config: Config) -> anyhow::Result<()> {
+        let tracker = crate::tracking::Tracker::new(&config);
+        let adoption = tracker.get_adoption_stats(self.limit).await?;
+        let report = build_discovery_report(&self.command, self.limit, &adoption);
         if self.json {
             println!("{}", serde_json::to_string_pretty(&report)?);
         } else {
@@ -69,8 +75,10 @@ impl LearnCmd {
     // LINKS:
     //   -> M-CAPABILITIES (depends) - exposes learn capability metadata
     // START_learn_cmd_run
-    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
-        let report = build_learn_report();
+    pub async fn run(&self, config: Config) -> anyhow::Result<()> {
+        let tracker = crate::tracking::Tracker::new(&config);
+        let adoption = tracker.get_adoption_stats(DEFAULT_DISCOVER_LIMIT).await?;
+        let report = build_learn_report(&adoption);
         if self.json {
             println!("{}", serde_json::to_string_pretty(&report)?);
         } else {
@@ -89,6 +97,7 @@ struct DiscoveryReport {
     mode: String,
     analyzed_command: Option<String>,
     opportunities: Vec<DiscoveryOpportunity>,
+    history: Vec<DiscoveryHistoryOpportunity>,
     notes: Vec<String>,
 }
 // END_DiscoveryReport
@@ -105,11 +114,25 @@ struct DiscoveryOpportunity {
 }
 // END_DiscoveryOpportunity
 
+// START_DiscoveryHistoryOpportunity
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct DiscoveryHistoryOpportunity {
+    command: String,
+    suggestion: String,
+    adapter: String,
+    family: String,
+    route_key: String,
+    count: u64,
+    last_seen: String,
+}
+// END_DiscoveryHistoryOpportunity
+
 // START_LearnReport
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct LearnReport {
     mode: String,
     rules: Vec<LearnRule>,
+    signals: Vec<LearnSignal>,
     notes: Vec<String>,
 }
 // END_LearnReport
@@ -123,12 +146,24 @@ struct LearnRule {
 }
 // END_LearnRule
 
+// START_LearnSignal
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct LearnSignal {
+    name: String,
+    value: String,
+}
+// END_LearnSignal
+
 // START_CONTRACT_build_discovery_report
 // PURPOSE: Build a discovery report for one command or for the supported router catalogue
-// INPUTS: { command: &[String] }, { limit: usize }
+// INPUTS: { command: &[String] }, { limit: usize }, { adoption: &TrackingAdoptionStats }
 // OUTPUTS: { DiscoveryReport }
 // START_build_discovery_report
-fn build_discovery_report(command: &[String], limit: usize) -> DiscoveryReport {
+fn build_discovery_report(
+    command: &[String],
+    limit: usize,
+    adoption: &TrackingAdoptionStats,
+) -> DiscoveryReport {
     let normalized_limit = if limit == 0 {
         DEFAULT_DISCOVER_LIMIT
     } else {
@@ -158,13 +193,58 @@ fn build_discovery_report(command: &[String], limit: usize) -> DiscoveryReport {
         },
         analyzed_command: (!command_text.is_empty()).then_some(command_text),
         opportunities,
+        history: history_opportunities(&router, adoption, normalized_limit),
         notes: vec![
-            "Discovery is bounded: Synapse classifies supplied commands and built-in examples; it does not read private agent session history.".into(),
+            "Discovery is bounded: Synapse classifies supplied commands, built-in examples, and local tracking records; it does not read private agent session history.".into(),
             "Use syn rewrite <cmd> for hook-exact rewriting and syn gain --sessions --adapters for measured economics.".into(),
         ],
     }
 }
 // END_build_discovery_report
+
+// START_CONTRACT_history_opportunities
+// PURPOSE: Convert locally tracked passthrough commands into routeable missed-route history opportunities
+// INPUTS: { router: &CommandRouter }, { adoption: &TrackingAdoptionStats }, { limit: usize }
+// OUTPUTS: { Vec<DiscoveryHistoryOpportunity> }
+// LINKS:
+//   -> M-TRACKING (depends) - reads measured passthrough command candidates
+//   -> Phase-56 (implements) - tracking-backed discover history
+// START_history_opportunities
+fn history_opportunities(
+    router: &CommandRouter,
+    adoption: &TrackingAdoptionStats,
+    limit: usize,
+) -> Vec<DiscoveryHistoryOpportunity> {
+    adoption
+        .missed_route_candidates
+        .iter()
+        .filter_map(|candidate| history_opportunity_for(router, candidate))
+        .take(limit)
+        .collect()
+}
+// END_history_opportunities
+
+// START_CONTRACT_history_opportunity_for
+// PURPOSE: Convert one tracked passthrough command into a routeable missed-route history item
+// INPUTS: { router: &CommandRouter }, { candidate: &TrackingMissedRouteStat }
+// OUTPUTS: { Option<DiscoveryHistoryOpportunity> }
+// START_history_opportunity_for
+fn history_opportunity_for(
+    router: &CommandRouter,
+    candidate: &TrackingMissedRouteStat,
+) -> Option<DiscoveryHistoryOpportunity> {
+    let opportunity = opportunity_for(router, &candidate.command)?;
+    Some(DiscoveryHistoryOpportunity {
+        command: opportunity.command,
+        suggestion: opportunity.suggestion,
+        adapter: opportunity.adapter,
+        family: opportunity.family,
+        route_key: opportunity.route_key,
+        count: candidate.count,
+        last_seen: candidate.last_seen.clone(),
+    })
+}
+// END_history_opportunity_for
 
 // START_CONTRACT_opportunity_for
 // PURPOSE: Convert one shell command into a routeable discovery opportunity when possible
@@ -254,31 +334,58 @@ fn split_simple_command(command: &str) -> Vec<String> {
 // END_split_simple_command
 
 // START_CONTRACT_build_learn_report
-// PURPOSE: Build static learning guidance from Synapse adoption patterns
+// PURPOSE: Build learning guidance from Synapse adoption patterns and local tracking signals
+// INPUTS: { adoption: &TrackingAdoptionStats }
 // OUTPUTS: { LearnReport }
 // START_build_learn_report
-fn build_learn_report() -> LearnReport {
+fn build_learn_report(adoption: &TrackingAdoptionStats) -> LearnReport {
+    let mut rules = vec![
+        LearnRule {
+            name: "missed-route".into(),
+            trigger: LEARN_TRIGGER_MISSED_ROUTE.into(),
+            recommendation: LEARN_RECOMMENDATION_MISSED_ROUTE.into(),
+        },
+        LearnRule {
+            name: "hook-adoption".into(),
+            trigger: "Routeable commands keep appearing as raw shell commands in an agent session."
+                .into(),
+            recommendation: LEARN_RECOMMENDATION_HOOK_ADOPTION.into(),
+        },
+        LearnRule {
+            name: "economics-review".into(),
+            trigger: "Token savings are unclear or adapter coverage looks uneven.".into(),
+            recommendation: LEARN_RECOMMENDATION_ECONOMICS.into(),
+        },
+    ];
+    if !adoption.missed_route_candidates.is_empty() {
+        rules.push(LearnRule {
+            name: "measured-missed-routes".into(),
+            trigger: format!(
+                "{} passthrough command groups were found in local Synapse tracking.",
+                adoption.missed_route_candidates.len()
+            ),
+            recommendation: LEARN_RECOMMENDATION_MEASURED_MISSES.into(),
+        });
+    }
     LearnReport {
-        mode: "bounded-guidance".into(),
-        rules: vec![
-            LearnRule {
-                name: "missed-route".into(),
-                trigger: LEARN_TRIGGER_MISSED_ROUTE.into(),
-                recommendation: LEARN_RECOMMENDATION_MISSED_ROUTE.into(),
+        mode: "measured-guidance".into(),
+        rules,
+        signals: vec![
+            LearnSignal {
+                name: "route-adoption-pct".into(),
+                value: format!("{:.1}", adoption.route_adoption_pct),
             },
-            LearnRule {
-                name: "hook-adoption".into(),
-                trigger: "Routeable commands keep appearing as raw shell commands in an agent session.".into(),
-                recommendation: LEARN_RECOMMENDATION_HOOK_ADOPTION.into(),
+            LearnSignal {
+                name: "passthrough-commands".into(),
+                value: adoption.passthrough_commands.to_string(),
             },
-            LearnRule {
-                name: "economics-review".into(),
-                trigger: "Token savings are unclear or adapter coverage looks uneven.".into(),
-                recommendation: LEARN_RECOMMENDATION_ECONOMICS.into(),
+            LearnSignal {
+                name: "missed-route-candidates".into(),
+                value: adoption.missed_route_candidates.len().to_string(),
             },
         ],
         notes: vec![
-            "Synapse learn is advisory in Phase-49; it does not mutate rules or scrape private session files.".into(),
+            "Synapse learn is advisory; it uses local tracking aggregates and does not mutate rules or scrape private session files.".into(),
             "Use MyGRACE verification and review gates before turning learning suggestions into persistent project rules.".into(),
         ],
     }
@@ -306,6 +413,15 @@ fn print_discovery_report(report: &DiscoveryReport) {
             );
         }
     }
+    if !report.history.is_empty() {
+        println!("Measured missed-route history:");
+        for item in &report.history {
+            println!(
+                "- {} -> {} [{} runs, last {}]",
+                item.command, item.suggestion, item.count, item.last_seen
+            );
+        }
+    }
     for note in &report.notes {
         println!("note: {note}");
     }
@@ -323,6 +439,9 @@ fn print_learn_report(report: &LearnReport) {
     for rule in &report.rules {
         println!("- {}: {}", rule.name, rule.recommendation);
     }
+    for signal in &report.signals {
+        println!("signal: {}={}", signal.name, signal.value);
+    }
     for note in &report.notes {
         println!("note: {note}");
     }
@@ -339,7 +458,11 @@ mod tests {
     // START_discovery_for_single_command_suggests_shortcut
     #[test]
     fn discovery_for_single_command_suggests_shortcut() {
-        let report = build_discovery_report(&["docker".into(), "ps".into()], 20);
+        let report = build_discovery_report(
+            &["docker".into(), "ps".into()],
+            20,
+            &TrackingAdoptionStats::default(),
+        );
         assert_eq!(report.mode, "command");
         assert_eq!(report.opportunities.len(), 1);
         assert_eq!(report.opportunities[0].suggestion, "syn docker ps");
@@ -353,7 +476,7 @@ mod tests {
     // START_discovery_catalog_contains_routeable_examples
     #[test]
     fn discovery_catalog_contains_routeable_examples() {
-        let report = build_discovery_report(&[], 50);
+        let report = build_discovery_report(&[], 50, &TrackingAdoptionStats::default());
         let suggestions = report
             .opportunities
             .iter()
@@ -371,14 +494,40 @@ mod tests {
     // START_learn_report_contains_bounded_guidance
     #[test]
     fn learn_report_contains_bounded_guidance() {
-        let report = build_learn_report();
-        assert_eq!(report.mode, "bounded-guidance");
+        let report = build_learn_report(&TrackingAdoptionStats::default());
+        assert_eq!(report.mode, "measured-guidance");
         assert!(report.rules.iter().any(|rule| rule.name == "hook-adoption"));
+        assert!(report
+            .signals
+            .iter()
+            .any(|signal| signal.name == "route-adoption-pct"));
         assert!(report
             .notes
             .iter()
             .any(|note| note.contains("does not mutate")));
     }
     // END_learn_report_contains_bounded_guidance
+
+    // START_CONTRACT_discovery_history_uses_tracking_candidates
+    // PURPOSE: Verify tracked passthrough candidates become measured routeable history.
+    // OUTPUTS: { () }
+    // START_discovery_history_uses_tracking_candidates
+    #[test]
+    fn discovery_history_uses_tracking_candidates() {
+        let adoption = TrackingAdoptionStats {
+            missed_route_candidates: vec![TrackingMissedRouteStat {
+                command: "git status".into(),
+                count: 2,
+                last_seen: "2026-05-25 10:00:00".into(),
+            }],
+            ..TrackingAdoptionStats::default()
+        };
+        let report = build_discovery_report(&[], 20, &adoption);
+
+        assert_eq!(report.history.len(), 1);
+        assert_eq!(report.history[0].suggestion, "syn git status");
+        assert_eq!(report.history[0].count, 2);
+    }
+    // END_discovery_history_uses_tracking_candidates
 }
 // END_public_api

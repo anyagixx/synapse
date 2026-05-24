@@ -4,6 +4,7 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test tracking::tests::tracker_records_and_reads_run_events --lib</COMMAND>
     <COMMAND>cargo test tracking::tests::tracker_records_routed_adapter_and_session_stats --lib</COMMAND>
+    <COMMAND>cargo run --quiet -- session --json</COMMAND>
     <COMMAND>cargo test --test integration_test test_tracking_is_scoped_by_canonical_project_path</COMMAND>
     <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
     <COMMAND>cargo test --test rtk_system_adapters_test</COMMAND>
@@ -15,6 +16,7 @@
     <ASSERTION>Run-event reads and writes use the same canonical project identity under isolated cwd test execution.</ASSERTION>
     <ASSERTION>Route-aware tracking stores adapter, route_key, and session_id and reports adapter/session aggregate savings.</ASSERTION>
     <ASSERTION>Token economics include adapter_groups and session_groups so RTK coverage can be audited in gain output.</ASSERTION>
+    <ASSERTION>Tracking reports route_adoption_pct, routed_commands, passthrough_commands, and bounded missed_route_candidates from local SQLite data.</ASSERTION>
     <ASSERTION>Local RTK adapters and system adapters record adapter-level savings through the shared tracking path.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-50</PHASE_GATE>

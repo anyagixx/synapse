@@ -98,16 +98,16 @@ This page lists shipped CLI commands only.
 | `syn pipe --filter <name>` | Filter stdin through Synapse RTK filters |
 | `syn log <file>` | Deduplicate and summarize log output |
 | `syn smart <file>` | Summarize source file structure without printing full code |
-| `syn discover [cmd...]` | Discover routeable token-heavy commands and Synapse replacements |
-| `syn discover --json --limit 10` | Render bounded discovery diagnostics as JSON |
-| `syn learn` | Show bounded RTK learning guidance for recurring misses |
-| `syn learn --json` | Render bounded RTK learning guidance as JSON |
+| `syn discover [cmd...]` | Discover routeable token-heavy commands, local missed-route history, and Synapse replacements |
+| `syn discover --json --limit 10` | Render bounded tracking-backed discovery diagnostics as JSON |
+| `syn learn` | Show measured RTK learning guidance for recurring misses |
+| `syn learn --json` | Render measured local adoption signals and guidance as JSON |
 | `syn binlog <path>` | Summarize MSBuild binary log diagnostics |
 | `syn dotnet-format-report <path>` | Summarize dotnet format JSON reports |
 | `syn dotnet-trx <path-or-dir>` | Summarize dotnet TRX test results |
-| `syn session` | Show tracked RTK session token savings |
-| `syn session --json` | Render tracked RTK session savings as JSON |
-| `syn cc-economics --format json` | Render local token economics from Synapse tracking |
+| `syn session` | Show tracked RTK session token savings and route adoption |
+| `syn session --json` | Render tracked RTK session savings, adoption, and missed-route candidates as JSON |
+| `syn cc-economics --format json` | Render local token economics and route adoption from Synapse tracking |
 | `syn rtk-parity --ci` | Check RTK parity inventory for CI |
 | `syn rewrite <cmd>` | Print the hook rewrite for routeable commands, safe command chains, pipeline left edges, safe fd redirects, and shell prefixes without executing it |
 | `syn proxy -- <cmd>` | Run a shell command through the token-saving proxy |

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TRACKING
 // PURPOSE: SQLite tracking and provenance ledger — records route-aware token usage plus autonomous run events by canonical project identity and provides stats
-// SCOPE: Tracker struct, canonical project identity, SQLite schema, route-aware token recording, provenance event recording, RTK coverage counts, session/adapter stats querying, TrackingStats and RunEvent models
+// SCOPE: Tracker struct, canonical project identity, SQLite schema, route-aware token recording, provenance event recording, RTK coverage counts, session/adapter stats querying, route adoption and missed-route candidate querying, TrackingStats and RunEvent models
 // DEPENDS: M-CONFIG
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - adapter and route metadata source
@@ -13,15 +13,20 @@
 // TrackingStats — Aggregate token economy statistics
 // TrackingAdapterStat — Aggregate savings grouped by routed adapter
 // TrackingSessionStat — Aggregate savings grouped by session id
+// TrackingAdoptionStats — Aggregate RTK route adoption statistics
+// TrackingMissedRouteStat — Passthrough command candidate for RTK routing review
 // RunEvent — Autonomous run lifecycle event record
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Added RTK adapter/session coverage counts to token economics]
+// LAST_CHANGE: [v3.2.0 — Added route adoption and missed-route candidate queries]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
 use std::path::PathBuf;
+
+const DEFAULT_MISSED_ROUTE_LIMIT: usize = 12;
+const MAX_MISSED_ROUTE_COMMAND_CHARS: i64 = 160;
 
 // START_public_api
 
@@ -374,7 +379,7 @@ impl Tracker {
              ORDER BY last_seen DESC
              LIMIT 12",
         )?;
-        let rows = stmt.query_map(rusqlite::params![project], |row| {
+        let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
             Ok(TrackingSessionStat {
                 session_id: row.get(0)?,
                 count: row.get(1)?,
@@ -388,10 +393,120 @@ impl Tracker {
         for row in rows {
             stats.recent_sessions.push(row?);
         }
+        stats.adoption = query_adoption_stats(&conn, &project, DEFAULT_MISSED_ROUTE_LIMIT)?;
         Ok(stats)
     }
     // END_tracker_get_stats
+
+    // START_CONTRACT_Tracker::get_adoption_stats
+    // PURPOSE: Retrieve RTK route adoption and missed-route candidates for the current project
+    // INPUTS: { limit: usize }
+    // OUTPUTS: { anyhow::Result<TrackingAdoptionStats> }
+    // LINKS:
+    //   → NFR-003 (traces_to) - measured adoption guides token-saving rollout
+    //   → Phase-56 (implements) - tracking-backed missed-route surface
+    // START_tracker_get_adoption_stats
+    pub async fn get_adoption_stats(&self, limit: usize) -> anyhow::Result<TrackingAdoptionStats> {
+        let db_path = Self::db_path()?;
+        let project = current_project_key();
+        if let Some(parent) = db_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let conn = rusqlite::Connection::open(&db_path)
+            .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
+        ensure_schema(&conn)?;
+        query_adoption_stats(&conn, &project, limit)
+            .map_err(|e| anyhow::anyhow!("query route adoption stats: {}", e))
+    }
+    // END_tracker_get_adoption_stats
 }
+
+// START_CONTRACT_query_adoption_stats
+// PURPOSE: Query route adoption counts and passthrough commands that may be missed RTK routes
+// INPUTS: { conn: &rusqlite::Connection }, { project: &str }, { limit: usize }
+// OUTPUTS: { rusqlite::Result<TrackingAdoptionStats> }
+// LINKS:
+//   → M-TRACKING (depends) - local tracking database query surface
+//   → Phase-56 (implements) - measured RTK adoption and missed-route reporting
+// START_query_adoption_stats
+fn query_adoption_stats(
+    conn: &rusqlite::Connection,
+    project: &str,
+    limit: usize,
+) -> rusqlite::Result<TrackingAdoptionStats> {
+    let normalized_limit = if limit == 0 {
+        DEFAULT_MISSED_ROUTE_LIMIT
+    } else {
+        limit
+    };
+    let mut adoption = TrackingAdoptionStats::default();
+    let mut stmt = conn.prepare(
+        "SELECT
+            COUNT(*),
+            COALESCE(SUM(CASE
+                WHEN route_key IS NOT NULL
+                    AND route_key != ''
+                    AND adapter IS NOT NULL
+                    AND adapter != ''
+                    AND adapter != 'passthrough'
+                THEN 1 ELSE 0 END),0),
+            COALESCE(SUM(CASE
+                WHEN route_key IS NULL
+                    OR route_key = ''
+                    OR adapter IS NULL
+                    OR adapter = ''
+                    OR adapter = 'passthrough'
+                THEN 1 ELSE 0 END),0)
+         FROM commands
+         WHERE project_path = ?1",
+    )?;
+    stmt.query_row(rusqlite::params![project], |row| {
+        adoption.total_commands = row.get(0)?;
+        adoption.routed_commands = row.get(1)?;
+        adoption.passthrough_commands = row.get(2)?;
+        Ok(())
+    })?;
+    adoption.route_adoption_pct = if adoption.total_commands == 0 {
+        0.0
+    } else {
+        adoption.routed_commands as f64 / adoption.total_commands as f64 * 100.0
+    };
+
+    let mut stmt = conn.prepare(
+        "SELECT substr(original_cmd, 1, ?3), COUNT(*) as count, MAX(timestamp) as last_seen
+         FROM commands
+         WHERE project_path = ?1
+            AND (route_key IS NULL
+                OR route_key = ''
+                OR adapter IS NULL
+                OR adapter = ''
+                OR adapter = 'passthrough')
+            AND original_cmd NOT LIKE 'syn %'
+            AND original_cmd NOT LIKE 'rtk %'
+         GROUP BY original_cmd
+         ORDER BY count DESC, last_seen DESC
+         LIMIT ?2",
+    )?;
+    let rows = stmt.query_map(
+        rusqlite::params![
+            project,
+            normalized_limit as i64,
+            MAX_MISSED_ROUTE_COMMAND_CHARS
+        ],
+        |row| {
+            Ok(TrackingMissedRouteStat {
+                command: row.get(0)?,
+                count: row.get(1)?,
+                last_seen: row.get(2)?,
+            })
+        },
+    )?;
+    for row in rows {
+        adoption.missed_route_candidates.push(row?);
+    }
+    Ok(adoption)
+}
+// END_query_adoption_stats
 
 // START_CONTRACT_current_project_key
 // PURPOSE: Return a stable canonical project identity for per-project tracking isolation
@@ -541,6 +656,26 @@ pub struct TrackingSessionStat {
 }
 // END_TrackingSessionStat
 
+// START_TrackingMissedRouteStat
+#[derive(serde::Serialize, Default, Debug, Clone)]
+pub struct TrackingMissedRouteStat {
+    pub command: String,
+    pub count: u64,
+    pub last_seen: String,
+}
+// END_TrackingMissedRouteStat
+
+// START_TrackingAdoptionStats
+#[derive(serde::Serialize, Default, Debug, Clone)]
+pub struct TrackingAdoptionStats {
+    pub total_commands: u64,
+    pub routed_commands: u64,
+    pub passthrough_commands: u64,
+    pub route_adoption_pct: f64,
+    pub missed_route_candidates: Vec<TrackingMissedRouteStat>,
+}
+// END_TrackingAdoptionStats
+
 // START_RunEvent
 #[derive(serde::Serialize, Default, Debug, Clone)]
 pub struct RunEvent {
@@ -567,6 +702,7 @@ pub struct TrackingStats {
     pub top_commands: Vec<TrackingCommandStat>,
     pub top_adapters: Vec<TrackingAdapterStat>,
     pub recent_sessions: Vec<TrackingSessionStat>,
+    pub adoption: TrackingAdoptionStats,
 }
 // END_TrackingStats
 
@@ -635,20 +771,26 @@ mod tests {
             .record_routed("docker ps", 80, 20, "infra-cli", "docker ps")
             .await
             .unwrap();
+        tracker.record("git status", 40, 35).await.unwrap();
 
+        let adoption = tracker.get_adoption_stats(10).await.unwrap();
         let stats = tracker.get_stats().await.unwrap();
         std::env::set_current_dir(old_cwd).unwrap();
         unsafe {
             std::env::remove_var("SYNAPSE_SESSION_ID");
         }
 
-        assert_eq!(stats.total_commands, 2);
-        assert_eq!(stats.adapter_groups, 2);
+        assert_eq!(stats.total_commands, 3);
+        assert_eq!(stats.adapter_groups, 3);
         assert_eq!(stats.session_groups, 1);
         assert_eq!(stats.top_commands[0].command, "cargo test");
         assert_eq!(stats.top_adapters[0].adapter, "rust-cargo");
         assert_eq!(stats.recent_sessions[0].session_id, "session-router-test");
-        assert_eq!(stats.recent_sessions[0].saved_tokens, 135);
+        assert_eq!(stats.recent_sessions[0].saved_tokens, 140);
+        assert_eq!(adoption.total_commands, 3);
+        assert_eq!(adoption.routed_commands, 2);
+        assert_eq!(adoption.passthrough_commands, 1);
+        assert_eq!(adoption.missed_route_candidates[0].command, "git status");
     }
 }
 
