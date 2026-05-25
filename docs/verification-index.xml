@@ -115,7 +115,7 @@
     <VERIFICATION id="V-M-TEST-MCP-REGRESSION" module="M-TEST-MCP-REGRESSION" path="docs/verification/V-M-TEST-MCP-REGRESSION.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-TEST-COVERAGE-MATRIX" module="M-TEST-COVERAGE-MATRIX" path="docs/verification/V-M-TEST-COVERAGE-MATRIX.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TEST-PERF-REGRESSION" module="M-TEST-PERF-REGRESSION" path="docs/verification/V-M-TEST-PERF-REGRESSION.xml" priority="normal" status="pending" />
-    <VERIFICATION id="V-M-TEST-CONTRACT-DIFFERENTIAL" module="M-TEST-CONTRACT-DIFFERENTIAL" path="docs/verification/V-M-TEST-CONTRACT-DIFFERENTIAL.xml" priority="critical" status="pending" />
+    <VERIFICATION id="V-M-TEST-CONTRACT-DIFFERENTIAL" module="M-TEST-CONTRACT-DIFFERENTIAL" path="docs/verification/V-M-TEST-CONTRACT-DIFFERENTIAL.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-TEST-RESILIENCE-CHAOS" module="M-TEST-RESILIENCE-CHAOS" path="docs/verification/V-M-TEST-RESILIENCE-CHAOS.xml" priority="critical" status="pending" />
     <VERIFICATION id="V-M-TRACKING" module="M-TRACKING" path="docs/verification/V-M-TRACKING.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TRACKING-MCP-METRICS" module="M-TRACKING-MCP-METRICS" path="docs/verification/V-M-TRACKING-MCP-METRICS.xml" priority="normal" status="active" />

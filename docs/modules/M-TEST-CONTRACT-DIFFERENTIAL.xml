@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MODULE id="M-TEST-CONTRACT-DIFFERENTIAL" type="CORE_LOGIC" status="pending">
+<MODULE id="M-TEST-CONTRACT-DIFFERENTIAL" type="CORE_LOGIC" status="active">
   <NAME>M-TEST-CONTRACT-DIFFERENTIAL</NAME>
   <PURPOSE>Assert that cascade impact analysis affects exactly the modules declared by a contract test specification.</PURPOSE>
   <SCOPE>TOML contract specs, trigger filtering, expected and unexpected affected modules, allow_extra behavior, and cascade preview cleanup.</SCOPE>

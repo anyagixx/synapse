@@ -1,0 +1,28 @@
+# MODULE_CONTRACT
+# MODULE_ID: M-TEST-CONTRACT-DIFFERENTIAL
+# PURPOSE: Contract differential fixture asserting module dependency cascade behavior.
+# SCOPE: MultiModule fixture cascade trigger from M-CORE to dependent modules.
+# DEPENDS: M-TEST-CONTRACT-DIFFERENTIAL, M-TEST-FIXTURE
+# LINKS:
+#   -> Phase-79 (implements) - contract differential integration fixture
+#   <- V-M-TEST-CONTRACT-DIFFERENTIAL (verified_by) - contract differential verification
+
+# START_MODULE_MAP
+# test - TOML contract differential cases
+# END_MODULE_MAP
+
+# START_CHANGE_SUMMARY
+# LAST_CHANGE: [v1.0.0 - Added module-change contract differential fixture]
+# END_CHANGE_SUMMARY
+
+# START_contract_suite
+fixture = "multi-module"
+
+[[test]]
+name = "core-change-reaches-dependent-modules"
+trigger = "module-change"
+changed_artifact = "M-CORE"
+change_description = "Core module contract changed"
+expected_modules = ["M-AUTH", "M-STORAGE"]
+allow_extra = false
+# END_contract_suite
