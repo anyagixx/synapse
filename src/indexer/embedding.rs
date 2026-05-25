@@ -16,6 +16,8 @@
 // EmbeddingRunSummary — Summary of block embedding attachment work
 // EmbeddingProvider — Provider trait for fastembed runtime and deterministic unit fakes
 // FastembedEmbeddingProvider — fastembed-backed local ONNX text embedding provider
+// configure_dynamic_ort_path — Selects bundled ONNX Runtime dylib for dynamic macOS Intel builds
+// initialize_text_embedding — Initializes fastembed while converting ONNX Runtime panics into errors
 // default_provider_spec — Returns the selected provider/model/version contract
 // default_model_cache_dir — Returns the XDG data cache directory for embedding assets
 // validate_embedding_batch_size — Validates configured embedding batch size bounds
@@ -25,18 +27,31 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 — Added fastembed runtime wiring for block and query embeddings]
+// LAST_CHANGE: [v1.2.0 - Added macOS Intel dynamic ONNX Runtime build support]
 // END_CHANGE_SUMMARY
 
 use super::storage_types::StoredBlock;
 use crate::config::Config;
+use anyhow::Context as _;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use std::path::PathBuf;
 
 pub const EMBEDDING_PROVIDER: &str = "fastembed";
 pub const EMBEDDING_PROVIDER_VERSION: &str = "5.13.4";
+
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+pub const EMBEDDING_PROVIDER_FEATURES: &[&str] = &["ort-load-dynamic", "hf-hub-rustls-tls"];
+
+#[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
 pub const EMBEDDING_PROVIDER_FEATURES: &[&str] =
     &["ort-download-binaries-rustls-tls", "hf-hub-rustls-tls"];
+
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+pub const EMBEDDING_RUNTIME_LINKAGE: &str = "dynamic-onnxruntime";
+
+#[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
+pub const EMBEDDING_RUNTIME_LINKAGE: &str = "linked-onnxruntime";
+
 pub const EMBEDDING_MODEL_NAME: &str = "AllMiniLML6V2";
 pub const EMBEDDING_MODEL_REPOSITORY: &str = "Qdrant/all-MiniLM-L6-v2-onnx";
 pub const EMBEDDING_MODEL_FILE: &str = "model.onnx";
@@ -183,10 +198,11 @@ impl FastembedEmbeddingProvider {
         std::fs::create_dir_all(&runtime.cache_dir)?;
         let model = parse_embedding_model(&runtime.model)
             .ok_or_else(|| anyhow::anyhow!("unsupported embedding model `{}`", runtime.model))?;
+        configure_dynamic_ort_path();
         let options = InitOptions::new(model)
             .with_cache_dir(runtime.cache_dir.clone())
             .with_show_download_progress(false);
-        let inner = TextEmbedding::try_new(options)?;
+        let inner = initialize_text_embedding(options)?;
         Ok(Self {
             model_id: runtime.model_id()?,
             dimensions: EMBEDDING_MODEL_DIMENSIONS,
@@ -195,6 +211,58 @@ impl FastembedEmbeddingProvider {
     }
     // END_fastembed_embedding_provider_new
 }
+
+// START_CONTRACT_configure_dynamic_ort_path
+// PURPOSE: Prefer a bundled ONNX Runtime dylib beside the syn executable for dynamic macOS Intel builds
+// OUTPUTS: { none }
+// SIDE_EFFECTS: may set ORT_DYLIB_PATH before fastembed initializes ONNX Runtime
+// START_configure_dynamic_ort_path
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+fn configure_dynamic_ort_path() {
+    if std::env::var_os("ORT_DYLIB_PATH").is_some() {
+        return;
+    }
+    let Ok(exe_path) = std::env::current_exe() else {
+        return;
+    };
+    let Some(exe_dir) = exe_path.parent() else {
+        return;
+    };
+    let candidate = exe_dir.join("libonnxruntime.dylib");
+    if candidate.is_file() {
+        std::env::set_var("ORT_DYLIB_PATH", candidate);
+    }
+}
+
+#[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
+fn configure_dynamic_ort_path() {}
+// END_configure_dynamic_ort_path
+
+// START_CONTRACT_initialize_text_embedding
+// PURPOSE: Initialize fastembed and return actionable errors when ONNX Runtime is unavailable
+// INPUTS: { options: InitOptions }
+// OUTPUTS: { anyhow::Result<TextEmbedding> }
+// SIDE_EFFECTS: may initialize ONNX Runtime and download model assets through fastembed
+// START_initialize_text_embedding
+fn initialize_text_embedding(options: InitOptions) -> anyhow::Result<TextEmbedding> {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        TextEmbedding::try_new(options)
+    }));
+    result
+        .map_err(|_| {
+            anyhow::anyhow!(
+                "embedding provider failed to initialize ONNX Runtime using {}; set ORT_DYLIB_PATH to a compatible libonnxruntime.dylib or disable embeddings",
+                EMBEDDING_RUNTIME_LINKAGE
+            )
+        })?
+        .with_context(|| {
+            format!(
+                "embedding provider failed to initialize ONNX Runtime using {}; set ORT_DYLIB_PATH to a compatible libonnxruntime.dylib or disable embeddings",
+                EMBEDDING_RUNTIME_LINKAGE
+            )
+        })
+}
+// END_initialize_text_embedding
 
 impl EmbeddingProvider for FastembedEmbeddingProvider {
     // START_CONTRACT_FastembedEmbeddingProvider::model_id
@@ -549,11 +617,20 @@ mod tests {
 
         assert_eq!(spec.provider, "fastembed");
         assert_eq!(spec.provider_version, "5.13.4");
+        assert!(spec.provider_features.contains(&"hf-hub-rustls-tls"));
         assert_eq!(spec.model_name, "AllMiniLML6V2");
         assert_eq!(spec.model_repository, "Qdrant/all-MiniLM-L6-v2-onnx");
         assert_eq!(spec.model_format, "onnx");
         assert_eq!(spec.dimensions, 384);
         assert_eq!(spec.default_batch_size, 256);
+
+        #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+        assert!(spec.provider_features.contains(&"ort-load-dynamic"));
+
+        #[cfg(not(all(target_os = "macos", target_arch = "x86_64")))]
+        assert!(spec
+            .provider_features
+            .contains(&"ort-download-binaries-rustls-tls"));
     }
     // END_test_default_provider_spec_documents_fastembed_model
 

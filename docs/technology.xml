@@ -23,7 +23,7 @@
       <Dependency ecosystem="rust" name="axum" version="0.7.9" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="chrono" version="0.4.44" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="clap" version="4.6.1" source="Cargo.toml/Cargo.lock" exact="true" />
-      <Dependency ecosystem="rust" name="fastembed" version="5.13.4" source="Cargo.toml/Cargo.lock" exact="true" features="ort-download-binaries-rustls-tls,hf-hub-rustls-tls" />
+      <Dependency ecosystem="rust" name="fastembed" version="5.13.4" source="Cargo.toml/Cargo.lock" exact="true" features="ort-download-binaries-rustls-tls,hf-hub-rustls-tls; macOS Intel: ort-load-dynamic,hf-hub-rustls-tls" />
       <Dependency ecosystem="rust" name="hf-hub" version="0.5.0" source="Cargo.lock transitive via fastembed" exact="true" />
       <Dependency ecosystem="rust" name="ignore" version="0.4.25" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="notify" version="8.2.0" source="Cargo.toml/Cargo.lock" exact="true" />
@@ -68,7 +68,7 @@
       <ComponentA>fastembed 5.13.4</ComponentA>
       <ComponentB>ort 2.0.0-rc.12</ComponentB>
       <Status>compatible</Status>
-      <Note>fastembed pins ort 2.0.0-rc.12 and Synapse enables rustls-backed ONNX Runtime binary download features.</Note>
+      <Note>fastembed pins ort 2.0.0-rc.12. Synapse enables rustls-backed ONNX Runtime binary downloads on supported non-Intel-macOS targets and dynamic ONNX Runtime loading on x86_64-apple-darwin to keep Intel macOS packaging buildable.</Note>
       <VerifiedAt>2026-05-25</VerifiedAt>
     </CompatibilityCheck>
     <CompatibilityCheck id="CHECK-005">
@@ -81,16 +81,16 @@
   </DependencyMatrix>
   <KnownIssues>
     <Issue id="KI-001" component="fastembed/ort" version="5.13.4/2.0.0-rc.12">
-      <Description>First embedding use may download ONNX model assets and ONNX Runtime binaries into the configured cache directory.</Description>
-      <Workaround>Embeddings are disabled by default for release-safe installs; enable with syn config set embedding.enabled true when local model downloads are acceptable. Indexing and search fall back to lexical behavior on provider failure.</Workaround>
+      <Description>First embedding use may download ONNX model assets and, on non-Intel-macOS targets, ONNX Runtime binaries into the configured cache directory. macOS Intel uses dynamic ONNX Runtime loading because the transitive ort download table has no x86_64-apple-darwin binary.</Description>
+      <Workaround>Embeddings are disabled by default for release-safe installs; enable with syn config set embedding.enabled true when local model downloads are acceptable. On macOS Intel, set ORT_DYLIB_PATH to a compatible libonnxruntime.dylib before enabling embeddings. Indexing and search fall back to lexical behavior on provider failure.</Workaround>
     </Issue>
     <Issue id="KI-002" component="fastembed/tokenizers/paste" version="5.13.4/0.22.2/1.0.15">
       <Description>cargo audit reports RUSTSEC-2024-0436 because tokenizers depends on the unmaintained paste crate through fastembed 5.13.4. fastembed is currently the latest available release and the advisory is a maintenance warning, not a vulnerability.</Description>
       <Workaround>CI runs cargo audit --deny warnings with an explicit RUSTSEC-2024-0436 waiver until fastembed releases a tokenizers line that removes paste or Synapse replaces the embedding provider.</Workaround>
     </Issue>
     <Issue id="KI-003" component="ort/x86_64-apple-darwin" version="2.0.0-rc.12">
-      <Description>ort does not publish a prebuilt ONNX Runtime binary for the hosted x86_64-apple-darwin target used by the v2.6.2 release workflow.</Description>
-      <Workaround>v2.6.2 publishes prebuilt artifacts for Linux x86_64, Linux aarch64, and macOS arm64 only. macOS Intel packaging remains deferred until the ONNX Runtime dependency has a compatible hosted release path or Synapse ships a separate build strategy.</Workaround>
+      <Description>ort does not publish a prebuilt ONNX Runtime binary for the hosted x86_64-apple-darwin target used by the v2.6.3 release workflow.</Description>
+      <Workaround>v2.6.3 restores the macOS Intel prebuilt artifact with fastembed's ort-load-dynamic feature. Core Synapse runs without ONNX Runtime because embeddings are disabled by default; optional embeddings require ORT_DYLIB_PATH on Intel macOS.</Workaround>
     </Issue>
   </KnownIssues>
   <DevOps>

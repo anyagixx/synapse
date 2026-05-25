@@ -4,7 +4,7 @@
     Module responsibility: Embedding provider specification and runtime helpers for local semantic code search
     Key data flows:
       - INPUT: Configured embedding enablement, provider/model settings, cache path, and batch size.
-      - PROCESSING: Validate provider/model compatibility, resolve cache location, enforce batch limits, initialize fastembed when enabled, attach block vectors, embed query text, and report fallback policy.
+      - PROCESSING: Validate provider/model compatibility, resolve cache location, enforce batch limits, configure dynamic ONNX Runtime loading on macOS Intel, initialize fastembed when enabled, attach block vectors, embed query text, and report fallback policy.
       - OUTPUT: Provider contract, block embedding metadata, and query vectors consumed by indexing and search modules.
     Critical invariants:
       - Provider version, model identity, model dimension, and fallback policy remain explicit.
@@ -19,5 +19,5 @@
     - indexer::embedding unit tests pass
     - verify_project and review_code pass after implementation
   RISKS_ACKNOWLEDGED:
-    - fastembed/ONNX can affect release packaging; docs/technology.xml must be updated before the phase closes.
+    - fastembed/ONNX can affect release packaging; macOS Intel uses dynamic ONNX Runtime loading and docs/technology.xml must stay explicit.
 </BELIEF_STATE>

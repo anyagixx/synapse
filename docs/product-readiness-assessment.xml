@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-25-V2-6-2-PHASE-68" status="release-candidate">
+<PRODUCT_READINESS_ASSESSMENT id="PRA-2026-05-25-V2-6-3-PHASE-68" status="release-candidate">
   <DATE>2026-05-25</DATE>
-  <PHASE_GATE>v2.6.2 is the current supported Linux/macOS release candidate after Phase-68; all indexed phases are done and release freshness requires a new tag at HEAD.</PHASE_GATE>
-  <SUMMARY>Synapse is ready for the v2.6.2 release line as a governed AI engineering toolkit with full RTK parity gates, GraphRAG/LSP improvements, strict MyGRACE traceability, zero canonical drift, and public installer truth aligned to Linux x86_64/aarch64 plus macOS arm64 artifacts.</SUMMARY>
+  <PHASE_GATE>v2.6.3 is the current supported Linux/macOS release candidate after Phase-68; all indexed phases are done and release freshness requires a new tag at HEAD.</PHASE_GATE>
+  <SUMMARY>Synapse is ready for the v2.6.3 release line as a governed AI engineering toolkit with full RTK parity gates, GraphRAG/LSP improvements, strict MyGRACE traceability, zero canonical drift, and public installer truth aligned to Linux x86_64/aarch64 plus macOS x86_64/arm64 artifacts.</SUMMARY>
   <SCORES>
     <OVERALL_READINESS>9.8/10</OVERALL_READINESS>
     <PUBLIC_RELEASE_READINESS>10.0/10</PUBLIC_RELEASE_READINESS>
@@ -16,25 +16,25 @@
   </SCORES>
   <EVIDENCE>
     <MYGRACE_DRIFT>0 canonical drift across 98 code modules, graph shards, and verification shards after Phase-68 refresh.</MYGRACE_DRIFT>
-    <LOCAL_CI_GATE>Release-candidate gates are run before publishing v2.6.2: cargo tests, release version/freshness guards, release/install smoke, RTK full release gate, MyGRACE verify/review, refresh, and status.</LOCAL_CI_GATE>
-    <HOSTED_CI_GATE>Hosted CI must pass on pushed main and on the v2.6.2 tag before treating the supported GitHub release artifacts as final.</HOSTED_CI_GATE>
-    <RELEASE_VERSION_TRUTH>Tags v2.6.0 and v2.6.1 are already published on older commits; the current release line therefore advances Cargo.toml, Cargo.lock, install.sh, public docs, and release-smoke verification refs to v2.6.2.</RELEASE_VERSION_TRUTH>
-    <MAIN_BRANCH_VERSION_TRUTH>Main must publish a fresh v2.6.2 tag at the release commit so release freshness guards do not confuse post-release commits with stale tags.</MAIN_BRANCH_VERSION_TRUTH>
+    <LOCAL_CI_GATE>Release-candidate gates are run before publishing v2.6.3: cargo tests, release version/freshness guards, release/install smoke, RTK full release gate, MyGRACE verify/review, refresh, and status.</LOCAL_CI_GATE>
+    <HOSTED_CI_GATE>Hosted CI must pass on pushed main and on the v2.6.3 tag before treating the supported GitHub release artifacts as final.</HOSTED_CI_GATE>
+    <RELEASE_VERSION_TRUTH>Tags v2.6.0 and v2.6.1 are already published on older commits; the current release line therefore advances Cargo.toml, Cargo.lock, install.sh, public docs, and release-smoke verification refs to v2.6.3.</RELEASE_VERSION_TRUTH>
+    <MAIN_BRANCH_VERSION_TRUTH>Main must publish a fresh v2.6.3 tag at the release commit so release freshness guards do not confuse post-release commits with stale tags.</MAIN_BRANCH_VERSION_TRUTH>
     <INSTALLER_TRUTH>The installer still prefers signed-off release artifacts plus SHA256SUMS verification. Source fallback is now explicit for supported hosts: SYN_INSTALL_SOURCE_REF for hosted fresh-install smoke, selected Git tag when available, and default main branch only during the pre-tag release-candidate window.</INSTALLER_TRUTH>
-    <FRESH_INSTALL_TRUTH>Push CI fresh-install smoke uses raw.githubusercontent.com at the exact workflow commit plus SYN_INSTALL_SOURCE_REF, preventing a current-HEAD smoke job from silently installing an older release tag. Public install docs now target https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh.</FRESH_INSTALL_TRUTH>
+    <FRESH_INSTALL_TRUTH>Push CI fresh-install smoke uses raw.githubusercontent.com at the exact workflow commit plus SYN_INSTALL_SOURCE_REF, preventing a current-HEAD smoke job from silently installing an older release tag. Public install docs now target https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh.</FRESH_INSTALL_TRUTH>
     <PACKAGE_TRUTH>The Cargo package is synapse-agent to avoid the crates.io syn parser conflict; the public binary and library crate remain syn.</PACKAGE_TRUTH>
     <SECURITY_AUDIT_TRUTH>cargo audit --deny warnings passes for the release line with an explicit RUSTSEC-2024-0436 waiver for the transitive fastembed/tokenizers paste maintenance warning.</SECURITY_AUDIT_TRUTH>
     <MCP_CLI_TRUTH>syn mcp is public stdio-only. verify_project/review_code and syn verify/review now expose profile-aware strictness without changing the strict CI default.</MCP_CLI_TRUTH>
     <NO_ACTIVE_PHASE_TRUTH>docs/plan-index.xml now has ACTIVE_PHASE none after all phase shards are done; status and refresh preserve that state instead of reporting a completed phase as active.</NO_ACTIVE_PHASE_TRUTH>
     <DOC_TRUTH>Public README, INSTALL, COMMANDS, FAQ, QUICKSTART, WORKFLOW, and SUPPORT docs are guarded against ghost CLI commands, unsupported flags, unsupported installer URLs, obsolete release paths, unsupported Windows install claims, unmeasured token-savings percentages, and misleading privacy wording.</DOC_TRUTH>
     <LICENSE_TRUTH>LICENSE now contains the full Apache License 2.0 text instead of a short placeholder.</LICENSE_TRUTH>
-    <SUPPORT_DIAGNOSTICS>install.sh --diagnose reports independent OS and architecture support status, supported Linux/macOS artifact mapping, install directory status, tool availability, checksum verifier status, macOS Intel and Windows packaging deferral, and SYN_INSTALL_DIR guidance.</SUPPORT_DIAGNOSTICS>
+    <SUPPORT_DIAGNOSTICS>install.sh --diagnose reports independent OS and architecture support status, supported Linux/macOS artifact mapping including macOS Intel, install directory status, tool availability, checksum verifier status, Windows packaging deferral, and SYN_INSTALL_DIR guidance.</SUPPORT_DIAGNOSTICS>
   </EVIDENCE>
   <RESIDUAL_RISKS>
-    <RISK_MACOS_INTEL_DEFERRED>macOS Intel prebuilt install remains intentionally deferred because the transitive ONNX Runtime dependency does not provide a compatible hosted x86_64-apple-darwin binary path for v2.6.2.</RISK_MACOS_INTEL_DEFERRED>
+    <RISK_MACOS_INTEL_EMBEDDING_RUNTIME>macOS Intel prebuilt install is restored through an ort-load-dynamic build; optional local embeddings on Intel macOS require a compatible libonnxruntime.dylib via ORT_DYLIB_PATH, while default indexing/search remain lexical-safe.</RISK_MACOS_INTEL_EMBEDDING_RUNTIME>
     <RISK_WINDOWS_DEFERRED>Windows prebuilt install remains intentionally deferred and is not part of the first supported Linux/macOS public release scope.</RISK_WINDOWS_DEFERRED>
     <RISK_EXTERNAL_ADOPTION_EVIDENCE>Real user feedback still needs to be collected across more Linux/macOS environments after the public release.</RISK_EXTERNAL_ADOPTION_EVIDENCE>
     <RISK_TEST_FILE_SIZE_TARGET>tests/docs_parity.rs and tests/integration_test.rs exceed the 500-line Phase-2 maintainability target while remaining under the hard 1300-line gate.</RISK_TEST_FILE_SIZE_TARGET>
   </RESIDUAL_RISKS>
-  <NEXT_PHASE>Publish v2.6.2, wait for hosted main/tag release workflows, collect Linux/macOS user feedback, and defer macOS Intel plus Windows packaging to later dedicated release lines.</NEXT_PHASE>
+  <NEXT_PHASE>Publish v2.6.3, wait for hosted main/tag release workflows, collect Linux/macOS user feedback, and defer Windows packaging to a later dedicated release line.</NEXT_PHASE>
 </PRODUCT_READINESS_ASSESSMENT>

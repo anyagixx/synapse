@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.4.0 - Added macOS Intel deferred-packaging diagnostics]
+// LAST_CHANGE: [v1.5.0 - Restored macOS Intel diagnostics as supported]
 // END_CHANGE_SUMMARY
 
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
@@ -28,6 +28,8 @@ const SUPPORT_DOC: &str = include_str!("../docs/SUPPORT.md");
 fn test_installer_diagnose_reports_supported_matrix() {
     let cases = [
         ("Linux", "x86_64", "syn-x86_64-unknown-linux-gnu.tar.gz"),
+        ("Linux", "aarch64", "syn-aarch64-unknown-linux-gnu.tar.gz"),
+        ("Darwin", "x86_64", "syn-x86_64-apple-darwin.tar.gz"),
         ("Darwin", "arm64", "syn-aarch64-apple-darwin.tar.gz"),
     ];
 
@@ -55,7 +57,7 @@ fn test_installer_diagnose_reports_supported_matrix() {
             "tool.curl=".to_string(),
             "tool.tar=".to_string(),
             "tool.sha256=".to_string(),
-            "macos_intel_packaging=deferred".to_string(),
+            "macos_intel_packaging=supported".to_string(),
             "windows_packaging=deferred".to_string(),
             "support_hint=Use SYN_INSTALL_DIR".to_string(),
         ];
@@ -110,9 +112,9 @@ fn test_installer_diagnose_reports_os_and_arch_failures() {
     for marker in [
         "os_status=ok",
         "arch_status=ok",
-        "platform_status=unsupported-platform",
-        "artifact=none",
-        "macos_intel_packaging=deferred",
+        "platform_status=ok",
+        "artifact=syn-x86_64-apple-darwin.tar.gz",
+        "macos_intel_packaging=supported",
     ] {
         assert!(
             stdout.contains(marker),
@@ -140,8 +142,8 @@ fn test_installer_unsupported_platform_guidance_is_actionable() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(
-        combined.contains("Supported prebuilt hosts: Linux x86_64/aarch64 and macOS arm64")
-            && combined.contains("macOS Intel and Windows packaging are deferred")
+        combined.contains("Supported prebuilt hosts: Linux x86_64/aarch64 and macOS x86_64/arm64")
+            && combined.contains("Windows packaging is deferred")
             && combined.contains("Run: sh install.sh --diagnose"),
         "unsupported platform guidance is not actionable: {combined}"
     );
@@ -161,7 +163,7 @@ fn test_support_docs_document_diagnostics() {
             "{name} must document installer diagnose mode"
         );
         assert!(
-            doc.contains("https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh"),
+            doc.contains("https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh"),
             "{name} must use the supported installer URL"
         );
     }
@@ -189,7 +191,7 @@ fn test_support_docs_do_not_add_windows_install_claims() {
         );
     }
     assert!(
-        SUPPORT_DOC.contains("macOS Intel and Windows packaging are deferred"),
-        "support docs must state macOS Intel and Windows packaging are deferred"
+        SUPPORT_DOC.contains("Windows packaging is deferred"),
+        "support docs must state Windows packaging is deferred"
     );
 }

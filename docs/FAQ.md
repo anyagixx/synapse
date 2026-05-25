@@ -15,25 +15,26 @@ OpenCode, Claude Code, Cursor, Windsurf, Cline, Copilot, Gemini CLI, Codex, and 
 
 **How do I install?**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh | sh
 ```
 Without sudo:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
 **What platforms are supported?**
 Prebuilt release artifacts:
 - Linux x86_64
 - Linux aarch64
+- macOS Intel
 - macOS arm64
 
 Source fallback via Cargo remains available on supported Linux/macOS hosts when a matching prebuilt artifact cannot be downloaded. Before a newly bumped default tag is published, the default installer can build the repository `main` branch instead of failing on the pending tag.
-macOS Intel and Windows packaging are deferred and are not part of the current release matrix.
+Windows packaging is deferred and is not part of the current release matrix.
 
 **How do I diagnose install failures?**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh -o /tmp/synapse-install.sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh -o /tmp/synapse-install.sh
 sh /tmp/synapse-install.sh --diagnose
 ```
 The diagnostic report prints the detected artifact, install directory status, required tools, checksum support, and source fallback prerequisites.

@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.35.0 - Aligned supported release platforms with v2.6.2 hosted matrix]
+// LAST_CHANGE: [v2.36.0 - Restored Intel macOS release platform]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -464,6 +464,7 @@ pub const REVIEW_MODES: &[&str] = &["scoped", "wave-audit", "full"];
 pub const PLATFORMS: &[&str] = &[
     "x86_64-unknown-linux-gnu",
     "aarch64-unknown-linux-gnu",
+    "x86_64-apple-darwin",
     "aarch64-apple-darwin",
 ];
 

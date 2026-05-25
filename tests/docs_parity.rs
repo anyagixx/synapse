@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.5.0 - Aligned release parity checks with supported v2.6.2 artifact matrix]
+// LAST_CHANGE: [v5.6.0 - Restored Intel macOS artifact parity checks]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -49,10 +49,11 @@ const FAQ: &str = include_str!("../docs/FAQ.md");
 const WORKFLOW_DOC: &str = include_str!("../docs/WORKFLOW.md");
 const SUPPORT_DOC: &str = include_str!("../docs/SUPPORT.md");
 const INSTALL_COMMAND: &str =
-    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh | sh";
-const EXPECTED_PREBUILT_ARTIFACTS: [&str; 3] = [
+    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh | sh";
+const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
     "syn-x86_64-unknown-linux-gnu.tar.gz",
     "syn-aarch64-unknown-linux-gnu.tar.gz",
+    "syn-x86_64-apple-darwin.tar.gz",
     "syn-aarch64-apple-darwin.tar.gz",
 ];
 // START_CONTRACT_public_docs
@@ -487,7 +488,12 @@ fn test_platform_claims_match_release_truth() {
         FAQ.contains("Prebuilt release artifacts:"),
         "FAQ must introduce the Linux/macOS prebuilt matrix"
     );
-    for platform in ["Linux x86_64", "Linux aarch64", "macOS arm64"] {
+    for platform in [
+        "Linux x86_64",
+        "Linux aarch64",
+        "macOS Intel",
+        "macOS arm64",
+    ] {
         assert!(
             FAQ.contains(platform),
             "FAQ must state {} support",
@@ -495,8 +501,10 @@ fn test_platform_claims_match_release_truth() {
         );
     }
     assert!(
-        FAQ.contains("macOS Intel and Windows packaging are deferred and are not part of the current release matrix."),
-        "FAQ must state macOS Intel and Windows are intentionally deferred"
+        FAQ.contains(
+            "Windows packaging is deferred and is not part of the current release matrix."
+        ),
+        "FAQ must state Windows packaging is intentionally deferred"
     );
 }
 
@@ -623,6 +631,7 @@ fn test_release_matrix_declares_linux_macos_targets() {
     for target in [
         "x86_64-unknown-linux-gnu",
         "aarch64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
         "aarch64-apple-darwin",
     ] {
         assert!(
@@ -631,7 +640,12 @@ fn test_release_matrix_declares_linux_macos_targets() {
             target
         );
     }
-    for runner in ["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest"] {
+    for runner in [
+        "ubuntu-latest",
+        "ubuntu-24.04-arm",
+        "macos-15-intel",
+        "macos-latest",
+    ] {
         assert!(
             RELEASE_WORKFLOW.contains(runner) && CI_WORKFLOW.contains(runner),
             "release and CI workflows must include runner {}",
@@ -691,6 +705,7 @@ fn test_installer_dry_run_maps_linux_macos_artifacts() {
     let cases = [
         ("Linux", "x86_64", "syn-x86_64-unknown-linux-gnu.tar.gz"),
         ("Linux", "aarch64", "syn-aarch64-unknown-linux-gnu.tar.gz"),
+        ("Darwin", "x86_64", "syn-x86_64-apple-darwin.tar.gz"),
         ("Darwin", "arm64", "syn-aarch64-apple-darwin.tar.gz"),
     ];
     for (system, machine, artifact) in cases {
@@ -719,13 +734,13 @@ fn test_installer_dry_run_maps_linux_macos_artifacts() {
     let unsupported_output = std::process::Command::new("sh")
         .arg("install.sh")
         .arg("--dry-run")
-        .env("SYN_INSTALL_UNAME_S", "Darwin")
+        .env("SYN_INSTALL_UNAME_S", "Windows_NT")
         .env("SYN_INSTALL_UNAME_M", "x86_64")
         .output()
-        .expect("install.sh dry-run should execute for unsupported macOS Intel");
+        .expect("install.sh dry-run should execute for unsupported Windows");
     assert!(
         !unsupported_output.status.success(),
-        "macOS Intel dry-run must fail until a supported release artifact exists"
+        "Windows dry-run must fail until a supported release artifact exists"
     );
     let unsupported = format!(
         "{}{}",
@@ -733,7 +748,7 @@ fn test_installer_dry_run_maps_linux_macos_artifacts() {
         String::from_utf8_lossy(&unsupported_output.stderr)
     );
     assert!(
-        unsupported.contains("macOS Intel packaging is deferred"),
-        "macOS Intel dry-run must explain the deferred packaging status: {unsupported}"
+        unsupported.contains("Windows packaging is deferred"),
+        "Windows dry-run must explain the deferred packaging status: {unsupported}"
     );
 }

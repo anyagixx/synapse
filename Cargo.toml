@@ -1,6 +1,6 @@
 [package]
 name = "synapse-agent"
-version = "2.6.2"
+version = "2.6.3"
 edition = "2021"
 description = "Local MyGRACE agent engineering toolkit for OpenCode"
 authors = ["Synapse Contributors"]
@@ -48,6 +48,11 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 axum = "0.7"
 tower-http = { version = "0.5", features = ["cors"] }
 rayon = "1"
+
+[target.'cfg(all(target_os = "macos", target_arch = "x86_64"))'.dependencies]
+fastembed = { version = "5.13.4", default-features = false, features = ["ort-load-dynamic", "hf-hub-rustls-tls"] }
+
+[target.'cfg(not(all(target_os = "macos", target_arch = "x86_64")))'.dependencies]
 fastembed = { version = "5.13.4", default-features = false, features = ["ort-download-binaries-rustls-tls", "hf-hub-rustls-tls"] }
 
 [build-dependencies]
