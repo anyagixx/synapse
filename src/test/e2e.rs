@@ -22,7 +22,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.1 - Derived StepExpectation default for clippy gate]
+// LAST_CHANGE: [v1.0.2 - Added repository scenario fixture coverage]
 // END_CHANGE_SUMMARY
 
 use crate::test::fixture::{FixtureBuilder, FixtureTemplate, TestFixture};
@@ -648,5 +648,24 @@ expected = { exit_code = 0 }
         let error = write_fixture_file(fixture.root(), &write).unwrap_err();
 
         assert!(error.to_string().contains("cannot escape fixture"));
+    }
+
+    #[test]
+    fn e2e_test_repository_full_cycle_scenario_passes() {
+        let result = run_e2e_scenario(Path::new("tests/e2e/scenarios/full-cycle.toml")).unwrap();
+
+        assert!(result.passed);
+        assert_eq!(result.steps_failed, 0);
+        assert!(result.steps_passed >= 4);
+    }
+
+    #[test]
+    fn e2e_test_repository_failure_scenario_reports_failure() {
+        let result = run_e2e_scenario(Path::new("tests/e2e/scenarios/failure.toml")).unwrap();
+
+        assert!(!result.passed);
+        assert_eq!(result.steps_failed, 1);
+        assert_eq!(result.steps_passed, 0);
+        assert!(result.failures[0].actual.contains("exit_code expected"));
     }
 }

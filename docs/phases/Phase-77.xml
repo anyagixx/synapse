@@ -16,7 +16,7 @@
     <step-1 module="M-TEST-SNAPSHOT" status="done">Implement snapshot create, compare, update, normalization, and summary logic.</step-1>
     <step-2 module="M-TEST-E2E-RUNNER" status="done">Implement E2E scenario model and command/write_file/snapshot step executor.</step-2>
     <step-3 module="M-CLI-TEST-COMMANDS" status="done">Wire syn test e2e and syn test snapshot CLI handlers.</step-3>
-    <step-4 module="M-TEST-E2E-RUNNER" status="pending">Add full-cycle scenario fixture and failure scenario coverage.</step-4>
+    <step-4 module="M-TEST-E2E-RUNNER" status="done">Add full-cycle scenario fixture and failure scenario coverage.</step-4>
   </STEPS>
   <VERIFICATION>
     <CHECK status="planned">cargo test --all-targets e2e</CHECK>
