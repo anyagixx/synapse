@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-72" status="planned">
+  <NAME>UPGRADE_2 A6 GraphRAG Impact Analysis</NAME>
+  <GOAL>Add graph-based impact analysis for direct and transitive dependents, verification shards, use cases, and risk-aware suggested actions.</GOAL>
+  <SOURCE_PLAN>UPGRADE_2/A6-impact-analysis.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRAPHRAG-IMPACT" />
+    <MODULE_REF id="M-GRAPHRAG" />
+    <MODULE_REF id="M-GRAPHRAG-TYPES" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-72-1">CodeGraph node id plus depth flows into bounded BFS over relationships and typed LINKS.</FLOW>
+    <FLOW id="DF-72-2">ImpactAnalysis returns risk, dependents, dependencies, affected verification/use-case targets, and suggested actions to MCP clients.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-GRAPHRAG-IMPACT" status="planned">Create ImpactAnalysis and ImpactTarget data model plus traversal and risk scoring functions.</step-1>
+    <step-2 module="M-GRAPHRAG" status="planned">Export the impact module through the GraphRAG facade.</step-2>
+    <step-3 module="M-MCP-SERVER-CODE-TOOLS" status="planned">Add graphrag_query operation=impact with node_id, depth, and include_tests arguments.</step-3>
+    <step-4 module="M-MCP-SERVER-TOOLS" status="planned">Update GraphRAG tool schema to include impact.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test graphrag::impact --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test mcp::server_code_tools::tests::test_graphrag_query_impact --lib -- --test-threads=8</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-72-1">Impact traversal must remain bounded and deterministic on large graphs.</RISK>
+    <RISK id="R-72-2">Risk output must be advisory unless a caller explicitly uses it as a blocking gate.</RISK>
+  </RISKS>
+</PHASE>

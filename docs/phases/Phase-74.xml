@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-74" status="planned">
+  <NAME>UPGRADE_2 A3 And A8 Resume And Handoff</NAME>
+  <GOAL>Add resumable agent context and structured multi-agent handoff artifacts for long-running bounded work.</GOAL>
+  <SOURCE_PLAN>UPGRADE_2/A3-wip-persistence.md,UPGRADE_2/A8-multi-agent-handoff.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-RUNNER-AGENT-CONTEXT" />
+    <MODULE_REF id="M-RUNNER-HANDOFF" />
+    <MODULE_REF id="M-CLI-AGENT-COMMANDS" />
+    <MODULE_REF id="M-RUNNER" />
+    <MODULE_REF id="M-GRACE-BELIEF-STATE" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-74-1">Persisted run, action queue, belief state, and latest handoff flow into a compact AgentContext for resume.</FLOW>
+    <FLOW id="DF-74-2">Role completion creates ordered JSON handoff artifacts consumed by the next agent role.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-RUNNER-HANDOFF" status="planned">Create handoff model, role sequencing, storage paths, create/load/latest APIs.</step-1>
+    <step-2 module="M-RUNNER-AGENT-CONTEXT" status="planned">Create AgentContext builder, latest incomplete run lookup, and handoff-aware next action suggestion.</step-2>
+    <step-3 module="M-CLI-AGENT-COMMANDS" status="planned">Add syn agent resume/status text and JSON output.</step-3>
+    <step-4 module="M-RUNNER-SELF-HEAL" status="planned">Create verifier-to-fixer handoff when self-heal diagnoses unresolved failures.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test run::handoff --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test run::agent_context --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test cli::agent_commands --lib -- --test-threads=8</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-74-1">Resume output must be compact enough for agents while still preserving evidence and next-action clarity.</RISK>
+    <RISK id="R-74-2">Handoff artifacts must avoid becoming free-form prose that cannot be consumed by later tools.</RISK>
+  </RISKS>
+</PHASE>

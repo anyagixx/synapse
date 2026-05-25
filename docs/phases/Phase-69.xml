@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-69" status="done">
+  <NAME>UPGRADE_2 Autonomy Planning Baseline</NAME>
+  <GOAL>Create sharded MyGRACE plan, graph, and verification surfaces for UPGRADE_2 autonomous agent upgrades before source implementation.</GOAL>
+  <SOURCE_PLAN>UPGRADE_2/README.md,UPGRADE_2/A1-self-heal-loop.md,UPGRADE_2/A2-test-to-fix-pipeline.md,UPGRADE_2/A3-wip-persistence.md,UPGRADE_2/A4-phase-auto-progression.md,UPGRADE_2/A5-auto-contract-repair.md,UPGRADE_2/A6-impact-analysis.md,UPGRADE_2/A7-pre-commit-verify.md,UPGRADE_2/A8-multi-agent-handoff.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-RUNNER-SELF-HEAL" />
+    <MODULE_REF id="M-GRACE-FAILURE-DIAGNOSIS" />
+    <MODULE_REF id="M-RUNNER-AGENT-CONTEXT" />
+    <MODULE_REF id="M-RUNNER-PHASE-ENGINE" />
+    <MODULE_REF id="M-GRACE-CONTRACT-GENERATOR" />
+    <MODULE_REF id="M-GRAPHRAG-IMPACT" />
+    <MODULE_REF id="M-RUNNER-PRECOMMIT" />
+    <MODULE_REF id="M-RUNNER-HANDOFF" />
+    <MODULE_REF id="M-CLI-AGENT-COMMANDS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-69-1">UPGRADE_2 source tasks are mapped to planned modules, phase gates, and verification shards without generating source code.</FLOW>
+    <FLOW id="DF-69-2">Existing M-RUNNER, M-GRACE, M-GRAPHRAG, M-MCP, and M-CLI ownership boundaries remain the integration anchors.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-RUNNER-SELF-HEAL" status="done">Define self-heal loop ownership, dependencies, and acceptance criteria.</step-1>
+    <step-2 module="M-GRACE-FAILURE-DIAGNOSIS" status="done">Define failure XML diagnosis ownership and integration with Debugger.</step-2>
+    <step-3 module="M-RUNNER-AGENT-CONTEXT" status="done">Define resumable run context and CLI agent command surfaces.</step-3>
+    <step-4 module="M-RUNNER-PHASE-ENGINE" status="done">Define phase-gate checking and safe plan-index progression.</step-4>
+    <step-5 module="M-GRACE-CONTRACT-GENERATOR" status="done">Define automatic contract repair boundaries and dry-run requirements.</step-5>
+    <step-6 module="M-GRAPHRAG-IMPACT" status="done">Define graph impact analysis result and MCP operation surfaces.</step-6>
+    <step-7 module="M-RUNNER-PRECOMMIT" status="done">Define pre-commit verification gate and self-heal handoff behavior.</step-7>
+    <step-8 module="M-RUNNER-HANDOFF" status="done">Define multi-agent handoff artifact model and storage layout.</step-8>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">User approved UPGRADE_2 planning baseline for artifact generation.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-69-1">Planning shards must not imply code exists before implementation phases create source files.</RISK>
+  </RISKS>
+</PHASE>
