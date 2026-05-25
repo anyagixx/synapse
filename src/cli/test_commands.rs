@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-TEST-COMMANDS
-// PURPOSE: Structured Synapse test command dispatcher with RTK legacy fallback.
-// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, and legacy RTK fallback dispatch.
-// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS
+// PURPOSE: Structured Synapse test command dispatcher with E2E/snapshot handlers and RTK legacy fallback.
+// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, snapshot listing, and legacy RTK fallback dispatch.
+// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-SNAPSHOT
 // LINKS:
 //   -> Phase-76 (implements) - UPGRADE_3 test command foundation
 //   -> M-CLI-RTK-COMMANDS (depends) - legacy compact test adapter
@@ -12,19 +12,23 @@
 // TestAction - Structured syn test action schema and external legacy command capture
 // StructuredTestArgs - Shared structured test action options
 // TestCmd::run - Dispatches structured actions or delegates legacy commands to RTK fallback
+// run_e2e_action - Runs one or more E2E scenario TOML files
+// run_snapshot_action - Lists or acknowledges snapshot check/update mode
 // render_structured_action - Emits compact text or machine-readable JSON planning output
 // normalize_legacy_command - Converts clap external subcommand args into executable command argv
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Implemented structured syn test actions with RTK legacy fallback]
+// LAST_CHANGE: [v1.1.0 - Wired syn test e2e and snapshot handlers]
 // END_CHANGE_SUMMARY
 
 use super::TestCmd;
 use crate::config::Config;
+use crate::test::e2e::{run_e2e_scenario, E2EResult};
+use serde::Serialize;
 use serde_json::json;
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 // START_public_api
 
@@ -63,6 +67,12 @@ pub struct StructuredTestArgs {
     pub json: bool,
     #[arg(long)]
     pub list: bool,
+    #[arg(long)]
+    pub update: bool,
+    #[arg(long)]
+    pub filter: Option<String>,
+    #[arg(long, default_value = "tests/snapshots")]
+    pub snapshot_dir: PathBuf,
     #[arg(last = true)]
     pub passthrough: Vec<String>,
 }
@@ -70,14 +80,16 @@ pub struct StructuredTestArgs {
 
 impl TestCmd {
     // START_CONTRACT_TestCmd::run
-    // PURPOSE: Dispatch syn test actions to structured UPGRADE_3 planning output or RTK legacy compact test execution
+    // PURPOSE: Dispatch syn test actions to real handlers, structured planning output, or RTK legacy compact test execution
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: writes stdout, may execute a child command through RTK fallback, records RTK savings for legacy commands
     // LINKS:
     //   -> M-CLI-TEST-COMMANDS (depends) - structured test command schema
     //   -> M-CLI-RTK-COMMANDS (depends) - legacy test command fallback
-    //   -> Phase-76 (implements) - CLI planning surface
+    //   -> M-TEST-E2E-RUNNER (depends) - E2E scenario execution
+    //   -> M-TEST-SNAPSHOT (depends) - snapshot command surface
+    //   -> Phase-77 (implements) - E2E and snapshot handler wiring
     //   -> NFR-002 (traces_to) - release verification commands must route deterministically
     //   <- V-M-CLI-TEST-COMMANDS (verified_by) - parse and dispatch tests
     // <LOG id="test_command_dispatch" level="INFO" ref="test-command-dispatch" module="M-CLI-TEST-COMMANDS" contract="TestCmd::run">
@@ -100,8 +112,14 @@ impl TestCmd {
             return super::rtk_core_adapters::run_legacy_test_command(&command, config).await;
         }
 
-        println!("{}", render_structured_action(action)?);
-        Ok(())
+        match action {
+            TestAction::E2e(args) => run_e2e_action(args),
+            TestAction::Snapshot(args) => run_snapshot_action(args),
+            _ => {
+                println!("{}", render_structured_action(action)?);
+                Ok(())
+            }
+        }
     }
     // END_test_cmd_run
 }
@@ -171,8 +189,7 @@ impl TestActionKind {
     // START_test_action_kind_phase_id
     fn phase_id(self) -> &'static str {
         match self {
-            Self::E2e | Self::Mcp => "Phase-77",
-            Self::Snapshot => "Phase-78",
+            Self::E2e | Self::Mcp | Self::Snapshot => "Phase-77",
             Self::Coverage => "Phase-79",
             Self::Perf => "Phase-80",
             Self::Contract => "Phase-81",
@@ -226,6 +243,224 @@ impl TestAction {
     // END_test_action_structured_args
 }
 
+// START_E2ECliReport
+#[derive(Debug, Serialize)]
+struct E2ECliReport {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    passed: bool,
+    scenarios: Vec<E2EResult>,
+}
+// END_E2ECliReport
+
+// START_SnapshotCliReport
+#[derive(Debug, Serialize)]
+struct SnapshotCliReport {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    mode: &'static str,
+    snapshot_dir: String,
+    total: usize,
+    snapshots: Vec<SnapshotFileReport>,
+}
+// END_SnapshotCliReport
+
+// START_SnapshotFileReport
+#[derive(Debug, Serialize)]
+struct SnapshotFileReport {
+    name: String,
+    path: String,
+}
+// END_SnapshotFileReport
+
+// START_CONTRACT_run_e2e_action
+// PURPOSE: Run structured syn test e2e scenarios when --scenario is provided, otherwise render planning output
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: executes E2E scenario commands inside isolated fixtures, writes stdout
+// LINKS:
+//   -> M-TEST-E2E-RUNNER (depends) - scenario execution
+//   -> M-CLI-TEST-COMMANDS (depends) - CLI handler wiring
+//   -> Phase-77 (implements) - syn test e2e handler
+//   -> NFR-002 (traces_to) - E2E scenarios must be invokable from CLI
+// START_run_e2e_action
+fn run_e2e_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
+    if args.scenarios.is_empty() {
+        println!(
+            "{}",
+            render_structured_action(&TestAction::E2e(args.clone()))?
+        );
+        return Ok(());
+    }
+
+    let mut scenarios = Vec::new();
+    for scenario in &args.scenarios {
+        let path = resolve_project_path(&args.project, Path::new(scenario));
+        scenarios.push(run_e2e_scenario(&path)?);
+    }
+    let report = E2ECliReport {
+        kind: "synapse.test.e2e",
+        passed: scenarios.iter().all(|scenario| scenario.passed),
+        scenarios,
+    };
+
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+    } else {
+        println!("{}", render_e2e_report(&report));
+    }
+    if !report.passed {
+        anyhow::bail!("one or more E2E scenarios failed");
+    }
+    Ok(())
+}
+// END_run_e2e_action
+
+// START_CONTRACT_run_snapshot_action
+// PURPOSE: Run structured syn test snapshot listing/check/update command surface
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: reads snapshot directory and writes stdout
+// LINKS:
+//   -> M-TEST-SNAPSHOT (depends) - snapshot artifact convention
+//   -> M-CLI-TEST-COMMANDS (depends) - CLI handler wiring
+//   -> Phase-77 (implements) - syn test snapshot handler
+//   -> NFR-002 (traces_to) - snapshot command must be invokable from CLI
+// START_run_snapshot_action
+fn run_snapshot_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
+    let snapshot_dir = resolve_project_path(&args.project, &args.snapshot_dir);
+    let snapshots = collect_snapshot_files(&snapshot_dir, args.filter.as_deref())?;
+    let report = SnapshotCliReport {
+        kind: "synapse.test.snapshot",
+        mode: if args.update { "update" } else { "check" },
+        snapshot_dir: snapshot_dir.display().to_string(),
+        total: snapshots.len(),
+        snapshots,
+    };
+
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+    } else {
+        println!("{}", render_snapshot_report(&report));
+    }
+    Ok(())
+}
+// END_run_snapshot_action
+
+// START_CONTRACT_render_e2e_report
+// PURPOSE: Render compact text output for E2E CLI scenario results
+// INPUTS: { report: &E2ECliReport }
+// OUTPUTS: { String }
+// LINKS:
+//   -> M-TEST-E2E-RUNNER (depends) - result rendering
+//   -> NFR-003 (traces_to) - bounded E2E CLI output
+// START_render_e2e_report
+fn render_e2e_report(report: &E2ECliReport) -> String {
+    let total = report.scenarios.len();
+    let passed = report
+        .scenarios
+        .iter()
+        .filter(|scenario| scenario.passed)
+        .count();
+    let mut lines = vec![format!("E2E scenarios: {passed}/{total} passed")];
+    for scenario in &report.scenarios {
+        lines.push(format!(
+            "- {}: {} (steps {}/{}, failed {})",
+            scenario.scenario,
+            if scenario.passed { "passed" } else { "failed" },
+            scenario.steps_passed,
+            scenario.steps_total,
+            scenario.steps_failed
+        ));
+        for failure in &scenario.failures {
+            lines.push(format!(
+                "  step {} {}: {}",
+                failure.step_index + 1,
+                failure.command,
+                failure.actual
+            ));
+        }
+    }
+    lines.join("\n")
+}
+// END_render_e2e_report
+
+// START_CONTRACT_render_snapshot_report
+// PURPOSE: Render compact text output for snapshot CLI mode
+// INPUTS: { report: &SnapshotCliReport }
+// OUTPUTS: { String }
+// LINKS:
+//   -> M-TEST-SNAPSHOT (depends) - snapshot artifact summary
+//   -> NFR-003 (traces_to) - bounded snapshot CLI output
+// START_render_snapshot_report
+fn render_snapshot_report(report: &SnapshotCliReport) -> String {
+    let mut lines = vec![
+        format!("Snapshot testing: {} mode", report.mode),
+        format!("snapshot_dir: {}", report.snapshot_dir),
+        format!("snapshots: {}", report.total),
+    ];
+    for snapshot in &report.snapshots {
+        lines.push(format!("- {} ({})", snapshot.name, snapshot.path));
+    }
+    lines.join("\n")
+}
+// END_render_snapshot_report
+
+// START_CONTRACT_collect_snapshot_files
+// PURPOSE: Collect .snap files from a snapshot directory with optional name filtering
+// INPUTS: { snapshot_dir: &Path }, { filter: Option<&str> }
+// OUTPUTS: { anyhow::Result<Vec<SnapshotFileReport>> }
+// LINKS:
+//   -> M-TEST-SNAPSHOT (depends) - snapshot artifact discovery
+//   -> NFR-002 (traces_to) - deterministic sorted snapshot inventory
+// START_collect_snapshot_files
+fn collect_snapshot_files(
+    snapshot_dir: &Path,
+    filter: Option<&str>,
+) -> anyhow::Result<Vec<SnapshotFileReport>> {
+    if !snapshot_dir.exists() {
+        return Ok(Vec::new());
+    }
+    let mut snapshots = Vec::new();
+    for entry in std::fs::read_dir(snapshot_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|value| value.to_str()) != Some("snap") {
+            continue;
+        }
+        let Some(name) = path.file_stem().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        if filter.is_some_and(|needle| !name.contains(needle)) {
+            continue;
+        }
+        snapshots.push(SnapshotFileReport {
+            name: name.to_string(),
+            path: path.display().to_string(),
+        });
+    }
+    snapshots.sort_by(|left, right| left.name.cmp(&right.name));
+    Ok(snapshots)
+}
+// END_collect_snapshot_files
+
+// START_CONTRACT_resolve_project_path
+// PURPOSE: Resolve a possibly relative CLI path against --project
+// INPUTS: { project: &Path }, { path: &Path }
+// OUTPUTS: { PathBuf }
+// LINKS:
+//   -> M-CLI-TEST-COMMANDS (depends) - stable CLI path resolution
+//   -> NFR-002 (traces_to) - scenario and snapshot paths resolve predictably
+// START_resolve_project_path
+fn resolve_project_path(project: &Path, path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        project.join(path)
+    }
+}
+// END_resolve_project_path
+
 // START_CONTRACT_render_structured_action
 // PURPOSE: Render structured syn test planning output as compact text or JSON
 // INPUTS: { action: &TestAction }
@@ -254,6 +489,9 @@ fn render_structured_action(action: &TestAction) -> anyhow::Result<String> {
                 "project": project,
                 "fixture": args.fixture,
                 "scenarios": args.scenarios,
+                "update": args.update,
+                "filter": args.filter,
+                "snapshot_dir": args.snapshot_dir.display().to_string(),
                 "passthrough": args.passthrough,
                 "runner": "pending"
             }]
@@ -273,6 +511,13 @@ fn render_structured_action(action: &TestAction) -> anyhow::Result<String> {
     if !args.scenarios.is_empty() {
         lines.push(format!("scenarios: {}", args.scenarios.join(",")));
     }
+    if args.update {
+        lines.push("update: true".to_string());
+    }
+    if let Some(filter) = &args.filter {
+        lines.push(format!("filter: {filter}"));
+    }
+    lines.push(format!("snapshot_dir: {}", args.snapshot_dir.display()));
     if !args.passthrough.is_empty() {
         lines.push(format!("passthrough: {}", args.passthrough.join(" ")));
     }
@@ -305,6 +550,7 @@ mod tests {
     use super::*;
     use crate::cli::{Command, SynCli};
     use clap::Parser;
+    use tempfile::TempDir;
 
     fn parse_test_action(args: &[&str]) -> TestAction {
         match SynCli::try_parse_from(args)
@@ -356,6 +602,31 @@ mod tests {
     }
 
     #[test]
+    fn cli_test_e2e_scenario_option_is_preserved() {
+        let action =
+            parse_test_action(&["syn", "test", "e2e", "--scenario", "tests/e2e/full.toml"]);
+        match action {
+            TestAction::E2e(args) => {
+                assert_eq!(args.scenarios, ["tests/e2e/full.toml"]);
+            }
+            _ => panic!("expected e2e action"),
+        }
+    }
+
+    #[test]
+    fn cli_test_snapshot_update_and_filter_are_parsed() {
+        let action =
+            parse_test_action(&["syn", "test", "snapshot", "--update", "--filter", "verify"]);
+        match action {
+            TestAction::Snapshot(args) => {
+                assert!(args.update);
+                assert_eq!(args.filter.as_deref(), Some("verify"));
+            }
+            _ => panic!("expected snapshot action"),
+        }
+    }
+
+    #[test]
     fn cli_test_coverage_json_renders_machine_readable_matrix() {
         let action = parse_test_action(&["syn", "test", "coverage", "--json"]);
         let rendered = render_structured_action(&action).expect("coverage JSON should render");
@@ -364,5 +635,19 @@ mod tests {
         assert_eq!(value["type"], "synapse.test.action");
         assert_eq!(value["matrix"][0]["action"], "coverage");
         assert_eq!(value["matrix"][0]["module"], "M-TEST-COVERAGE-MATRIX");
+    }
+
+    #[test]
+    fn cli_test_snapshot_report_collects_sorted_snap_files() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(dir.path().join("b.snap"), "b").unwrap();
+        std::fs::write(dir.path().join("a.snap"), "a").unwrap();
+        std::fs::write(dir.path().join("ignore.txt"), "x").unwrap();
+
+        let files = collect_snapshot_files(dir.path(), None).unwrap();
+
+        assert_eq!(files.len(), 2);
+        assert_eq!(files[0].name, "a");
+        assert_eq!(files[1].name, "b");
     }
 }
