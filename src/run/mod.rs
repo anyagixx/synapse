@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
-// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, action queues, self-heal plans, scenarios, and outcomes for controlled execution
-// SCOPE: Run state model, task model, step model, gate model, review model, replay model, action queue executor, self-heal metadata, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
-// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-RUNNER-SELF-HEAL, M-TRACKING
+// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, phase gates, pre-commit gates, action queues, self-heal plans, scenarios, and outcomes for controlled execution
+// SCOPE: Run state model, task model, step model, gate model, review model, replay model, action queue executor, phase gate engine, pre-commit verification, self-heal metadata, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
+// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-GRACE-VERIFY, M-RUNNER-PHASE-ENGINE, M-RUNNER-PRECOMMIT, M-RUNNER-SELF-HEAL, M-TRACKING
 // LINKS:
 //   → M-SKILLS (depends) - future execution bridge
 //   → UC-002 (implements) - verify and review bounded autonomous changes
@@ -17,15 +17,18 @@
 // RunGate — Persisted gate requirement
 // RunReviewDecision — Persisted human review decision for blocked runs
 // RunReplay — Replayable run timeline assembled from persisted state
+// phase / pre_commit — Active phase and pre-commit verification gates
 // RunActionPlan / SelfHealPlan / RunScenarioResult — End-to-end bounded action, self-heal, and scenario results
 // RunOutcome — Persisted run outcome
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.5.0 - Added bounded self-heal module hook and retry budget foundation]
+// LAST_CHANGE: [v0.6.0 - Added phase gate and pre-commit verification modules]
 // END_CHANGE_SUMMARY
 
 pub mod actions;
+pub mod phase;
+pub mod pre_commit;
 mod replay;
 mod review;
 pub mod scenario;

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
-// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -15,13 +15,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.19.0 - Simplified MCP elapsed millis conversion for release clippy gate]
+// LAST_CHANGE: [v3.20.0 - Routed advance_phase and pre_commit_check tools]
 // END_CHANGE_SUMMARY
 
 use super::{
     pipeline::{self, McpPipelineConfig, PipelineHandler},
     server_cascade_tools, server_code_tools, server_contract_tools, server_grace_tools,
-    server_response, server_tools,
+    server_response, server_run_tools, server_tools,
 };
 use crate::config::Config;
 use crate::graphrag::GraphRag;
@@ -312,6 +312,8 @@ impl SynapseHandler {
                         server_grace_tools::handle_submit_test_report(id, args).await
                     }
                     "self_heal" => server_grace_tools::handle_self_heal(id, args).await,
+                    "advance_phase" => server_run_tools::handle_advance_phase(id, args).await,
+                    "pre_commit_check" => server_run_tools::handle_pre_commit_check(id, args).await,
                     "token_savings" => server_grace_tools::handle_gain(id, args).await,
                     "compress_text" => server_grace_tools::handle_compress(id, args).await,
                     "refresh_project" => server_grace_tools::handle_refresh(id, args).await,

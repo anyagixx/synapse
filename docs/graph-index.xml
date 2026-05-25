@@ -82,6 +82,7 @@
     <MODULE id="M-MCP-SERVER-CODE-TOOLS" path="docs/modules/M-MCP-SERVER-CODE-TOOLS.xml" status="active" />
     <MODULE id="M-MCP-SERVER-GRACE-TOOLS" path="docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml" status="active" />
     <MODULE id="M-MCP-SERVER-RESPONSE" path="docs/modules/M-MCP-SERVER-RESPONSE.xml" status="active" />
+    <MODULE id="M-MCP-SERVER-RUN-TOOLS" path="docs/modules/M-MCP-SERVER-RUN-TOOLS.xml" status="active" />
     <MODULE id="M-MCP-SERVER-TOOLS" path="docs/modules/M-MCP-SERVER-TOOLS.xml" status="active" />
     <MODULE id="M-MEMORY" path="docs/modules/M-MEMORY.xml" status="active" />
     <MODULE id="M-PLUGIN" path="docs/modules/M-PLUGIN.xml" status="active" />
@@ -90,6 +91,8 @@
     <MODULE id="M-PROXY-ROUTER" path="docs/modules/M-PROXY-ROUTER.xml" status="active" />
     <MODULE id="M-PROXY-RUNNER" path="docs/modules/M-PROXY-RUNNER.xml" status="active" />
     <MODULE id="M-RUNNER" path="docs/modules/M-RUNNER.xml" status="active" />
+    <MODULE id="M-RUNNER-PHASE-ENGINE" path="docs/modules/M-RUNNER-PHASE-ENGINE.xml" status="active" />
+    <MODULE id="M-RUNNER-PRECOMMIT" path="docs/modules/M-RUNNER-PRECOMMIT.xml" status="active" />
     <MODULE id="M-RUNNER-SELF-HEAL" path="docs/modules/M-RUNNER-SELF-HEAL.xml" status="active" />
     <MODULE id="M-RTK-FULL-PARITY" path="docs/modules/M-RTK-FULL-PARITY.xml" status="active" />
     <MODULE id="M-SKILLS" path="docs/modules/M-SKILLS.xml" status="active" />
@@ -284,8 +287,15 @@
     <REL source="M-RUNNER" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
     <REL source="M-RUNNER" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
     <REL source="M-RUNNER" target="M-GRACE-STATUS" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-GRACE-VERIFY" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-RUNNER-PHASE-ENGINE" type="DEPENDS" />
+    <REL source="M-RUNNER" target="M-RUNNER-PRECOMMIT" type="DEPENDS" />
     <REL source="M-RUNNER" target="M-RUNNER-SELF-HEAL" type="DEPENDS" />
     <REL source="M-RUNNER" target="M-SKILLS" type="DEPENDS" />
+    <REL source="M-RUNNER-PHASE-ENGINE" target="M-RUNNER" type="DEPENDS" />
+    <REL source="M-RUNNER-PHASE-ENGINE" target="M-GRACE-STATUS" type="DEPENDS" />
+    <REL source="M-RUNNER-PRECOMMIT" target="M-RUNNER" type="DEPENDS" />
+    <REL source="M-RUNNER-PRECOMMIT" target="M-GRACE-VERIFY" type="DEPENDS" />
     <REL source="M-RUNNER-SELF-HEAL" target="M-RUNNER" type="DEPENDS" />
     <REL source="M-RUNNER-SELF-HEAL" target="M-GRACE" type="DEPENDS" />
     <REL source="M-RUNNER-SELF-HEAL" target="M-GRACE-CONTRACT-GENERATOR" type="DEPENDS" />
@@ -390,6 +400,7 @@
     <REL source="M-MCP" target="M-MCP-SERVER-GRACE-TOOLS" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-PIPELINE" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP" target="M-MCP-SERVER-RUN-TOOLS" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-LSP" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-CONFIG" type="DEPENDS" />
@@ -400,6 +411,7 @@
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-CODE-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-GRACE-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-MCP-SERVER-RUN-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-TRACKING-MCP-METRICS" type="DEPENDS" />
@@ -434,6 +446,10 @@
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-COMPRESS" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-SKILLS-ENGINE" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER-PHASE-ENGINE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER-PRECOMMIT" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
     <REL source="M-MCP-SERVER-TOOLS" target="M-SKILLS-REGISTRY" type="DEPENDS" />
     <REL source="M-PLUGIN" target="M-PROXY" type="DEPENDS" />
     <REL source="M-PLUGIN" target="M-MCP" type="DEPENDS" />

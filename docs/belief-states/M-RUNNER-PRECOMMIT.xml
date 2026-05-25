@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-RUNNER-PRECOMMIT" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Prevent bounded runs from completing until final verification gates pass.
+    Key data flows:
+      - INPUT: persisted RunRecord, required gates, optional project verification results.
+      - PROCESSING: Collect failed gates, optionally run verifier, persist pass/fail metadata, block run on failures.
+      - OUTPUT: PreCommitReport and updated run state.
+    Critical invariants:
+      - Failed gates block final completion.
+      - Failure metadata is structured and stored on the run record.
+      - Passing pre-commit keeps the run in progress so the action queue can perform final completion.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep pre-commit verification as an explicit action before final CompleteStep.
+    Complexity_areas: synchronous verification from runtime code, avoiding test fixture dependence on full project docs.
+    Patterns_applied: explicit gate failure model, deterministic metadata keys, blocked outcome persistence.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test run::pre_commit --lib -- --test-threads=8 passes
+    - cargo test run::actions::tests::test_pre_commit_blocks_final_completion --lib -- --test-threads=8 passes
+  RISKS_ACKNOWLEDGED:
+    - Stale gate snapshots can be insufficient unless full project verification is enabled for real roots.
+    - Blocking final completion must still allow self-heal or review recovery.
+</BELIEF_STATE>

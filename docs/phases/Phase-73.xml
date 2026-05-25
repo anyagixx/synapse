@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-73" status="planned">
+<PHASE id="Phase-73" status="done">
   <NAME>UPGRADE_2 A4 And A7 Phase Gates And Pre-Commit</NAME>
   <GOAL>Implement autonomous phase progression and enforce pre-commit verification before bounded run completion.</GOAL>
   <SOURCE_PLAN>UPGRADE_2/A4-phase-auto-progression.md,UPGRADE_2/A7-pre-commit-verify.md</SOURCE_PLAN>
@@ -11,21 +11,22 @@
     <MODULE_REF id="M-GRACE-VERIFY" />
     <MODULE_REF id="M-GRACE-TRACEABILITY" />
     <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-RUN-TOOLS" />
   </MODULE_REFS>
   <DATA_FLOWS>
     <FLOW id="DF-73-1">Active phase from plan-index.xml flows through status and gate policy evaluation into dry-run or safe phase advance.</FLOW>
     <FLOW id="DF-73-2">Final run step flows through pre-commit verification before completion can set RunOutcomeKind::Success.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-RUNNER-PHASE-ENGINE" status="planned">Implement check_phase_gates, advance_phase, dry-run behavior, and action queue integration.</step-1>
-    <step-2 module="M-RUNNER-PRECOMMIT" status="planned">Implement pre_commit_verify and structured gate failure metadata.</step-2>
-    <step-3 module="M-RUNNER" status="planned">Inject PreCommitVerify before final CompleteStep and block completion on failed gates.</step-3>
-    <step-4 module="M-MCP-SERVER-GRACE-TOOLS" status="planned">Expose advance_phase and pre_commit_check MCP handlers.</step-4>
+    <step-1 module="M-RUNNER-PHASE-ENGINE" status="done">Implement check_phase_gates, advance_phase, dry-run behavior, and action queue integration.</step-1>
+    <step-2 module="M-RUNNER-PRECOMMIT" status="done">Implement pre_commit_verify and structured gate failure metadata.</step-2>
+    <step-3 module="M-RUNNER" status="done">Inject PreCommitVerify before final CompleteStep and block completion on failed gates.</step-3>
+    <step-4 module="M-MCP-SERVER-RUN-TOOLS" status="done">Expose advance_phase and pre_commit_check MCP handlers without growing the already-large GRACE tools module.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test run::phase --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test run::pre_commit --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test run::actions::tests::test_pre_commit_blocks_final_completion --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test run::phase --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test run::pre_commit --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test run::actions::tests::test_pre_commit_blocks_final_completion --lib -- --test-threads=8</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-73-1">Phase XML updates must be atomic enough to avoid plan-index corruption on failure.</RISK>

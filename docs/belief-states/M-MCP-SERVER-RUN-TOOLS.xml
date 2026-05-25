@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-MCP-SERVER-RUN-TOOLS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Expose bounded run phase and pre-commit gates to MCP clients.
+    Key data flows:
+      - INPUT: MCP arguments for dry_run, run_id, and optional project_root.
+      - PROCESSING: Resolve project root, call RunManager phase/pre-commit APIs, format MCP response or JSON-RPC error.
+      - OUTPUT: MCP text content plus structured report JSON.
+    Critical invariants:
+      - Missing run_id is rejected before project state is touched.
+      - project_root type errors return invalid-params errors.
+      - advance_phase defaults to dry_run=true.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep run-gate MCP handlers outside the already-large GRACE tools module.
+    Complexity_areas: preserving MCP response shape and explicit parameter validation.
+    Patterns_applied: small handler module, structured response payloads, typed argument validation.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test mcp::server_run_tools --lib -- --test-threads=8 passes
+    - tools/list exposes advance_phase and pre_commit_check schemas
+  RISKS_ACKNOWLEDGED:
+    - Applied phase advancement mutates MyGRACE XML and must remain opt-in.
+    - MCP clients may call dry-run repeatedly; output must be deterministic.
+</BELIEF_STATE>

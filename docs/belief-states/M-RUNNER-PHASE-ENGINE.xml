@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-RUNNER-PHASE-ENGINE" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Advance MyGRACE phases only after explicit active-phase gates pass.
+    Key data flows:
+      - INPUT: docs/plan-index.xml, active phase shard, dry_run flag.
+      - PROCESSING: Read active and next planned phase, inspect step/check statuses, optionally update plan-index and phase shards atomically.
+      - OUTPUT: PhaseGateReport with pass/fail checks and advancement state.
+    Critical invariants:
+      - Dry-run mode never writes files.
+      - Failed, blocked, planned, or unfinished phase gates prevent advancement.
+      - Phase updates keep plan-index and phase shard statuses aligned.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Use bounded canonical MyGRACE shard parsing and atomic file replacement.
+    Complexity_areas: XML status mutation, next-phase selection, avoiding partial phase updates.
+    Patterns_applied: explicit gate report, dry-run first, deterministic phase entry parsing.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test run::phase --lib -- --test-threads=8 passes
+    - verify --ci reports no MyGRACE drift
+  RISKS_ACKNOWLEDGED:
+    - Manual XML mutation must remain limited to canonical shard patterns.
+    - Phase advancement must not skip a planned phase.
+</BELIEF_STATE>

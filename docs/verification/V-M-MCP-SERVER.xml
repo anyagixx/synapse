@@ -7,6 +7,7 @@
     <COMMAND>cargo test --test mcp_protocol test_concurrent_requests_keep_response_ids</COMMAND>
     <COMMAND>cargo test mcp::server::tests::test_classify_mcp_response_detects_error_status --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::server::tests::test_invalidate_graph_cache_clears_graph_and_key --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_run_tools --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
   </UNIT_TESTS>
@@ -34,7 +35,8 @@
     <ASSERTION>JSON-RPC tool dispatch routes traceability_report to the GRACE Traceability reporter.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes cascade_impact and cascade_execute to the GRACE cascade update engine.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes run_test_guide and submit_test_report to the GRACE agent-based testing workflow.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes advance_phase and pre_commit_check to bounded run gate handlers.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes lsp_hover and lsp_references through runtime Config so configured LSP server commands are honored.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-62,Phase-67</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-62,Phase-67,Phase-73</PHASE_GATE>
 </VERIFICATION>

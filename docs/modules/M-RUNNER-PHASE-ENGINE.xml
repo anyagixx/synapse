@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-RUNNER-PHASE-ENGINE" type="RUNTIME" status="active">
+  <NAME>M-RUNNER-PHASE-ENGINE</NAME>
+  <PURPOSE>Autonomous MyGRACE phase gate checking and safe phase advancement for bounded runs.</PURPOSE>
+  <SCOPE>Active phase discovery, PhaseGateCheck, PhaseGateReport, dry-run phase advancement, atomic plan-index and phase shard status updates.</SCOPE>
+  <FILES>
+    <FILE>src/run/phase.rs</FILE>
+  </FILES>
+  <DEPENDS>M-RUNNER,M-GRACE-STATUS</DEPENDS>
+  <LINKS>docs/phases/Phase-73.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_2/A4-phase-auto-progression.md</LINKS>
+  <VERIFICATION_REF>V-M-RUNNER-PHASE-ENGINE</VERIFICATION_REF>
+</MODULE>

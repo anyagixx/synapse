@@ -5,7 +5,7 @@
 // DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
-// test_initialize_then_list_tools — MCP handler lists all 42 tools after initialize
+// test_initialize_then_list_tools — MCP handler lists all 44 tools after initialize
 // test_tools_list_contains_grace_and_core_tools — Tool list contains representative core and grace tools
 // test_tools_call_grace_status_returns_text — Representative grace tool call returns MCP content envelope
 // test_concurrent_requests_keep_response_ids — Pipelined stdio requests preserve JSON-RPC response IDs
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.27.0 - Updated MCP protocol registry count for diagnosis and repair tools]
+// LAST_CHANGE: [v2.28.0 - Updated MCP protocol registry count for phase and pre-commit tools]
 // END_CHANGE_SUMMARY
 
 use std::io::Write;
@@ -37,7 +37,7 @@ async fn test_initialize_then_list_tools() {
         .await
         .expect("tools/list request should produce a response");
     let tools = list["result"]["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 42);
+    assert_eq!(tools.len(), 44);
 }
 
 #[tokio::test]

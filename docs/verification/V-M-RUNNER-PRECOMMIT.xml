@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-RUNNER-PRECOMMIT" module="M-RUNNER-PRECOMMIT" priority="critical" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test run::pre_commit --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>pre_commit_verify records pass metadata when required gates have passed.</ASSERTION>
+    <ASSERTION>pre_commit_verify blocks the run and persists structured failure metadata when required gates fail.</ASSERTION>
+    <ASSERTION>Final completion through the action queue is blocked until PreCommitVerify passes.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-73</PHASE_GATE>
+</VERIFICATION>

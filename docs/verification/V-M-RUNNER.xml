@@ -3,6 +3,9 @@
   <UNIT_TESTS>
     <COMMAND>cargo test run::tests --lib</COMMAND>
     <COMMAND>cargo test run::actions::tests --lib</COMMAND>
+    <COMMAND>cargo test run::phase --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test run::pre_commit --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test run::actions::tests::test_pre_commit_blocks_final_completion --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test run::self_heal --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test run::scenario::tests --lib</COMMAND>
     <COMMAND>cargo test run::tests::run_review_approval_allows_blocked_resume_and_replay --lib</COMMAND>
@@ -28,8 +31,10 @@
     <ASSERTION>Blocked runs require an approved human review before dashboard-driven resume can continue.</ASSERTION>
     <ASSERTION>Replay events preserve state, gate, step, review, outcome, and evidence references.</ASSERTION>
     <ASSERTION>Action queue exposes explicit plan, next action, bounded loop, retry, and replay controls for persisted runs.</ASSERTION>
+    <ASSERTION>Action queue injects PreCommitVerify before final completion and blocks completion when required gates fail.</ASSERTION>
+    <ASSERTION>Phase engine supports dry-run and applied advancement only after active phase gates pass.</ASSERTION>
     <ASSERTION>Action queue exposes SelfHeal as the next safe action for verification failures unless a diagnosis is already awaiting review.</ASSERTION>
     <ASSERTION>Scenario runs preserve bounded objective to gates, evidence, review, completion, and replay.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-23,Phase-70</PHASE_GATE>
+  <PHASE_GATE>Phase-23,Phase-70,Phase-73</PHASE_GATE>
 </VERIFICATION>

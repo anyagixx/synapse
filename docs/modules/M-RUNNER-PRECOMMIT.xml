@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-RUNNER-PRECOMMIT" type="RUNTIME" status="active">
+  <NAME>M-RUNNER-PRECOMMIT</NAME>
+  <PURPOSE>Pre-commit verification gate for bounded autonomous runs before final completion.</PURPOSE>
+  <SCOPE>PreCommitGateFailure, PreCommitReport, required gate evaluation, optional project verification, run metadata updates, and blocked-run failure metadata.</SCOPE>
+  <FILES>
+    <FILE>src/run/pre_commit.rs</FILE>
+  </FILES>
+  <DEPENDS>M-RUNNER,M-GRACE-VERIFY</DEPENDS>
+  <LINKS>docs/phases/Phase-73.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_2/A7-pre-commit-verify.md</LINKS>
+  <VERIFICATION_REF>V-M-RUNNER-PRECOMMIT</VERIFICATION_REF>
+</MODULE>

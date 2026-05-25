@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, GRACE profiles, self_heal, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.3.0 - Added graphrag_query impact schema]
+// LAST_CHANGE: [v4.4.0 - Added run phase and pre-commit tool schemas]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -257,6 +257,29 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
             }
         }),
         serde_json::json!({
+            "name": "advance_phase",
+            "description": "Check active MyGRACE phase gates and optionally advance to the next planned phase. Defaults to dry_run=true.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "dry_run": { "type": "boolean", "description": "Preview without writing when true", "default": true },
+                    "project_root": { "type": "string", "description": "Optional project root; defaults to current working directory" }
+                }
+            }
+        }),
+        serde_json::json!({
+            "name": "pre_commit_check",
+            "description": "Run pre-commit verification for a persisted bounded run before final completion.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "run_id": { "type": "string", "description": "Persisted run id from docs/runs/<run_id>.json" },
+                    "project_root": { "type": "string", "description": "Optional project root; defaults to current working directory" }
+                },
+                "required": ["run_id"]
+            }
+        }),
+        serde_json::json!({
             "name": "token_savings",
             "description": "View token savings analytics — total commands, tokens saved, average savings %, estimated cost saved.",
             "inputSchema": { "type": "object", "properties": {} }
@@ -487,6 +510,28 @@ mod tests {
         assert_eq!(self_heal["inputSchema"]["required"][0], "run_id");
     }
     // END_test_self_heal_schema_exposes_run_id_and_profile
+
+    // START_CONTRACT_test_phase_and_pre_commit_schemas_are_exposed
+    // PURPOSE: Verify tools/list declares advance_phase and pre_commit_check schemas.
+    // START_test_phase_and_pre_commit_schemas_are_exposed
+    #[test]
+    fn test_phase_and_pre_commit_schemas_are_exposed() {
+        let tools = tool_definitions();
+        let advance_phase = tools
+            .iter()
+            .find(|tool| tool["name"] == "advance_phase")
+            .expect("advance_phase tool");
+        let pre_commit = tools
+            .iter()
+            .find(|tool| tool["name"] == "pre_commit_check")
+            .expect("pre_commit_check tool");
+
+        assert!(advance_phase["inputSchema"]["properties"]
+            .as_object()
+            .is_some_and(|properties| properties.contains_key("dry_run")));
+        assert_eq!(pre_commit["inputSchema"]["required"][0], "run_id");
+    }
+    // END_test_phase_and_pre_commit_schemas_are_exposed
 
     // START_CONTRACT_test_diagnose_and_repair_schemas_are_exposed
     // PURPOSE: Verify tools/list declares diagnose_failure and repair_contract schemas

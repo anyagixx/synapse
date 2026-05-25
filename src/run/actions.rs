@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
-// PURPOSE: Run action queue - plans and executes bounded run control actions with replayable evidence and self-heal handoff
-// SCOPE: Action model, durable action plan persistence, next-action execution, bounded loops, self-heal handoff, retry handoff, and replay action results
-// DEPENDS: M-RUNNER, M-RUNNER-SELF-HEAL, M-TRACKING
+// PURPOSE: Run action queue - plans and executes bounded run control actions with replayable evidence, pre-commit gates, phase advance handoff, and self-heal handoff
+// SCOPE: Action model, durable action plan persistence, next-action execution, bounded loops, pre-commit verification before final completion, optional phase advancement, self-heal handoff, retry handoff, and replay action results
+// DEPENDS: M-RUNNER, M-RUNNER-PRECOMMIT, M-RUNNER-PHASE-ENGINE, M-RUNNER-SELF-HEAL, M-TRACKING
 // LINKS:
 //   -> V-M-RUNNER (verified_by) - action queue and executor tests
 //   -> UC-002 (implements) - bounded run control from objective to action/replay loop
@@ -16,12 +16,14 @@
 // RunActionLoopResult - Result of bounded action loop execution
 // plan_run_actions - Build and persist next actions for a run
 // execute_next_action - Apply exactly one safe next action
+// pre_commit action - Verify gates before final completion
+// advance_phase action - Optional phase advancement for completed runs
 // self_heal action - Diagnose verification failures through bounded self-heal runtime
 // run_action_loop - Apply safe actions until terminal, blocked, or budget exhausted
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Added bounded SelfHeal action planning and execution]
+// LAST_CHANGE: [v1.2.0 - Added PreCommitVerify and optional AdvancePhase actions]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -38,9 +40,11 @@ use std::path::PathBuf;
 #[serde(rename_all = "snake_case")]
 pub enum RunActionKind {
     Start,
+    PreCommitVerify,
     CompleteStep,
     AwaitReview,
     Resume,
+    AdvancePhase,
     SelfHeal,
     RetryRecovery,
     Replay,
@@ -206,6 +210,64 @@ impl RunManager {
                 run,
             });
         }
+        if matches!(action.kind, RunActionKind::PreCommitVerify) {
+            let report = self.pre_commit_verify(run_id)?;
+            let run = self.load(run_id)?;
+            let blocked = !report.passed;
+            action.status = if blocked {
+                RunActionStatus::Blocked
+            } else {
+                RunActionStatus::Applied
+            };
+            action.applied_at = Some(chrono::Utc::now().to_rfc3339());
+            let next_plan = self.plan_run_actions(run_id)?;
+            return Ok(RunActionExecution {
+                action,
+                replay: run.replay(),
+                next_plan,
+                blocked,
+                message: if blocked {
+                    "pre-commit verification failed; run completion blocked".into()
+                } else {
+                    "pre-commit verification passed".into()
+                },
+                run,
+            });
+        }
+        if matches!(action.kind, RunActionKind::AdvancePhase) {
+            let report = self.advance_phase(false)?;
+            let mut run = self.load(run_id)?;
+            run.metadata
+                .insert("phase_advance_checked".into(), report.passed.to_string());
+            run.metadata
+                .insert("phase_advance_done".into(), report.advanced.to_string());
+            if !report.passed {
+                run.status = RunStatus::Blocked;
+                run.blocked_reason = Some("phase gates blocked automatic advance".into());
+            }
+            run.touch();
+            self.save(&run)?;
+            let blocked = !report.passed;
+            action.status = if blocked {
+                RunActionStatus::Blocked
+            } else {
+                RunActionStatus::Applied
+            };
+            action.applied_at = Some(chrono::Utc::now().to_rfc3339());
+            let next_plan = self.plan_run_actions(run_id)?;
+            return Ok(RunActionExecution {
+                action,
+                replay: run.replay(),
+                next_plan,
+                blocked,
+                message: if blocked {
+                    "phase gates blocked automatic advance".into()
+                } else {
+                    "phase advanced".into()
+                },
+                run,
+            });
+        }
 
         let applied_run = match action.kind {
             RunActionKind::Start => self.start_run(run_id)?,
@@ -229,7 +291,11 @@ impl RunManager {
                 self.load(run_id)?
             }
             RunActionKind::Replay => self.load(run_id)?,
-            RunActionKind::AwaitReview => unreachable!(),
+            RunActionKind::PreCommitVerify
+            | RunActionKind::AdvancePhase
+            | RunActionKind::AwaitReview => {
+                unreachable!()
+            }
         };
         action.status = RunActionStatus::Applied;
         action.applied_at = Some(chrono::Utc::now().to_rfc3339());
@@ -318,6 +384,16 @@ fn plan_actions_for_record(record: &RunRecord, now: &str) -> Vec<RunAction> {
                     now,
                 )];
             }
+            if is_final_step(record) && !pre_commit_verified(record) {
+                return vec![RunAction::pending(
+                    "pre-commit-verify",
+                    RunActionKind::PreCommitVerify,
+                    "Run pre-commit verification before final completion",
+                    Some("pre-commit://verify".into()),
+                    None,
+                    now,
+                )];
+            }
             let step = record.steps.get(record.current_step);
             let name = step
                 .map(|step| step.name.as_str())
@@ -385,6 +461,25 @@ fn plan_actions_for_record(record: &RunRecord, now: &str) -> Vec<RunAction> {
                 )
             }
         }
+        RunStatus::Completed
+            if record
+                .metadata
+                .get("phase_auto_advance")
+                .is_some_and(|value| value == "true")
+                && !record
+                    .metadata
+                    .get("phase_advance_done")
+                    .is_some_and(|value| value == "true") =>
+        {
+            RunAction::pending(
+                "advance-phase",
+                RunActionKind::AdvancePhase,
+                "Advance active MyGRACE phase after completed run",
+                Some("phase://advance".into()),
+                None,
+                now,
+            )
+        }
         RunStatus::Completed | RunStatus::Escalated => RunAction::pending(
             "replay-run",
             RunActionKind::Replay,
@@ -396,6 +491,29 @@ fn plan_actions_for_record(record: &RunRecord, now: &str) -> Vec<RunAction> {
     };
     vec![action]
 }
+
+// START_CONTRACT_is_final_step
+// PURPOSE: Detect whether a running record is about to complete its last bounded step
+// INPUTS: { record: &RunRecord }
+// OUTPUTS: { bool }
+// START_is_final_step
+fn is_final_step(record: &RunRecord) -> bool {
+    !record.steps.is_empty() && record.current_step >= record.steps.len().saturating_sub(1)
+}
+// END_is_final_step
+
+// START_CONTRACT_pre_commit_verified
+// PURPOSE: Detect whether current run already passed pre-commit verification
+// INPUTS: { record: &RunRecord }
+// OUTPUTS: { bool }
+// START_pre_commit_verified
+fn pre_commit_verified(record: &RunRecord) -> bool {
+    record
+        .metadata
+        .get("pre_commit_verified")
+        .is_some_and(|value| value == "true")
+}
+// END_pre_commit_verified
 
 // START_CONTRACT_should_self_heal
 // PURPOSE: Decide whether the next safe run action should enter bounded self-heal
@@ -462,7 +580,7 @@ impl RunAction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::run::{RunReviewStatus, RunStepStatus};
+    use crate::run::{RunGate, RunGateStatus, RunReviewStatus, RunStepStatus};
 
     fn ready_run() -> RunRecord {
         let mut record = RunRecord::new(
@@ -473,6 +591,14 @@ mod tests {
         );
         record.steps = default_steps("M-RUNNER");
         record.status = RunStatus::Ready;
+        record.required_gates.push(RunGate {
+            id: "gate-verification".into(),
+            name: "verification".into(),
+            required: true,
+            status: RunGateStatus::Passed,
+            reason: None,
+            evidence_refs: vec!["syn verify".into()],
+        });
         record
     }
 
@@ -487,7 +613,7 @@ mod tests {
         let result = manager.run_action_loop(&run_id, 8).unwrap();
 
         assert_eq!(result.final_run.status, RunStatus::Completed);
-        assert_eq!(result.executions.len(), 5);
+        assert_eq!(result.executions.len(), 6);
         assert!(result
             .final_run
             .steps
@@ -496,6 +622,34 @@ mod tests {
         assert!(result.final_run.evidence_refs.len() >= 4);
         assert!(manager.action_plan_path(&run_id).exists());
     }
+
+    // START_CONTRACT_test_pre_commit_blocks_final_completion
+    // PURPOSE: Verify PreCommitVerify blocks a final CompleteStep when required gates failed.
+    // START_test_pre_commit_blocks_final_completion
+    #[test]
+    fn test_pre_commit_blocks_final_completion() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = RunManager::new(root.path());
+        let mut record = ready_run();
+        record.status = RunStatus::Running;
+        record.current_step = record.steps.len().saturating_sub(1);
+        record.steps[record.current_step].status = RunStepStatus::Running;
+        record.required_gates[0].status = RunGateStatus::Failed;
+        record.required_gates[0].reason = Some("verification failed".into());
+        manager.save(&record).unwrap();
+
+        let result = manager.execute_next_action(&record.run_id).unwrap();
+        let loaded = manager.load(&record.run_id).unwrap();
+
+        assert!(result.blocked);
+        assert_eq!(result.action.kind, RunActionKind::PreCommitVerify);
+        assert_eq!(loaded.status, RunStatus::Blocked);
+        assert_ne!(
+            loaded.outcome.as_ref().map(|outcome| &outcome.kind),
+            Some(&crate::run::RunOutcomeKind::Success)
+        );
+    }
+    // END_test_pre_commit_blocks_final_completion
 
     #[test]
     fn blocked_run_without_review_stops_at_await_review_action() {
