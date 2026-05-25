@@ -16,10 +16,13 @@
 // notify - Send JSON-RPC notification without waiting for a response
 // read_any_response - Read the next JSON-RPC response regardless of id
 // read_response - Read responses while skipping notifications
+// tools_list_names - Extract tool names from a tools/list response
+// contains_schema_description_key - Detect schema description metadata in tools/list payloads
+// mcp_regression_tools_list_profiles_and_terse_style - Real stdio tools/list profile and terse coverage
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 - Added strict MyGRACE contract anchor for MCP regression helper constants]
+// LAST_CHANGE: [v1.3.0 - Added tools/list profile and terse schema stdio regression coverage]
 // END_CHANGE_SUMMARY
 
 use serde_json::{json, Value};
@@ -395,6 +398,53 @@ mod tests {
     use super::*;
     use syn::test::fixture::{FixtureTemplate, TestFixture};
 
+    // START_CONTRACT_tools_list_names
+    // PURPOSE: Extract ordered tool names from a tools/list response
+    // INPUTS: { response: &Value }
+    // OUTPUTS: { Vec<String> }
+    // START_tools_list_names
+    fn tools_list_names(response: &Value) -> Vec<String> {
+        response["result"]["tools"]
+            .as_array()
+            .expect("tools/list array")
+            .iter()
+            .filter_map(|tool| tool["name"].as_str().map(ToOwned::to_owned))
+            .collect()
+    }
+    // END_tools_list_names
+
+    // START_CONTRACT_contains_schema_description_key
+    // PURPOSE: Detect schema description metadata without flagging parameters named description
+    // INPUTS: { value: &Value }
+    // OUTPUTS: { bool }
+    // START_contains_schema_description_key
+    fn contains_schema_description_key(value: &Value) -> bool {
+        contains_schema_description_key_in_context(value, false)
+    }
+    // END_contains_schema_description_key
+
+    // START_CONTRACT_contains_schema_description_key_in_context
+    // PURPOSE: Context-aware recursive implementation for schema description detection
+    // INPUTS: { value: &Value }, { is_properties_map: bool }
+    // OUTPUTS: { bool }
+    // START_contains_schema_description_key_in_context
+    fn contains_schema_description_key_in_context(value: &Value, is_properties_map: bool) -> bool {
+        match value {
+            Value::Object(object) => {
+                (!is_properties_map && object.contains_key("description"))
+                    || object.iter().any(|(key, child)| {
+                        let child_is_properties_map = !is_properties_map && key == "properties";
+                        contains_schema_description_key_in_context(child, child_is_properties_map)
+                    })
+            }
+            Value::Array(items) => items
+                .iter()
+                .any(|item| contains_schema_description_key_in_context(item, false)),
+            _ => false,
+        }
+    }
+    // END_contains_schema_description_key_in_context
+
     #[test]
     fn mcp_regression_helper_initializes_minimal_fixture() {
         let fixture = TestFixture::builder()
@@ -463,6 +513,89 @@ mod tests {
                 "tools/list missing {expected}: {response}"
             );
         }
+    }
+
+    #[test]
+    // START_CONTRACT_mcp_regression_tools_list_profiles_and_terse_style
+    // PURPOSE: Verify real stdio tools/list supports all profile and terse schema combinations
+    // SIDE_EFFECTS: spawns syn mcp with a Minimal fixture
+    fn mcp_regression_tools_list_profiles_and_terse_style() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Minimal)
+            .build()
+            .expect("fixture");
+        let mut server = McpTestServer::spawn_for_fixture(&fixture).expect("spawn mcp server");
+        server.initialize().expect("initialize response");
+        server
+            .notify("notifications/initialized", &json!({}))
+            .expect("send notification");
+
+        let all = server
+            .request("tools/list", &json!({}))
+            .expect("all tools/list response");
+        let verification = server
+            .request("tools/list", &json!({"profile": "verification"}))
+            .expect("verification tools/list response");
+        let minimal = server
+            .request("tools/list", &json!({"profile": "minimal"}))
+            .expect("minimal tools/list response");
+        let custom = server
+            .request(
+                "tools/list",
+                &json!({"profile": "custom:semantic_search,verify_project"}),
+            )
+            .expect("custom tools/list response");
+        let terse = server
+            .request("tools/list", &json!({"style": "terse"}))
+            .expect("terse tools/list response");
+        let verification_terse = server
+            .request(
+                "tools/list",
+                &json!({"profile": "verification", "style": "terse"}),
+            )
+            .expect("profile terse tools/list response");
+
+        let all_names = tools_list_names(&all);
+        let verification_names = tools_list_names(&verification);
+        let minimal_names = tools_list_names(&minimal);
+        let custom_names = tools_list_names(&custom);
+        let verification_terse_names = tools_list_names(&verification_terse);
+
+        assert_eq!(all_names.len(), 44);
+        assert_eq!(all["result"]["profile"], "all");
+        assert_eq!(all["result"]["style"], "full");
+        assert_eq!(all["result"]["total_visible"], 44);
+        assert!(contains_schema_description_key(&all["result"]["tools"]));
+
+        assert!(verification_names.len() <= 10, "{verification}");
+        assert!(verification_names.contains(&"verify_project".to_string()));
+        assert!(!verification_names.contains(&"semantic_search".to_string()));
+        assert_eq!(
+            minimal_names,
+            vec![
+                "semantic_search",
+                "graphrag_query",
+                "verify_project",
+                "review_code",
+                "project_status",
+                "mental_test_run"
+            ]
+        );
+        assert_eq!(custom_names, vec!["semantic_search", "verify_project"]);
+        assert_eq!(custom["result"]["total_visible"], 2);
+
+        assert_eq!(terse["result"]["style"], "terse");
+        assert!(!contains_schema_description_key(&terse["result"]["tools"]));
+        assert!(terse["result"]["schema_economy"]["savings_pct"]
+            .as_f64()
+            .is_some_and(|pct| pct >= 60.0));
+
+        assert_eq!(verification_terse["result"]["profile"], "verification");
+        assert_eq!(verification_terse["result"]["style"], "terse");
+        assert!(verification_terse_names.len() <= 10, "{verification_terse}");
+        assert!(!contains_schema_description_key(
+            &verification_terse["result"]["tools"]
+        ));
     }
 
     #[test]

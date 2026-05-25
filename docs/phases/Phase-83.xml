@@ -23,7 +23,7 @@
     <step-1 module="M-MCP-SERVER-TOOLS" status="done">Add profile classification for every existing MCP tool, including generated grace skill tools.</step-1>
     <step-2 module="M-MCP-SERVER" status="done">Parse profile and style from tools/list params and return total_available and total_visible.</step-2>
     <step-3 module="M-MCP-SERVER-TOOLS" status="done">Add terse schema transform that strips all description fields while preserving types, defaults, enums, required, items, and nested properties.</step-3>
-    <step-4 module="M-TESTS-MCP-PROTOCOL" status="planned">Add protocol tests for all, verification, minimal, custom, full, terse, and profile+terse combinations.</step-4>
+    <step-4 module="M-TESTS-MCP-PROTOCOL" status="done">Add protocol tests for all, verification, minimal, custom, full, terse, and profile+terse combinations.</step-4>
   </STEPS>
   <VERIFICATION>
     <CHECK status="planned">cargo test mcp::server_tools::tests --lib</CHECK>

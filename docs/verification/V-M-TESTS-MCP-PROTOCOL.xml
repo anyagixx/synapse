@@ -3,12 +3,18 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test --test mcp_protocol</COMMAND>
+    <COMMAND>cargo test --test e2e_mcp tools_list</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Handler-level notifications return no response.</ASSERTION>
     <ASSERTION>Binary-level syn mcp stdout remains clean JSON-RPC when logs are emitted.</ASSERTION>
     <ASSERTION>tools/list exposes the 44-tool MCP registry including extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, and grace_run_history.</ASSERTION>
+    <ASSERTION>tools/list profile=verification returns no more than 10 tools and hides unrelated implementation tools.</ASSERTION>
+    <ASSERTION>tools/list profile=minimal returns exactly the six core tools.</ASSERTION>
+    <ASSERTION>tools/list profile=custom:semantic_search,verify_project returns exactly those two tools.</ASSERTION>
+    <ASSERTION>tools/list style=terse removes schema description metadata and reports at least 60 percent schema savings.</ASSERTION>
+    <ASSERTION>tools/list combines profile filtering and terse schema style in one request.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7,Phase-70,Phase-71,Phase-73</PHASE_GATE>
+  <PHASE_GATE>Phase-7,Phase-70,Phase-71,Phase-73,Phase-83</PHASE_GATE>
 </VERIFICATION>

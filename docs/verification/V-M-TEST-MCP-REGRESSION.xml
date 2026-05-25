@@ -9,6 +9,7 @@
   <INTEGRATION_TESTS>
     <TEST>Real stdio initialize succeeds on Minimal fixture.</TEST>
     <TEST>tools/list contains semantic_search, verify_project, graphrag_query, and project_status.</TEST>
+    <TEST>tools/list covers all, verification, minimal, custom, terse, and profile+terse requests over real stdio.</TEST>
     <TEST>tools/call semantic_search returns a content envelope.</TEST>
     <TEST>verify_project reports failures on Broken fixture.</TEST>
     <TEST>Malformed JSON returns JSON-RPC error and does not panic.</TEST>
@@ -20,5 +21,5 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>MCP stdout remains JSON-RPC-only; diagnostics stay off stdout.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-78</PHASE_GATE>
+  <PHASE_GATE>Phase-78,Phase-83</PHASE_GATE>
 </VERIFICATION>
