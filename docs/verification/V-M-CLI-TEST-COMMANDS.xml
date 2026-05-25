@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-CLI-TEST-COMMANDS" module="M-CLI-TEST-COMMANDS" priority="critical" status="pending">
+<VERIFICATION id="V-M-CLI-TEST-COMMANDS" module="M-CLI-TEST-COMMANDS" priority="critical" status="active">
   <UNIT_TESTS>
     <TEST>CLI parses syn test e2e, mcp, snapshot, coverage, perf, contract, and resilience actions.</TEST>
     <TEST>Legacy syn test -- &lt;cmd&gt; continues to route to the RTK compact test adapter.</TEST>

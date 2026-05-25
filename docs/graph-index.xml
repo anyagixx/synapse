@@ -18,7 +18,7 @@
     <MODULE id="M-CLI-RUNTIME-COMMANDS" path="docs/modules/M-CLI-RUNTIME-COMMANDS.xml" status="active" />
     <MODULE id="M-CLI-RTK-COMMANDS" path="docs/modules/M-CLI-RTK-COMMANDS.xml" status="active" />
     <MODULE id="M-CLI-SETUP-COMMANDS" path="docs/modules/M-CLI-SETUP-COMMANDS.xml" status="active" />
-    <MODULE id="M-CLI-TEST-COMMANDS" path="docs/modules/M-CLI-TEST-COMMANDS.xml" status="pending" />
+    <MODULE id="M-CLI-TEST-COMMANDS" path="docs/modules/M-CLI-TEST-COMMANDS.xml" status="active" />
     <MODULE id="M-COMPRESS" path="docs/modules/M-COMPRESS.xml" status="active" />
     <MODULE id="M-CONFIG" path="docs/modules/M-CONFIG.xml" status="active" />
     <MODULE id="M-DASHBOARD" path="docs/modules/M-DASHBOARD.xml" status="active" />

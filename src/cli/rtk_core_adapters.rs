@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RTK-COMMANDS
 // PURPOSE: Core RTK-style adapters — compact command error, test failure, diff, and text summary output
-// SCOPE: ErrCmd, TestCmd, DiffCmd, and SummaryCmd execution; compact renderers; adapter-level token tracking for core RTK commands
+// SCOPE: ErrCmd, legacy TestCmd fallback, DiffCmd, and SummaryCmd execution; compact renderers; adapter-level token tracking for core RTK commands
 // DEPENDS: M-CONFIG, M-PROXY-RUNNER, M-TRACKING, M-UTILS
 // LINKS:
 //   -> M-CLI (depends) - exposes core RTK command schemas
@@ -12,7 +12,7 @@
 
 // START_MODULE_MAP
 // ErrCmd::run - Runs a command and keeps only error/warning lines
-// TestCmd::run - Runs a test command and keeps failure-oriented lines
+// run_legacy_test_command - Runs a test command and keeps failure-oriented lines
 // DiffCmd::run - Summarizes file-to-file or unified diff input
 // SummaryCmd::run - Summarizes file/stdin text without dumping full content
 // render_matching_lines - Shared keyword line filter
@@ -21,10 +21,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Use configurable async CommandRunner for err/test adapters]
+// LAST_CHANGE: [v1.2.0 - Expose legacy test fallback for structured syn test dispatcher]
 // END_CHANGE_SUMMARY
 
-use super::{DiffCmd, ErrCmd, SummaryCmd, TestCmd};
+use super::{DiffCmd, ErrCmd, SummaryCmd};
 use crate::config::Config;
 use crate::proxy::runner::CommandRunner;
 use std::io::Read;
@@ -80,53 +80,6 @@ impl ErrCmd {
         .await
     }
     // END_err_cmd_run
-}
-
-impl TestCmd {
-    // START_CONTRACT_TestCmd::run
-    // PURPOSE: Run a test command and print compact failure-oriented output
-    // INPUTS: { config: Config }
-    // OUTPUTS: { anyhow::Result<()> }
-    // SIDE_EFFECTS: executes a child command, writes stdout, records token savings, exits with child status on failure
-    // LINKS:
-    //   -> M-PROXY-RUNNER (depends) - capped command capture
-    //   -> M-TRACKING (depends) - adapter savings
-    //   -> Phase-53 (implements) - test command parity
-    //   -> NFR-003 (traces_to) - compact test output
-    // START_test_cmd_run
-    pub async fn run(&self, config: Config) -> anyhow::Result<()> {
-        if self.command.is_empty() {
-            anyhow::bail!("Usage: syn test -- <test-command> [args...]");
-        }
-        let output = CommandRunner::from_config(&self.command, &config)
-            .execute()
-            .await?;
-        let rendered = render_matching_lines(
-            &output.text,
-            &[
-                "fail",
-                "failed",
-                "failure",
-                "error",
-                "panicked",
-                "assertion",
-                "traceback",
-            ],
-            if output.success { "tests passed" } else { "" },
-        );
-        print_and_track_command(CommandAdapterOutput {
-            config: &config,
-            command: &format!("syn test {}", self.command.join(" ")),
-            raw: &output.text,
-            rendered: &rendered,
-            adapter: "rtk-test",
-            route_key: "syn test",
-            status_code: output.status_code,
-            success: output.success,
-        })
-        .await
-    }
-    // END_test_cmd_run
 }
 
 impl DiffCmd {
@@ -191,6 +144,62 @@ impl SummaryCmd {
 }
 
 // END_public_api
+
+// START_CONTRACT_run_legacy_test_command
+// PURPOSE: Run a legacy syn test command through the RTK compact failure-oriented adapter
+// INPUTS: { command: &[String] }, { config: Config }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: executes a child command, writes stdout, records token savings, exits with child status on failure
+// LINKS:
+//   -> M-CLI-TEST-COMMANDS (depends) - structured dispatcher delegates legacy commands here
+//   -> M-PROXY-RUNNER (depends) - capped command capture
+//   -> M-TRACKING (depends) - adapter savings
+//   -> Phase-53 (implements) - test command parity
+//   -> NFR-003 (traces_to) - compact test output
+// <LOG id="legacy_rtk_test_fallback" level="INFO" ref="legacy-test-fallback" module="M-CLI-RTK-COMMANDS" contract="run_legacy_test_command">
+//   EVENT: legacy_rtk_test_fallback
+//   EXPECTATION: unknown or delimiter-routed syn test commands keep RTK compact output
+//   DECISION: structured test dispatcher delegated an external command variant
+//   RESULT: success
+//   TRACEABILITY: NFR-003
+// </LOG>
+// START_run_legacy_test_command
+pub(super) async fn run_legacy_test_command(
+    command: &[String],
+    config: Config,
+) -> anyhow::Result<()> {
+    if command.is_empty() {
+        anyhow::bail!("Usage: syn test -- <test-command> [args...]");
+    }
+    let output = CommandRunner::from_config(command, &config)
+        .execute()
+        .await?;
+    let rendered = render_matching_lines(
+        &output.text,
+        &[
+            "fail",
+            "failed",
+            "failure",
+            "error",
+            "panicked",
+            "assertion",
+            "traceback",
+        ],
+        if output.success { "tests passed" } else { "" },
+    );
+    print_and_track_command(CommandAdapterOutput {
+        config: &config,
+        command: &format!("syn test {}", command.join(" ")),
+        raw: &output.text,
+        rendered: &rendered,
+        adapter: "rtk-test",
+        route_key: "syn test",
+        status_code: output.status_code,
+        success: output.success,
+    })
+    .await
+}
+// END_run_legacy_test_command
 
 // START_CommandAdapterOutput
 struct CommandAdapterOutput<'a> {

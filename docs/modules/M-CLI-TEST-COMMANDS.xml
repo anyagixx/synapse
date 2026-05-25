@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MODULE id="M-CLI-TEST-COMMANDS" type="ENTRY_POINT" status="pending">
+<MODULE id="M-CLI-TEST-COMMANDS" type="ENTRY_POINT" status="active">
   <NAME>M-CLI-TEST-COMMANDS</NAME>
   <PURPOSE>Expose structured Synapse test harness commands while preserving the existing RTK compact test adapter.</PURPOSE>
-  <SCOPE>syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, and legacy syn test -- &lt;cmd&gt; dispatch compatibility.</SCOPE>
+  <SCOPE>syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, machine-readable planning output, and legacy syn test -- &lt;cmd&gt; dispatch compatibility.</SCOPE>
   <FILES>
     <FILE>src/cli/test_commands.rs</FILE>
     <FILE>src/cli.rs</FILE>

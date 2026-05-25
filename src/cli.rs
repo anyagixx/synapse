@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, command dispatch, and command argument structs
-// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs, run scenario/action flags, agent resume/status flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
-// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-CONFIG-COMMANDS, M-CLI-FILTER-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-AGENT-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
+// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs, run scenario/action flags, agent resume/status flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, structured test command action schema, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
+// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-CONFIG-COMMANDS, M-CLI-FILTER-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-AGENT-COMMANDS, M-CLI-RTK-COMMANDS, M-CLI-TEST-COMMANDS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
@@ -16,7 +16,8 @@
 // PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
 // ConfigAction — Explicit config get, set, list, unset, path, and edit operations
 // BinlogCmd/DotnetFormatReportCmd/DotnetTrxCmd — Local .NET artifact summarizers
-// ErrCmd/TestCmd/DiffCmd/SummaryCmd — Core RTK-style adapters
+// ErrCmd/DiffCmd/SummaryCmd — Core RTK-style adapters
+// TestCmd — Structured Synapse test action schema with RTK legacy fallback
 // SessionCmd/CcEconomicsCmd — Local RTK session and economics analytics
 // DiscoverCmd/LearnCmd — Bounded RTK discovery and learning diagnostics
 // HooksCmd — Agent hook install/status/audit schema
@@ -27,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v6.1.0 — Added agent resume/status command schema]
+// LAST_CHANGE: [v6.2.0 — Added structured syn test action schema with RTK legacy fallback]
 // END_CHANGE_SUMMARY
 
 mod agent_commands;
@@ -47,6 +48,7 @@ mod rtk_parity;
 mod rtk_system_adapters;
 mod runtime_commands;
 mod setup_commands;
+mod test_commands;
 
 use crate::config::Config;
 use clap::{Parser, Subcommand};
@@ -715,10 +717,10 @@ pub struct ErrCmd {
 
 // START_TestCmd
 #[derive(clap::Args)]
-#[command(about = "Run tests and show compact failure output")]
+#[command(about = "Run structured Synapse tests or legacy compact RTK test commands")]
 pub struct TestCmd {
-    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-    pub command: Vec<String>,
+    #[command(subcommand)]
+    pub action: Option<test_commands::TestAction>,
 }
 // END_TestCmd
 
