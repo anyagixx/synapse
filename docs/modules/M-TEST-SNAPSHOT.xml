@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-SNAPSHOT" type="UTILITY" status="pending">
+  <NAME>M-TEST-SNAPSHOT</NAME>
+  <PURPOSE>Compare command output against golden snapshots with stable normalization and explicit update mode.</PURPOSE>
+  <SCOPE>Snapshot creation, update, line diffing, path/timing normalization, summary reporting, and E2E runner integration.</SCOPE>
+  <FILES>
+    <FILE>src/test/snapshot.rs</FILE>
+    <FILE>tests/snapshots/</FILE>
+  </FILES>
+  <DEPENDS>M-UTILS</DEPENDS>
+  <LINKS>docs/phases/Phase-77.xml,docs/phases/Phase-82.xml</LINKS>
+  <VERIFICATION_REF>V-M-TEST-SNAPSHOT</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CLI-TEST-COMMANDS" module="M-CLI-TEST-COMMANDS" priority="critical" status="pending">
+  <UNIT_TESTS>
+    <TEST>CLI parses syn test e2e, mcp, snapshot, coverage, perf, contract, and resilience actions.</TEST>
+    <TEST>Legacy syn test -- &lt;cmd&gt; continues to route to the RTK compact test adapter.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>cargo test --all-targets covers command parsing and dispatch behavior.</TEST>
+    <TEST>syn test coverage --json emits machine-readable matrix output.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>test_command_dispatch</LOG>
+    <LOG>legacy_rtk_test_fallback</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>CLI schema links to M-TEST-HARNESS and all UPGRADE_3 test modules.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-76</PHASE_GATE>
+</VERIFICATION>

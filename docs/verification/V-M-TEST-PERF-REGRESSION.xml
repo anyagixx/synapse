@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-PERF-REGRESSION" module="M-TEST-PERF-REGRESSION" priority="normal" status="pending">
+  <UNIT_TESTS>
+    <TEST>Benchmark statistics compute min, max, average, and median deterministically.</TEST>
+    <TEST>Baseline comparison fails only when delta exceeds configured threshold.</TEST>
+    <TEST>Missing baseline produces an actionable message.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>syn test perf --baseline writes tests/baselines/perf.json.</TEST>
+    <TEST>syn test perf --check compares index, search_cold, search_warm, verify, and graphrag benchmarks.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>perf_benchmark_completed</LOG>
+    <LOG>perf_baseline_compared</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Perf gate records OS, architecture, profile, and Synapse version in baseline metadata.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-80</PHASE_GATE>
+</VERIFICATION>

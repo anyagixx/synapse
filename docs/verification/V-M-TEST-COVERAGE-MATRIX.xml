@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-COVERAGE-MATRIX" module="M-TEST-COVERAGE-MATRIX" priority="normal" status="pending">
+  <UNIT_TESTS>
+    <TEST>Module discovery reads docs/graph-index.xml before per-module shards.</TEST>
+    <TEST>Coverage status is covered when at least three evidence types are present.</TEST>
+    <TEST>JSON output includes summary and per-module evidence counts.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>syn test coverage renders a table on MultiModule fixture.</TEST>
+    <TEST>syn test coverage --json emits valid JSON.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>coverage_matrix_built</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Coverage scan remains index-first and avoids monolithic GRACE artifact assumptions.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-79</PHASE_GATE>
+</VERIFICATION>

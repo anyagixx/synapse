@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-PERF-REGRESSION" type="UTILITY" status="pending">
+  <NAME>M-TEST-PERF-REGRESSION</NAME>
+  <PURPOSE>Detect performance regressions by comparing current benchmark medians with platform-aware JSON baselines.</PURPOSE>
+  <SCOPE>Index, cold search, warm search, verify, graphrag benchmarks, warmup, threshold comparison, baseline save, and non-flaky CI mode.</SCOPE>
+  <FILES>
+    <FILE>src/test/perf.rs</FILE>
+    <FILE>tests/baselines/</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER,M-GRAPHRAG,M-GRACE-VERIFY,M-TEST-FIXTURE</DEPENDS>
+  <LINKS>docs/phases/Phase-80.xml,docs/phases/Phase-82.xml</LINKS>
+  <VERIFICATION_REF>V-M-TEST-PERF-REGRESSION</VERIFICATION_REF>
+</MODULE>

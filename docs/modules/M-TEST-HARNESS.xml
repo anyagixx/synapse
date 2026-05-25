@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-HARNESS" type="UTILITY" status="pending">
+  <NAME>M-TEST-HARNESS</NAME>
+  <PURPOSE>Provide the crate-level test infrastructure namespace for UPGRADE_3 E2E and regression tooling.</PURPOSE>
+  <SCOPE>Module facade for fixtures, scenario runner, snapshots, coverage, performance, contract differential, and resilience harnesses.</SCOPE>
+  <FILES>
+    <FILE>src/test/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-TEST-FIXTURE,M-TEST-E2E-RUNNER,M-TEST-SNAPSHOT,M-TEST-COVERAGE-MATRIX,M-TEST-PERF-REGRESSION,M-TEST-CONTRACT-DIFFERENTIAL,M-TEST-RESILIENCE-CHAOS</DEPENDS>
+  <LINKS>docs/phases/Phase-76.xml,docs/phases/Phase-82.xml</LINKS>
+  <VERIFICATION_REF>V-M-TEST-HARNESS</VERIFICATION_REF>
+</MODULE>

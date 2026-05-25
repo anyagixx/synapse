@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-CONTRACT-DIFFERENTIAL" type="CORE_LOGIC" status="pending">
+  <NAME>M-TEST-CONTRACT-DIFFERENTIAL</NAME>
+  <PURPOSE>Assert that cascade impact analysis affects exactly the modules declared by a contract test specification.</PURPOSE>
+  <SCOPE>TOML contract specs, trigger filtering, expected and unexpected affected modules, allow_extra behavior, and cascade preview cleanup.</SCOPE>
+  <FILES>
+    <FILE>src/test/contract_test.rs</FILE>
+    <FILE>tests/e2e/contract-tests/</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CASCADE,M-TEST-FIXTURE</DEPENDS>
+  <LINKS>docs/phases/Phase-79.xml,docs/phases/Phase-82.xml</LINKS>
+  <VERIFICATION_REF>V-M-TEST-CONTRACT-DIFFERENTIAL</VERIFICATION_REF>
+</MODULE>

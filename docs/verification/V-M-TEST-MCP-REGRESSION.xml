@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-MCP-REGRESSION" module="M-TEST-MCP-REGRESSION" priority="critical" status="pending">
+  <UNIT_TESTS>
+    <TEST>McpTestServer request helper preserves JSON-RPC request IDs and skips notifications.</TEST>
+    <TEST>Drop kills and waits on the child process without leaking a server.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>Real stdio initialize succeeds on Minimal fixture.</TEST>
+    <TEST>tools/list contains semantic_search, verify_project, graphrag_query, and project_status.</TEST>
+    <TEST>tools/call semantic_search returns a content envelope.</TEST>
+    <TEST>verify_project reports failures on Broken fixture.</TEST>
+    <TEST>Malformed JSON returns JSON-RPC error and does not panic.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>mcp_regression_spawned</LOG>
+    <LOG>mcp_regression_request_completed</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>MCP stdout remains JSON-RPC-only; diagnostics stay off stdout.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-78</PHASE_GATE>
+</VERIFICATION>

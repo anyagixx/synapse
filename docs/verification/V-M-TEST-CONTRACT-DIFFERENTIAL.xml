@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-CONTRACT-DIFFERENTIAL" module="M-TEST-CONTRACT-DIFFERENTIAL" priority="critical" status="pending">
+  <UNIT_TESTS>
+    <TEST>TOML wrapper parses multiple contract test specs under test entries.</TEST>
+    <TEST>Missing expected modules and unexpected affected modules are reported separately.</TEST>
+    <TEST>allow_extra true allows unexpected modules while still requiring all expected modules.</TEST>
+    <TEST>trigger filter runs only matching specs.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>syn test contract tests/e2e/contract-tests/module-change.toml passes on MultiModule fixture.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>contract_test_started</LOG>
+    <LOG>contract_test_completed</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Contract differential tests use M-GRACE-CASCADE as the source of actual affected modules.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-79</PHASE_GATE>
+</VERIFICATION>

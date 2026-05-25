@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-80" status="pending">
+  <NAME>UPGRADE_3 Performance Regression</NAME>
+  <GOAL>Add baseline-based performance regression checks for index, search, verify, and graph query workflows.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/E6-perf-regression.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TEST-PERF-REGRESSION" />
+    <MODULE_REF id="M-TEST-FIXTURE" />
+    <MODULE_REF id="M-CLI-TEST-COMMANDS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-80-1">Perf command runs benchmark set on a MultiModule fixture and stores or compares platform-aware baselines.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TEST-PERF-REGRESSION" status="pending">Implement benchmark result model, statistics, warmup, and binary invocation helper.</step-1>
+    <step-2 module="M-TEST-PERF-REGRESSION" status="pending">Implement baseline save and threshold comparison with platform metadata.</step-2>
+    <step-3 module="M-CLI-TEST-COMMANDS" status="pending">Wire syn test perf --baseline, --check, --threshold, and --baseline-path.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test --all-targets perf</CHECK>
+    <CHECK status="planned">cargo run --quiet -- test perf --baseline --baseline-path tests/baselines/perf.json</CHECK>
+    <CHECK status="planned">cargo run --quiet -- test perf --check --threshold 20 --baseline-path tests/baselines/perf.json</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-80-1">CI latency noise can create false failures without warmup, platform metadata, and conservative thresholds.</RISK>
+  </RISKS>
+</PHASE>

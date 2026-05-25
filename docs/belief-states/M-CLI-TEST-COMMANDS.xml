@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-CLI-TEST-COMMANDS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned structured CLI surface for UPGRADE_3 test commands while preserving the RTK compact test adapter.
+    Key data flows:
+      - INPUT: clap arguments for syn test subcommands or legacy command passthrough
+      - PROCESSING: route structured actions to test harness modules and route legacy passthrough to M-CLI-RTK-COMMANDS
+      - OUTPUT: command results, machine-readable JSON where requested, and nonzero failures for broken gates
+    Critical invariants:
+      - Legacy syn test passthrough remains available
+      - Structured test commands do not mutate the developer checkout except declared snapshot or baseline update modes
+  IMPLEMENTATION_STRATEGY:
+    Approach: add a dedicated command module and keep dispatch compatibility explicit
+    Complexity_areas: clap compatibility, legacy fallback, stable exit status
+    Patterns_applied: bounded command schemas, fixture-local execution, explicit verification
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - syn test e2e, mcp, snapshot, coverage, perf, contract, and resilience parse
+    - legacy RTK syn test command behavior is preserved
+    - verify_project and cargo tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - New subcommands can conflict with trailing var-arg fallback if parser shape is careless
+</BELIEF_STATE>

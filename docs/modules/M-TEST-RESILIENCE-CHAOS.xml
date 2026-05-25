@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-RESILIENCE-CHAOS" type="UTILITY" status="pending">
+  <NAME>M-TEST-RESILIENCE-CHAOS</NAME>
+  <PURPOSE>Run corruption and recovery scenarios to prove Synapse fails gracefully and can recover critical project state.</PURPOSE>
+  <SCOPE>Delete, truncate, corrupt, remove directory, rename, locked resource simulations, fresh fixture per case, output assertions, and recovery verification.</SCOPE>
+  <FILES>
+    <FILE>src/test/resilience.rs</FILE>
+    <FILE>tests/e2e/resilience/</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-INDEXER-STORAGE,M-GRACE-STATUS,M-TEST-FIXTURE</DEPENDS>
+  <LINKS>docs/phases/Phase-81.xml,docs/phases/Phase-82.xml</LINKS>
+  <VERIFICATION_REF>V-M-TEST-RESILIENCE-CHAOS</VERIFICATION_REF>
+</MODULE>

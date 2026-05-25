@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-CONTRACT-DIFFERENTIAL" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned differential tests that assert exact cascade impact behavior.
+    Key data flows:
+      - INPUT: TOML contract test specs, fixture root, trigger filters
+      - PROCESSING: run cascade_impact and compare actual affected modules with expected modules
+      - OUTPUT: missing, unexpected, and pass/fail result evidence
+    Critical invariants:
+      - M-GRACE-CASCADE remains the source of actual impact truth
+      - allow_extra changes only unexpected-module behavior
+  IMPLEMENTATION_STRATEGY:
+    Approach: implement a typed spec wrapper and deterministic set comparisons
+    Complexity_areas: cascade preview side effects, fixture graph shape, exact versus fuzzy assertions
+    Patterns_applied: contract testing, differential assertion, explicit expected sets
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - module-change contract specs pass on MultiModule fixture
+    - failures show missing and unexpected modules separately
+  RISKS_ACKNOWLEDGED:
+    - Cascade preview artifacts can pollute fixtures if cleanup is not explicit
+</BELIEF_STATE>

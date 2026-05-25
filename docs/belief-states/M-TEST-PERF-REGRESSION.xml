@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-PERF-REGRESSION" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned baseline comparison gate for performance-sensitive Synapse workflows.
+    Key data flows:
+      - INPUT: fixture root, benchmark set, baseline path, threshold
+      - PROCESSING: run benchmarks with warmup, compute medians, save or compare platform-aware baselines
+      - OUTPUT: benchmark table and pass or fail comparison results
+    Critical invariants:
+      - CI mode avoids flaky failures from unrelated environment noise
+      - Baselines record OS, architecture, profile, and Synapse version
+  IMPLEMENTATION_STRATEGY:
+    Approach: measure the built binary on deterministic fixtures and compare medians conservatively
+    Complexity_areas: CI variance, cold versus warm cache behavior, release/debug differences
+    Patterns_applied: warmup, platform metadata, threshold gate
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - baseline save and check modes work on MultiModule fixture
+    - stricter threshold fails when current median exceeds allowed delta
+  RISKS_ACKNOWLEDGED:
+    - Measuring cargo run instead of the built binary would make benchmark results meaningless
+</BELIEF_STATE>

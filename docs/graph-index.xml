@@ -18,6 +18,7 @@
     <MODULE id="M-CLI-RUNTIME-COMMANDS" path="docs/modules/M-CLI-RUNTIME-COMMANDS.xml" status="active" />
     <MODULE id="M-CLI-RTK-COMMANDS" path="docs/modules/M-CLI-RTK-COMMANDS.xml" status="active" />
     <MODULE id="M-CLI-SETUP-COMMANDS" path="docs/modules/M-CLI-SETUP-COMMANDS.xml" status="active" />
+    <MODULE id="M-CLI-TEST-COMMANDS" path="docs/modules/M-CLI-TEST-COMMANDS.xml" status="pending" />
     <MODULE id="M-COMPRESS" path="docs/modules/M-COMPRESS.xml" status="active" />
     <MODULE id="M-CONFIG" path="docs/modules/M-CONFIG.xml" status="active" />
     <MODULE id="M-DASHBOARD" path="docs/modules/M-DASHBOARD.xml" status="active" />
@@ -107,6 +108,15 @@
     <MODULE id="M-TESTS-MCP-PROTOCOL" path="docs/modules/M-TESTS-MCP-PROTOCOL.xml" status="active" />
     <MODULE id="M-TESTS-PARITY" path="docs/modules/M-TESTS-PARITY.xml" status="active" />
     <MODULE id="M-TESTS-RELIABILITY" path="docs/modules/M-TESTS-RELIABILITY.xml" status="active" />
+    <MODULE id="M-TEST-HARNESS" path="docs/modules/M-TEST-HARNESS.xml" status="pending" />
+    <MODULE id="M-TEST-FIXTURE" path="docs/modules/M-TEST-FIXTURE.xml" status="pending" />
+    <MODULE id="M-TEST-E2E-RUNNER" path="docs/modules/M-TEST-E2E-RUNNER.xml" status="pending" />
+    <MODULE id="M-TEST-SNAPSHOT" path="docs/modules/M-TEST-SNAPSHOT.xml" status="pending" />
+    <MODULE id="M-TEST-MCP-REGRESSION" path="docs/modules/M-TEST-MCP-REGRESSION.xml" status="pending" />
+    <MODULE id="M-TEST-COVERAGE-MATRIX" path="docs/modules/M-TEST-COVERAGE-MATRIX.xml" status="pending" />
+    <MODULE id="M-TEST-PERF-REGRESSION" path="docs/modules/M-TEST-PERF-REGRESSION.xml" status="pending" />
+    <MODULE id="M-TEST-CONTRACT-DIFFERENTIAL" path="docs/modules/M-TEST-CONTRACT-DIFFERENTIAL.xml" status="pending" />
+    <MODULE id="M-TEST-RESILIENCE-CHAOS" path="docs/modules/M-TEST-RESILIENCE-CHAOS.xml" status="pending" />
     <MODULE id="M-TRACKING" path="docs/modules/M-TRACKING.xml" status="active" />
     <MODULE id="M-TRACKING-MCP-METRICS" path="docs/modules/M-TRACKING-MCP-METRICS.xml" status="active" />
     <MODULE id="M-UTILS" path="docs/modules/M-UTILS.xml" status="active" />
@@ -143,6 +153,7 @@
     <REL source="M-CLI" target="M-CLI-GRACE-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI" target="M-CLI-TEST-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI" target="M-RTK-FULL-PARITY" type="DEPENDS" />
     <REL source="M-CLI-AGENT-COMMANDS" target="M-RUNNER" type="DEPENDS" />
     <REL source="M-CLI-AGENT-COMMANDS" target="M-RUNNER-AGENT-CONTEXT" type="DEPENDS" />
@@ -188,6 +199,14 @@
     <REL source="M-CLI-SETUP-COMMANDS" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-CLI-SETUP-COMMANDS" target="M-HOOKS" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-HARNESS" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-E2E-RUNNER" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-SNAPSHOT" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-COVERAGE-MATRIX" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-PERF-REGRESSION" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-CONTRACT-DIFFERENTIAL" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-RESILIENCE-CHAOS" type="DEPENDS" />
     <REL source="M-COMPRESS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-GRACE-STATUS" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-GRACE-BELIEF-STATE" type="DEPENDS" />
@@ -525,6 +544,31 @@
     <REL source="M-TESTS-RELIABILITY" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-TESTS-RELIABILITY" target="M-CLI-RUNTIME-COMMANDS" type="DEPENDS" />
     <REL source="M-TESTS-RELIABILITY" target="M-HOOKS" type="DEPENDS" />
+    <REL source="M-TEST-HARNESS" target="M-TEST-FIXTURE" type="DEPENDS" />
+    <REL source="M-TEST-HARNESS" target="M-TEST-E2E-RUNNER" type="DEPENDS" />
+    <REL source="M-TEST-HARNESS" target="M-TEST-SNAPSHOT" type="DEPENDS" />
+    <REL source="M-TEST-HARNESS" target="M-TEST-COVERAGE-MATRIX" type="DEPENDS" />
+    <REL source="M-TEST-HARNESS" target="M-TEST-PERF-REGRESSION" type="DEPENDS" />
+    <REL source="M-TEST-HARNESS" target="M-TEST-CONTRACT-DIFFERENTIAL" type="DEPENDS" />
+    <REL source="M-TEST-HARNESS" target="M-TEST-RESILIENCE-CHAOS" type="DEPENDS" />
+    <REL source="M-TEST-FIXTURE" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-TEST-FIXTURE" target="M-GRACE-LAYOUT" type="DEPENDS" />
+    <REL source="M-TEST-E2E-RUNNER" target="M-TEST-FIXTURE" type="DEPENDS" />
+    <REL source="M-TEST-E2E-RUNNER" target="M-TEST-SNAPSHOT" type="DEPENDS" />
+    <REL source="M-TEST-MCP-REGRESSION" target="M-MCP-SERVER" type="DEPENDS" />
+    <REL source="M-TEST-MCP-REGRESSION" target="M-TEST-FIXTURE" type="DEPENDS" />
+    <REL source="M-TEST-COVERAGE-MATRIX" target="M-GRACE-LOG" type="DEPENDS" />
+    <REL source="M-TEST-COVERAGE-MATRIX" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
+    <REL source="M-TEST-COVERAGE-MATRIX" target="M-GRACE-VERIFY" type="DEPENDS" />
+    <REL source="M-TEST-PERF-REGRESSION" target="M-INDEXER" type="DEPENDS" />
+    <REL source="M-TEST-PERF-REGRESSION" target="M-GRAPHRAG" type="DEPENDS" />
+    <REL source="M-TEST-PERF-REGRESSION" target="M-GRACE-VERIFY" type="DEPENDS" />
+    <REL source="M-TEST-PERF-REGRESSION" target="M-TEST-FIXTURE" type="DEPENDS" />
+    <REL source="M-TEST-CONTRACT-DIFFERENTIAL" target="M-GRACE-CASCADE" type="DEPENDS" />
+    <REL source="M-TEST-CONTRACT-DIFFERENTIAL" target="M-TEST-FIXTURE" type="DEPENDS" />
+    <REL source="M-TEST-RESILIENCE-CHAOS" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-TEST-RESILIENCE-CHAOS" target="M-INDEXER-STORAGE" type="DEPENDS" />
+    <REL source="M-TEST-RESILIENCE-CHAOS" target="M-TEST-FIXTURE" type="DEPENDS" />
     <REL source="M-TRACKING" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TRACKING" target="M-TRACKING-MCP-METRICS" type="DEPENDS" />
     <REL source="M-TRACKING-MCP-METRICS" target="M-CONFIG" type="DEPENDS" />

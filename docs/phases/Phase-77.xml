@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-77" status="pending">
+  <NAME>UPGRADE_3 E2E Runner And Snapshots</NAME>
+  <GOAL>Implement TOML scenario execution and golden snapshot comparison for full-cycle command output verification.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/E1-e2e-scenario-runner.md,/home/truffle/Загрузки/synapse-main/UPGRADE_3/E3-golden-snapshot.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TEST-E2E-RUNNER" />
+    <MODULE_REF id="M-TEST-SNAPSHOT" />
+    <MODULE_REF id="M-CLI-TEST-COMMANDS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-77-1">Scenario TOML selects a fixture, runs ordered steps, validates expectations, and emits a bounded result.</FLOW>
+    <FLOW id="DF-77-2">Snapshot command steps normalize command output before comparing with golden files.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TEST-SNAPSHOT" status="pending">Implement snapshot create, compare, update, normalization, and summary logic.</step-1>
+    <step-2 module="M-TEST-E2E-RUNNER" status="pending">Implement E2E scenario model and command/write_file/snapshot step executor.</step-2>
+    <step-3 module="M-CLI-TEST-COMMANDS" status="pending">Wire syn test e2e and syn test snapshot CLI handlers.</step-3>
+    <step-4 module="M-TEST-E2E-RUNNER" status="pending">Add full-cycle scenario fixture and failure scenario coverage.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test --all-targets e2e</CHECK>
+    <CHECK status="planned">cargo test --all-targets snapshot</CHECK>
+    <CHECK status="planned">cargo run --quiet -- test e2e --scenario tests/e2e/scenarios/full-cycle.toml</CHECK>
+    <CHECK status="planned">cargo run --quiet -- test snapshot</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-77-1">Snapshots will be flaky if paths, timings, versions, ANSI, or IDs are not normalized.</RISK>
+  </RISKS>
+</PHASE>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-E2E-RUNNER" type="CORE_LOGIC" status="pending">
+  <NAME>M-TEST-E2E-RUNNER</NAME>
+  <PURPOSE>Run TOML-defined full-cycle Synapse scenarios against isolated fixtures and report deterministic step results.</PURPOSE>
+  <SCOPE>Scenario parsing, command steps, write_file steps, snapshot command steps, fail_fast behavior, result serialization, and bounded command execution.</SCOPE>
+  <FILES>
+    <FILE>src/test/e2e.rs</FILE>
+    <FILE>tests/e2e/scenarios/</FILE>
+  </FILES>
+  <DEPENDS>M-TEST-FIXTURE,M-TEST-SNAPSHOT,M-CLI</DEPENDS>
+  <LINKS>docs/phases/Phase-77.xml,docs/phases/Phase-82.xml</LINKS>
+  <VERIFICATION_REF>V-M-TEST-E2E-RUNNER</VERIFICATION_REF>
+</MODULE>

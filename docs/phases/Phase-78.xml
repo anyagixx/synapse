@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-78" status="pending">
+  <NAME>UPGRADE_3 MCP Regression</NAME>
+  <GOAL>Add real MCP stdio JSON-RPC regression coverage against fixture projects.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/E4-mcp-regression.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TEST-MCP-REGRESSION" />
+    <MODULE_REF id="M-TEST-FIXTURE" />
+    <MODULE_REF id="M-MCP-SERVER" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-78-1">MCP regression test spawns syn mcp stdio, sends JSON-RPC requests, and validates response envelopes.</FLOW>
+    <FLOW id="DF-78-2">Broken fixture flows through verify_project tool and must return structured failure content.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TEST-MCP-REGRESSION" status="pending">Implement McpTestServer helper with timeout, request, notify, and cleanup behavior.</step-1>
+    <step-2 module="M-TEST-MCP-REGRESSION" status="pending">Add initialize, tools/list, semantic_search, verify_project, malformed JSON, and notification tests.</step-2>
+    <step-3 module="M-CLI-TEST-COMMANDS" status="pending">Wire syn test mcp command to the MCP regression suite where practical.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test --test e2e_mcp</CHECK>
+    <CHECK status="planned">cargo test --test mcp_protocol</CHECK>
+    <CHECK status="planned">cargo run --quiet -- test mcp</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-78-1">Stdio tests can hang without explicit timeout and child process cleanup.</RISK>
+  </RISKS>
+</PHASE>
