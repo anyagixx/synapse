@@ -8,17 +8,17 @@
 //   <- V-M-TEST-HARNESS (verified_by) - harness facade verification
 
 // START_MODULE_MAP
-// fixture - Planned reusable project fixture factory
-// e2e - Planned TOML scenario runner
-// snapshot - Planned golden snapshot comparison engine
-// coverage - Planned module evidence coverage matrix
-// perf - Planned performance regression baseline checker
-// contract_test - Planned cascade differential assertions
-// resilience - Planned corrupted-state resilience harness
+// fixture - Reusable project fixture factory
+// e2e - TOML scenario runner
+// snapshot - Golden snapshot comparison engine
+// coverage - Module evidence coverage matrix
+// perf - Performance regression baseline checker
+// contract_test - Cascade differential assertions
+// resilience - Corrupted-state resilience harness
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.1.0 - Added UPGRADE_3 planning contract stub]
+// LAST_CHANGE: [v0.2.0 - Exposed UPGRADE_3 test harness module facade]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_planned_scope
@@ -31,5 +31,11 @@
 // END_planned_scope
 
 // START_public_api
-// Contract-only stub. Functional module declarations are scheduled by docs/phases/Phase-76.xml.
+pub mod contract_test;
+pub mod coverage;
+pub mod e2e;
+pub mod fixture;
+pub mod perf;
+pub mod resilience;
+pub mod snapshot;
 // END_public_api

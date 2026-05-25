@@ -10,10 +10,11 @@
 // START_MODULE_MAP
 // VERSION — Crate version from Cargo.toml
 // NAME — Binary name from Cargo.toml
+// test — UPGRADE_3 E2E and regression test harness facade
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Exposed durable project memory module]
+// LAST_CHANGE: [v2.14.0 — Exposed UPGRADE_3 test harness facade]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_public_api
@@ -34,6 +35,7 @@ pub mod memory;
 pub mod proxy;
 pub mod run;
 pub mod skills;
+pub mod test;
 pub mod tracking;
 pub mod utils;
 
