@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-INDEXER" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Code indexer — walks, parses, stores full snapshots, and searches code blocks with guarded storage health checks
+    Module responsibility: Code indexer — walks, delegates pipeline block construction, stores full or delta snapshots, and searches code blocks with guarded storage health checks
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, search, hybrid_search, storage health propagation, view_signatures
+      - Scope remains bounded to: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, stale-entry pruning, search, hybrid_search, storage health propagation, view_signatures
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

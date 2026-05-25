@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
-// PURPOSE: Code indexer — walks, delegates pipeline block construction, stores full snapshots, and searches code blocks with guarded storage health checks
-// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
+// PURPOSE: Code indexer — walks, delegates pipeline block construction, stores full or delta snapshots, and searches code blocks with guarded storage health checks
+// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-PIPELINE, M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS:
 //   → M-INDEXER-PIPELINE (depends) — deterministic full-index block construction
@@ -15,13 +15,14 @@
 // Indexer — Main indexer combining walker, parser, and storage
 // Indexer::storage_count — Returns loaded storage count through guarded lock access
 // Indexer::index_directory_with_gitignore — Rebuilds index snapshot with configurable gitignore handling
+// Indexer::index_delta — Applies changed and deleted file updates without a full project rebuild
 // Indexer::search_in_root — Searches indexed blocks for an explicit project root
 // Indexer::hybrid_search_in_root — Runs graph-aware hybrid search for an explicit project root
 // ensure_storage_ready — Converts storage load-health errors into actionable search errors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.5.0 - Delegated full-index StoredBlock construction to M-INDEXER-PIPELINE]
+// LAST_CHANGE: [v3.6.0 - Added incremental index_delta entrypoint]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
@@ -33,7 +34,8 @@ pub mod walker;
 
 use crate::config::Config;
 use crate::graphrag::builder::GraphBuilder;
-use std::path::Path;
+use std::collections::BTreeSet;
+use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 use storage::Storage;
 
@@ -154,6 +156,59 @@ impl Indexer {
         Ok(())
     }
     // END_indexer_index_directory_with_gitignore
+
+    // START_CONTRACT_Indexer::index_delta
+    // PURPOSE: Apply changed and deleted file updates without rebuilding the full project index
+    // INPUTS: { root: &Path — project root }, { changed_files: &[PathBuf] — changed source paths }, { deleted_files: &[PathBuf] — deleted source paths }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: updates stored blocks for changed/deleted files and invalidates GraphBuilder cache for root
+    // START_indexer_index_delta
+    pub async fn index_delta(
+        &self,
+        root: &Path,
+        changed_files: &[PathBuf],
+        deleted_files: &[PathBuf],
+    ) -> anyhow::Result<()> {
+        let deleted_paths = normalize_delta_paths(root, deleted_files)?;
+        let changed_paths = normalize_delta_paths(root, changed_files)?;
+        let mut storage_guard = self.get_storage(root)?;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
+
+        let deleted: Vec<String> = deleted_paths.iter().cloned().collect();
+        let removed_count = storage.remove_files_blocks(&deleted)?;
+        let mut changed_count = 0usize;
+        for path in changed_paths
+            .iter()
+            .filter(|path| !deleted_paths.contains(*path))
+        {
+            let full_path = root.join(path);
+            let blocks = if let Some(language) = walker::detect_language(&full_path) {
+                let file = walker::IndexFile {
+                    path: path.clone(),
+                    language,
+                };
+                pipeline::process_index_file(root, &file).unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+            storage.upsert_file_blocks(path, blocks)?;
+            changed_count += 1;
+        }
+
+        if changed_count > 0 || removed_count > 0 || !deleted_paths.is_empty() {
+            GraphBuilder::invalidate_cache(root);
+        }
+        tracing::info!(
+            "[Indexer][index_delta][DELTA_APPLY] changed={} deleted={} removed_blocks={}",
+            changed_count,
+            deleted_paths.len(),
+            removed_count
+        );
+        Ok(())
+    }
+    // END_indexer_index_delta
 
     // START_CONTRACT_Indexer::search
     // PURPOSE: BM25 search across indexed code blocks
@@ -361,6 +416,39 @@ fn ensure_storage_ready(storage: &Storage) -> anyhow::Result<()> {
 }
 // END_ensure_storage_ready
 
+// START_CONTRACT_normalize_delta_paths
+// PURPOSE: Normalize changed or deleted file paths to project-relative storage paths
+// INPUTS: { root: &Path — project root }, { paths: &[PathBuf] — changed or deleted paths }
+// OUTPUTS: { anyhow::Result<BTreeSet<String>> }
+// START_normalize_delta_paths
+fn normalize_delta_paths(root: &Path, paths: &[PathBuf]) -> anyhow::Result<BTreeSet<String>> {
+    let mut normalized = BTreeSet::new();
+    for path in paths {
+        normalized.insert(normalize_delta_path(root, path)?);
+    }
+    Ok(normalized)
+}
+// END_normalize_delta_paths
+
+// START_CONTRACT_normalize_delta_path
+// PURPOSE: Convert one changed or deleted path into the project-relative storage path format
+// INPUTS: { root: &Path — project root }, { path: &Path — changed or deleted path }
+// OUTPUTS: { anyhow::Result<String> }
+// START_normalize_delta_path
+fn normalize_delta_path(root: &Path, path: &Path) -> anyhow::Result<String> {
+    let relative = if path.is_absolute() {
+        path.strip_prefix(root).unwrap_or(path)
+    } else {
+        path
+    };
+    let normalized = relative.to_string_lossy().replace('\\', "/");
+    if normalized.is_empty() || normalized == "." {
+        anyhow::bail!("index delta path must name a file");
+    }
+    Ok(normalized)
+}
+// END_normalize_delta_path
+
 fn graph_proximity_boost(
     graph: &crate::graphrag::types::CodeGraph,
     block: &storage::StoredBlock,
@@ -567,6 +655,78 @@ mod tests {
             .iter()
             .any(|result| result.name.contains("first_step")));
     }
+
+    // START_CONTRACT_test_index_delta_upserts_changed_files
+    // PURPOSE: Verify incremental indexing replaces changed-file blocks without a full rebuild
+    // START_test_index_delta_upserts_changed_files
+    #[tokio::test]
+    async fn test_index_delta_upserts_changed_files() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        let path = src.join("workflow.rs");
+        std::fs::write(&path, "pub fn old_step() {\n}\n").expect("write old source");
+
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        assert!(!indexer
+            .search_in_root(dir.path(), "old", 5)
+            .await
+            .expect("search old")
+            .is_empty());
+
+        std::fs::write(&path, "pub fn new_step() {\n}\n").expect("write new source");
+        indexer
+            .index_delta(dir.path(), &[PathBuf::from("src/workflow.rs")], &[])
+            .await
+            .expect("index delta");
+
+        assert!(indexer
+            .search_in_root(dir.path(), "old", 5)
+            .await
+            .expect("search old after delta")
+            .is_empty());
+        assert!(!indexer
+            .search_in_root(dir.path(), "new", 5)
+            .await
+            .expect("search new after delta")
+            .is_empty());
+    }
+    // END_test_index_delta_upserts_changed_files
+
+    // START_CONTRACT_test_index_delta_removes_deleted_files
+    // PURPOSE: Verify incremental indexing removes deleted-file blocks while preserving unrelated files
+    // START_test_index_delta_removes_deleted_files
+    #[tokio::test]
+    async fn test_index_delta_removes_deleted_files() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        let deleted_path = src.join("deleted.rs");
+        let keep_path = src.join("keep.rs");
+        std::fs::write(&deleted_path, "pub fn deleted_step() {\n}\n").expect("write deleted");
+        std::fs::write(&keep_path, "pub fn keep_step() {\n}\n").expect("write keep");
+
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        std::fs::remove_file(&deleted_path).expect("remove deleted");
+        indexer
+            .index_delta(dir.path(), &[], &[PathBuf::from("src/deleted.rs")])
+            .await
+            .expect("index deleted delta");
+
+        assert!(indexer
+            .search_in_root(dir.path(), "deleted", 5)
+            .await
+            .expect("search deleted")
+            .is_empty());
+        assert!(!indexer
+            .search_in_root(dir.path(), "keep", 5)
+            .await
+            .expect("search keep")
+            .is_empty());
+    }
+    // END_test_index_delta_removes_deleted_files
 
     #[tokio::test]
     async fn test_hybrid_search_uses_multi_hop_graph_proximity() {

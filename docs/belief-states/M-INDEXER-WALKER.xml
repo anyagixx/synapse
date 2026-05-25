@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-INDEXER-WALKER" version="1.0">
   UNDERSTANDING:
-    Module responsibility: File system walker — discovers source files with configurable .gitignore and .synignore handling
+    Module responsibility: File system walker — discovers source files with configurable .gitignore and .synignore handling and exposes language detection for incremental indexing
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: No declared dependencies
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Walker struct, file discovery with language detection including SQL, gitignore toggle, ignore rules
+      - Scope remains bounded to: Walker struct, file discovery with public language detection including SQL, gitignore toggle, ignore rules
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

@@ -2,11 +2,13 @@
 <VERIFICATION id="V-M-INDEXER-WALKER" module="M-INDEXER-WALKER" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test indexer::walker::tests::test_detect_language_exposes_incremental_helper --lib</COMMAND>
     <COMMAND>cargo test --test reliability_test test_index_no_git_indexes_gitignored_files</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Walker respects .gitignore by default and disables gitignore filtering when requested by syn index --no-git.</ASSERTION>
+    <ASSERTION>Public language detection supports incremental indexing without a full file-system walk.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7</PHASE_GATE>
+  <PHASE_GATE>Phase-7,Phase-64</PHASE_GATE>
 </VERIFICATION>

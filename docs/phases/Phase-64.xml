@@ -21,7 +21,7 @@
     <step-1 module="M-INDEXER-PIPELINE" status="done">Extract shared file-processing and StoredBlock construction from M-INDEXER into a pipeline module with stable ordering and bounded error reporting.</step-1>
     <step-2 module="M-INDEXER-PIPELINE" status="done">Add Rayon-backed parallel parsing for full indexing while preserving existing gitignore behavior and search-result determinism.</step-2>
     <step-3 module="M-INDEXER-STORAGE" status="done">Add storage operations for per-file upsert and deleted-file removal without requiring a full snapshot rewrite.</step-3>
-    <step-4 module="M-INDEXER" status="planned">Expose an incremental indexing entrypoint for changed-file sets and route full indexing through the shared pipeline.</step-4>
+    <step-4 module="M-INDEXER" status="done">Expose an incremental indexing entrypoint for changed-file sets and route full indexing through the shared pipeline.</step-4>
     <step-5 module="M-CLI-SETUP-COMMANDS" status="planned">Wire setup or watch-related entrypoints to request incremental index updates when a bounded changed-file list is available.</step-5>
     <step-6 module="M-GRAPHRAG-BUILDER" status="planned">Keep GraphRAG cache invalidation scoped to the indexed root and affected deltas.</step-6>
   </STEPS>

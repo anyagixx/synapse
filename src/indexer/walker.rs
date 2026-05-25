@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-WALKER
 // PURPOSE: File system walker — discovers source files with configurable .gitignore and .synignore handling
-// SCOPE: Walker struct, file discovery with language detection including SQL, gitignore toggle, ignore rules
+// SCOPE: Walker struct, file discovery with public language detection including SQL, gitignore toggle, ignore rules
 // DEPENDS: N/A
 // LINKS: .gitignore, .synignore
 
@@ -9,10 +9,11 @@
 // IndexFile — Discovered source file with path and language
 // Walker — File system walker with configurable gitignore-aware traversal
 // Walker::new_with_gitignore — Creates a walker with explicit gitignore behavior
+// detect_language — Detects indexable language for one path
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 — Added SQL discovery for MyGRACE language-aware contracts]
+// LAST_CHANGE: [v2.3.0 — Exposed language detection for incremental indexing]
 // END_CHANGE_SUMMARY
 
 use ignore::WalkBuilder;
@@ -116,7 +117,12 @@ impl Walker {
     // END_walker_walk
 }
 
-fn detect_language(path: &Path) -> Option<String> {
+// START_CONTRACT_detect_language
+// PURPOSE: Detect the indexable language for a source path
+// INPUTS: { path: &Path — source file path }
+// OUTPUTS: { Option<String> — Synapse language id when path is indexable }
+// START_detect_language
+pub fn detect_language(path: &Path) -> Option<String> {
     let ext = path.extension()?.to_str()?.to_lowercase();
     let name = path.file_name()?.to_str()?;
     match ext.as_str() {
@@ -142,5 +148,24 @@ fn detect_language(path: &Path) -> Option<String> {
             _ => None,
         },
     }
+}
+// END_detect_language
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_test_detect_language_exposes_incremental_helper
+    // PURPOSE: Verify public language detection supports incremental indexing without a full walk
+    // START_test_detect_language_exposes_incremental_helper
+    #[test]
+    fn test_detect_language_exposes_incremental_helper() {
+        assert_eq!(
+            detect_language(Path::new("src/lib.rs")).as_deref(),
+            Some("rust")
+        );
+        assert_eq!(detect_language(Path::new("README.unknown")), None);
+    }
+    // END_test_detect_language_exposes_incremental_helper
 }
 // END_public_api
