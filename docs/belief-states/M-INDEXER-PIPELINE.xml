@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-INDEXER-PIPELINE" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Convert discovered source files into deterministic StoredBlock records for full and later incremental indexing.
+    Module responsibility: Convert discovered source files into deterministic StoredBlock records using parallel full-index processing for full and later incremental indexing.
     Key data flows:
       - INPUT: Walker IndexFile records, project root, parser CodeBlocks, and source file contents.
-      - PROCESSING: Read bounded source files, parse code blocks, build StoredBlock values, and normalize ordering.
+      - PROCESSING: Read bounded source files in parallel, parse code blocks, build StoredBlock values, and normalize ordering.
       - OUTPUT: Stable StoredBlock vectors consumed by M-INDEXER and M-INDEXER-STORAGE.
     Critical invariants:
       - StoredBlock IDs stay path:start_line compatible with existing search and GraphRAG logic.
@@ -20,5 +20,5 @@
     - M-INDEXER search behavior remains compatible through the existing public index_directory API.
   RISKS_ACKNOWLEDGED:
     - Ordering changes can affect persisted snapshots if not normalized consistently.
-    - Future parallelism must reuse the same deterministic output boundary.
+      - Parallel execution must reuse the same deterministic output boundary.
 </BELIEF_STATE>

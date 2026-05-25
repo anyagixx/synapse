@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-PIPELINE
-// PURPOSE: Indexing pipeline helpers — convert discovered files into deterministic StoredBlock updates
-// SCOPE: collect_index_blocks, process_index_file, build_stored_blocks, size-bounded source reads
+// PURPOSE: Indexing pipeline helpers — convert discovered files into deterministic parallel StoredBlock updates
+// SCOPE: Rayon-backed collect_index_blocks, process_index_file, build_stored_blocks, size-bounded source reads
 // DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE-TYPES
 // LINKS:
 //   → M-INDEXER-WALKER (depends) — source file discovery types
@@ -17,46 +17,77 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Extracted deterministic indexing pipeline from M-INDEXER]
+// LAST_CHANGE: [v1.1.0 — Added Rayon-backed full-index file processing]
 // END_CHANGE_SUMMARY
 
 use super::parser::{CodeBlock, ParserEngine};
 use super::storage::StoredBlock;
 use super::walker::IndexFile;
+use rayon::prelude::*;
 use std::path::Path;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub const MAX_INDEXABLE_FILE_BYTES: usize = 100_000;
 
 // START_public_api
 
 // START_CONTRACT_collect_index_blocks
-// PURPOSE: Convert discovered files into a deterministic stored block snapshot
+// PURPOSE: Convert discovered files into a deterministic stored block snapshot using parallel file processing
 // INPUTS: { root: &Path — project root }, { files: &[IndexFile] — files discovered by walker }
 // OUTPUTS: { Vec<StoredBlock> — sorted stored blocks }
 // SIDE_EFFECTS: reads source files from disk and emits indexing progress logs
 // START_collect_index_blocks
 pub fn collect_index_blocks(root: &Path, files: &[IndexFile]) -> Vec<StoredBlock> {
     let total = files.len();
-    let mut all_stored = Vec::new();
+    tracing::info!(
+        "[IndexerPipeline][collect_index_blocks][PARALLEL_START] processing {} files",
+        total
+    );
+    let completed = AtomicUsize::new(0);
+    let mut all_stored: Vec<StoredBlock> = files
+        .par_iter()
+        .filter_map(|file| {
+            let stored = process_index_file(root, file);
+            let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
+            if done % 50 == 0 || done == total {
+                tracing::info!(
+                    "[IndexerPipeline][collect_index_blocks][PROGRESS] indexed {}/{} files",
+                    done,
+                    total
+                );
+            }
+            stored
+        })
+        .flatten()
+        .collect();
 
-    for (i, file) in files.iter().enumerate() {
-        if let Some(stored) = process_index_file(root, file) {
-            all_stored.extend(stored);
-        }
-
-        if (i + 1) % 50 == 0 || i == total.saturating_sub(1) {
-            tracing::info!(
-                "[IndexerPipeline][collect_index_blocks][PROGRESS] indexed {}/{} files",
-                i + 1,
-                total
-            );
-        }
+    if total == 0 {
+        tracing::info!("[IndexerPipeline][collect_index_blocks][PROGRESS] indexed 0/0 files");
     }
 
     sort_stored_blocks(&mut all_stored);
     all_stored
 }
 // END_collect_index_blocks
+
+// START_CONTRACT_collect_index_blocks_serial
+// PURPOSE: Build a sequential stored block snapshot for deterministic parity tests
+// INPUTS: { root: &Path — project root }, { files: &[IndexFile] — files discovered by walker }
+// OUTPUTS: { Vec<StoredBlock> — sorted stored blocks }
+// SIDE_EFFECTS: reads source files from disk
+// START_collect_index_blocks_serial
+#[cfg(test)]
+fn collect_index_blocks_serial(root: &Path, files: &[IndexFile]) -> Vec<StoredBlock> {
+    let mut all_stored = Vec::new();
+    for file in files {
+        if let Some(stored) = process_index_file(root, file) {
+            all_stored.extend(stored);
+        }
+    }
+    sort_stored_blocks(&mut all_stored);
+    all_stored
+}
+// END_collect_index_blocks_serial
 
 // START_CONTRACT_process_index_file
 // PURPOSE: Read and parse one discovered source file into stored blocks
@@ -194,6 +225,35 @@ mod tests {
         assert_eq!(paths, vec!["src/a.rs", "src/b.rs"]);
     }
     // END_test_collect_index_blocks_sorts_snapshot
+
+    // START_CONTRACT_test_parallel_collection_matches_serial_snapshot
+    // PURPOSE: Verify Rayon collection produces the same deterministic snapshot as sequential collection
+    // START_test_parallel_collection_matches_serial_snapshot
+    #[test]
+    fn test_parallel_collection_matches_serial_snapshot() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        for idx in 0..24 {
+            std::fs::write(
+                src.join(format!("file_{idx:02}.rs")),
+                format!("fn function_{idx:02}() {{}}\n"),
+            )
+            .expect("write source");
+        }
+        let files: Vec<_> = (0..24)
+            .rev()
+            .map(|idx| index_file(&format!("src/file_{idx:02}.rs"), "rust"))
+            .collect();
+
+        let parallel = collect_index_blocks(dir.path(), &files);
+        let serial = collect_index_blocks_serial(dir.path(), &files);
+        let parallel_ids: Vec<_> = parallel.iter().map(|block| block.id.as_str()).collect();
+        let serial_ids: Vec<_> = serial.iter().map(|block| block.id.as_str()).collect();
+
+        assert_eq!(parallel_ids, serial_ids);
+    }
+    // END_test_parallel_collection_matches_serial_snapshot
 
     // START_CONTRACT_test_process_index_file_skips_large_files
     // PURPOSE: Verify oversized files are skipped before parser work

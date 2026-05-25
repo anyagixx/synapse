@@ -5,11 +5,13 @@
     <COMMAND>cargo test indexer::tests::test_search_expands_module_identifier_terms --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
+    <LOG_MARKER>[IndexerPipeline][collect_index_blocks][PARALLEL_START]</LOG_MARKER>
     <LOG_MARKER>[IndexerPipeline][collect_index_blocks][PROGRESS]</LOG_MARKER>
     <LOG_MARKER>[IndexerPipeline][process_index_file][SIZE_SKIP]</LOG_MARKER>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Pipeline StoredBlock construction preserves file path, language, name, kind, content, and line metadata.</ASSERTION>
+    <ASSERTION>Rayon-backed full-index collection matches the deterministic sequential snapshot.</ASSERTION>
     <ASSERTION>Full snapshot block ordering is deterministic by path and start line.</ASSERTION>
     <ASSERTION>Oversized files are skipped before parser work.</ASSERTION>
   </TRACE_ASSERTIONS>
