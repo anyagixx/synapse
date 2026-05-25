@@ -2,11 +2,11 @@
 <MODULE id="M-INDEXER-PIPELINE" type="CORE_LOGIC" status="active">
   <NAME>Indexer Pipeline</NAME>
   <PURPOSE>Indexing pipeline helpers that convert discovered files into deterministic parallel StoredBlock updates.</PURPOSE>
-  <SCOPE>Rayon-backed collect_index_blocks, process_index_file, build_stored_blocks, size-bounded source reads, deterministic full-index ordering.</SCOPE>
+  <SCOPE>Rayon-backed collect_index_blocks, process_index_file, build_stored_blocks with empty embedding metadata, size-bounded source reads, deterministic full-index ordering.</SCOPE>
   <FILES>
     <FILE>src/indexer/pipeline.rs</FILE>
   </FILES>
   <DEPENDS>M-INDEXER-WALKER,M-INDEXER-PARSER,M-INDEXER-STORAGE-TYPES</DEPENDS>
-  <LINKS>docs/phases/Phase-64.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U2-parallel-indexing.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U3-incremental-indexing.md</LINKS>
+  <LINKS>docs/phases/Phase-64.xml,docs/phases/Phase-66.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U2-parallel-indexing.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U3-incremental-indexing.md</LINKS>
   <VERIFICATION_REF>V-M-INDEXER-PIPELINE</VERIFICATION_REF>
 </MODULE>

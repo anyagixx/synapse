@@ -1,18 +1,23 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-STORAGE-TYPES
-// PURPOSE: Shared storage data types for indexed code blocks
-// SCOPE: StoredBlock serialization shape
+// PURPOSE: Shared storage data types for indexed code blocks and semantic embedding metadata
+// SCOPE: StoredBlock serialization shape, backward-compatible embedding metadata, SearchFilters metadata
 // DEPENDS: N/A
 // LINKS: docs/modules/M-INDEXER-STORAGE.xml
 
 // START_MODULE_MAP
 // StoredBlock — Serializable code block for JSON storage
+// StoredBlock::set_embedding — Attaches embedding vector metadata to a stored block
+// StoredBlock::has_compatible_embedding — Checks embedding model/schema/dimension compatibility
+// StoredBlock::clear_embedding — Removes embedding metadata from a stored block
 // SearchFilters — Optional language and relative-path filters for indexed block search
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.7.0 — Added reusable search filter metadata]
+// LAST_CHANGE: [v3.9.0 — Added backward-compatible embedding metadata]
 // END_CHANGE_SUMMARY
+
+pub const CURRENT_EMBEDDING_SCHEMA_VERSION: u32 = 1;
 
 // START_public_api
 
@@ -27,8 +32,68 @@ pub struct StoredBlock {
     pub content: String,
     pub start_line: usize,
     pub end_line: usize,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub embedding: Option<Vec<f32>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub embedding_model: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub embedding_dimensions: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub embedding_schema_version: Option<u32>,
 }
 // END_StoredBlock
+
+impl StoredBlock {
+    // START_CONTRACT_StoredBlock::set_embedding
+    // PURPOSE: Attach an embedding vector and compatibility metadata to this block
+    // INPUTS: { model: &str }, { vector: Vec<f32> }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: mutates embedding metadata fields
+    // START_stored_block_set_embedding
+    pub fn set_embedding(&mut self, model: &str, vector: Vec<f32>) -> anyhow::Result<()> {
+        if model.trim().is_empty() {
+            anyhow::bail!("embedding model must not be empty");
+        }
+        if vector.is_empty() {
+            anyhow::bail!("embedding vector must not be empty");
+        }
+        let dimensions = vector.len();
+        self.embedding = Some(vector);
+        self.embedding_model = Some(model.to_string());
+        self.embedding_dimensions = Some(dimensions);
+        self.embedding_schema_version = Some(CURRENT_EMBEDDING_SCHEMA_VERSION);
+        Ok(())
+    }
+    // END_stored_block_set_embedding
+
+    // START_CONTRACT_StoredBlock::has_compatible_embedding
+    // PURPOSE: Check whether this block has an embedding compatible with the active model and dimension
+    // INPUTS: { model: &str }, { dimensions: usize }
+    // OUTPUTS: { bool }
+    // START_stored_block_has_compatible_embedding
+    pub fn has_compatible_embedding(&self, model: &str, dimensions: usize) -> bool {
+        let Some(vector) = &self.embedding else {
+            return false;
+        };
+        self.embedding_model.as_deref() == Some(model)
+            && self.embedding_dimensions == Some(dimensions)
+            && self.embedding_schema_version == Some(CURRENT_EMBEDDING_SCHEMA_VERSION)
+            && vector.len() == dimensions
+    }
+    // END_stored_block_has_compatible_embedding
+
+    // START_CONTRACT_StoredBlock::clear_embedding
+    // PURPOSE: Remove embedding vector and metadata from this block
+    // SIDE_EFFECTS: mutates embedding metadata fields
+    // START_stored_block_clear_embedding
+    pub fn clear_embedding(&mut self) {
+        self.embedding = None;
+        self.embedding_model = None;
+        self.embedding_dimensions = None;
+        self.embedding_schema_version = None;
+    }
+    // END_stored_block_clear_embedding
+}
 
 // START_SearchFilters
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -151,6 +216,10 @@ mod tests {
             content: "fn sample() {}".into(),
             start_line: 1,
             end_line: 1,
+            embedding: None,
+            embedding_model: None,
+            embedding_dimensions: None,
+            embedding_schema_version: None,
         }
     }
 
@@ -184,5 +253,46 @@ mod tests {
 
         assert!(filters.matches(&block("src/mcp/server_code_tools.rs", "rust")));
         assert!(!filters.matches(&block("src/mcp/server_tools.rs", "rust")));
+    }
+
+    #[test]
+    fn test_stored_block_embedding_metadata_roundtrip() {
+        let mut block = block("src/lib.rs", "rust");
+
+        block
+            .set_embedding("AllMiniLML6V2", vec![0.1, 0.2, 0.3])
+            .expect("set embedding");
+
+        assert!(block.has_compatible_embedding("AllMiniLML6V2", 3));
+        assert!(!block.has_compatible_embedding("OtherModel", 3));
+        assert!(!block.has_compatible_embedding("AllMiniLML6V2", 4));
+    }
+
+    #[test]
+    fn test_stored_block_embedding_metadata_defaults_for_legacy_json() {
+        let block: StoredBlock = serde_json::from_str(
+            r#"{
+              "id": "src/lib.rs:1",
+              "path": "src/lib.rs",
+              "language": "rust",
+              "name": "sample",
+              "kind": "function",
+              "content": "fn sample() {}",
+              "start_line": 1,
+              "end_line": 1
+            }"#,
+        )
+        .expect("legacy stored block");
+
+        assert!(block.embedding.is_none());
+        assert!(!block.has_compatible_embedding("AllMiniLML6V2", 384));
+    }
+
+    #[test]
+    fn test_stored_block_embedding_rejects_empty_vector() {
+        let mut block = block("src/lib.rs", "rust");
+
+        assert!(block.set_embedding("AllMiniLML6V2", Vec::new()).is_err());
+        assert!(block.set_embedding("", vec![0.1]).is_err());
     }
 }

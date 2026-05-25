@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.8.0 — Added filtered search and vector search APIs]
+// LAST_CHANGE: [v3.9.0 — Preserves embedding metadata in stored block test fixtures]
 // END_CHANGE_SUMMARY
 
 use super::storage_search::{
@@ -450,6 +450,10 @@ mod tests {
             content: content.to_string(),
             start_line: 1,
             end_line: content.lines().count(),
+            embedding: None,
+            embedding_model: None,
+            embedding_dimensions: None,
+            embedding_schema_version: None,
         }
     }
 

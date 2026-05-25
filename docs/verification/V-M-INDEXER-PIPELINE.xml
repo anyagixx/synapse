@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-INDEXER-PIPELINE" module="M-INDEXER-PIPELINE" priority="critical" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test indexer::pipeline --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::pipeline::tests::test_build_stored_blocks_uses_file_metadata --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test indexer::tests::test_search_expands_module_identifier_terms --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
@@ -11,9 +12,10 @@
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Pipeline StoredBlock construction preserves file path, language, name, kind, content, and line metadata.</ASSERTION>
+    <ASSERTION>Pipeline initializes embedding metadata as empty so later embedding generation can fill it deterministically.</ASSERTION>
     <ASSERTION>Rayon-backed full-index collection matches the deterministic sequential snapshot.</ASSERTION>
     <ASSERTION>Full snapshot block ordering is deterministic by path and start line.</ASSERTION>
     <ASSERTION>Oversized files are skipped before parser work.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-64</PHASE_GATE>
+  <PHASE_GATE>Phase-64,Phase-66</PHASE_GATE>
 </VERIFICATION>

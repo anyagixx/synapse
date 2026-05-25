@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 — Added Rayon-backed full-index file processing]
+// LAST_CHANGE: [v1.2.0 — Initializes empty embedding metadata for new stored blocks]
 // END_CHANGE_SUMMARY
 
 use super::parser::{CodeBlock, ParserEngine};
@@ -141,6 +141,10 @@ pub fn build_stored_blocks(file: &IndexFile, blocks: &[CodeBlock]) -> Vec<Stored
             content: block.content.clone(),
             start_line: block.start_line,
             end_line: block.end_line,
+            embedding: None,
+            embedding_model: None,
+            embedding_dimensions: None,
+            embedding_schema_version: None,
         })
         .collect()
 }
@@ -201,6 +205,8 @@ mod tests {
         assert_eq!(stored[0].path, "src/lib.rs");
         assert_eq!(stored[0].language, "rust");
         assert_eq!(stored[0].name, "run");
+        assert!(stored[0].embedding.is_none());
+        assert!(stored[0].embedding_model.is_none());
     }
     // END_test_build_stored_blocks_uses_file_metadata
 

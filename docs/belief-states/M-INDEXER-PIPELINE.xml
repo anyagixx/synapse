@@ -4,8 +4,8 @@
     Module responsibility: Convert discovered source files into deterministic StoredBlock records using parallel full-index processing for full and later incremental indexing.
     Key data flows:
       - INPUT: Walker IndexFile records, project root, parser CodeBlocks, and source file contents.
-      - PROCESSING: Read bounded source files in parallel, parse code blocks, build StoredBlock values, and normalize ordering.
-      - OUTPUT: Stable StoredBlock vectors consumed by M-INDEXER and M-INDEXER-STORAGE.
+      - PROCESSING: Read bounded source files in parallel, parse code blocks, build StoredBlock values with empty embedding metadata, and normalize ordering.
+      - OUTPUT: Stable StoredBlock vectors consumed by M-INDEXER, M-INDEXER-EMBEDDING, and M-INDEXER-STORAGE.
     Critical invariants:
       - StoredBlock IDs stay path:start_line compatible with existing search and GraphRAG logic.
       - Oversized or unreadable files are skipped without aborting the full index.

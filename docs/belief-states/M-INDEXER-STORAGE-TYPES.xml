@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-INDEXER-STORAGE-TYPES" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Shared storage data types for indexed code blocks and reusable search filters
+    Module responsibility: Shared storage data types for indexed code blocks, semantic embedding metadata, and reusable search filters
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: No declared dependencies
-      - OUTPUT: StoredBlock records plus normalized SearchFilters consumed by storage and MCP search flows
+      - OUTPUT: StoredBlock records with optional embedding metadata plus normalized SearchFilters consumed by storage and MCP search flows
     Critical invariants:
-      - Scope remains bounded to: StoredBlock serialization shape and language/path filter metadata
+      - Scope remains bounded to: StoredBlock serialization shape, backward-compatible embedding metadata, and language/path filter metadata
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

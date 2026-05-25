@@ -17,7 +17,7 @@
   </DATA_FLOWS>
   <STEPS>
     <step-1 module="M-INDEXER-EMBEDDING" status="done">Select and document exact local embedding dependencies, model format, model path config, batching limits, and fallback behavior before implementation.</step-1>
-    <step-2 module="M-INDEXER-STORAGE-TYPES" status="planned">Add embedding vector metadata to stored block types with versioning and dimension compatibility checks.</step-2>
+    <step-2 module="M-INDEXER-STORAGE-TYPES" status="done">Add embedding vector metadata to stored block types with versioning and dimension compatibility checks.</step-2>
     <step-3 module="M-INDEXER-PIPELINE" status="planned">Generate embeddings during full and incremental indexing without blocking deterministic block persistence.</step-3>
     <step-4 module="M-INDEXER-STORAGE-SEARCH" status="planned">Implement vector similarity ranking and hybrid fallback semantics while preserving existing lexical search tests.</step-4>
     <step-5 module="M-CONFIG" status="planned">Expose embedding enablement, model path, provider, and batch-size settings through typed config.</step-5>
@@ -25,6 +25,8 @@
   </STEPS>
   <VERIFICATION>
     <CHECK status="passed">cargo test indexer::embedding --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test indexer::storage_types::tests::test_stored_block_embedding --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test indexer::pipeline::tests::test_build_stored_blocks_uses_file_metadata --lib -- --test-threads=8</CHECK>
     <CHECK status="planned">cargo test indexer::storage::search::tests::test_semantic_vector_search_ranks_related_code --lib</CHECK>
     <CHECK status="planned">cargo test indexer::storage::search::tests::test_semantic_search_falls_back_without_embeddings --lib</CHECK>
     <CHECK status="planned">cargo test --test mcp_semantic_search_embeddings</CHECK>
