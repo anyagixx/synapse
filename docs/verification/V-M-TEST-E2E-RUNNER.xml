@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-TEST-E2E-RUNNER" module="M-TEST-E2E-RUNNER" priority="critical" status="pending">
+<VERIFICATION id="V-M-TEST-E2E-RUNNER" module="M-TEST-E2E-RUNNER" priority="critical" status="active">
   <UNIT_TESTS>
     <TEST>TOML scenarios parse scenario metadata, command steps, write_file steps, expectations, and snapshot steps.</TEST>
     <TEST>Exit code, stdout_contains, stdout_not_contains, and stderr_contains checks fail with actionable reasons.</TEST>
