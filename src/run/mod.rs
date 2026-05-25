@@ -12,17 +12,14 @@
 // START_MODULE_MAP
 // RunManager — Durable bounded-run manager for autonomous agent workflows
 // RunRecord — Persisted run state
-// RunStep — Persisted execution step
-// RunGate — Persisted gate requirement
 // RunReviewDecision — Persisted human review decision for blocked runs
 // RunReplay — Replayable run timeline assembled from persisted state
 // phase / pre_commit — Active phase and pre-commit verification gates
 // RunActionPlan / SelfHealPlan / RunScenarioResult — End-to-end bounded action, self-heal, and scenario results
-// RunOutcome — Persisted run outcome
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.7.0 - Added handoff and resumable agent context modules]
+// LAST_CHANGE: [v0.8.0 - Skipped action snapshots when listing run records]
 // END_CHANGE_SUMMARY
 
 pub mod actions;
@@ -661,7 +658,8 @@ impl RunManager {
         for entry in std::fs::read_dir(dir)? {
             let entry = entry?;
             let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) != Some("json") {
+            let name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+            if !name.ends_with(".json") || name.ends_with(".actions.json") {
                 continue;
             }
             let data = std::fs::read(&path)?;

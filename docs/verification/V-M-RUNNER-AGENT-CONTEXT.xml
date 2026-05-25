@@ -6,8 +6,9 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>latest_incomplete_run ignores terminal Completed, Failed, and Escalated runs.</ASSERTION>
+    <ASSERTION>build_agent_context falls back to latest terminal run when no incomplete run exists.</ASSERTION>
     <ASSERTION>build_agent_context includes next action, evidence refs, belief-state path, latest handoff, and compact summary.</ASSERTION>
     <ASSERTION>AgentContext is serializable for JSON resume/status output.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-74</PHASE_GATE>
+  <PHASE_GATE>Phase-74,Phase-75</PHASE_GATE>
 </VERIFICATION>

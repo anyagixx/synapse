@@ -4,10 +4,10 @@
     Module responsibility: Build a compact resume packet from persisted run state.
     Key data flows:
       - INPUT: optional run id, run store, action planner, belief-state shard, latest handoff.
-      - PROCESSING: Select latest non-terminal run, summarize next action, attach evidence and handoff refs.
+      - PROCESSING: Select latest non-terminal run, fall back to latest terminal run, summarize next action, attach evidence and handoff refs.
       - OUTPUT: serializable AgentContext for CLI and future MCP/agent consumers.
     Critical invariants:
-      - Terminal runs are not selected for implicit resume.
+      - Terminal runs are selected only when no incomplete run exists.
       - Context stays compact and evidence-linked.
       - Missing belief state is optional, not fatal.
   IMPLEMENTATION_STRATEGY:

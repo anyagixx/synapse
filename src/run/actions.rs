@@ -23,7 +23,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 - Added PreCommitVerify and optional AdvancePhase actions]
+// LAST_CHANGE: [v1.3.0 - Simplified phase auto-advance guard for clippy-clean integration]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -465,11 +465,13 @@ fn plan_actions_for_record(record: &RunRecord, now: &str) -> Vec<RunAction> {
             if record
                 .metadata
                 .get("phase_auto_advance")
-                .is_some_and(|value| value == "true")
-                && !record
+                .map(String::as_str)
+                == Some("true")
+                && record
                     .metadata
                     .get("phase_advance_done")
-                    .is_some_and(|value| value == "true") =>
+                    .map(String::as_str)
+                    != Some("true") =>
         {
             RunAction::pending(
                 "advance-phase",

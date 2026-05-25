@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-75" status="active">
+<PHASE id="Phase-75" status="done">
   <NAME>UPGRADE_2 Integration Hardening</NAME>
   <GOAL>Run full autonomy integration verification across self-heal, diagnosis, contract repair, impact analysis, phase progression, pre-commit, resume, and handoff.</GOAL>
   <SOURCE_PLAN>UPGRADE_2/README.md</SOURCE_PLAN>
@@ -19,22 +19,22 @@
     <FLOW id="DF-75-2">Agent resume and handoff flows can recover after session interruption without scanning monolithic artifacts.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-RUNNER-SELF-HEAL" status="planned">Run end-to-end self-heal scenario against controlled verification failures.</step-1>
-    <step-2 module="M-GRAPHRAG-IMPACT" status="planned">Verify impact results are available to both MCP and self-heal risk checks.</step-2>
-    <step-3 module="M-CLI-AGENT-COMMANDS" status="planned">Verify syn agent resume/status works on active, blocked, and completed runs.</step-3>
-    <step-4 module="M-RUNNER-PRECOMMIT" status="planned">Verify failed pre-commit gates block completion and suggest self_heal.</step-4>
-    <step-5 module="M-RUNNER-HANDOFF" status="planned">Verify structured handoff artifacts survive reload and guide next role.</step-5>
+    <step-1 module="M-RUNNER-SELF-HEAL" status="done">Run end-to-end self-heal scenario against controlled verification failures.</step-1>
+    <step-2 module="M-GRAPHRAG-IMPACT" status="done">Verify impact results are available to both MCP and self-heal risk checks.</step-2>
+    <step-3 module="M-CLI-AGENT-COMMANDS" status="done">Verify syn agent resume/status works on active, blocked, and completed runs.</step-3>
+    <step-4 module="M-RUNNER-PRECOMMIT" status="done">Verify failed pre-commit gates block completion and suggest self_heal.</step-4>
+    <step-5 module="M-RUNNER-HANDOFF" status="done">Verify structured handoff artifacts survive reload and guide next role.</step-5>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo fmt --all -- --check</CHECK>
-    <CHECK status="planned">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
-    <CHECK status="planned">cargo test --all-targets -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo run --quiet -- run --scenario happy --goal prove-self-heal-loop</CHECK>
-    <CHECK status="planned">cargo run --quiet -- agent resume --json</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
-    <CHECK status="planned">cargo run --quiet -- review --mode scoped --ci</CHECK>
-    <CHECK status="planned">cargo run --quiet -- refresh</CHECK>
-    <CHECK status="planned">cargo run --quiet -- status</CHECK>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo test --all-targets -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo run --quiet -- run --scenario happy --goal prove-self-heal-loop</CHECK>
+    <CHECK status="passed">cargo run --quiet -- agent resume --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode scoped --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh</CHECK>
+    <CHECK status="passed">cargo run --quiet -- status</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-75-1">Full integration must prove autonomy without bypassing MyGRACE approval and verification gates.</RISK>

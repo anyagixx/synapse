@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added agent resume/status commands]
+// LAST_CHANGE: [v1.1.0 - Allowed agent resume/status to report latest terminal run context]
 // END_CHANGE_SUMMARY
 
 use super::{AgentAction, AgentCmd, AgentContextCmd};
@@ -49,7 +49,7 @@ impl AgentCmd {
 fn run_agent_context(cmd: &AgentContextCmd) -> anyhow::Result<()> {
     let manager = RunManager::new(std::env::current_dir()?);
     let Some(context) = manager.build_agent_context(cmd.run_id.as_deref())? else {
-        anyhow::bail!("no resumable run found; pass --run-id or create a run");
+        anyhow::bail!("no run context found; pass --run-id or create a run");
     };
     if cmd.json {
         println!("{}", serde_json::to_string_pretty(&context)?);

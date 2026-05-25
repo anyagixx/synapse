@@ -7,6 +7,6 @@
     <FILE>src/cli/agent_commands.rs</FILE>
   </FILES>
   <DEPENDS>M-RUNNER,M-RUNNER-AGENT-CONTEXT</DEPENDS>
-  <LINKS>V-M-CLI-AGENT-COMMANDS,docs/phases/Phase-74.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_2/A3-wip-persistence.md</LINKS>
+  <LINKS>V-M-CLI-AGENT-COMMANDS,docs/phases/Phase-74.xml,docs/phases/Phase-75.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_2/A3-wip-persistence.md</LINKS>
   <VERIFICATION_REF>V-M-CLI-AGENT-COMMANDS</VERIFICATION_REF>
 </MODULE>

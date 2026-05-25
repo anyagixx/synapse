@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER-AGENT-CONTEXT
 // PURPOSE: Compact resumable agent context for long-running bounded work.
-// SCOPE: AgentContext model, latest incomplete run discovery, action queue summary, belief-state reference, latest handoff inclusion, and resume/status builders.
+// SCOPE: AgentContext model, latest incomplete/latest run discovery, action queue summary, belief-state reference, latest handoff inclusion, and resume/status builders.
 // DEPENDS: M-RUNNER, M-RUNNER-HANDOFF, M-GRACE-BELIEF-STATE
 // LINKS:
 //   -> M-RUNNER (depends) - reads persisted runs and action queues
@@ -13,11 +13,12 @@
 // START_MODULE_MAP
 // AgentContext - Compact run resume payload
 // RunManager::latest_incomplete_run - Locate most recently updated non-terminal run
+// RunManager::latest_run - Locate most recently updated run when no incomplete run exists
 // RunManager::build_agent_context - Build handoff-aware resume context
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added resumable agent context builder]
+// LAST_CHANGE: [v1.1.0 - Added completed-run fallback for agent resume/status context]
 // END_CHANGE_SUMMARY
 
 use super::handoff::AgentHandoff;
@@ -71,8 +72,26 @@ impl RunManager {
     }
     // END_run_manager_latest_incomplete_run
 
+    // START_CONTRACT_RunManager::latest_run
+    // PURPOSE: Return the most recently updated run, including terminal runs.
+    // OUTPUTS: { anyhow::Result<Option<RunRecord>> }
+    // LINKS:
+    //   -> UC-002 (implements) - status context remains available after completion
+    // START_run_manager_latest_run
+    pub fn latest_run(&self) -> anyhow::Result<Option<RunRecord>> {
+        let mut runs = self.list()?;
+        runs.sort_by(|left, right| {
+            right
+                .updated_at
+                .cmp(&left.updated_at)
+                .then_with(|| right.run_id.cmp(&left.run_id))
+        });
+        Ok(runs.into_iter().next())
+    }
+    // END_run_manager_latest_run
+
     // START_CONTRACT_RunManager::build_agent_context
-    // PURPOSE: Build compact resume context from one run or the latest incomplete run.
+    // PURPOSE: Build compact resume context from one run, the latest incomplete run, or latest terminal run.
     // INPUTS: { run_id: Option<&str> }
     // OUTPUTS: { anyhow::Result<Option<AgentContext>> }
     // LINKS:
@@ -84,7 +103,10 @@ impl RunManager {
     ) -> anyhow::Result<Option<AgentContext>> {
         let run = match run_id {
             Some(run_id) => self.load(run_id).map(Some)?,
-            None => self.latest_incomplete_run()?,
+            None => match self.latest_incomplete_run()? {
+                Some(run) => Some(run),
+                None => self.latest_run()?,
+            },
         };
         let Some(run) = run else {
             return Ok(None);
@@ -189,6 +211,23 @@ mod tests {
         assert_eq!(latest.run_id, active);
     }
     // END_latest_incomplete_run_skips_terminal_runs
+
+    // START_CONTRACT_build_agent_context_falls_back_to_latest_terminal_run
+    // PURPOSE: Verify agent context remains available when only terminal runs exist.
+    // START_build_agent_context_falls_back_to_latest_terminal_run
+    #[test]
+    fn build_agent_context_falls_back_to_latest_terminal_run() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = RunManager::new(root.path());
+        let completed = run(&manager, RunStatus::Completed, "M-RUNNER");
+
+        let context = manager.build_agent_context(None).unwrap().unwrap();
+
+        assert_eq!(context.run_id, completed);
+        assert_eq!(context.status, "Completed");
+        assert!(context.compact_summary.contains("completed"));
+    }
+    // END_build_agent_context_falls_back_to_latest_terminal_run
 
     // START_CONTRACT_build_agent_context_includes_handoff_and_belief_state_ref
     // PURPOSE: Verify agent context includes latest handoff and belief-state path.
