@@ -29,9 +29,26 @@ input_enabled = true
 enabled = true
 history_days = 90
 
+[observability]
+enabled = true
+mcp_metrics_enabled = true
+mcp_metrics_retention_days = 30
+mcp_stats_limit = 12
+readiness_mcp_stats_limit = 5
+pipeline_response_queue_capacity = 128
+pipeline_max_concurrent_requests = 16
+pipeline_max_line_bytes = 10485760
+
 [graphrag]
 enabled = false
 use_llm = false
+
+[embedding]
+enabled = false
+provider = "fastembed"
+model = "AllMiniLML6V2"
+cache_dir = ""
+batch_size = 256
 
 # [lsp.servers]
 # rs = ["rust-analyzer"]

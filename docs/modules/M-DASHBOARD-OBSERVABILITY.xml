@@ -2,11 +2,11 @@
 <MODULE id="M-DASHBOARD-OBSERVABILITY" type="UI_COMPONENT" status="active">
   <NAME>M-DASHBOARD-OBSERVABILITY</NAME>
   <PURPOSE>Dashboard observability helpers and endpoints for runtime health, readiness, and MCP metrics summaries.</PURPOSE>
-  <SCOPE>Health payloads, readiness payloads, MCP stats payloads, route handlers, and dashboard-facing observability serialization.</SCOPE>
+  <SCOPE>Health payloads, readiness payloads, config-gated MCP stats payloads, route handlers, and dashboard-facing observability serialization.</SCOPE>
   <FILES>
     <FILE>src/dashboard/observability.rs</FILE>
   </FILES>
-  <DEPENDS>M-DASHBOARD,M-TRACKING-MCP-METRICS,M-INDEXER</DEPENDS>
+  <DEPENDS>M-CONFIG,M-DASHBOARD,M-TRACKING-MCP-METRICS,M-INDEXER</DEPENDS>
   <LINKS>docs/phases/Phase-67.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U8-observability.md</LINKS>
   <VERIFICATION_REF>V-M-DASHBOARD-OBSERVABILITY</VERIFICATION_REF>
 </MODULE>

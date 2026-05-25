@@ -2,11 +2,12 @@
 <MODULE id="M-CONFIG" type="CORE_LOGIC" status="active">
   <NAME>M-CONFIG</NAME>
   <PURPOSE>Config model and explicit load/default/init semantics for synapsec.toml</PURPOSE>
-  <SCOPE>Config struct definitions, proxy capture cap and command timeout defaults, embedding provider/model/cache/batch settings, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed scalar key lookup/update, path resolution, persistence</SCOPE>
+  <SCOPE>Config struct definitions, proxy capture cap and command timeout defaults, embedding provider/model/cache/batch settings, observability toggles, MCP metrics retention bounds, MCP pipeline runtime limits, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed scalar key lookup/update, path resolution, persistence</SCOPE>
   <FILES>
     <FILE>src/config.rs</FILE>
+    <FILE>src/config/observability.rs</FILE>
   </FILES>
   <DEPENDS></DEPENDS>
-  <LINKS>synapsec.toml,docs/phases/Phase-59.xml,docs/phases/Phase-61.xml,docs/phases/Phase-65.xml,docs/phases/Phase-66.xml</LINKS>
+  <LINKS>synapsec.toml,docs/phases/Phase-59.xml,docs/phases/Phase-61.xml,docs/phases/Phase-65.xml,docs/phases/Phase-66.xml,docs/phases/Phase-67.xml</LINKS>
   <VERIFICATION_REF>V-M-CONFIG</VERIFICATION_REF>
 </MODULE>

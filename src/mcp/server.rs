@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, pipelined stdio loop, best-effort MCP metrics recording, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 
@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.17.0 - Added best-effort MCP tool metrics recording]
+// LAST_CHANGE: [v3.18.0 - Applied observability config bounds to MCP pipeline]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -77,6 +77,12 @@ impl McpServer {
             tracing::info!("Multi-root mode: serving {} projects", "multiple");
         }
 
+        let config = Config::load_or_default();
+        let pipeline_config = McpPipelineConfig {
+            response_queue_capacity: config.observability.pipeline_response_queue_capacity(),
+            max_concurrent_requests: config.observability.pipeline_max_concurrent_requests(),
+            max_message_bytes: config.observability.pipeline_max_line_bytes(),
+        };
         let handler = Arc::new(SynapseHandler::new());
         let pipeline_handler: PipelineHandler = Arc::new(move |line| {
             let handler = handler.clone();
@@ -95,7 +101,7 @@ impl McpServer {
             tokio::io::stdin(),
             tokio::io::stdout(),
             pipeline_handler,
-            McpPipelineConfig::default(),
+            pipeline_config,
         )
         .await
     }

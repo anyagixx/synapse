@@ -1,18 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CONFIG
 // PURPOSE: Config model and explicit load/default/init semantics for synapsec.toml
-// SCOPE: Config struct definitions including embedding provider settings, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
+// SCOPE: Config struct definitions including embedding provider settings, observability runtime bounds, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
 // DEPENDS: N/A
 // LINKS: synapsec.toml
 
 // START_MODULE_MAP
-// Config — Top-level config struct (project, index, search, proxy, compress, tracking, graphrag, embedding, lsp)
+// Config — Top-level config struct (project, index, search, proxy, compress, tracking, observability, graphrag, embedding, lsp)
 // ProjectConfig — Project metadata (name, version, strictness)
 // IndexConfig — Indexer settings (chunk_size, chunk_overlap, require_git)
 // SearchConfig — Search settings (max_results, similarity_threshold, hybrid_enabled)
 // ProxyConfig — Proxy settings (enabled, passthrough_max_chars, capture caps, command timeout)
 // CompressConfig — Compress settings (output_level, input_enabled)
 // TrackingConfig — Tracking settings (enabled, history_days)
+// ObservabilityConfig — Dashboard/MCP observability settings and runtime bounds
 // GraphRagConfig — GraphRAG settings (enabled, use_llm)
 // EmbeddingConfig — Local semantic embedding settings (enabled, provider, model, cache_dir, batch_size)
 // LspConfig — Language server command overrides
@@ -21,11 +22,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.9.0 — Added typed local embedding provider settings]
+// LAST_CHANGE: [v3.10.0 — Added typed observability and MCP runtime bounds]
 // END_CHANGE_SUMMARY
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+
+mod observability;
+pub use observability::ObservabilityConfig;
 
 // START_public_api
 
@@ -38,6 +42,8 @@ pub struct Config {
     pub proxy: ProxyConfig,
     pub compress: CompressConfig,
     pub tracking: TrackingConfig,
+    #[serde(default)]
+    pub observability: ObservabilityConfig,
     pub graphrag: GraphRagConfig,
     #[serde(default)]
     pub embedding: EmbeddingConfig,
@@ -272,6 +278,38 @@ const CONFIG_KEY_SPECS: &[ConfigKeySpec] = &[
         value_type: "u32",
     },
     ConfigKeySpec {
+        key: "observability.enabled",
+        value_type: "bool",
+    },
+    ConfigKeySpec {
+        key: "observability.mcp_metrics_enabled",
+        value_type: "bool",
+    },
+    ConfigKeySpec {
+        key: "observability.mcp_metrics_retention_days",
+        value_type: "u32",
+    },
+    ConfigKeySpec {
+        key: "observability.mcp_stats_limit",
+        value_type: "usize",
+    },
+    ConfigKeySpec {
+        key: "observability.readiness_mcp_stats_limit",
+        value_type: "usize",
+    },
+    ConfigKeySpec {
+        key: "observability.pipeline_response_queue_capacity",
+        value_type: "usize",
+    },
+    ConfigKeySpec {
+        key: "observability.pipeline_max_concurrent_requests",
+        value_type: "usize",
+    },
+    ConfigKeySpec {
+        key: "observability.pipeline_max_line_bytes",
+        value_type: "usize",
+    },
+    ConfigKeySpec {
         key: "graphrag.enabled",
         value_type: "bool",
     },
@@ -401,6 +439,28 @@ impl Config {
             "compress.input_enabled" => self.compress.input_enabled.to_string(),
             "tracking.enabled" => self.tracking.enabled.to_string(),
             "tracking.history_days" => self.tracking.history_days.to_string(),
+            "observability.enabled" => self.observability.enabled.to_string(),
+            "observability.mcp_metrics_enabled" => {
+                self.observability.mcp_metrics_enabled.to_string()
+            }
+            "observability.mcp_metrics_retention_days" => {
+                self.observability.mcp_metrics_retention_days.to_string()
+            }
+            "observability.mcp_stats_limit" => self.observability.mcp_stats_limit.to_string(),
+            "observability.readiness_mcp_stats_limit" => {
+                self.observability.readiness_mcp_stats_limit.to_string()
+            }
+            "observability.pipeline_response_queue_capacity" => self
+                .observability
+                .pipeline_response_queue_capacity
+                .to_string(),
+            "observability.pipeline_max_concurrent_requests" => self
+                .observability
+                .pipeline_max_concurrent_requests
+                .to_string(),
+            "observability.pipeline_max_line_bytes" => {
+                self.observability.pipeline_max_line_bytes.to_string()
+            }
             "graphrag.enabled" => self.graphrag.enabled.to_string(),
             "graphrag.use_llm" => self.graphrag.use_llm.to_string(),
             "embedding.enabled" => self.embedding.enabled.to_string(),
@@ -458,6 +518,33 @@ impl Config {
             }
             "tracking.enabled" => self.tracking.enabled = parse_bool(&canonical, value)?,
             "tracking.history_days" => self.tracking.history_days = parse_u32(&canonical, value)?,
+            "observability.enabled" => self.observability.enabled = parse_bool(&canonical, value)?,
+            "observability.mcp_metrics_enabled" => {
+                self.observability.mcp_metrics_enabled = parse_bool(&canonical, value)?
+            }
+            "observability.mcp_metrics_retention_days" => {
+                self.observability.mcp_metrics_retention_days =
+                    parse_u32_range(&canonical, value, 1, 3650)?
+            }
+            "observability.mcp_stats_limit" => {
+                self.observability.mcp_stats_limit = parse_usize_range(&canonical, value, 1, 100)?
+            }
+            "observability.readiness_mcp_stats_limit" => {
+                self.observability.readiness_mcp_stats_limit =
+                    parse_usize_range(&canonical, value, 1, 50)?
+            }
+            "observability.pipeline_response_queue_capacity" => {
+                self.observability.pipeline_response_queue_capacity =
+                    parse_usize_range(&canonical, value, 1, 4096)?
+            }
+            "observability.pipeline_max_concurrent_requests" => {
+                self.observability.pipeline_max_concurrent_requests =
+                    parse_usize_range(&canonical, value, 1, 256)?
+            }
+            "observability.pipeline_max_line_bytes" => {
+                self.observability.pipeline_max_line_bytes =
+                    parse_usize_range(&canonical, value, 1024, 67_108_864)?
+            }
             "graphrag.enabled" => self.graphrag.enabled = parse_bool(&canonical, value)?,
             "graphrag.use_llm" => self.graphrag.use_llm = parse_bool(&canonical, value)?,
             "embedding.enabled" => self.embedding.enabled = parse_bool(&canonical, value)?,
@@ -514,6 +601,33 @@ impl Config {
             }
             "tracking.enabled" => self.tracking.enabled = defaults.tracking.enabled,
             "tracking.history_days" => self.tracking.history_days = defaults.tracking.history_days,
+            "observability.enabled" => self.observability.enabled = defaults.observability.enabled,
+            "observability.mcp_metrics_enabled" => {
+                self.observability.mcp_metrics_enabled = defaults.observability.mcp_metrics_enabled
+            }
+            "observability.mcp_metrics_retention_days" => {
+                self.observability.mcp_metrics_retention_days =
+                    defaults.observability.mcp_metrics_retention_days
+            }
+            "observability.mcp_stats_limit" => {
+                self.observability.mcp_stats_limit = defaults.observability.mcp_stats_limit
+            }
+            "observability.readiness_mcp_stats_limit" => {
+                self.observability.readiness_mcp_stats_limit =
+                    defaults.observability.readiness_mcp_stats_limit
+            }
+            "observability.pipeline_response_queue_capacity" => {
+                self.observability.pipeline_response_queue_capacity =
+                    defaults.observability.pipeline_response_queue_capacity
+            }
+            "observability.pipeline_max_concurrent_requests" => {
+                self.observability.pipeline_max_concurrent_requests =
+                    defaults.observability.pipeline_max_concurrent_requests
+            }
+            "observability.pipeline_max_line_bytes" => {
+                self.observability.pipeline_max_line_bytes =
+                    defaults.observability.pipeline_max_line_bytes
+            }
             "graphrag.enabled" => self.graphrag.enabled = defaults.graphrag.enabled,
             "graphrag.use_llm" => self.graphrag.use_llm = defaults.graphrag.use_llm,
             "embedding.enabled" => self.embedding.enabled = defaults.embedding.enabled,
@@ -576,6 +690,7 @@ impl Default for Config {
                 enabled: true,
                 history_days: 90,
             },
+            observability: ObservabilityConfig::default(),
             graphrag: GraphRagConfig {
                 enabled: false,
                 use_llm: false,
@@ -671,6 +786,22 @@ fn parse_u32(key: &str, value: &str) -> anyhow::Result<u32> {
 }
 // END_parse_u32
 
+// START_CONTRACT_parse_u32_range
+// PURPOSE: Parse a bounded unsigned 32-bit config value
+// INPUTS: { key: &str }, { value: &str }, { min: u32 }, { max: u32 }
+// OUTPUTS: { anyhow::Result<u32> }
+// LINKS:
+//   -> NFR-002 (traces_to) - user-supplied runtime bounds are validated
+// START_parse_u32_range
+fn parse_u32_range(key: &str, value: &str, min: u32, max: u32) -> anyhow::Result<u32> {
+    let parsed = parse_u32(key, value)?;
+    if !(min..=max).contains(&parsed) {
+        anyhow::bail!("{} must be between {} and {}", key, min, max);
+    }
+    Ok(parsed)
+}
+// END_parse_u32_range
+
 // START_CONTRACT_parse_u64
 // PURPOSE: Parse an unsigned 64-bit config value
 // INPUTS: { key: &str }, { value: &str }
@@ -696,6 +827,22 @@ fn parse_usize(key: &str, value: &str) -> anyhow::Result<usize> {
         .map_err(|_| anyhow::anyhow!("{} must be an unsigned integer", key))
 }
 // END_parse_usize
+
+// START_CONTRACT_parse_usize_range
+// PURPOSE: Parse a bounded usize config value
+// INPUTS: { key: &str }, { value: &str }, { min: usize }, { max: usize }
+// OUTPUTS: { anyhow::Result<usize> }
+// LINKS:
+//   -> NFR-002 (traces_to) - user-supplied runtime bounds are validated
+// START_parse_usize_range
+fn parse_usize_range(key: &str, value: &str, min: usize, max: usize) -> anyhow::Result<usize> {
+    let parsed = parse_usize(key, value)?;
+    if !(min..=max).contains(&parsed) {
+        anyhow::bail!("{} must be between {} and {}", key, min, max);
+    }
+    Ok(parsed)
+}
+// END_parse_usize_range
 
 // START_CONTRACT_parse_embedding_batch_size
 // PURPOSE: Parse a bounded embedding batch size config value
@@ -790,6 +937,14 @@ use_llm = false
 
         assert_eq!(config.proxy.capture_cap_bytes, 10_485_760);
         assert_eq!(config.proxy.command_timeout_secs, 300);
+        assert!(config.observability.enabled());
+        assert!(config.observability.mcp_metrics_enabled());
+        assert_eq!(config.observability.mcp_metrics_retention_days(), 30);
+        assert_eq!(config.observability.mcp_stats_limit(), 12);
+        assert_eq!(config.observability.readiness_mcp_stats_limit(), 5);
+        assert_eq!(config.observability.pipeline_response_queue_capacity(), 128);
+        assert_eq!(config.observability.pipeline_max_concurrent_requests(), 16);
+        assert_eq!(config.observability.pipeline_max_line_bytes(), 10_485_760);
         assert!(!config.embedding.enabled);
         assert_eq!(config.embedding.provider, "fastembed");
         assert_eq!(config.embedding.model, "AllMiniLML6V2");
@@ -802,6 +957,20 @@ use_llm = false
 
         assert_eq!(config.proxy.capture_cap_bytes, 10_485_760);
         assert_eq!(config.proxy.command_timeout_secs, 300);
+    }
+
+    #[test]
+    fn default_observability_runtime_limits_are_release_defaults() {
+        let config = Config::default();
+
+        assert!(config.observability.enabled());
+        assert!(config.observability.mcp_metrics_enabled());
+        assert_eq!(config.observability.mcp_metrics_retention_days(), 30);
+        assert_eq!(config.observability.mcp_stats_limit(), 12);
+        assert_eq!(config.observability.readiness_mcp_stats_limit(), 5);
+        assert_eq!(config.observability.pipeline_response_queue_capacity(), 128);
+        assert_eq!(config.observability.pipeline_max_concurrent_requests(), 16);
+        assert_eq!(config.observability.pipeline_max_line_bytes(), 10_485_760);
     }
 
     #[test]
@@ -835,6 +1004,19 @@ use_llm = false
         assert_eq!(config.embedding.batch_size, 128);
 
         let entry = config
+            .set_config_key("observability.pipeline-max-concurrent-requests", "32")
+            .expect("set MCP pipeline concurrency");
+        assert_eq!(entry.key, "observability.pipeline_max_concurrent_requests");
+        assert_eq!(entry.value, "32");
+        assert_eq!(config.observability.pipeline_max_concurrent_requests(), 32);
+
+        let entry = config
+            .set_config_key("observability.mcp-metrics-enabled", "false")
+            .expect("set MCP metrics toggle");
+        assert_eq!(entry.value, "false");
+        assert!(!config.observability.mcp_metrics_enabled());
+
+        let entry = config
             .unset_config_key("search.max_results")
             .expect("unset key");
         assert_eq!(
@@ -860,6 +1042,18 @@ use_llm = false
         assert!(config.set_config_key("embedding.batch_size", "0").is_err());
         assert!(config
             .set_config_key("embedding.batch_size", "1025")
+            .is_err());
+        assert!(config
+            .set_config_key("observability.mcp_metrics_retention_days", "0")
+            .is_err());
+        assert!(config
+            .set_config_key("observability.mcp_stats_limit", "101")
+            .is_err());
+        assert!(config
+            .set_config_key("observability.pipeline_max_concurrent_requests", "0")
+            .is_err());
+        assert!(config
+            .set_config_key("observability.pipeline_max_line_bytes", "512")
             .is_err());
     }
 

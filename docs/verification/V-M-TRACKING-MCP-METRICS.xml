@@ -7,6 +7,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>MCP metrics recording is best-effort and never changes tool-call results.</ASSERTION>
     <ASSERTION>Metrics queries return per-tool counts, latency summaries, error counts, active request counts, and last-seen timestamps.</ASSERTION>
+    <ASSERTION>MCP metrics honor observability toggles and prune old rows by the configured retention window.</ASSERTION>
     <ASSERTION>MCP metrics storage remains separate from token-savings command analytics.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-67</PHASE_GATE>

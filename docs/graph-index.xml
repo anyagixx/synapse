@@ -182,6 +182,7 @@
     <REL source="M-DASHBOARD" target="M-TRACKING-MCP-METRICS" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-RUNNER" type="DEPENDS" />
     <REL source="M-DASHBOARD" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-DASHBOARD-OBSERVABILITY" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-DASHBOARD-OBSERVABILITY" target="M-DASHBOARD" type="DEPENDS" />
     <REL source="M-DASHBOARD-OBSERVABILITY" target="M-TRACKING-MCP-METRICS" type="DEPENDS" />
     <REL source="M-DASHBOARD-OBSERVABILITY" target="M-INDEXER" type="DEPENDS" />

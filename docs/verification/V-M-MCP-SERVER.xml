@@ -22,6 +22,7 @@
     <ASSERTION>SynapseHandler stores and can invalidate GraphRAG cache keys for root/index-aware graph rebuilds.</ASSERTION>
     <ASSERTION>JSON-RPC notifications do not produce response objects.</ASSERTION>
     <ASSERTION>McpServer::start_stdio routes through the bounded MCP pipeline while SynapseHandler uses atomic initialization state for concurrent request handling.</ASSERTION>
+    <ASSERTION>McpServer::start_stdio applies observability pipeline queue, concurrency, and message-size bounds from Config.</ASSERTION>
     <ASSERTION>Pipelined stdio requests preserve JSON-RPC response IDs and keep stdout response serialization single-writer.</ASSERTION>
     <ASSERTION>tools/call records best-effort MCP active request and completed call metrics without changing JSON-RPC responses when tracking fails.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes analyze_logs to the GRACE structured LOG analyzer.</ASSERTION>

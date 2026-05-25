@@ -7,7 +7,8 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>/health remains a cheap liveness response and /health/ready reports runtime readiness without weakening existing health behavior.</ASSERTION>
-    <ASSERTION>/api/mcp-stats serializes MCP metric aggregates without failing the dashboard when tracking storage is unavailable.</ASSERTION>
+    <ASSERTION>/api/mcp-stats serializes config-limited MCP metric aggregates without failing the dashboard when tracking storage is unavailable.</ASSERTION>
+    <ASSERTION>Dashboard observability honors configured enablement and MCP metric payload limits.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-67</PHASE_GATE>
 </VERIFICATION>

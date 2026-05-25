@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added MCP metrics schema, recording, and aggregate queries]
+// LAST_CHANGE: [v1.1.0 - Applied observability toggles and retention cleanup]
 // END_CHANGE_SUMMARY
 
 // START_public_api
@@ -82,7 +82,7 @@ impl super::Tracker {
     //   -> NFR-003 (traces_to) - active request tracking exposes runtime MCP load
     // START_tracker_start_mcp_request
     pub async fn start_mcp_request(&self, tool_name: &str) -> anyhow::Result<Option<i64>> {
-        if !self.config.tracking.enabled() {
+        if !self.config.tracking.enabled() || !self.config.observability.mcp_metrics_enabled() {
             return Ok(None);
         }
         let project = self.project_key();
@@ -114,13 +114,14 @@ impl super::Tracker {
         status: McpCallStatus,
         error_message: &str,
     ) -> anyhow::Result<()> {
-        if !self.config.tracking.enabled() {
+        if !self.config.tracking.enabled() || !self.config.observability.mcp_metrics_enabled() {
             return Ok(());
         }
         let project = self.project_key();
         let tool_name = normalize_tool_name(tool_name);
         let duration_ms = u64_to_i64_saturating(duration_ms);
         let error_message = truncate_error_message(error_message);
+        let retention_days = self.config.observability.mcp_metrics_retention_days();
         self.with_conn(|conn| {
             ensure_mcp_metrics_schema(conn)?;
             if let Some(active_id) = active_id {
@@ -136,7 +137,8 @@ impl super::Tracker {
                 status,
                 &error_message,
                 &project,
-            )
+            )?;
+            prune_mcp_metrics(conn, &project, retention_days)
         })
     }
     // END_tracker_finish_mcp_request
@@ -169,6 +171,9 @@ impl super::Tracker {
     //   -> NFR-003 (traces_to) - dashboard observability reads MCP economics without command analytics bloat
     // START_tracker_get_mcp_metrics
     pub async fn get_mcp_metrics(&self, limit: usize) -> anyhow::Result<McpMetricsSnapshot> {
+        if !self.config.tracking.enabled() || !self.config.observability.mcp_metrics_enabled() {
+            return Ok(McpMetricsSnapshot::default());
+        }
         let project = self.project_key();
         self.with_conn(|conn| {
             ensure_mcp_metrics_schema(conn)?;
@@ -243,6 +248,47 @@ fn insert_mcp_call(
     .map(|_| ())
 }
 // END_insert_mcp_call
+
+// START_CONTRACT_prune_mcp_metrics
+// PURPOSE: Delete MCP metric rows older than the configured retention window
+// INPUTS: { conn: &rusqlite::Connection }, { project: &str }, { retention_days: u32 }
+// OUTPUTS: { rusqlite::Result<()> }
+// SIDE_EFFECTS: deletes old mcp_tool_calls and stale mcp_active_requests rows
+// LINKS:
+//   -> NFR-002 (traces_to) - metrics retention is bounded by configuration
+//   -> M-CONFIG (depends) - observability retention setting controls cleanup
+// START_prune_mcp_metrics
+fn prune_mcp_metrics(
+    conn: &rusqlite::Connection,
+    project: &str,
+    retention_days: u32,
+) -> rusqlite::Result<()> {
+    let modifier = retention_modifier(retention_days);
+    conn.execute(
+        "DELETE FROM mcp_tool_calls
+         WHERE project_path = ?1 AND timestamp < datetime('now', ?2)",
+        rusqlite::params![project, modifier],
+    )?;
+    conn.execute(
+        "DELETE FROM mcp_active_requests
+         WHERE project_path = ?1 AND started_at < datetime('now', ?2)",
+        rusqlite::params![project, modifier],
+    )?;
+    Ok(())
+}
+// END_prune_mcp_metrics
+
+// START_CONTRACT_retention_modifier
+// PURPOSE: Convert retention days into a SQLite datetime modifier
+// INPUTS: { retention_days: u32 }
+// OUTPUTS: { String }
+// LINKS:
+//   -> NFR-002 (traces_to) - retention values stay positive at query time
+// START_retention_modifier
+fn retention_modifier(retention_days: u32) -> String {
+    format!("-{} days", retention_days.max(1))
+}
+// END_retention_modifier
 
 // START_CONTRACT_query_mcp_metrics
 // PURPOSE: Query aggregate MCP metrics from separate MCP tables
@@ -508,5 +554,39 @@ mod tests {
         assert!(active.is_none());
         assert_eq!(metrics.total_calls, 0);
         assert_eq!(metrics.active_requests, 0);
+    }
+
+    #[tokio::test]
+    async fn tracker_skips_mcp_metrics_when_observability_disabled() {
+        let data_home = tempfile::tempdir().expect("data home");
+        let project_home = tempfile::tempdir().expect("project home");
+        let mut config = Config::default();
+        config.observability.mcp_metrics_enabled = false;
+        let tracker = super::super::Tracker::new_for_test(
+            &config,
+            data_home.path(),
+            project_home.path(),
+            Some("mcp-observability-disabled-test"),
+        );
+
+        let active = tracker
+            .start_mcp_request("semantic_search")
+            .await
+            .expect("disabled start");
+        tracker
+            .record_mcp_call("semantic_search", 10, McpCallStatus::Ok, "")
+            .await
+            .expect("disabled record");
+        let metrics = tracker.get_mcp_metrics(10).await.expect("metrics");
+
+        assert!(active.is_none());
+        assert_eq!(metrics.total_calls, 0);
+        assert_eq!(metrics.active_requests, 0);
+    }
+
+    #[test]
+    fn retention_modifier_keeps_zero_days_positive() {
+        assert_eq!(retention_modifier(0), "-1 days");
+        assert_eq!(retention_modifier(30), "-30 days");
     }
 }
