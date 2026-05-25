@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-MCP-PROTOCOL
-// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
-// SCOPE: Direct handler tests and binary stdio protocol behavior
+// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, response economy schemas, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
+// SCOPE: Direct handler tests, response economy schema assertions, and binary stdio protocol behavior
 // DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
@@ -13,13 +13,14 @@
 // test_tools_list_profiles_return_expected_counts — tools/list profiles expose bounded tool sets
 // test_tools_list_full_and_terse_styles — tools/list style controls schema verbosity and economy metadata
 // test_tools_list_profile_and_terse_style_compose — tools/list profile and terse style combine
+// test_tools_list_response_economy_schema_covers_core_tools — tools/list exposes max_tokens/style on 10+ tools
 // test_tools_call_grace_status_returns_text — Representative grace tool call returns MCP content envelope
 // test_concurrent_requests_keep_response_ids — Pipelined stdio requests preserve JSON-RPC response IDs
 // test_stdio_keeps_logs_off_stdout_and_notifications_silent — Binary stdio emits only request responses on stdout
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.29.0 - Added tools/list profile and terse schema protocol coverage]
+// LAST_CHANGE: [v2.30.0 - Added response economy schema protocol coverage]
 // END_CHANGE_SUMMARY
 
 use serde_json::Value;
@@ -185,6 +186,49 @@ async fn test_tools_list_profile_and_terse_style_compose() {
     assert!(response["result"]["schema_economy"]["savings_pct"]
         .as_f64()
         .is_some_and(|pct| pct > 0.0));
+}
+
+#[tokio::test]
+// START_CONTRACT_test_tools_list_response_economy_schema_covers_core_tools
+// PURPOSE: Verify tools/list exposes max_tokens and style on at least ten high-output MCP tools
+// SIDE_EFFECTS: creates in-process MCP handler
+async fn test_tools_list_response_economy_schema_covers_core_tools() {
+    let response = initialized_tools_list("{}").await;
+    let tools = response["result"]["tools"].as_array().expect("tools array");
+    let expected = [
+        "semantic_search",
+        "graphrag_query",
+        "view_signatures",
+        "lsp_hover",
+        "lsp_references",
+        "project_status",
+        "verify_project",
+        "review_code",
+        "analyze_logs",
+        "mental_test_run",
+        "traceability_report",
+        "token_savings",
+        "refresh_project",
+        "cascade_impact",
+        "cascade_execute",
+    ];
+    let mut covered = 0_usize;
+
+    for name in expected {
+        let tool = tools
+            .iter()
+            .find(|tool| tool["name"] == name)
+            .unwrap_or_else(|| panic!("{name} tool"));
+        let properties = tool["inputSchema"]["properties"]
+            .as_object()
+            .unwrap_or_else(|| panic!("{name} properties"));
+        assert!(properties.contains_key("max_tokens"), "{name} max_tokens");
+        assert!(properties.contains_key("style"), "{name} style");
+        assert_eq!(properties["style"]["enum"][1], "terse");
+        covered += 1;
+    }
+
+    assert!(covered >= 10, "covered={covered}");
 }
 
 #[tokio::test]

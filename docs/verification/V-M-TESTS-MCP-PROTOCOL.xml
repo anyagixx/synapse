@@ -15,6 +15,7 @@
     <ASSERTION>tools/list profile=custom:semantic_search,verify_project returns exactly those two tools.</ASSERTION>
     <ASSERTION>tools/list style=terse removes schema description metadata and reports at least 60 percent schema savings.</ASSERTION>
     <ASSERTION>tools/list combines profile filtering and terse schema style in one request.</ASSERTION>
+    <ASSERTION>tools/list exposes max_tokens and style on at least 10 high-output MCP tools.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7,Phase-70,Phase-71,Phase-73,Phase-83</PHASE_GATE>
+  <PHASE_GATE>Phase-7,Phase-70,Phase-71,Phase-73,Phase-83,Phase-84</PHASE_GATE>
 </VERIFICATION>
