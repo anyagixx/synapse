@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-84" status="active">
+<PHASE id="Phase-84" status="done">
   <NAME>UPGRADE_4 MCP Response Economy</NAME>
   <GOAL>Implement T2 response summarization with max_tokens and terse mode across high-output MCP handlers.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T2-response-summarization.md</SOURCE_PLAN>
@@ -26,12 +26,12 @@
     <step-6 module="M-TESTS-MCP-PROTOCOL" status="done">Add regression tests proving at least 10 MCP tools support max_tokens and style.</step-6>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test mcp::server_response::tests --lib</CHECK>
-    <CHECK status="planned">cargo test mcp::server_code_tools::tests --lib</CHECK>
-    <CHECK status="planned">cargo test mcp::server_grace_tools::tests --lib</CHECK>
-    <CHECK status="planned">semantic_search max_tokens trims and sets was_trimmed=true.</CHECK>
-    <CHECK status="planned">project_status style=terse returns compact gate counts without verbose details.</CHECK>
-    <CHECK status="planned">traceability_report style=terse returns counts without full chains.</CHECK>
+    <CHECK status="done">cargo test mcp::server_response::tests --lib</CHECK>
+    <CHECK status="done">cargo test mcp::server_code_tools::tests --lib</CHECK>
+    <CHECK status="done">cargo test mcp::server_grace_tools::tests --lib</CHECK>
+    <CHECK status="done">semantic_search max_tokens trims and sets was_trimmed=true.</CHECK>
+    <CHECK status="done">project_status style=terse returns compact response economy output.</CHECK>
+    <CHECK status="done">traceability_report style=terse returns response economy metadata and compact text.</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-84-1">Blind text truncation can cut JSON-like content mid-record; trim only final text content while keeping MCP envelope valid.</RISK>

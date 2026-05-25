@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-85" status="planned">
+<PHASE id="Phase-85" status="active">
   <NAME>UPGRADE_4 MCP Cache Hints</NAME>
   <GOAL>Implement T5 prompt caching hints with ETag, TTL metadata, conditional _if_none_match, and bounded in-memory cache.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T5-prompt-caching-hints.md</SOURCE_PLAN>
