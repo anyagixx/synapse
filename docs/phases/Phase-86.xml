@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-86" status="planned">
+<PHASE id="Phase-86" status="active">
   <NAME>UPGRADE_4 Predictive Tool Recommendation</NAME>
   <GOAL>Implement T8 tools/recommend so agents can request no more than eight context-relevant tools before listing schemas.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T8-predictive-tool-preselection.md</SOURCE_PLAN>

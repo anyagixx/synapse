@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-85" status="active">
+<PHASE id="Phase-85" status="done">
   <NAME>UPGRADE_4 MCP Cache Hints</NAME>
   <GOAL>Implement T5 prompt caching hints with ETag, TTL metadata, conditional _if_none_match, and bounded in-memory cache.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T5-prompt-caching-hints.md</SOURCE_PLAN>
@@ -24,12 +24,12 @@
     <step-5 module="M-TESTS-MCP-PROTOCOL" status="done">Test cache metadata for cacheable tools and ttl_secs=0 behavior for volatile tools.</step-5>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test mcp::server_response::tests --lib</CHECK>
-    <CHECK status="planned">cargo test cache --lib</CHECK>
-    <CHECK status="planned">project_status returns _meta.cache.etag and ttl_secs.</CHECK>
-    <CHECK status="planned">graphrag_query overview returns cache metadata.</CHECK>
-    <CHECK status="planned">matching _if_none_match returns _not_modified=true.</CHECK>
-    <CHECK status="planned">semantic_search returns ttl_secs=0 or no cache hit path.</CHECK>
+    <CHECK status="done">cargo test mcp::server_response::tests --lib</CHECK>
+    <CHECK status="done">cargo test cache --lib</CHECK>
+    <CHECK status="done">project_status returns _meta.cache.etag and ttl_secs.</CHECK>
+    <CHECK status="done">graphrag_query overview returns cache metadata.</CHECK>
+    <CHECK status="done">matching _if_none_match returns _not_modified=true.</CHECK>
+    <CHECK status="done">semantic_search returns ttl_secs=0 or no cache hit path.</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-85-1">ETag based on non-normalized arguments can miss cache hits; canonicalize argument JSON before hashing.</RISK>
