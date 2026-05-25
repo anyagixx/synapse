@@ -1,12 +1,13 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-DASHBOARD
 // PURPOSE: Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, token-economy, cascade, and run cockpit views/APIs
-// SCOPE: HTTP server with health/status/graph/tokens APIs, token adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, graph-aware search explanation with explicit-root test helper, cascade previews, and cascade history
-// DEPENDS: M-GRACE-STATUS, M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRAPHRAG, M-TRACKING, M-RUNNER, M-CONFIG
+// SCOPE: HTTP server with health/status/graph/tokens APIs, observability module boundary, token adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, graph-aware search explanation with explicit-root test helper, cascade previews, and cascade history
+// DEPENDS: M-DASHBOARD-OBSERVABILITY, M-GRACE-STATUS, M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRAPHRAG, M-TRACKING, M-RUNNER, M-CONFIG
 // LINKS:
 //   -> V-M-DASHBOARD (verified_by) - dashboard route and JSON payload tests
 
 // START_MODULE_MAP
+// observability — Dashboard health/readiness/MCP metrics module boundary
 // start_dashboard — Start Axum HTTP server with dashboard API routes
 // belief_states_payload — Build JSON for belief-state coverage and detail data
 // mental_tests_payload — Build JSON for MentalTest status and definitions
@@ -19,9 +20,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.4.0 — Added explicit-root dashboard search helper for parallel test isolation]
+// LAST_CHANGE: [v3.5.0 — Added observability module boundary for Phase-67]
 // END_CHANGE_SUMMARY
 
+mod observability;
 mod render;
 mod runs;
 

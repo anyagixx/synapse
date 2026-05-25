@@ -2,11 +2,11 @@
 <MODULE id="M-TRACKING" type="DATA_LAYER" status="active">
   <NAME>M-TRACKING</NAME>
   <PURPOSE>SQLite token tracker — records route-aware command token usage by canonical project identity and provides stats</PURPOSE>
-  <SCOPE>Tracker struct, canonical project identity, explicit test state overrides, cached SQLite connection with WAL and busy timeout, migration-safe SQLite schema, token recording with adapter/route/session metadata for proxy and local adapters, RTK adapter/session coverage counts, route adoption counts, missed-route candidate querying, stats querying, TrackingStats model</SCOPE>
+  <SCOPE>Tracker struct, canonical project identity, explicit test state overrides, cached SQLite connection with WAL and busy timeout, migration-safe SQLite schema, token recording with adapter/route/session metadata for proxy and local adapters, MCP metrics module boundary, RTK adapter/session coverage counts, route adoption counts, missed-route candidate querying, stats querying, TrackingStats model</SCOPE>
   <FILES>
     <FILE>src/tracking/mod.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG</DEPENDS>
-  <LINKS>tracking.db,docs/phases/Phase-21.xml,docs/phases/Phase-46.xml,docs/phases/Phase-50.xml,docs/phases/Phase-56.xml,docs/phases/Phase-58.xml,docs/phases/Phase-61.xml</LINKS>
+  <DEPENDS>M-CONFIG,M-TRACKING-MCP-METRICS</DEPENDS>
+  <LINKS>tracking.db,docs/phases/Phase-21.xml,docs/phases/Phase-46.xml,docs/phases/Phase-50.xml,docs/phases/Phase-56.xml,docs/phases/Phase-58.xml,docs/phases/Phase-61.xml,docs/phases/Phase-67.xml</LINKS>
   <VERIFICATION_REF>V-M-TRACKING</VERIFICATION_REF>
 </MODULE>

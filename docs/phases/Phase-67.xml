@@ -18,18 +18,20 @@
     <FLOW id="DF-67-2">Observability flow aggregates MCP counters and runtime readiness into tracking storage, then serves /health/ready and /api/mcp-stats from dashboard routes.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-MCP-PIPELINE" status="planned">Add a bounded stdio pipeline with initialize ordering, concurrent request handling, single-writer response serialization, EOF shutdown, and handler panic isolation.</step-1>
-    <step-2 module="M-MCP-SERVER" status="planned">Route start_stdio through the pipeline while keeping existing request processing behavior and protocol tests intact.</step-2>
+    <step-1 module="M-MCP-PIPELINE" status="done">Add a bounded stdio pipeline with initialize ordering, concurrent request handling, single-writer response serialization, EOF shutdown, and handler panic isolation.</step-1>
+    <step-2 module="M-MCP-SERVER" status="done">Route start_stdio through the pipeline while keeping existing request processing behavior and protocol tests intact.</step-2>
     <step-3 module="M-TRACKING-MCP-METRICS" status="planned">Record request counts, active requests, latency summaries, per-tool errors, and last-seen timestamps without bloating token-savings analytics.</step-3>
     <step-4 module="M-DASHBOARD-OBSERVABILITY" status="planned">Expose readiness and MCP stats endpoints from dashboard without weakening the existing /health behavior.</step-4>
     <step-5 module="M-CONFIG" status="planned">Add observability toggles, retention bounds, and pipeline concurrency limits as typed runtime settings.</step-5>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test mcp::pipeline --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test --test mcp_protocol_test test_concurrent_requests_keep_response_ids</CHECK>
+    <CHECK status="passed">cargo test mcp::pipeline --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test --test mcp_protocol test_concurrent_requests_keep_response_ids -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test --all-targets -- --test-threads=8</CHECK>
     <CHECK status="planned">cargo test tracking::mcp_metrics --lib</CHECK>
     <CHECK status="planned">cargo test dashboard::tests::test_health_ready_reports_mcp_state --lib</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode scoped --ci</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-67-1">Concurrent MCP execution must never interleave response writes or lose JSON-RPC request IDs.</RISK>

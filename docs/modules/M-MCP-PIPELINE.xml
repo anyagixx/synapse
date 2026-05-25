@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-PIPELINE" type="INTEGRATION" status="active">
+  <NAME>M-MCP-PIPELINE</NAME>
+  <PURPOSE>Bounded MCP stdio pipeline that decouples request reads, concurrent handler execution, and single-writer response serialization.</PURPOSE>
+  <SCOPE>Pipeline config, bounded JSON-RPC line reads, initialize-before-concurrency ordering, handler task spawning, panic isolation, response queue writing, EOF shutdown.</SCOPE>
+  <FILES>
+    <FILE>src/mcp/pipeline.rs</FILE>
+  </FILES>
+  <DEPENDS>M-MCP-SERVER-RESPONSE</DEPENDS>
+  <LINKS>docs/phases/Phase-67.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U4-mcp-pipelining.md</LINKS>
+  <VERIFICATION_REF>V-M-MCP-PIPELINE</VERIFICATION_REF>
+</MODULE>

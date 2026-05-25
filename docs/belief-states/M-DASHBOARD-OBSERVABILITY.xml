@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-DASHBOARD-OBSERVABILITY" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Provide dashboard-facing liveness, readiness, and MCP metrics JSON payloads.
+    Key data flows:
+      - INPUT: AppState indexer state, tracking MCP metrics aggregates, version and uptime data.
+      - PROCESSING: Build stable health/ready/stats payloads and degrade gracefully when metrics storage is unavailable.
+      - OUTPUT: /health, /health/ready, and /api/mcp-stats responses.
+    Critical invariants:
+      - /health stays cheap and always reports process liveness.
+      - /health/ready must be explicit about readiness rather than hiding missing index state.
+      - Stats failures must not break dashboard serving.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Add observability helpers behind the existing dashboard router without refactoring unrelated UI rendering.
+    Complexity_areas: dashboard.rs file size, AppState visibility, stable JSON contract.
+    Patterns_applied: small helper module, graceful fallback payloads, focused unit tests.
+  VERIFICATION_INTENT:
+    I expect the following to be true after implementation:
+    - dashboard observability unit tests pass
+    - Phase-67 dashboard gates pass
+  RISKS_ACKNOWLEDGED:
+    - dashboard.rs is already near the file-size threshold, so new logic should live outside it where possible.
+</BELIEF_STATE>

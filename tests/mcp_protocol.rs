@@ -1,6 +1,6 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-MCP-PROTOCOL
-// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, stdio cleanliness, notification silence, and representative grace tool exposure
+// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
 // SCOPE: Direct handler tests and binary stdio protocol behavior
 // DEPENDS: M-MCP-SERVER, M-SKILLS, M-CAPABILITIES
 
@@ -8,11 +8,12 @@
 // test_initialize_then_list_tools — MCP handler lists all 39 tools after initialize
 // test_tools_list_contains_grace_and_core_tools — Tool list contains representative core and grace tools
 // test_tools_call_grace_status_returns_text — Representative grace tool call returns MCP content envelope
+// test_concurrent_requests_keep_response_ids — Pipelined stdio requests preserve JSON-RPC response IDs
 // test_stdio_keeps_logs_off_stdout_and_notifications_silent — Binary stdio emits only request responses on stdout
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 - Updated MCP tool count for run history skill]
+// LAST_CHANGE: [v2.24.0 - Added pipelined stdio response ID coverage]
 // END_CHANGE_SUMMARY
 
 use std::io::Write;
@@ -127,3 +128,55 @@ fn test_stdio_keeps_logs_off_stdout_and_notifications_silent() {
     );
 }
 // END_test_stdio_keeps_logs_off_stdout_and_notifications_silent
+
+#[test]
+// START_CONTRACT_test_concurrent_requests_keep_response_ids
+// PURPOSE: Verify pipelined stdio requests keep their JSON-RPC response IDs under the MCP pipeline
+// SIDE_EFFECTS: spawns target/debug/syn mcp with piped stdio
+fn test_concurrent_requests_keep_response_ids() {
+    let syn = std::env::current_dir()
+        .expect("current dir")
+        .join("target/debug/syn");
+    let mut child = Command::new(&syn)
+        .arg("mcp")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn syn mcp");
+
+    {
+        let mut stdin = child.stdin.take().expect("child stdin");
+        writeln!(
+            stdin,
+            r#"{{"jsonrpc":"2.0","id":1,"method":"initialize","params":{{}}}}"#
+        )
+        .expect("write initialize");
+        for id in [10, 11, 12] {
+            writeln!(
+                stdin,
+                r#"{{"jsonrpc":"2.0","id":{},"method":"tools/list","params":{{}}}}"#,
+                id
+            )
+            .expect("write tools/list");
+        }
+    }
+
+    let output = child.wait_with_output().expect("wait syn mcp");
+    assert!(
+        output.status.success(),
+        "syn mcp failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut ids: Vec<i64> = stdout
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line).expect("json response"))
+        .filter_map(|response| response["id"].as_i64())
+        .collect();
+    ids.sort_unstable();
+
+    assert_eq!(ids, vec![1, 10, 11, 12], "stdout was: {}", stdout);
+}
+// END_test_concurrent_requests_keep_response_ids

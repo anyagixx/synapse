@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-MCP-PIPELINE" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Decouple MCP stdio reads from handler execution and stdout writes while preserving JSON-RPC response IDs.
+    Key data flows:
+      - INPUT: Async stdin lines, handler function, bounded queue settings.
+      - PROCESSING: Read bounded JSON-RPC lines, process initialize before concurrent spawning, dispatch handler tasks, recover panic failures into JSON-RPC errors, and serialize responses through one writer.
+      - OUTPUT: Newline-delimited JSON-RPC responses on stdout.
+    Critical invariants:
+      - stdout writes must never interleave.
+      - initialize must complete before tools/list or tools/call requests are allowed to run concurrently.
+      - Handler panic isolation must keep the pipeline alive.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Add a small standalone pipeline module first, then route McpServer::start_stdio through it.
+    Complexity_areas: async ownership, Send bounds, EOF shutdown, response ID preservation.
+    Patterns_applied: bounded queues, single writer, panic-guarded task joins.
+  VERIFICATION_INTENT:
+    I expect the following to be true after implementation:
+    - mcp::pipeline unit tests pass
+    - MCP protocol tests continue to pass
+  RISKS_ACKNOWLEDGED:
+    - Concurrent handlers require SynapseHandler mutable initialization state to move behind thread-safe interior state.
+</BELIEF_STATE>

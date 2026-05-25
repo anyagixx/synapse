@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, bounded stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
-// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, pipelined stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,14 +11,14 @@
 // SynapseHandler — MCP message router, runtime config, and initialization state
 // GraphCacheKey — Root/index signature used to invalidate cached GraphRAG state
 // preload_index_storage — Loads index storage without panicking on poisoned locks
-// read_bounded_json_rpc_line — Reads one bounded JSON-RPC line from stdio
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.15.0 - Added GraphRAG cache signatures and bounded JSON-RPC input]
+// LAST_CHANGE: [v3.16.0 - Routed stdio through MCP pipeline and made handler initialization atomic]
 // END_CHANGE_SUMMARY
 
 use super::{
+    pipeline::{self, McpPipelineConfig, PipelineHandler},
     server_cascade_tools, server_code_tools, server_contract_tools, server_grace_tools,
     server_response, server_tools,
 };
@@ -28,11 +28,11 @@ use crate::indexer::storage::Storage;
 use crate::indexer::Indexer;
 use crate::skills::{SkillEngine, SkillRequest};
 use std::path::{Path, PathBuf};
-use std::sync::RwLock;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, RwLock,
+};
 use std::time::UNIX_EPOCH;
-use tokio::io::{AsyncBufRead, AsyncBufReadExt, AsyncWriteExt, BufReader};
-
-const MAX_JSON_RPC_MESSAGE_BYTES: usize = 10_485_760;
 
 // START_public_api
 
@@ -75,41 +75,27 @@ impl McpServer {
             tracing::info!("Multi-root mode: serving {} projects", "multiple");
         }
 
-        let mut handler = SynapseHandler::new();
-        let (stdin, mut stdout) = (tokio::io::stdin(), tokio::io::stdout());
-        let mut reader = BufReader::new(stdin);
-
-        loop {
-            let line = match read_bounded_json_rpc_line(&mut reader).await {
-                Ok(Some(line)) => line,
-                Ok(None) => break,
-                Err(err) => {
-                    let response =
-                        server_response::error(None, -32600, format!("Invalid request: {}", err));
-                    let mut out = serde_json::to_string(&response)?.into_bytes();
-                    out.push(b'\n');
-                    stdout.write_all(&out).await?;
-                    stdout.flush().await?;
-                    break;
+        let handler = Arc::new(SynapseHandler::new());
+        let pipeline_handler: PipelineHandler = Arc::new(move |line| {
+            let handler = handler.clone();
+            Box::pin(async move {
+                tracing::debug!("MCP << {}", crate::utils::truncate_chars(&line, 200));
+                let response = handler.handle_message(&line).await;
+                if let Some(response) = &response {
+                    if let Ok(msg) = serde_json::to_string(response) {
+                        tracing::debug!("MCP >> {}", crate::utils::truncate_chars(&msg, 200));
+                    }
                 }
-            };
-            let line = line.trim().to_string();
-            if line.is_empty() || !line.starts_with('{') {
-                continue;
-            }
-
-            tracing::debug!("MCP << {}", crate::utils::truncate_chars(&line, 200));
-            if let Some(response) = handler.handle_message(&line).await {
-                let msg = serde_json::to_string(&response)?;
-                tracing::debug!("MCP >> {}", crate::utils::truncate_chars(&msg, 200));
-
-                let mut out = msg.into_bytes();
-                out.push(b'\n');
-                stdout.write_all(&out).await?;
-                stdout.flush().await?;
-            }
-        }
-        Ok(())
+                response
+            })
+        });
+        pipeline::run_stdio_pipeline(
+            tokio::io::stdin(),
+            tokio::io::stdout(),
+            pipeline_handler,
+            McpPipelineConfig::default(),
+        )
+        .await
     }
     // END_mcp_server_start_stdio
 }
@@ -160,7 +146,7 @@ pub struct SynapseHandler {
     graphrag: RwLock<Option<GraphRag>>,
     graph_cache_key: RwLock<Option<GraphCacheKey>>,
     skill_engine: SkillEngine,
-    initialized: bool,
+    initialized: AtomicBool,
 }
 // END_SynapseHandler
 
@@ -200,7 +186,7 @@ impl SynapseHandler {
             graphrag: RwLock::new(None),
             graph_cache_key: RwLock::new(None),
             skill_engine,
-            initialized: false,
+            initialized: AtomicBool::new(false),
         }
     }
     // END_sh_new
@@ -210,7 +196,7 @@ impl SynapseHandler {
     // INPUTS: { line: &str — JSON-RPC request line }
     // OUTPUTS: { Option<serde_json::Value> — JSON-RPC response object for requests, None for notifications }
     // START_sh_handle_message
-    pub async fn handle_message(&mut self, line: &str) -> Option<serde_json::Value> {
+    pub async fn handle_message(&self, line: &str) -> Option<serde_json::Value> {
         let msg: serde_json::Value = match serde_json::from_str(line) {
             Ok(v) => v,
             Err(e) => {
@@ -228,7 +214,7 @@ impl SynapseHandler {
 
         let response = match method {
             "initialize" => {
-                self.initialized = true;
+                self.initialized.store(true, Ordering::SeqCst);
                 server_response::result(
                     id,
                     serde_json::json!({
@@ -244,7 +230,7 @@ impl SynapseHandler {
                 )
             }
             "tools/list" => {
-                if !self.initialized {
+                if !self.initialized.load(Ordering::SeqCst) {
                     return Some(server_response::error(id, -32000, "Not initialized"));
                 }
                 server_response::result(
@@ -255,7 +241,7 @@ impl SynapseHandler {
                 )
             }
             "tools/call" => {
-                if !self.initialized {
+                if !self.initialized.load(Ordering::SeqCst) {
                     return Some(server_response::error(id, -32000, "Not initialized"));
                 }
                 let params = &msg["params"];
@@ -331,7 +317,7 @@ impl SynapseHandler {
             }
             "notifications/initialized" => return None,
             _ => {
-                if !self.initialized && method != "initialize" {
+                if !self.initialized.load(Ordering::SeqCst) && method != "initialize" {
                     return Some(server_response::error(id, -32000, "Not initialized"));
                 }
                 server_response::error(id, -32601, format!("Method not found: {}", method))
@@ -404,86 +390,9 @@ fn preload_index_storage(indexer: &Indexer, root: &Path) -> anyhow::Result<()> {
 }
 // END_preload_index_storage
 
-// START_CONTRACT_read_bounded_json_rpc_line
-// PURPOSE: Read one JSON-RPC stdio line without allowing unbounded allocation
-// INPUTS: { reader: &mut impl AsyncBufRead + Unpin }
-// OUTPUTS: { anyhow::Result<Option<String>> }
-// START_read_bounded_json_rpc_line
-async fn read_bounded_json_rpc_line<R>(reader: &mut R) -> anyhow::Result<Option<String>>
-where
-    R: AsyncBufRead + Unpin,
-{
-    let mut buf = Vec::new();
-    loop {
-        let available = reader.fill_buf().await?;
-        if available.is_empty() {
-            if buf.is_empty() {
-                return Ok(None);
-            }
-            return String::from_utf8(buf)
-                .map(Some)
-                .map_err(|err| anyhow::anyhow!("JSON-RPC message is not valid UTF-8: {}", err));
-        }
-
-        if let Some(newline_pos) = available.iter().position(|byte| *byte == b'\n') {
-            if buf.len().saturating_add(newline_pos) > MAX_JSON_RPC_MESSAGE_BYTES {
-                reader.consume(newline_pos + 1);
-                anyhow::bail!(
-                    "JSON-RPC message exceeds max size of {} bytes",
-                    MAX_JSON_RPC_MESSAGE_BYTES
-                );
-            }
-            buf.extend_from_slice(&available[..newline_pos]);
-            reader.consume(newline_pos + 1);
-            return String::from_utf8(buf)
-                .map(Some)
-                .map_err(|err| anyhow::anyhow!("JSON-RPC message is not valid UTF-8: {}", err));
-        }
-
-        if buf.len().saturating_add(available.len()) > MAX_JSON_RPC_MESSAGE_BYTES {
-            let consumed = available.len();
-            reader.consume(consumed);
-            anyhow::bail!(
-                "JSON-RPC message exceeds max size of {} bytes",
-                MAX_JSON_RPC_MESSAGE_BYTES
-            );
-        }
-        let consumed = available.len();
-        buf.extend_from_slice(available);
-        reader.consume(consumed);
-    }
-}
-// END_read_bounded_json_rpc_line
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[tokio::test]
-    async fn test_read_bounded_json_rpc_line_accepts_normal_message() {
-        let input = br#"{"jsonrpc":"2.0","id":1}
-"#;
-        let mut reader = BufReader::new(&input[..]);
-
-        let line = read_bounded_json_rpc_line(&mut reader)
-            .await
-            .expect("read line")
-            .expect("line");
-
-        assert_eq!(line, r#"{"jsonrpc":"2.0","id":1}"#);
-    }
-
-    #[tokio::test]
-    async fn test_read_bounded_json_rpc_line_rejects_oversized_message() {
-        let input = vec![b'a'; MAX_JSON_RPC_MESSAGE_BYTES + 1];
-        let mut reader = BufReader::new(&input[..]);
-
-        let err = read_bounded_json_rpc_line(&mut reader)
-            .await
-            .expect_err("oversized line should fail");
-
-        assert!(err.to_string().contains("exceeds max size"));
-    }
 
     #[test]
     fn test_invalidate_graph_cache_clears_graph_and_key() {

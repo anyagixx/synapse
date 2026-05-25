@@ -1,14 +1,15 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TRACKING
 // PURPOSE: SQLite tracking and provenance ledger — records route-aware token usage plus autonomous run events by canonical project identity and provides stats
-// SCOPE: Tracker struct, canonical project identity, explicit test state overrides, SQLite schema, route-aware token recording, provenance event recording, RTK coverage counts, session/adapter stats querying, route adoption and missed-route candidate querying, TrackingStats and RunEvent models
-// DEPENDS: M-CONFIG
+// SCOPE: Tracker struct, canonical project identity, explicit test state overrides, SQLite schema, route-aware token recording, MCP metrics module boundary, provenance event recording, RTK coverage counts, session/adapter stats querying, route adoption and missed-route candidate querying, TrackingStats and RunEvent models
+// DEPENDS: M-CONFIG, M-TRACKING-MCP-METRICS
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - adapter and route metadata source
 //   → UC-002 (implements) - persisted execution evidence
 //   → NFR-003 (traces_to) - token economy statistics and session analytics
 
 // START_MODULE_MAP
+// mcp_metrics — MCP runtime metrics module boundary
 // Tracker — Token usage and provenance ledger backed by SQLite
 // Tracker::new_for_test — Test-only tracker with explicit db path, project key, and session id
 // TrackingStats — Aggregate token economy statistics
@@ -20,13 +21,15 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.4.0 — Added cached SQLite connection with WAL and busy timeout]
+// LAST_CHANGE: [v3.5.0 — Added MCP metrics module boundary for Phase-67]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Mutex;
+
+mod mcp_metrics;
 
 const DEFAULT_MISSED_ROUTE_LIMIT: usize = 12;
 const MAX_MISSED_ROUTE_COMMAND_CHARS: i64 = 160;

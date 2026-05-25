@@ -19,6 +19,7 @@
     <VERIFICATION id="V-M-COMPRESS" module="M-COMPRESS" path="docs/verification/V-M-COMPRESS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CONFIG" module="M-CONFIG" path="docs/verification/V-M-CONFIG.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-DASHBOARD" module="M-DASHBOARD" path="docs/verification/V-M-DASHBOARD.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-DASHBOARD-OBSERVABILITY" module="M-DASHBOARD-OBSERVABILITY" path="docs/verification/V-M-DASHBOARD-OBSERVABILITY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE" module="M-GRACE" path="docs/verification/V-M-GRACE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-ANCHOR" module="M-GRACE-ANCHOR" path="docs/verification/V-M-GRACE-ANCHOR.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-BELIEF-STATE" module="M-GRACE-BELIEF-STATE" path="docs/verification/V-M-GRACE-BELIEF-STATE.xml" priority="normal" status="active" />
@@ -70,6 +71,7 @@
     <VERIFICATION id="V-M-MAIN" module="M-MAIN" path="docs/verification/V-M-MAIN.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP" module="M-MCP" path="docs/verification/V-M-MCP.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-LSP" module="M-MCP-LSP" path="docs/verification/V-M-MCP-LSP.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-MCP-PIPELINE" module="M-MCP-PIPELINE" path="docs/verification/V-M-MCP-PIPELINE.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER" module="M-MCP-SERVER" path="docs/verification/V-M-MCP-SERVER.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-CASCADE-TOOLS" module="M-MCP-SERVER-CASCADE-TOOLS" path="docs/verification/V-M-MCP-SERVER-CASCADE-TOOLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-CODE-TOOLS" module="M-MCP-SERVER-CODE-TOOLS" path="docs/verification/V-M-MCP-SERVER-CODE-TOOLS.xml" priority="normal" status="active" />
@@ -94,6 +96,7 @@
     <VERIFICATION id="V-M-TESTS-PARITY" module="M-TESTS-PARITY" path="docs/verification/V-M-TESTS-PARITY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TESTS-RELIABILITY" module="M-TESTS-RELIABILITY" path="docs/verification/V-M-TESTS-RELIABILITY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TRACKING" module="M-TRACKING" path="docs/verification/V-M-TRACKING.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TRACKING-MCP-METRICS" module="M-TRACKING-MCP-METRICS" path="docs/verification/V-M-TRACKING-MCP-METRICS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-UTILS" module="M-UTILS" path="docs/verification/V-M-UTILS.xml" priority="normal" status="active" />
   </VERIFICATIONS>
 </VERIFICATION_INDEX>
