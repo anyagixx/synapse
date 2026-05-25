@@ -24,6 +24,7 @@
     <ASSERTION>Tracking tests serialize process environment overrides so XDG_DATA_HOME and SYNAPSE_SESSION_ID cannot cross-contaminate parallel test runs.</ASSERTION>
     <ASSERTION>Tracker opens SQLite once per Tracker instance, enables WAL and busy_timeout, and reuses the cached connection across read/write operations.</ASSERTION>
     <ASSERTION>Unused project_db_path dead code is removed; canonical project identity remains row-scoped in the shared tracking database.</ASSERTION>
+    <ASSERTION>MCP metrics use separate tables and do not change token-savings command totals.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58,Phase-61</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-61,Phase-67</PHASE_GATE>
 </VERIFICATION>

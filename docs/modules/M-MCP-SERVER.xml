@@ -2,11 +2,11 @@
 <MODULE id="M-MCP-SERVER" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER</NAME>
   <PURPOSE>MCP JSON-RPC server facade — serves Synapse tools over clean pipelined stdio with guarded runtime initialization</PURPOSE>
-  <SCOPE>McpServer, SynapseHandler, runtime Config retention, pipelined stdio loop, atomic initialization state, GraphRAG cache key storage/invalidation, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, config-aware LSP tools, guarded index and GraphRAG preload</SCOPE>
+  <SCOPE>McpServer, SynapseHandler, runtime Config retention, pipelined stdio loop, atomic initialization state, best-effort MCP metrics recording, GraphRAG cache key storage/invalidation, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, config-aware LSP tools, guarded index and GraphRAG preload</SCOPE>
   <FILES>
     <FILE>src/mcp/server.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG,M-GRAPHRAG,M-INDEXER,M-MCP-PIPELINE,M-MCP-SERVER-CASCADE-TOOLS,M-MCP-SERVER-CODE-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-MCP-SERVER-RESPONSE,M-MCP-SERVER-TOOLS,M-UTILS</DEPENDS>
+  <DEPENDS>M-CONFIG,M-GRAPHRAG,M-INDEXER,M-MCP-PIPELINE,M-MCP-SERVER-CASCADE-TOOLS,M-MCP-SERVER-CODE-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-MCP-SERVER-RESPONSE,M-MCP-SERVER-TOOLS,M-TRACKING,M-TRACKING-MCP-METRICS,M-UTILS</DEPENDS>
   <LINKS>docs/phases/Phase-59.xml,docs/phases/Phase-62.xml,docs/phases/Phase-67.xml</LINKS>
   <VERIFICATION_REF>V-M-MCP-SERVER</VERIFICATION_REF>
 </MODULE>

@@ -29,7 +29,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-mod mcp_metrics;
+pub mod mcp_metrics;
 
 const DEFAULT_MISSED_ROUTE_LIMIT: usize = 12;
 const MAX_MISSED_ROUTE_COMMAND_CHARS: i64 = 160;

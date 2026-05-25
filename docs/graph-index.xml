@@ -375,6 +375,8 @@
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-GRACE-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-TRACKING-MCP-METRICS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-UTILS" type="DEPENDS" />
     <REL source="M-MCP-PIPELINE" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CASCADE-TOOLS" target="M-GRACE-CASCADE" type="DEPENDS" />

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, pipelined stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
-// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, pipelined stdio loop, best-effort MCP metrics recording, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 
 // START_MODULE_MAP
@@ -11,10 +11,11 @@
 // SynapseHandler — MCP message router, runtime config, and initialization state
 // GraphCacheKey — Root/index signature used to invalidate cached GraphRAG state
 // preload_index_storage — Loads index storage without panicking on poisoned locks
+// classify_mcp_response — Converts JSON-RPC tool responses into tracking status metadata
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.16.0 - Routed stdio through MCP pipeline and made handler initialization atomic]
+// LAST_CHANGE: [v3.17.0 - Added best-effort MCP tool metrics recording]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -27,12 +28,13 @@ use crate::graphrag::GraphRag;
 use crate::indexer::storage::Storage;
 use crate::indexer::Indexer;
 use crate::skills::{SkillEngine, SkillRequest};
+use crate::tracking::{mcp_metrics::McpCallStatus, Tracker};
 use std::path::{Path, PathBuf};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, RwLock,
 };
-use std::time::UNIX_EPOCH;
+use std::time::{Instant, UNIX_EPOCH};
 
 // START_public_api
 
@@ -146,6 +148,7 @@ pub struct SynapseHandler {
     graphrag: RwLock<Option<GraphRag>>,
     graph_cache_key: RwLock<Option<GraphCacheKey>>,
     skill_engine: SkillEngine,
+    tracker: Tracker,
     initialized: AtomicBool,
 }
 // END_SynapseHandler
@@ -174,6 +177,7 @@ impl SynapseHandler {
         let config = Config::load_or_default();
         let indexer = Indexer::new(&config);
         let skill_engine = SkillEngine::new(&config);
+        let tracker = Tracker::new(&config);
         // Try to find index from current directory.
         if let Ok(cwd) = std::env::current_dir() {
             if let Err(e) = preload_index_storage(&indexer, &cwd) {
@@ -186,6 +190,7 @@ impl SynapseHandler {
             graphrag: RwLock::new(None),
             graph_cache_key: RwLock::new(None),
             skill_engine,
+            tracker,
             initialized: AtomicBool::new(false),
         }
     }
@@ -247,8 +252,19 @@ impl SynapseHandler {
                 let params = &msg["params"];
                 let name = params["name"].as_str().unwrap_or("");
                 let args = &params["arguments"];
+                let started = Instant::now();
+                let active_id = match self.tracker.start_mcp_request(name).await {
+                    Ok(active_id) => active_id,
+                    Err(error) => {
+                        tracing::warn!(
+                            "[SynapseHandler][handle_message][MCP_METRICS_START] {}",
+                            error
+                        );
+                        None
+                    }
+                };
 
-                match name {
+                let response = match name {
                     "semantic_search" => {
                         server_code_tools::handle_search(&self.indexer, id, args).await
                     }
@@ -313,7 +329,20 @@ impl SynapseHandler {
                         .await
                     }
                     _ => server_response::error(id, -32601, format!("Unknown tool: {}", name)),
+                };
+                let (status, error_message) = classify_mcp_response(&response);
+                let duration_ms = elapsed_millis_u64(started);
+                if let Err(error) = self
+                    .tracker
+                    .finish_mcp_request(active_id, name, duration_ms, status, &error_message)
+                    .await
+                {
+                    tracing::warn!(
+                        "[SynapseHandler][handle_message][MCP_METRICS_FINISH] {}",
+                        error
+                    );
                 }
+                response
             }
             "notifications/initialized" => return None,
             _ => {
@@ -390,6 +419,42 @@ fn preload_index_storage(indexer: &Indexer, root: &Path) -> anyhow::Result<()> {
 }
 // END_preload_index_storage
 
+// START_CONTRACT_classify_mcp_response
+// PURPOSE: Convert one JSON-RPC response into MCP metrics status and error text
+// INPUTS: { response: &serde_json::Value }
+// OUTPUTS: { (McpCallStatus, String) }
+// LINKS:
+//   -> NFR-003 (traces_to) - MCP metrics record per-tool errors without affecting responses
+// START_classify_mcp_response
+fn classify_mcp_response(response: &serde_json::Value) -> (McpCallStatus, String) {
+    if let Some(error) = response.get("error") {
+        let message = error
+            .get("message")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("")
+            .to_string();
+        (McpCallStatus::Error, message)
+    } else {
+        (McpCallStatus::Ok, String::new())
+    }
+}
+// END_classify_mcp_response
+
+// START_CONTRACT_elapsed_millis_u64
+// PURPOSE: Convert elapsed wall time into a saturating u64 millisecond value
+// INPUTS: { started: Instant }
+// OUTPUTS: { u64 }
+// LINKS:
+//   -> NFR-003 (traces_to) - MCP latency metrics use explicit bounded integer conversion
+// START_elapsed_millis_u64
+fn elapsed_millis_u64(started: Instant) -> u64 {
+    match u64::try_from(started.elapsed().as_millis()) {
+        Ok(value) => value,
+        Err(_) => u64::MAX,
+    }
+}
+// END_elapsed_millis_u64
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -406,6 +471,16 @@ mod tests {
 
         assert!(handler.graphrag.read().expect("graph lock").is_none());
         assert!(handler.graph_cache_key.read().expect("key lock").is_none());
+    }
+
+    #[test]
+    fn test_classify_mcp_response_detects_error_status() {
+        let response = server_response::error(Some(serde_json::json!(1)), -32601, "missing tool");
+
+        let (status, message) = classify_mcp_response(&response);
+
+        assert_eq!(status, McpCallStatus::Error);
+        assert_eq!(message, "missing tool");
     }
 }
 
