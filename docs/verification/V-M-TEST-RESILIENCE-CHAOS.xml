@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-TEST-RESILIENCE-CHAOS" module="M-TEST-RESILIENCE-CHAOS" priority="critical" status="pending">
+<VERIFICATION id="V-M-TEST-RESILIENCE-CHAOS" module="M-TEST-RESILIENCE-CHAOS" priority="critical" status="active">
   <UNIT_TESTS>
     <TEST>Delete, truncate, corrupt, remove directory, rename, and lock actions apply to fixture-local paths only.</TEST>
     <TEST>Each resilience spec uses a fresh fixture so corruption does not leak between cases.</TEST>
     <TEST>Expected exit and output substring checks produce actionable failure reasons.</TEST>
+    <TEST>Index-storage deletion targets the fixture XDG data home, not the developer data directory.</TEST>
   </UNIT_TESTS>
   <INTEGRATION_TESTS>
     <TEST>Corrupted synapsec.toml returns a graceful config error.</TEST>
@@ -16,7 +17,7 @@
     <LOG>resilience_recovery_checked</LOG>
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Chaos tests never mutate the developer checkout or user config directories.</ASSERTION>
+    <ASSERTION status="covered">Chaos tests never mutate the developer checkout or user config directories.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-81</PHASE_GATE>
 </VERIFICATION>

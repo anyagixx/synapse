@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MODULE id="M-TEST-RESILIENCE-CHAOS" type="UTILITY" status="pending">
+<MODULE id="M-TEST-RESILIENCE-CHAOS" type="UTILITY" status="active">
   <NAME>M-TEST-RESILIENCE-CHAOS</NAME>
   <PURPOSE>Run corruption and recovery scenarios to prove Synapse fails gracefully and can recover critical project state.</PURPOSE>
   <SCOPE>Delete, truncate, corrupt, remove directory, rename, locked resource simulations, fresh fixture per case, output assertions, and recovery verification.</SCOPE>

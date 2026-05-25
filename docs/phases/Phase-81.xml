@@ -12,8 +12,8 @@
     <FLOW id="DF-81-1">Resilience spec creates a fresh fixture, applies corruption, runs recovery command, and checks output and recovery state.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-TEST-RESILIENCE-CHAOS" status="pending">Implement corruption actions and fixture-local safety checks.</step-1>
-    <step-2 module="M-TEST-RESILIENCE-CHAOS" status="pending">Implement recovery command runner, expected output checks, and verify command checks.</step-2>
+    <step-1 module="M-TEST-RESILIENCE-CHAOS" status="done">Implement corruption actions and fixture-local safety checks.</step-1>
+    <step-2 module="M-TEST-RESILIENCE-CHAOS" status="done">Implement recovery command runner, expected output checks, and verify command checks.</step-2>
     <step-3 module="M-CLI-TEST-COMMANDS" status="pending">Wire syn test resilience with directory/file spec discovery and fail_fast.</step-3>
     <step-4 module="M-TEST-RESILIENCE-CHAOS" status="pending">Add corruption specs for missing blocks.json, bad config, missing docs, empty graph, and missing module shard.</step-4>
   </STEPS>
