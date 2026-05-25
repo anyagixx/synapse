@@ -11,12 +11,12 @@
   </MODULE_REFS>
   <DATA_FLOWS>
     <FLOW id="DF-63-1">main.rs delegates command dispatch to the CLI schema module so command ownership is localized.</FLOW>
-    <FLOW id="DF-63-2">Docker image build uses explicit cargo release semantics without no-op feature flags.</FLOW>
+    <FLOW id="DF-63-2">Docker image build uses explicit locked cargo release semantics without no-op feature flags and packages a GLIBC-compatible runtime image.</FLOW>
   </DATA_FLOWS>
   <STEPS>
     <step-1 module="M-CLI" status="done">Moved top-level Command dispatch into the CLI module through the RunCommand implementation.</step-1>
     <step-2 module="M-MAIN" status="done">Reduced main.rs to tracing setup, CLI parsing, config loading, tokio runtime creation, and CLI dispatch delegation.</step-2>
-    <step-3 module="M-BUILD" status="done">Removed Dockerfile no-op --no-default-features and replaced unused protobuf/OpenSSL build packages with ca-certificates only after dependency audit.</step-3>
+    <step-3 module="M-BUILD" status="done">Removed Dockerfile no-op --no-default-features, replaced unused protobuf/OpenSSL build packages with ca-certificates only after dependency audit, aligned the builder with Rust 1.95.0, copied embedded OpenCode assets, and used a GLIBC-compatible trixie runtime.</step-3>
     <step-4 module="M-CI-RELEASE-SMOKE" status="done">Ran the full issue-resolution release gates after all fixes completed.</step-4>
   </STEPS>
   <VERIFICATION>
@@ -32,7 +32,10 @@
     <CHECK status="passed">SYN_RELEASE_TAG=v2.6.1 bash scripts/release_version_guard.sh — tag matched Cargo.toml.</CHECK>
     <CHECK status="passed">SYN_RELEASE_TAG=v2.6.1 bash scripts/release_freshness_guard.sh — release tag freshness validated.</CHECK>
     <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data bash scripts/release_install_smoke.sh — release/install smoke passed.</CHECK>
-    <CHECK status="environment-blocked">docker build -t synapse-phase63-test . — Docker daemon is not running in this environment; Dockerfile static audit, dependency audit, and cargo release build passed.</CHECK>
+    <CHECK status="passed">sudo env DOCKER_CONFIG=/tmp/synapse-docker-config docker build --progress=plain -t synapse-phase63-test . — Docker image built successfully.</CHECK>
+    <CHECK status="passed">docker run --rm synapse-phase63-test --version — syn 2.6.1.</CHECK>
+    <CHECK status="passed">docker run --rm synapse-phase63-test --help — CLI help rendered successfully.</CHECK>
+    <CHECK status="passed">docker image inspect synapse-phase63-test — image sha256:8fdaad08441018bf8eb9dbd6c3357d03bb81b919c5cc467e124bf618b8114534, size 37510338 bytes.</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-63-1">Dispatch refactor is intentionally last so behavior-changing fixes are not hidden behind broad CLI movement.</RISK>

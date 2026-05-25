@@ -72,9 +72,9 @@
       <Config>.github/workflows/ci.yml</Config>
       <RustVersion>1.95.0</RustVersion>
     </CI>
-    <Container name="none" version="1.0.0">
-      <BaseImage>not-used</BaseImage>
-      <Dockerfile>not-used</Dockerfile>
+    <Container name="Docker" version="29.2.1">
+      <BaseImage>rust:1.95.0-slim builder; debian:trixie-slim runtime</BaseImage>
+      <Dockerfile>Dockerfile</Dockerfile>
     </Container>
   </DevOps>
 </Technology>

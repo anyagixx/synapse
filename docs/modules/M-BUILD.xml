@@ -2,7 +2,7 @@
 <MODULE id="M-BUILD" type="UTILITY" status="active">
   <NAME>M-BUILD</NAME>
   <PURPOSE>Build metadata and release container policy — declares public package identity, dependency lock state, rebuild triggers, and Docker release build semantics</PURPOSE>
-  <SCOPE>Cargo.toml package metadata, Cargo.lock dependency lock state, build.rs rerun-if-changed directives for embedded Synapse/RTK proxy filters and OpenCode assets, and Dockerfile release build stages with explicit cargo release semantics and audited system packages</SCOPE>
+  <SCOPE>Cargo.toml package metadata, Cargo.lock dependency lock state, build.rs rerun-if-changed directives for embedded Synapse/RTK proxy filters and OpenCode assets, and Dockerfile release build stages using a Rust 1.95.0-compatible builder image, copied OpenCode embedded assets, GLIBC-compatible Debian trixie runtime, locked cargo release semantics, and audited system packages</SCOPE>
   <FILES>
     <FILE>Cargo.toml</FILE>
     <FILE>Cargo.lock</FILE>
