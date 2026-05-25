@@ -14,6 +14,7 @@
 // test_install_default_version_matches_package — Installer default tag, source-ref fallback, and pre-tag main fallback check
 // test_install_docs_use_supported_url — Install documentation URL check
 // test_release_tag_version_guard_is_enforced — Release tag/version guard check
+// test_release_freshness_guard_blocks_stale_tags — Isolated stale tag freshness guard check
 // test_release_artifact_matches_installer — Release artifact naming check
 // test_platform_claims_match_release_truth — Platform support truth check
 // test_installer_uses_safe_temp_dir_and_cleanup — Installer temp safety check
@@ -27,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.2.0 - Recognized session and cc-economics flags]
+// LAST_CHANGE: [v5.3.0 - Isolated release freshness guard stale-tag regression]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -365,15 +366,87 @@ fn test_release_freshness_guard_blocks_stale_tags() {
             "release freshness guard marker missing: {marker}"
         );
     }
+    let repo = tempfile::tempdir().expect("temp repo");
+    std::fs::create_dir(repo.path().join("scripts")).expect("scripts dir");
+    std::fs::write(
+        repo.path().join("Cargo.toml"),
+        "[package]\nname = \"freshness-test\"\nversion = \"9.9.9\"\n",
+    )
+    .expect("write Cargo.toml");
+    std::fs::write(
+        repo.path().join("scripts/release_freshness_guard.sh"),
+        RELEASE_FRESHNESS_GUARD,
+    )
+    .expect("write guard");
+    for args in [
+        vec!["init"],
+        vec!["add", "."],
+        vec![
+            "-c",
+            "user.name=Synapse Test",
+            "-c",
+            "user.email=synapse@example.invalid",
+            "commit",
+            "-m",
+            "initial",
+        ],
+        vec!["tag", "v9.9.9"],
+    ] {
+        let output = std::process::Command::new("git")
+            .args(args)
+            .current_dir(repo.path())
+            .output()
+            .expect("git should execute");
+        assert!(
+            output.status.success(),
+            "git setup failed\nstdout:\n{}\nstderr:\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    std::fs::write(repo.path().join("README.md"), "post-tag work\n").expect("write readme");
+    for args in [
+        vec!["add", "."],
+        vec![
+            "-c",
+            "user.name=Synapse Test",
+            "-c",
+            "user.email=synapse@example.invalid",
+            "commit",
+            "-m",
+            "post tag",
+        ],
+    ] {
+        let output = std::process::Command::new("git")
+            .args(args)
+            .current_dir(repo.path())
+            .output()
+            .expect("git should execute");
+        assert!(
+            output.status.success(),
+            "git post-tag setup failed\nstdout:\n{}\nstderr:\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
     let output = std::process::Command::new("bash")
         .arg("scripts/release_freshness_guard.sh")
+        .current_dir(repo.path())
         .output()
         .expect("release freshness guard should execute");
     assert!(
-        output.status.success(),
-        "release freshness guard failed\nstdout:\n{}\nstderr:\n{}",
+        !output.status.success(),
+        "release freshness guard should reject stale tags\nstdout:\n{}\nstderr:\n{}",
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("[CI][release_freshness_guard][FAIL]")
+            && stdout.contains("Bump Cargo.toml/install.sh version before release work continues."),
+        "freshness guard should report stale tag remediation: {}",
+        stdout
     );
 }
 

@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
 # PURPOSE: Release candidate dry-run gate validates release metadata, installer truth, and full RTK parity before publishing.
-# SCOPE: Tag/version and freshness guards, checked-out candidate SHA evidence, generated release notes policy, checksum aggregation policy, Linux/macOS installer dry-run mapping, full RTK release gate, GitHub step-summary evidence, and optional local release smoke.
+# SCOPE: Tag/version and release-context freshness guards, checked-out candidate SHA evidence, generated release notes policy, checksum aggregation policy, Linux/macOS installer dry-run mapping, full RTK release gate, GitHub step-summary evidence, and optional local release smoke.
 # DEPENDS: M-CI-RELEASE-SMOKE, M-RTK-FULL-PARITY, M-INSTALL, M-TESTS-PARITY
 # LINKS: .github/workflows/release-candidate.yml, .github/workflows/release.yml, scripts/release_version_guard.sh, scripts/release_install_smoke.sh, scripts/rtk_full_release_gate.sh
 
@@ -17,12 +17,12 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.5.0 - Added full RTK release gate to release candidate policy]
+# LAST_CHANGE: [v1.6.0 - Allowed local non-release CI to skip freshness guard]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_candidate_dry_run
 # PURPOSE: Validate release candidate policy without creating or mutating a GitHub release.
-# INPUTS: { SYN_RELEASE_TAG: optional tag override }, { SYN_RC_SKIP_SMOKE: optional flag to skip local release smoke }, { SYN_RC_SKIP_FULL_RTK: optional flag to skip full RTK in non-release CI }, { SYNAPSE_RTK_SOURCE: optional rtk-develop source path }, { SYNAPSE_RTK_SOURCE_REF: optional pinned RTK source ref }
+# INPUTS: { SYN_RELEASE_TAG: optional tag override }, { SYN_RC_SKIP_SMOKE: optional flag to skip local release smoke }, { SYN_RC_SKIP_FULL_RTK: optional flag to skip full RTK in non-release CI }, { SYN_RC_SKIP_FRESHNESS: optional flag to skip freshness in non-release CI }, { SYNAPSE_RTK_SOURCE: optional rtk-develop source path }, { SYNAPSE_RTK_SOURCE_REF: optional pinned RTK source ref }
 # OUTPUTS: { exit code 0 - candidate checks pass }
 # SIDE_EFFECTS: invokes release_version_guard.sh, install.sh --dry-run, rtk_full_release_gate.sh unless explicitly skipped, optionally release_install_smoke.sh, and may append to GITHUB_STEP_SUMMARY
 # LINKS:
@@ -155,7 +155,11 @@ echo "[CI][release_candidate][TAG] Validating ${release_tag}"
 (cd "$repo_root" && SYN_RELEASE_TAG="$release_tag" bash scripts/release_version_guard.sh)
 
 echo "[CI][release_candidate][FRESHNESS] Validating ${release_tag}"
-(cd "$repo_root" && SYN_RELEASE_TAG="$release_tag" bash scripts/release_freshness_guard.sh)
+if [[ "${SYN_RC_SKIP_FRESHNESS:-0}" = "1" ]]; then
+    echo "[CI][release_candidate][FRESHNESS] Skipping freshness guard; release workflows must not set SYN_RC_SKIP_FRESHNESS"
+else
+    (cd "$repo_root" && SYN_RELEASE_TAG="$release_tag" bash scripts/release_freshness_guard.sh)
+fi
 
 echo "[CI][release_candidate][WORKFLOW] Checking release metadata policy"
 check_release_workflow_truth

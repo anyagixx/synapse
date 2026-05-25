@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-GRAPHRAG-BUILDER" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Graph builder — constructs CodeGraph from indexed storage, imports, hierarchy, and typed GRACE LINKS
+    Module responsibility: Graph builder — constructs CodeGraph from indexed storage, imports, hierarchy, and typed GRACE LINKS with root-scoped cache invalidation
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-GRAPHRAG-TYPES, M-GRACE-CONTRACT, M-INDEXER-STORAGE, M-INDEXER-WALKER
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: GraphBuilder struct, build from storage blocks/files/contracts, typed LINKS extraction, extract_imports for multi-language
+      - Scope remains bounded to: GraphBuilder struct, root/index-keyed cached build from storage blocks/files/contracts, root-scoped cache invalidation after full index rebuilds and bounded deltas, typed LINKS extraction, extract_imports for multi-language
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

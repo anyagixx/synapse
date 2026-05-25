@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure release-candidate automation remains a dry-run truth gate before publishing.
-// SCOPE: Validate RC workflow permissions, candidate ref checkout, release metadata checks, full RTK gate policy, fresh install smoke, installer matrix smoke, GitHub step-summary evidence, and CI integration.
+// SCOPE: Validate RC workflow permissions, candidate ref checkout, release metadata checks, release-context freshness policy, full RTK gate policy, fresh install smoke, installer matrix smoke, GitHub step-summary evidence, and CI integration.
 // DEPENDS: M-CI, M-INSTALL, M-CI-RELEASE-SMOKE, M-RTK-FULL-PARITY
 // LINKS: scripts/release_candidate_dry_run.sh, scripts/rtk_full_release_gate.sh, .github/workflows/release-candidate.yml
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.4.0 - Added full RTK release gate policy checks]
+// LAST_CHANGE: [v1.5.0 - Accounted for local freshness skip in non-release RC tests]
 // END_CHANGE_SUMMARY
 
 const RELEASE_CANDIDATE_WORKFLOW: &str = include_str!("../.github/workflows/release-candidate.yml");
@@ -86,6 +86,7 @@ fn test_release_candidate_script_checks_release_truth() {
         "generate_release_notes: true",
         "scripts/release_freshness_guard.sh",
         "[CI][release_candidate][FRESHNESS]",
+        "SYN_RC_SKIP_FRESHNESS",
         "sort -k2 > dist/SHA256SUMS",
         "sha256sum -c SHA256SUMS",
         "SYN_INSTALL_UNAME_S",
@@ -130,6 +131,11 @@ fn test_release_candidate_script_checks_release_truth() {
             && !RELEASE_WORKFLOW.contains("SYN_RC_SKIP_FULL_RTK"),
         "release workflows must not skip the full RTK gate"
     );
+    assert!(
+        !RELEASE_CANDIDATE_WORKFLOW.contains("SYN_RC_SKIP_FRESHNESS")
+            && !RELEASE_WORKFLOW.contains("SYN_RC_SKIP_FRESHNESS"),
+        "release workflows must not skip the freshness guard"
+    );
 }
 
 #[test]
@@ -171,9 +177,7 @@ fn test_release_candidate_fresh_install_evidence() {
 // PURPOSE: Verify local CI includes release-candidate validation without duplicating matrix smoke.
 fn test_ci_invokes_release_candidate_gate() {
     assert!(
-        CI_SCRIPT.contains(
-            "SYN_RC_SKIP_SMOKE=1 SYN_RC_SKIP_FULL_RTK=1 bash scripts/release_candidate_dry_run.sh"
-        ),
+        CI_SCRIPT.contains("SYN_RC_SKIP_SMOKE=1 SYN_RC_SKIP_FULL_RTK=1 SYN_RC_SKIP_FRESHNESS=1 bash scripts/release_candidate_dry_run.sh"),
         "scripts/ci.sh must run the lightweight release candidate gate"
     );
     assert!(
@@ -196,6 +200,7 @@ fn test_release_candidate_script_executes_without_publishing() {
         .env("SYN_RELEASE_TAG", expected_tag)
         .env("SYN_RC_SKIP_SMOKE", "1")
         .env("SYN_RC_SKIP_FULL_RTK", "1")
+        .env("SYN_RC_SKIP_FRESHNESS", "1")
         .output()
         .expect("release candidate script should execute");
 
@@ -226,6 +231,7 @@ fn test_release_candidate_step_summary_is_written() {
         .env("SYN_RELEASE_TAG", expected_tag)
         .env("SYN_RC_SKIP_SMOKE", "1")
         .env("SYN_RC_SKIP_FULL_RTK", "1")
+        .env("SYN_RC_SKIP_FRESHNESS", "1")
         .env("GITHUB_STEP_SUMMARY", &summary_path)
         .output()
         .expect("release candidate script should execute with summary path");

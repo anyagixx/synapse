@@ -6,7 +6,7 @@
     <COMMAND>python3 scripts/ci_runtime_guard.py</COMMAND>
     <COMMAND>cargo audit --deny warnings</COMMAND>
     <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
-    <COMMAND>SYN_RC_SKIP_SMOKE=1 bash scripts/release_candidate_dry_run.sh</COMMAND>
+    <COMMAND>SYN_RC_SKIP_SMOKE=1 SYN_RC_SKIP_FULL_RTK=1 SYN_RC_SKIP_FRESHNESS=1 bash scripts/release_candidate_dry_run.sh</COMMAND>
     <COMMAND>cargo test --test release_candidate</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>bash scripts/ci.sh</COMMAND>

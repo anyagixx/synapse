@@ -198,7 +198,7 @@ impl Indexer {
         }
 
         if changed_count > 0 || removed_count > 0 || !deleted_paths.is_empty() {
-            GraphBuilder::invalidate_cache(root);
+            GraphBuilder::invalidate_cache_for_delta(root, changed_count, deleted_paths.len());
         }
         tracing::info!(
             "[Indexer][index_delta][DELTA_APPLY] changed={} deleted={} removed_blocks={}",

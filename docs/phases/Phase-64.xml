@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-64" status="active">
+<PHASE id="Phase-64" status="done">
   <NAME>UPGRADE_1 Indexing Pipeline Foundation</NAME>
   <GOAL>Implement the U2 and U3 indexing foundation: parallel file processing, deterministic full-index compatibility, incremental changed-file updates, deleted-file cleanup, and GraphRAG cache invalidation.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_1/U2-parallel-indexing.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U3-incremental-indexing.md</SOURCE_PLAN>
@@ -23,14 +23,17 @@
     <step-3 module="M-INDEXER-STORAGE" status="done">Add storage operations for per-file upsert and deleted-file removal without requiring a full snapshot rewrite.</step-3>
     <step-4 module="M-INDEXER" status="done">Expose an incremental indexing entrypoint for changed-file sets and route full indexing through the shared pipeline.</step-4>
     <step-5 module="M-CLI-SETUP-COMMANDS" status="done">Wire setup or watch-related entrypoints to request incremental index updates when a bounded changed-file list is available.</step-5>
-    <step-6 module="M-GRAPHRAG-BUILDER" status="planned">Keep GraphRAG cache invalidation scoped to the indexed root and affected deltas.</step-6>
+    <step-6 module="M-GRAPHRAG-BUILDER" status="done">Keep GraphRAG cache invalidation scoped to the indexed root and affected deltas.</step-6>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test indexer::pipeline --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test indexer::tests::test_index_delta_upserts_changed_files --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test indexer::tests::test_index_delta_removes_deleted_files --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test --test reliability_test test_parallel_index_matches_sequential_snapshot</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo test indexer::pipeline --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test indexer::tests::test_index_delta_upserts_changed_files --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test indexer::tests::test_index_delta_removes_deleted_files --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test graphrag::builder::tests::test_delta_invalidation_is_root_scoped --lib</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo test --all-targets -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-64-1">Parallel parsing can introduce nondeterministic result ordering unless StoredBlock ordering is normalized before persistence.</RISK>

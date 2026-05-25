@@ -1,17 +1,18 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRAPHRAG-BUILDER
 // PURPOSE: Graph builder — constructs CodeGraph from indexed storage, imports, hierarchy, and typed GRACE LINKS
-// SCOPE: GraphBuilder struct, root/index-keyed cached build from storage blocks/files/contracts, typed LINKS extraction, extract_imports for multi-language
+// SCOPE: GraphBuilder struct, root/index-keyed cached build from storage blocks/files/contracts, root-scoped full/delta cache invalidation, typed LINKS extraction, extract_imports for multi-language
 // DEPENDS: M-GRAPHRAG-TYPES, M-GRACE-CONTRACT, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS: N/A
 
 // START_MODULE_MAP
 // GraphBuilder — Builds a CodeGraph from indexed code blocks, file list, and typed LINKS
 // GraphBuildCacheKey — Conservative root/index metadata key for cached graph builds
+// GraphBuilder::invalidate_cache_for_delta — Invalidates cached graph builds after bounded index deltas
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.12.0 — Added root/index-keyed CodeGraph build cache]
+// LAST_CHANGE: [v2.13.0 — Added explicit delta cache invalidation]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile, TypedLink};
@@ -106,6 +107,22 @@ impl GraphBuilder {
         }
     }
     // END_gb_invalidate_cache
+
+    // START_CONTRACT_GraphBuilder::invalidate_cache_for_delta
+    // PURPOSE: Invalidate cached graph builds for one project root after bounded index deltas
+    // INPUTS: { root: &Path }, { changed_count: usize }, { deleted_count: usize }
+    // SIDE_EFFECTS: removes matching cache entries when cache is initialized and emits delta context
+    // START_gb_invalidate_cache_for_delta
+    pub fn invalidate_cache_for_delta(root: &Path, changed_count: usize, deleted_count: usize) {
+        tracing::debug!(
+            "[GraphBuilder][invalidate_cache_for_delta][DELTA_INVALIDATE] root={} changed={} deleted={}",
+            root.display(),
+            changed_count,
+            deleted_count
+        );
+        Self::invalidate_cache(root);
+    }
+    // END_gb_invalidate_cache_for_delta
 
     // START_CONTRACT_GraphBuilder::build_uncached
     // PURPOSE: Build a code graph from indexed storage — nodes from files, relationships from imports and hierarchy
@@ -687,5 +704,36 @@ mod tests {
 
         assert!(!first.shares_storage_with(&second));
     }
+
+    // START_CONTRACT_test_delta_invalidation_is_root_scoped
+    // PURPOSE: Verify delta cache invalidation removes only the affected root's cached graph
+    // START_test_delta_invalidation_is_root_scoped
+    #[test]
+    fn test_delta_invalidation_is_root_scoped() {
+        let first_dir = tempfile::tempdir().expect("first tempdir");
+        let second_dir = tempfile::tempdir().expect("second tempdir");
+        for (dir, name) in [(first_dir.path(), "first"), (second_dir.path(), "second")] {
+            let src = dir.join("src");
+            std::fs::create_dir_all(&src).expect("create src");
+            std::fs::write(
+                src.join(format!("{name}.rs")),
+                format!("pub fn {name}() {{}}\n"),
+            )
+            .expect("write source");
+            Storage::new(dir)
+                .replace_all_blocks(Vec::new())
+                .expect("write index marker");
+        }
+
+        let first_before = GraphBuilder::build(first_dir.path()).expect("first build");
+        let second_before = GraphBuilder::build(second_dir.path()).expect("second build");
+        GraphBuilder::invalidate_cache_for_delta(first_dir.path(), 1, 0);
+        let first_after = GraphBuilder::build(first_dir.path()).expect("first rebuild");
+        let second_after = GraphBuilder::build(second_dir.path()).expect("second cached build");
+
+        assert!(!first_before.shares_storage_with(&first_after));
+        assert!(second_before.shares_storage_with(&second_after));
+    }
+    // END_test_delta_invalidation_is_root_scoped
 }
 // END_public_api

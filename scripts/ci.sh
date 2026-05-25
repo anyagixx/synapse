@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
 # PURPOSE: CI quality gate — runs Rust checks and MyGRACE truth gates in one reproducible entrypoint
-# SCOPE: Formatting, linting, runtime panic guard, tests, isolated XDG data path, release tag and freshness guards, release-candidate dry-run, optional full RTK release gate, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
+# SCOPE: Formatting, linting, runtime panic guard, tests, isolated XDG data path, release tag guard, local release-candidate dry-run with release-context freshness skipped, optional full RTK release gate, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
 # DEPENDS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-RTK-FULL-PARITY, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
 # LINKS: .github/workflows/ci.yml, docs/verification-index.xml
 
@@ -16,7 +16,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.8.0 - Added optional full RTK release gate wiring]
+# LAST_CHANGE: [v1.9.0 - Skipped release freshness in local non-release candidate gate]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_ci_gate
@@ -56,7 +56,7 @@ echo "[CI][run_ci_gate][RELEASE_FRESHNESS] Checking release tag freshness"
 bash scripts/release_freshness_guard.sh
 
 echo "[CI][run_ci_gate][RELEASE_CANDIDATE] Checking release candidate policy"
-SYN_RC_SKIP_SMOKE=1 SYN_RC_SKIP_FULL_RTK=1 bash scripts/release_candidate_dry_run.sh
+SYN_RC_SKIP_SMOKE=1 SYN_RC_SKIP_FULL_RTK=1 SYN_RC_SKIP_FRESHNESS=1 bash scripts/release_candidate_dry_run.sh
 
 if [[ "${SYN_CI_RUN_FULL_RTK:-0}" = "1" ]]; then
     echo "[CI][run_ci_gate][RTK_FULL] Running full RTK release gate"

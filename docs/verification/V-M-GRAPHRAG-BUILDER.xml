@@ -5,11 +5,13 @@
     <COMMAND>cargo test graphrag::builder::tests::test_build_extracts_typed_links_from_contracts --lib</COMMAND>
     <COMMAND>cargo test graphrag::builder::tests::test_build_returns_cached_clone_for_unchanged_index --lib</COMMAND>
     <COMMAND>cargo test graphrag::builder::tests::test_invalidate_cache_forces_rebuild --lib</COMMAND>
+    <COMMAND>cargo test graphrag::builder::tests::test_delta_invalidation_is_root_scoped --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>GraphBuilder extracts module-level and function-level typed LINKS from MODULE_CONTRACT source files into graph relationships.</ASSERTION>
     <ASSERTION>GraphBuilder reuses cached CodeGraph clones for unchanged root/index signatures and invalidates cached graphs after index rebuilds.</ASSERTION>
+    <ASSERTION>Delta invalidation removes cached graphs only for the affected project root.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1,Phase-62</PHASE_GATE>
+  <PHASE_GATE>Phase-1,Phase-62,Phase-64</PHASE_GATE>
 </VERIFICATION>
