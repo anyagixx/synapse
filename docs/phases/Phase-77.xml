@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-77" status="active">
+<PHASE id="Phase-77" status="done">
   <NAME>UPGRADE_3 E2E Runner And Snapshots</NAME>
   <GOAL>Implement TOML scenario execution and golden snapshot comparison for full-cycle command output verification.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/E1-e2e-scenario-runner.md,/home/truffle/Загрузки/synapse-main/UPGRADE_3/E3-golden-snapshot.md</SOURCE_PLAN>
@@ -19,10 +19,10 @@
     <step-4 module="M-TEST-E2E-RUNNER" status="done">Add full-cycle scenario fixture and failure scenario coverage.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test --all-targets e2e</CHECK>
-    <CHECK status="planned">cargo test --all-targets snapshot</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test e2e --scenario tests/e2e/scenarios/full-cycle.toml</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test snapshot</CHECK>
+    <CHECK status="passed">cargo test --all-targets e2e</CHECK>
+    <CHECK status="passed">cargo test --all-targets snapshot</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test e2e --scenario tests/e2e/scenarios/full-cycle.toml</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test snapshot</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-77-1">Snapshots will be flaky if paths, timings, versions, ANSI, or IDs are not normalized.</RISK>
