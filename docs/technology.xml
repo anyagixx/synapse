@@ -89,8 +89,8 @@
       <Workaround>CI runs cargo audit --deny warnings with an explicit RUSTSEC-2024-0436 waiver until fastembed releases a tokenizers line that removes paste or Synapse replaces the embedding provider.</Workaround>
     </Issue>
     <Issue id="KI-003" component="ort/x86_64-apple-darwin" version="2.0.0-rc.12">
-      <Description>ort does not publish a prebuilt ONNX Runtime binary for the hosted x86_64-apple-darwin target used by the v2.6.3 release workflow.</Description>
-      <Workaround>v2.6.3 restores the macOS Intel prebuilt artifact with fastembed's ort-load-dynamic feature. Core Synapse runs without ONNX Runtime because embeddings are disabled by default; optional embeddings require ORT_DYLIB_PATH on Intel macOS.</Workaround>
+      <Description>ort does not publish a prebuilt ONNX Runtime binary for the hosted x86_64-apple-darwin target used by the v2.6.4 release workflow.</Description>
+      <Workaround>v2.6.4 keeps the macOS Intel prebuilt artifact with fastembed's ort-load-dynamic feature. Core Synapse runs without ONNX Runtime because embeddings are disabled by default; optional embeddings require ORT_DYLIB_PATH on Intel macOS.</Workaround>
     </Issue>
   </KnownIssues>
   <DevOps>

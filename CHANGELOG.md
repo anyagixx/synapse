@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.4 (2026-05-25)
+
+- Completed the UPGRADE_2 autonomy line with bounded self-heal, failure diagnosis, dry-run contract repair, GraphRAG impact analysis, phase/pre-commit gates, compact agent resume context, and structured multi-agent handoffs
+- Added `syn agent resume/status` context output and hardened completed-run fallback so release smoke can recover compact run state without monolithic artifact scans
+- Revalidated MyGRACE health after all 76 phases completed, with 108 module shards, 108 verification shards, zero drift, full RTK adoption, clippy-clean release gates, and no active phase
+
 ## 2.6.1 (2026-05-25)
 
 - Hardened the post-v2.6.0 release line with Phase 58-63 fixes for isolated test state, persistent configurable LSP runtime, filter semantics, token economics runtime, GraphRAG MCP robustness, and release cleanup gates

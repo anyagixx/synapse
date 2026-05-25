@@ -15,11 +15,11 @@ OpenCode, Claude Code, Cursor, Windsurf, Cline, Copilot, Gemini CLI, Codex, and 
 
 **How do I install?**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.4/install.sh | sh
 ```
 Without sudo:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.4/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
 **What platforms are supported?**
@@ -34,7 +34,7 @@ Windows packaging is deferred and is not part of the current release matrix.
 
 **How do I diagnose install failures?**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.3/install.sh -o /tmp/synapse-install.sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.4/install.sh -o /tmp/synapse-install.sh
 sh /tmp/synapse-install.sh --diagnose
 ```
 The diagnostic report prints the detected artifact, install directory status, required tools, checksum support, and source fallback prerequisites.
