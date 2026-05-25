@@ -13,11 +13,12 @@
 // spawn_for_fixture - Spawn server with fixture root and isolated XDG homes
 // request - Send JSON-RPC request and wait for matching response ID
 // notify - Send JSON-RPC notification without waiting for a response
+// read_any_response - Read the next JSON-RPC response regardless of id
 // read_response - Read responses while skipping notifications
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Implemented UPGRADE_3 MCP test server helper]
+// LAST_CHANGE: [v1.1.0 - Added real MCP stdio regression cases for tools and protocol errors]
 // END_CHANGE_SUMMARY
 
 use serde_json::{json, Value};
@@ -166,6 +167,19 @@ impl McpTestServer {
     }
     // END_mcp_test_server_send_raw
 
+    // START_CONTRACT_McpTestServer::read_any_response
+    // PURPOSE: Read the next JSON-RPC response regardless of request ID
+    // OUTPUTS: { anyhow::Result<Value> }
+    // SIDE_EFFECTS: reads child stdout
+    // LINKS:
+    //   -> M-MCP-SERVER (depends) - malformed JSON and protocol error responses
+    //   -> NFR-002 (traces_to) - negative-path reads must remain timeout bounded
+    // START_mcp_test_server_read_any_response
+    pub fn read_any_response(&mut self) -> anyhow::Result<Value> {
+        self.read_next_json()
+    }
+    // END_mcp_test_server_read_any_response
+
     // START_CONTRACT_McpTestServer::spawn_with_env
     // PURPOSE: Spawn syn mcp with caller-provided environment overrides
     // INPUTS: { fixture_root: &Path }, { env: impl IntoIterator<Item = (&'static str, &Path)> }
@@ -256,22 +270,8 @@ impl McpTestServer {
     fn read_response(&mut self, id: u64) -> anyhow::Result<Value> {
         let started = Instant::now();
         loop {
-            let Some(remaining) = self.timeout.checked_sub(started.elapsed()) else {
-                anyhow::bail!("timed out waiting for MCP response id {id}");
-            };
-            let line = match self.stdout_rx.recv_timeout(remaining) {
-                Ok(line) => line,
-                Err(RecvTimeoutError::Timeout) => {
-                    anyhow::bail!("timed out waiting for MCP response id {id}");
-                }
-                Err(RecvTimeoutError::Disconnected) => {
-                    anyhow::bail!("MCP stdout closed while waiting for response id {id}");
-                }
-            };
-            if line.trim().is_empty() {
-                continue;
-            }
-            let response: Value = serde_json::from_str(line.trim())?;
+            let response =
+                self.read_next_json_with_deadline(started, &format!("response id {id}"))?;
             let Some(response_id) = response.get("id") else {
                 continue;
             };
@@ -282,6 +282,52 @@ impl McpTestServer {
         }
     }
     // END_mcp_test_server_read_response
+
+    // START_CONTRACT_McpTestServer::read_next_json
+    // PURPOSE: Read the next non-empty stdout line as JSON within the helper timeout
+    // OUTPUTS: { anyhow::Result<Value> }
+    // SIDE_EFFECTS: reads child stdout
+    // LINKS:
+    //   -> M-MCP-SERVER (depends) - stdout must remain JSON-RPC-only
+    // START_mcp_test_server_read_next_json
+    fn read_next_json(&mut self) -> anyhow::Result<Value> {
+        self.read_next_json_with_deadline(Instant::now(), "next MCP response")
+    }
+    // END_mcp_test_server_read_next_json
+
+    // START_CONTRACT_McpTestServer::read_next_json_with_deadline
+    // PURPOSE: Read one non-empty JSON line before the shared deadline expires
+    // INPUTS: { started: Instant }, { label: &str }
+    // OUTPUTS: { anyhow::Result<Value> }
+    // SIDE_EFFECTS: reads child stdout
+    // LINKS:
+    //   -> M-MCP-SERVER (depends) - protocol response stream
+    // START_mcp_test_server_read_next_json_with_deadline
+    fn read_next_json_with_deadline(
+        &mut self,
+        started: Instant,
+        label: &str,
+    ) -> anyhow::Result<Value> {
+        loop {
+            let Some(remaining) = self.timeout.checked_sub(started.elapsed()) else {
+                anyhow::bail!("timed out waiting for MCP {label}");
+            };
+            let line = match self.stdout_rx.recv_timeout(remaining) {
+                Ok(line) => line,
+                Err(RecvTimeoutError::Timeout) => {
+                    anyhow::bail!("timed out waiting for MCP {label}");
+                }
+                Err(RecvTimeoutError::Disconnected) => {
+                    anyhow::bail!("MCP stdout closed while waiting for {label}");
+                }
+            };
+            if line.trim().is_empty() {
+                continue;
+            }
+            return serde_json::from_str(line.trim()).map_err(Into::into);
+        }
+    }
+    // END_mcp_test_server_read_next_json_with_deadline
 }
 
 impl Drop for McpTestServer {
@@ -374,6 +420,113 @@ mod tests {
     }
 
     #[test]
+    fn mcp_regression_tools_list_contains_required_tools() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Minimal)
+            .build()
+            .expect("fixture");
+        let mut server = McpTestServer::spawn_for_fixture(&fixture).expect("spawn mcp server");
+        server.initialize().expect("initialize response");
+        server
+            .notify("notifications/initialized", &json!({}))
+            .expect("send notification");
+
+        let response = server
+            .request("tools/list", &json!({}))
+            .expect("tools/list response");
+        let tools = response["result"]["tools"]
+            .as_array()
+            .expect("tools/list array");
+        let names: Vec<&str> = tools
+            .iter()
+            .filter_map(|tool| tool["name"].as_str())
+            .collect();
+
+        for expected in [
+            "semantic_search",
+            "verify_project",
+            "graphrag_query",
+            "project_status",
+        ] {
+            assert!(
+                names.contains(&expected),
+                "tools/list missing {expected}: {response}"
+            );
+        }
+    }
+
+    #[test]
+    fn mcp_regression_semantic_search_returns_content_envelope() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Minimal)
+            .build()
+            .expect("fixture");
+        let mut server = McpTestServer::spawn_for_fixture(&fixture).expect("spawn mcp server");
+        server.initialize().expect("initialize response");
+
+        let response = call_tool(
+            &mut server,
+            "semantic_search",
+            json!({
+                "query": "do_work",
+                "max_results": 3
+            }),
+        )
+        .expect("semantic_search response");
+
+        assert_eq!(response["result"]["isError"], false, "{response}");
+        let text = response_content_text(&response);
+        assert!(
+            text.contains("No results found") || text.contains("src/main.rs"),
+            "unexpected semantic_search content: {response}"
+        );
+    }
+
+    #[test]
+    fn mcp_regression_verify_project_reports_broken_fixture_failures() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Broken)
+            .build()
+            .expect("fixture");
+        let mut server = McpTestServer::spawn_for_fixture(&fixture).expect("spawn mcp server");
+        server.initialize().expect("initialize response");
+
+        let response = call_tool(
+            &mut server,
+            "verify_project",
+            json!({
+                "level": "all",
+                "profile": "balanced"
+            }),
+        )
+        .expect("verify_project response");
+
+        assert_eq!(response["result"]["isError"], false, "{response}");
+        let text = response_content_text(&response);
+        assert!(
+            text.contains("[FAIL]") || text.contains("FAILED") || text.contains("FAILURE PACKETS"),
+            "broken fixture should report verification failures: {response}"
+        );
+    }
+
+    #[test]
+    fn mcp_regression_malformed_json_returns_json_rpc_error() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Minimal)
+            .build()
+            .expect("fixture");
+        let mut server = McpTestServer::spawn_for_fixture(&fixture).expect("spawn mcp server");
+        server.initialize().expect("initialize response");
+
+        server.send_raw("{malformed-json").expect("send raw input");
+        let response = server.read_any_response().expect("malformed response");
+
+        assert!(response["error"].is_object(), "{response}");
+        assert_eq!(response["error"]["code"], -32700, "{response}");
+        assert!(response["id"].is_null(), "{response}");
+    }
+
+    #[test]
     fn mcp_regression_helper_supports_root_spawn_and_raw_write() {
         let fixture = TestFixture::builder()
             .with_template(FixtureTemplate::Minimal)
@@ -382,5 +535,29 @@ mod tests {
         let mut server = McpTestServer::spawn(fixture.root()).expect("spawn mcp server");
 
         server.send_raw("{malformed-json").expect("send raw input");
+    }
+
+    fn call_tool(
+        server: &mut McpTestServer,
+        name: &str,
+        arguments: Value,
+    ) -> anyhow::Result<Value> {
+        server.request(
+            "tools/call",
+            &json!({
+                "name": name,
+                "arguments": arguments,
+            }),
+        )
+    }
+
+    fn response_content_text(response: &Value) -> String {
+        response["result"]["content"]
+            .as_array()
+            .expect("content array")
+            .iter()
+            .filter_map(|entry| entry["text"].as_str())
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 }

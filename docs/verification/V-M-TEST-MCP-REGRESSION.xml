@@ -4,6 +4,7 @@
     <TEST>McpTestServer request helper preserves JSON-RPC request IDs and skips notifications.</TEST>
     <TEST>Drop kills and waits on the child process without leaking a server.</TEST>
     <TEST>e2e_mcp integration target spawns syn mcp against a Minimal fixture.</TEST>
+    <TEST>McpTestServer read_any_response captures malformed JSON protocol errors without an id.</TEST>
   </UNIT_TESTS>
   <INTEGRATION_TESTS>
     <TEST>Real stdio initialize succeeds on Minimal fixture.</TEST>
