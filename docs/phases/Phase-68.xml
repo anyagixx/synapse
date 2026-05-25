@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-68" status="planned">
+<PHASE id="Phase-68" status="active">
   <NAME>UPGRADE_1 Agent UX And LSP Correctness</NAME>
   <GOAL>Improve agent-facing UX with Mermaid GraphRAG output, filter dry-run explanations, and correct LSP didOpen and didClose lifecycle handling for unsaved buffers.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_1/U6-graphrag-mermaid.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U7-filter-dry-run.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U9-lsp-did-open.md</SOURCE_PLAN>
