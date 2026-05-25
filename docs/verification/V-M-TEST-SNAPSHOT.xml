@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-TEST-SNAPSHOT" module="M-TEST-SNAPSHOT" priority="normal" status="pending">
+<VERIFICATION id="V-M-TEST-SNAPSHOT" module="M-TEST-SNAPSHOT" priority="normal" status="active">
   <UNIT_TESTS>
     <TEST>Missing snapshot creates a baseline on first run.</TEST>
     <TEST>Existing matching snapshot returns matched true.</TEST>

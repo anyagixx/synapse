@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MODULE id="M-TEST-SNAPSHOT" type="UTILITY" status="pending">
+<MODULE id="M-TEST-SNAPSHOT" type="UTILITY" status="active">
   <NAME>M-TEST-SNAPSHOT</NAME>
   <PURPOSE>Compare command output against golden snapshots with stable normalization and explicit update mode.</PURPOSE>
   <SCOPE>Snapshot creation, update, line diffing, path/timing normalization, summary reporting, and E2E runner integration.</SCOPE>

@@ -13,7 +13,7 @@
     <FLOW id="DF-77-2">Snapshot command steps normalize command output before comparing with golden files.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-TEST-SNAPSHOT" status="pending">Implement snapshot create, compare, update, normalization, and summary logic.</step-1>
+    <step-1 module="M-TEST-SNAPSHOT" status="done">Implement snapshot create, compare, update, normalization, and summary logic.</step-1>
     <step-2 module="M-TEST-E2E-RUNNER" status="pending">Implement E2E scenario model and command/write_file/snapshot step executor.</step-2>
     <step-3 module="M-CLI-TEST-COMMANDS" status="pending">Wire syn test e2e and syn test snapshot CLI handlers.</step-3>
     <step-4 module="M-TEST-E2E-RUNNER" status="pending">Add full-cycle scenario fixture and failure scenario coverage.</step-4>
