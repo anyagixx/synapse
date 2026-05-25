@@ -1,25 +1,28 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRAPHRAG
-// PURPOSE: GraphRAG facade — knowledge graph navigation with search, typed relationships, and path finding
-// SCOPE: GraphRag struct, build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview
-// DEPENDS: M-GRACE-CONTRACT, M-GRAPHRAG-TYPES, M-GRAPHRAG-BUILDER
+// PURPOSE: GraphRAG facade — knowledge graph navigation with search, typed relationships, path finding, and Mermaid rendering exports
+// SCOPE: GraphRag struct, build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview, Mermaid render module export
+// DEPENDS: M-GRACE-CONTRACT, M-GRAPHRAG-TYPES, M-GRAPHRAG-BUILDER, M-GRAPHRAG-MERMAID
 // LINKS: N/A
 
 // START_MODULE_MAP
 // GraphRag — Knowledge graph facade wrapping CodeGraph
+// mermaid — Deterministic Mermaid rendering helpers
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Added typed LINKS query facade methods]
+// LAST_CHANGE: [v2.12.0 — Exported deterministic Mermaid rendering helpers]
 // END_CHANGE_SUMMARY
 
 pub mod builder;
+pub mod mermaid;
 pub mod types;
 
 use crate::grace::contract::LinkType;
 use builder::GraphBuilder;
 use std::path::Path;
 
+pub use mermaid::*;
 pub use types::*;
 
 // START_public_api

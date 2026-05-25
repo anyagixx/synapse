@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRAPHRAG-MERMAID" type="CORE_LOGIC" status="active">
+  <NAME>M-GRAPHRAG-MERMAID</NAME>
+  <PURPOSE>Deterministic Mermaid rendering for GraphRAG module, symbol, and relationship subsets.</PURPOSE>
+  <SCOPE>Mermaid render options, subset selection, deterministic node/edge ordering, safe label escaping, bounded graph output.</SCOPE>
+  <FILES>
+    <FILE>src/graphrag/mermaid.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRAPHRAG-TYPES</DEPENDS>
+  <LINKS>docs/phases/Phase-68.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U6-graphrag-mermaid.md</LINKS>
+  <VERIFICATION_REF>V-M-GRAPHRAG-MERMAID</VERIFICATION_REF>
+</MODULE>

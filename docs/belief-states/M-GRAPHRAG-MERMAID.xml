@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-GRAPHRAG-MERMAID" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Deterministic Mermaid rendering for GraphRAG module, symbol, and relationship subsets.
+    Key data flows:
+      - INPUT: CodeGraph nodes, relationships, render subset options, focus ids, and output bounds.
+      - PROCESSING: Select a deterministic bounded graph subset, escape labels, assign stable Mermaid ids, and emit node/edge lines.
+      - OUTPUT: Mermaid graph text suitable for agent-facing reports and documentation.
+    Critical invariants:
+      - Rendering never mutates CodeGraph.
+      - Repeated renders of the same graph and options produce identical output.
+      - Unsafe label characters are normalized before Mermaid output.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep rendering pure, deterministic, and local to GraphRAG types.
+    Complexity_areas: label escaping, stable ordering, bounded subset output.
+    Patterns_applied: explicit data flow, sorted collections, typed render options.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test graphrag::mermaid --lib -- --test-threads=8 passes
+    - verify --ci reports 100% traceability and belief-state coverage
+  RISKS_ACKNOWLEDGED:
+    - Mermaid syntax can break when labels include unsafe punctuation.
+    - Large graphs need bounded output to remain useful for agents.
+</BELIEF_STATE>

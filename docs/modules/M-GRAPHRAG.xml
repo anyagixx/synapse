@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-GRAPHRAG" type="CORE_LOGIC" status="active">
   <NAME>M-GRAPHRAG</NAME>
-  <PURPOSE>GraphRAG facade — knowledge graph navigation with search, typed relationships, and path finding</PURPOSE>
-  <SCOPE>GraphRag struct, cached build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview</SCOPE>
+  <PURPOSE>GraphRAG facade — knowledge graph navigation with search, typed relationships, path finding, and Mermaid rendering exports</PURPOSE>
+  <SCOPE>GraphRag struct, cached build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview, Mermaid render module export</SCOPE>
   <FILES>
     <FILE>src/graphrag/mod.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-CONTRACT,M-GRAPHRAG-TYPES,M-GRAPHRAG-BUILDER</DEPENDS>
-  <LINKS>docs/phases/Phase-62.xml</LINKS>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRAPHRAG-TYPES,M-GRAPHRAG-BUILDER,M-GRAPHRAG-MERMAID</DEPENDS>
+  <LINKS>docs/phases/Phase-62.xml,docs/phases/Phase-68.xml</LINKS>
   <VERIFICATION_REF>V-M-GRAPHRAG</VERIFICATION_REF>
 </MODULE>

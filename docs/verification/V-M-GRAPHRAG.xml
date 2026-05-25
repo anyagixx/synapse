@@ -6,6 +6,7 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>GraphRag builds through the cached GraphBuilder path while preserving graph navigation APIs.</ASSERTION>
+    <ASSERTION>GraphRag exports deterministic Mermaid rendering helpers without changing existing navigation APIs.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1,Phase-62</PHASE_GATE>
+  <PHASE_GATE>Phase-1,Phase-62,Phase-68</PHASE_GATE>
 </VERIFICATION>

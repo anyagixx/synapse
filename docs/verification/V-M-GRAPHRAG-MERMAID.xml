@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRAPHRAG-MERMAID" module="M-GRAPHRAG-MERMAID" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test graphrag::mermaid --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Mermaid output is deterministic for repeated renders of the same CodeGraph.</ASSERTION>
+    <ASSERTION>Mermaid labels escape unsafe quotes, brackets, pipes, and newlines before output.</ASSERTION>
+    <ASSERTION>Module, symbol, and relation subsets render bounded graph content without mutating CodeGraph.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-68</PHASE_GATE>
+</VERIFICATION>

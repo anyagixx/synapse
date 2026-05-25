@@ -52,6 +52,7 @@
     <MODULE id="M-GRACE-VERIFY-TYPES" path="docs/modules/M-GRACE-VERIFY-TYPES.xml" status="active" />
     <MODULE id="M-GRAPHRAG" path="docs/modules/M-GRAPHRAG.xml" status="active" />
     <MODULE id="M-GRAPHRAG-BUILDER" path="docs/modules/M-GRAPHRAG-BUILDER.xml" status="active" />
+    <MODULE id="M-GRAPHRAG-MERMAID" path="docs/modules/M-GRAPHRAG-MERMAID.xml" status="active" />
     <MODULE id="M-GRAPHRAG-TYPES" path="docs/modules/M-GRAPHRAG-TYPES.xml" status="active" />
     <MODULE id="M-HOOK-CLAUDE" path="docs/modules/M-HOOK-CLAUDE.xml" status="active" />
     <MODULE id="M-HOOK-CURSOR" path="docs/modules/M-HOOK-CURSOR.xml" status="active" />
@@ -323,6 +324,8 @@
     <REL source="M-GRAPHRAG" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRAPHRAG" target="M-GRAPHRAG-TYPES" type="DEPENDS" />
     <REL source="M-GRAPHRAG" target="M-GRAPHRAG-BUILDER" type="DEPENDS" />
+    <REL source="M-GRAPHRAG" target="M-GRAPHRAG-MERMAID" type="DEPENDS" />
+    <REL source="M-GRAPHRAG-MERMAID" target="M-GRAPHRAG-TYPES" type="DEPENDS" />
     <REL source="M-GRAPHRAG-TYPES" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-GRAPHRAG-BUILDER" target="M-GRAPHRAG-TYPES" type="DEPENDS" />
     <REL source="M-GRAPHRAG-BUILDER" target="M-GRACE-CONTRACT" type="DEPENDS" />
