@@ -2,13 +2,15 @@
 <VERIFICATION id="V-M-UTILS" module="M-UTILS" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test utils::tests::test_strip_ansi_removes_common_sgr_sequences --lib</COMMAND>
     <COMMAND>cargo test utils::tests::test_truncate_chars_preserves_utf8_boundaries --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Shared ANSI stripping utility uses cached fallback regex construction and does not unwrap.</ASSERTION>
+    <ASSERTION>Shared ANSI stripping utility removes common SGR color/style sequences used by proxy output filters.</ASSERTION>
     <ASSERTION>Shared truncation utility preserves UTF-8 boundaries and appends an ellipsis only when text is shortened.</ASSERTION>
     <ASSERTION>Shared test-only current-directory lock serializes unit tests that mutate process cwd.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-3</PHASE_GATE>
+  <PHASE_GATE>Phase-3,Phase-60</PHASE_GATE>
 </VERIFICATION>

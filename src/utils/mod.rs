@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.3.0 — Added shared test-only cwd lock for parallel test isolation]
+// LAST_CHANGE: [v2.4.0 — Added ANSI stripping regression coverage for shared filter utility]
 // END_CHANGE_SUMMARY
 
 use std::sync::OnceLock;
@@ -101,6 +101,13 @@ mod tests {
         assert!(truncated.ends_with("..."));
         assert!(truncated.is_char_boundary(truncated.len()));
         assert!(truncated.contains('😀'));
+    }
+
+    #[test]
+    fn test_strip_ansi_removes_common_sgr_sequences() {
+        let input = "\x1b[1mbold\x1b[0m \x1b[31mred\x1b[0m \x1b[38;5;196mbright\x1b[0m";
+
+        assert_eq!(strip_ansi(input), "bold red bright");
     }
 }
 // END_public_api

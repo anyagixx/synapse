@@ -20,16 +20,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.3.0 — Replaced project-filter test env mutation with scoped guards]
+// LAST_CHANGE: [v4.4.0 — Added explicit match_command_regex and delegated ANSI stripping to M-UTILS]
 // END_CHANGE_SUMMARY
 
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::path::Path;
-use std::sync::OnceLock;
 
-static ANSI_RE: OnceLock<Result<Regex, String>> = OnceLock::new();
-const ANSI_PATTERN: &str = "\x1b\\[[0-9;]*m";
 const SUPPORTED_SCHEMA_VERSION: u32 = 1;
 
 // START_public_api
@@ -64,6 +61,8 @@ pub struct FilterDef {
     pub description: Option<String>,
     #[serde(default)]
     pub match_command: Option<String>,
+    #[serde(default)]
+    pub match_command_regex: Option<String>,
     #[serde(default)]
     pub match_regex: Option<String>,
     #[serde(default)]
@@ -435,13 +434,6 @@ impl FilterEngine {
             Err(err) => self.warnings.push(err),
         }
     }
-
-    fn remove_ansi(s: &str) -> String {
-        match ANSI_RE.get_or_init(|| Regex::new(ANSI_PATTERN).map_err(|e| e.to_string())) {
-            Ok(re) => re.replace_all(s, "").to_string(),
-            Err(_) => s.to_string(),
-        }
-    }
 }
 
 // START_CONTRACT_apply_filter
@@ -453,7 +445,7 @@ fn apply_filter(filter: &FilterDef, output: &str) -> String {
     let mut result = output.to_string();
 
     if filter.strip_ansi.unwrap_or(false) {
-        result = FilterEngine::remove_ansi(&result);
+        result = crate::utils::strip_ansi(&result);
     }
 
     if !filter.replace.is_empty() {
@@ -585,7 +577,15 @@ fn parse_filter_file(content: &str, source_label: &str) -> Result<ParsedFilterFi
     let mut warnings = Vec::new();
     for filter in raw_filters {
         match validate_filter(&filter) {
-            Ok(()) => filters.push(filter),
+            Ok(filter_warnings) => {
+                let name = filter_display_name(&filter);
+                warnings.extend(
+                    filter_warnings
+                        .into_iter()
+                        .map(|warning| format!("filter '{name}' in {source_label}: {warning}")),
+                );
+                filters.push(filter);
+            }
             Err(err) => {
                 let name = filter_display_name(&filter);
                 warnings.push(format!("filter '{name}' in {source_label} skipped: {err}"));
@@ -612,6 +612,7 @@ fn filters_with_names(collection: FilterCollection, source_label: &str) -> Vec<F
                         filter
                             .match_command
                             .clone()
+                            .or_else(|| filter.match_command_regex.clone())
                             .or_else(|| filter.match_regex.clone())
                             .unwrap_or_else(|| format!("{source_label}-{index}")),
                     );
@@ -629,12 +630,30 @@ fn filters_with_names(collection: FilterCollection, source_label: &str) -> Vec<F
     }
 }
 
-fn validate_filter(filter: &FilterDef) -> Result<(), String> {
-    if filter.match_command.is_none() && filter.match_regex.is_none() {
-        return Err("missing match_command or match_regex".into());
+fn validate_filter(filter: &FilterDef) -> Result<Vec<String>, String> {
+    if filter.match_command.is_none()
+        && filter.match_command_regex.is_none()
+        && filter.match_regex.is_none()
+    {
+        return Err("missing match_command, match_command_regex, or match_regex".into());
     }
+    let mut warnings = Vec::new();
     if let Some(pattern) = &filter.match_command {
-        Regex::new(pattern).map_err(|err| format!("invalid match_command regex: {err}"))?;
+        if looks_like_regex(pattern) {
+            if let Err(err) = Regex::new(pattern) {
+                warnings.push(format!(
+                    "regex-like match_command is not a valid regex and will be treated as a literal prefix: {err}"
+                ));
+            } else {
+                warnings.push(
+                    "regex-like match_command is deprecated; use match_command_regex instead"
+                        .into(),
+                );
+            }
+        }
+    }
+    if let Some(pattern) = &filter.match_command_regex {
+        Regex::new(pattern).map_err(|err| format!("invalid match_command_regex regex: {err}"))?;
     }
     if let Some(pattern) = &filter.match_regex {
         Regex::new(pattern).map_err(|err| format!("invalid match_regex regex: {err}"))?;
@@ -655,7 +674,7 @@ fn validate_filter(filter: &FilterDef) -> Result<(), String> {
     if let Some(match_output) = &filter.match_output {
         validate_match_output(match_output)?;
     }
-    Ok(())
+    Ok(warnings)
 }
 
 fn validate_match_output(spec: &MatchOutputSpec) -> Result<(), String> {
@@ -681,22 +700,50 @@ fn validate_match_output(spec: &MatchOutputSpec) -> Result<(), String> {
 
 fn filter_matches_command(filter: &FilterDef, cmd: &str, cmd_base: &str) -> bool {
     if let Some(pattern) = &filter.match_command {
-        if cmd.starts_with(pattern) || cmd_base == pattern {
+        if literal_command_matches(pattern, cmd, cmd_base) {
             return true;
         }
-        if Regex::new(pattern)
-            .map(|re| re.is_match(cmd))
-            .unwrap_or(false)
-        {
+        if looks_like_regex(pattern) && regex_matches(pattern, cmd) {
+            return true;
+        }
+    }
+    if let Some(pattern) = &filter.match_command_regex {
+        if regex_matches(pattern, cmd) {
             return true;
         }
     }
     if let Some(pattern) = &filter.match_regex {
-        return Regex::new(pattern)
-            .map(|re| re.is_match(cmd))
-            .unwrap_or(false);
+        return regex_matches(pattern, cmd);
     }
     false
+}
+
+fn literal_command_matches(pattern: &str, cmd: &str, cmd_base: &str) -> bool {
+    let pattern = pattern.trim();
+    if pattern.is_empty() {
+        return false;
+    }
+    if cmd_base == pattern {
+        return true;
+    }
+    cmd.strip_prefix(pattern)
+        .map(|rest| rest.is_empty() || rest.starts_with(char::is_whitespace))
+        .unwrap_or(false)
+}
+
+fn regex_matches(pattern: &str, value: &str) -> bool {
+    Regex::new(pattern)
+        .map(|re| re.is_match(value))
+        .unwrap_or(false)
+}
+
+fn looks_like_regex(pattern: &str) -> bool {
+    pattern.chars().any(|ch| {
+        matches!(
+            ch,
+            '^' | '$' | '[' | ']' | '(' | ')' | '*' | '+' | '?' | '|' | '{' | '}' | '\\'
+        )
+    })
 }
 
 fn match_output_message(filter: &FilterDef, output: &str) -> Option<String> {
@@ -763,6 +810,7 @@ fn filter_display_name(filter: &FilterDef) -> String {
         .name
         .clone()
         .or_else(|| filter.match_command.clone())
+        .or_else(|| filter.match_command_regex.clone())
         .or_else(|| filter.match_regex.clone())
         .unwrap_or_else(|| "unnamed".into())
 }
@@ -838,6 +886,58 @@ mod tests {
                 .unwrap_or_else(|| panic!("gradle RTK filter should match {command}"));
             assert_eq!(filter_display_name(filter), "gradle");
         }
+    }
+
+    #[test]
+    fn test_match_command_regex_matches_explicit_regex_only() {
+        let toml = r#"
+schema_version = 1
+
+[filters.cargo-build-test]
+match_command_regex = "^cargo\\s+(test|build)\\b"
+max_lines = 1
+"#;
+        let engine = FilterEngine::from_toml(toml, "unit").expect("parse regex command filter");
+
+        assert!(engine.find_filter("cargo test --all-targets").is_some());
+        assert!(engine.find_filter("cargo build --release").is_some());
+        assert!(engine.find_filter("cargo run").is_none());
+    }
+
+    #[test]
+    fn test_match_command_literal_does_not_require_valid_regex() {
+        let toml = r#"
+schema_version = 1
+
+[filters.literal-command]
+match_command = "tool [literal"
+max_lines = 1
+"#;
+        let engine = FilterEngine::from_toml(toml, "unit").expect("parse literal command filter");
+
+        assert!(engine.find_filter("tool [literal --flag").is_some());
+        assert!(engine
+            .warnings()
+            .iter()
+            .any(|warning| warning.contains("treated as a literal prefix")));
+    }
+
+    #[test]
+    fn test_legacy_regex_like_match_command_warns_and_matches() {
+        let toml = r#"
+schema_version = 1
+
+[filters.legacy-regex]
+match_command = "^legacy\\b"
+max_lines = 1
+"#;
+        let engine = FilterEngine::from_toml(toml, "unit").expect("parse legacy regex filter");
+
+        assert!(engine.find_filter("legacy run").is_some());
+        assert!(engine
+            .warnings()
+            .iter()
+            .any(|warning| warning.contains("match_command_regex")));
     }
 
     #[test]
@@ -937,7 +1037,7 @@ mod tests {
 schema_version = 1
 
 [filters.clean-build]
-match_command = "^build-tool"
+match_command_regex = "^build-tool"
 strip_ansi = true
 
 [[filters.clean-build.match_output]]
@@ -963,7 +1063,7 @@ expected = "Build completed"
 schema_version = 1
 
 [filters.clean-build]
-match_command = "^build-tool"
+match_command_regex = "^build-tool"
 
 [[filters.clean-build.match_output]]
 pattern = "Finished"

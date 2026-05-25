@@ -5,7 +5,7 @@ schema_version = 1
 
 [filters.dotnet-build]
 description = "Compact dotnet build output - short-circuit on success, strip banners"
-match_command = "^dotnet\\s+build\\b"
+match_command_regex = "^dotnet\\s+build\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -70,7 +70,7 @@ expected = "src/Program.cs(10,5): error CS1002: ; expected [/home/user/MyApp/MyA
 
 [filters.markdownlint]
 description = "Compact markdownlint output - strip blank lines, limit rows"
-match_command = "^markdownlint\\b"
+match_command_regex = "^markdownlint\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -95,7 +95,7 @@ expected = ""
 
 [filters.shellcheck]
 description = "Compact shellcheck output - strip blank lines, keep caret indicators"
-match_command = "^shellcheck\\b"
+match_command_regex = "^shellcheck\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -123,7 +123,7 @@ expected = ""
 
 [filters.hadolint]
 description = "Compact hadolint Dockerfile linting output"
-match_command = "^hadolint\\b"
+match_command_regex = "^hadolint\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -148,7 +148,7 @@ expected = ""
 
 [filters.yamllint]
 description = "Compact yamllint output - strip blank lines, limit rows"
-match_command = "^yamllint\\b"
+match_command_regex = "^yamllint\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -174,7 +174,7 @@ expected = ""
 
 [filters.pre-commit]
 description = "Compact pre-commit output"
-match_command = "^pre-commit\\b"
+match_command_regex = "^pre-commit\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\[INFO\\] Installing environment",
@@ -210,7 +210,7 @@ expected = "isort...............................................................
 
 [filters.jq]
 description = "Compact jq output - truncate large JSON results"
-match_command = "^jq\\b"
+match_command_regex = "^jq\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -235,7 +235,7 @@ expected = ""
 
 [filters.biome]
 description = "Compact Biome lint/format output - strip blank lines, keep diagnostics"
-match_command = "^biome\\b"
+match_command_regex = "^biome\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -271,7 +271,7 @@ expected = "biome: ok"
 
 [filters.oxlint]
 description = "Compact oxlint output - strip blank lines, keep diagnostics"
-match_command = "^oxlint\\b"
+match_command_regex = "^oxlint\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -303,7 +303,7 @@ expected = "oxlint: ok"
 
 [filters.df]
 description = "Compact df output - truncate wide columns, limit rows"
-match_command = "^df(\\s|$)"
+match_command_regex = "^df(\\s|$)"
 strip_ansi = true
 truncate_lines_at = 80
 max_lines = 20
@@ -320,7 +320,7 @@ expected = ""
 
 [filters.du]
 description = "Compact du output"
-match_command = "^du\\b"
+match_command_regex = "^du\\b"
 strip_lines_matching = ["^\\s*$"]
 truncate_lines_at = 120
 max_lines = 40
@@ -337,7 +337,7 @@ expected = "128K\t."
 
 [filters.ps]
 description = "Compact ps output - truncate wide lines, limit rows"
-match_command = "^ps(\\s|$)"
+match_command_regex = "^ps(\\s|$)"
 strip_ansi = true
 truncate_lines_at = 120
 max_lines = 30
@@ -354,7 +354,7 @@ expected = ""
 
 [filters.ping]
 description = "Compact ping output - strip per-packet lines, keep summary"
-match_command = "^ping\\b"
+match_command_regex = "^ping\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^PING ",
@@ -418,7 +418,7 @@ Request timeout for icmp_seq 1
 
 [filters.systemctl-status]
 description = "Compact systemctl status output - strip blank lines, limit to 20 lines"
-match_command = "^systemctl\\s+status\\b"
+match_command_regex = "^systemctl\\s+status\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -452,7 +452,7 @@ expected = ""
 
 [filters.rsync]
 description = "Compact rsync output - short-circuit on success, strip progress"
-match_command = "^rsync\\b"
+match_command_regex = "^rsync\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -501,7 +501,7 @@ total size is 1000  speedup is 3.33"""
 
 [filters.ssh]
 description = "Compact ssh output - strip connection banners, keep command output"
-match_command = "^ssh\\b"
+match_command_regex = "^ssh\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -546,7 +546,7 @@ expected = ""
 
 [filters.brew-install]
 description = "Compact brew install/upgrade output - strip downloads, short-circuit when already installed"
-match_command = "^brew\\s+(install|upgrade)\\b"
+match_command_regex = "^brew\\s+(install|upgrade)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -584,7 +584,7 @@ expected = "==> Summary\n/opt/homebrew/Cellar/jq/1.7.1: 18 files, 1.2MB"
 
 [filters.uv-sync]
 description = "Compact uv sync/pip install output - strip downloads, short-circuit when up-to-date"
-match_command = "^uv\\s+(sync|pip\\s+install)\\b"
+match_command_regex = "^uv\\s+(sync|pip\\s+install)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -622,7 +622,7 @@ expected = "Installed 5 packages in 23ms\n + certifi==2023.11.17\n + charset-nor
 
 [filters.gcloud]
 description = "Compact gcloud output"
-match_command = "^gcloud\\b"
+match_command_regex = "^gcloud\\b"
 strip_ansi = true
 strip_lines_matching = ["^\\s*$"]
 truncate_lines_at = 120
@@ -645,7 +645,7 @@ expected = "Listed 0 items."
 
 [filters.gradle]
 description = "Compact Gradle build output - strip progress, keep tasks and errors"
-match_command = "^(\\./)?gradlew?\\b"
+match_command_regex = "^(\\./)?gradlew?\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -681,7 +681,7 @@ expected = "gradle: ok"
 
 [filters.mvn-build]
 description = "Compact Maven build output"
-match_command = "^mvn\\s+(compile|package|clean|install)\\b"
+match_command_regex = "^mvn\\s+(compile|package|clean|install)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\[INFO\\] ---",
@@ -726,7 +726,7 @@ expected = "[INFO] BUILD SUCCESS\n[INFO] Total time: 4.123 s\n[INFO] Finished at
 
 [filters.gcc]
 description = "Compact gcc/g++ compiler output - strip notes, keep errors and warnings"
-match_command = "^g(cc|\\+\\+)\\b"
+match_command_regex = "^g(cc|\\+\\+)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -771,7 +771,7 @@ expected = "/usr/bin/ld: /tmp/main.o: undefined reference to 'missing_func'\ncol
 
 [filters.task]
 description = "Compact go-task output - strip task headers, keep command results"
-match_command = "^task\\b"
+match_command_regex = "^task\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -799,7 +799,7 @@ expected = "task: ok"
 
 [filters.turbo]
 description = "Compact Turborepo output - strip cache status noise, keep task results"
-match_command = "^turbo\\b"
+match_command_regex = "^turbo\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -830,7 +830,7 @@ expected = "turbo: ok"
 
 [filters.terraform-plan]
 description = "Compact Terraform plan output"
-match_command = "^terraform\\s+plan"
+match_command_regex = "^terraform\\s+plan"
 strip_ansi = true
 strip_lines_matching = [
   "^Refreshing state",
@@ -866,7 +866,7 @@ expected = "No changes. Your infrastructure matches the configuration."
 
 [filters.tofu-init]
 description = "Compact OpenTofu init output"
-match_command = "^tofu\\s+init(\\s|$)"
+match_command_regex = "^tofu\\s+init(\\s|$)"
 strip_ansi = true
 strip_lines_matching = [
   "^- Downloading",
@@ -905,7 +905,7 @@ expected = "tofu init: ok"
 
 [filters.tofu-plan]
 description = "Compact OpenTofu plan output"
-match_command = "^tofu\\s+plan(\\s|$)"
+match_command_regex = "^tofu\\s+plan(\\s|$)"
 strip_ansi = true
 strip_lines_matching = [
   "^Refreshing state",
@@ -941,7 +941,7 @@ expected = "tofu plan: no changes detected"
 
 [filters.tofu-validate]
 description = "Compact OpenTofu validate output"
-match_command = "^tofu\\s+validate(\\s|$)"
+match_command_regex = "^tofu\\s+validate(\\s|$)"
 strip_ansi = true
 match_output = [
   { pattern = "Success! The configuration is valid", message = "ok (valid)" },
@@ -959,7 +959,7 @@ expected = "Error: Invalid resource type\n  on main.tf line 3: resource \"aws_in
 
 [filters.tofu-fmt]
 description = "Compact OpenTofu fmt output"
-match_command = "^tofu\\s+fmt(\\s|$)"
+match_command_regex = "^tofu\\s+fmt(\\s|$)"
 strip_ansi = true
 on_empty = "tofu fmt: ok (no changes)"
 max_lines = 30
@@ -976,7 +976,7 @@ expected = "main.tf\nvariables.tf"
 
 [filters.ansible-playbook]
 description = "Compact ansible-playbook output"
-match_command = "^ansible-playbook\\b"
+match_command_regex = "^ansible-playbook\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1011,7 +1011,7 @@ expected = "TASK [Start service] ***\nfailed: [web01] => {\"msg\": \"Service not
 
 [filters.poetry-install]
 description = "Compact poetry install/lock/update output - strip downloads, short-circuit when up-to-date"
-match_command = "^poetry\\s+(install|lock|update)\\b"
+match_command_regex = "^poetry\\s+(install|lock|update)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1062,7 +1062,7 @@ expected = "Installing dependencies from lock file\nWriting lock file"
 
 [filters.composer-install]
 description = "Compact composer install/update/require output - strip downloads, short-circuit when up-to-date"
-match_command = "^composer\\s+(install|update|require)\\b"
+match_command_regex = "^composer\\s+(install|update|require)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1103,7 +1103,7 @@ expected = "Writing lock file\nGenerating autoload files"
 
 [filters.bundle-install]
 description = "Compact bundle install/update - strip Using lines, keep installs and errors"
-match_command = "^bundle\\s+(install|update)\\b"
+match_command_regex = "^bundle\\s+(install|update)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^Using ",
@@ -1165,7 +1165,7 @@ expected = ""
 
 [filters.swift-build]
 description = "Compact swift build output - short-circuit on success, strip Compiling/Linking"
-match_command = "^swift\\s+build\\b"
+match_command_regex = "^swift\\s+build\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1207,7 +1207,7 @@ expected = "CompileSwift normal x86_64 MyFile.swift\n/path/to/MyFile.swift:42:10
 
 [filters.mix-compile]
 description = "Compact mix compile output"
-match_command = "^mix\\s+compile(\\s|$)"
+match_command_regex = "^mix\\s+compile(\\s|$)"
 strip_ansi = true
 strip_lines_matching = [
   "^Compiling \\d+ file",
@@ -1235,7 +1235,7 @@ expected = "mix compile: ok"
 
 [filters.mix-format]
 description = "Compact mix format output"
-match_command = "^mix\\s+format(\\s|$)"
+match_command_regex = "^mix\\s+format(\\s|$)"
 on_empty = "mix format: ok"
 max_lines = 20
 
@@ -1251,7 +1251,7 @@ expected = "lib/my_app.ex\ntest/my_app_test.exs"
 
 [filters.xcodebuild]
 description = "Compact xcodebuild output - strip build phases, keep errors/warnings/summary"
-match_command = "^xcodebuild\\b"
+match_command_regex = "^xcodebuild\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1351,7 +1351,7 @@ expected = "xcodebuild: ok"
 
 [filters.spring-boot]
 description = "Compact Spring Boot output - strip banner and verbose startup logs, keep key events"
-match_command = "^(mvn\\s+spring-boot:run|java\\s+-jar.*\\.jar|gradle\\s+.*bootRun)"
+match_command_regex = "^(mvn\\s+spring-boot:run|java\\s+-jar.*\\.jar|gradle\\s+.*bootRun)"
 strip_ansi = true
 keep_lines_matching = [
   "Started\\s.*\\sin\\s",
@@ -1380,7 +1380,7 @@ expected = "2024-01-01 ERROR Application run failed\nCaused by: java.lang.NullPo
 
 [filters.pio-run]
 description = "Compact PlatformIO build output"
-match_command = "^pio\\s+run"
+match_command_regex = "^pio\\s+run"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1421,7 +1421,7 @@ expected = "pio run: ok"
 
 [filters.trunk-build]
 description = "Compact trunk build output"
-match_command = "^trunk\\s+build"
+match_command_regex = "^trunk\\s+build"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1461,7 +1461,7 @@ expected = "trunk build: ok"
 
 [filters.quarto-render]
 description = "Compact quarto render output"
-match_command = "^quarto\\s+render"
+match_command_regex = "^quarto\\s+render"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1503,7 +1503,7 @@ expected = "ERROR: Render failed\ncaused by:\n  syntax error at line 10"
 
 [filters.nx]
 description = "Compact Nx monorepo output - strip task graph noise, keep results"
-match_command = "^(pnpm\\s+)?nx\\b"
+match_command_regex = "^(pnpm\\s+)?nx\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1528,7 +1528,7 @@ expected = "ERROR: Cannot find module '@myapp/shared'\nFailed at step: build"
 
 [filters.sops]
 description = "Compact sops output"
-match_command = "^sops\\b"
+match_command_regex = "^sops\\b"
 strip_ansi = true
 strip_lines_matching = ["^\\s*$"]
 max_lines = 40
@@ -1545,7 +1545,7 @@ expected = "mac: abc123\nversion: 3.8.1"
 
 [filters.container-ps]
 description = "Compact Docker/Podman ps output - strip headers and cap long container listings"
-match_command = "^(docker|podman)\\s+((container\\s+)?ps|container\\s+ls)\\b"
+match_command_regex = "^(docker|podman)\\s+((container\\s+)?ps|container\\s+ls)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1571,7 +1571,7 @@ expected = "container ps: no containers"
 
 [filters.container-images]
 description = "Compact Docker/Podman images output - strip headers and cap long image listings"
-match_command = "^(docker|podman)\\s+((image\\s+)?images|image\\s+ls)\\b"
+match_command_regex = "^(docker|podman)\\s+((image\\s+)?images|image\\s+ls)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1597,7 +1597,7 @@ expected = "container images: none"
 
 [filters.container-logs]
 description = "Compact Docker/Podman logs output - strip blank lines and cap high-volume logs"
-match_command = "^(docker|podman)\\s+((container\\s+)?logs|compose\\s+logs)\\b"
+match_command_regex = "^(docker|podman)\\s+((container\\s+)?logs|compose\\s+logs)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1618,7 +1618,7 @@ expected = "web-1  | starting server\nweb-1  | ready on :8080\ndb-1   | database
 
 [filters.kubectl-get]
 description = "Compact kubectl get output - cap common cluster listings"
-match_command = "^kubectl\\s+get\\s+(pods?|services?|deployments?|events?)\\b"
+match_command_regex = "^kubectl\\s+get\\s+(pods?|services?|deployments?|events?)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1638,7 +1638,7 @@ expected = "NAME                       READY   STATUS    RESTARTS   AGE\nweb-5d9
 
 [filters.kubectl-logs]
 description = "Compact kubectl logs output - strip blank lines and cap high-volume pod logs"
-match_command = "^kubectl\\s+logs\\b"
+match_command_regex = "^kubectl\\s+logs\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1658,7 +1658,7 @@ expected = "2026-05-24T12:00:00Z app starting\n2026-05-24T12:00:01Z app ready"
 
 [filters.psql-table]
 description = "Compact psql table output - remove separators, row-count footers, and padding around pipes"
-match_command = "^psql\\b"
+match_command_regex = "^psql\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1686,7 +1686,7 @@ expected = "id\tusername\tstatus\n1\talice_smith\tactive\n2\tbob_jones\tactive"
 
 [filters.skopeo]
 description = "Compact skopeo output - truncate large manifests, strip verbosity"
-match_command = "^skopeo\\b"
+match_command_regex = "^skopeo\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1732,7 +1732,7 @@ expected = "skopeo: ok"
 
 [filters.iptables]
 description = "Compact iptables output"
-match_command = "^iptables\\b"
+match_command_regex = "^iptables\\b"
 strip_lines_matching = [
   "^\\s*$",
   "^Chain DOCKER",
@@ -1760,7 +1760,7 @@ expected = "Chain FORWARD (policy DROP)\n1 ACCEPT tcp\nChain OUTPUT (policy ACCE
 
 [filters.fail2ban-client]
 description = "Compact fail2ban-client output"
-match_command = "^fail2ban-client\\b"
+match_command_regex = "^fail2ban-client\\b"
 strip_lines_matching = ["^\\s*$"]
 max_lines = 30
 
@@ -1776,7 +1776,7 @@ expected = "Shutdown successful"
 
 [filters.liquibase]
 description = "Compact liquibase output - strip headers and generic info"
-match_command = "(?:^|/)liquibase(?:\\s|$)"
+match_command_regex = "(?:^|/)liquibase(?:\\s|$)"
 strip_ansi = true
 filter_stderr = true
 strip_lines_matching = [
@@ -1854,7 +1854,7 @@ expected = "liquibase: ok"
 
 [filters.mise]
 description = "Compact mise task runner output - strip status lines, keep task results"
-match_command = "^mise\\s+(run|exec|install|upgrade)\\b"
+match_command_regex = "^mise\\s+(run|exec|install|upgrade)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1885,7 +1885,7 @@ expected = "mise: ok"
 
 [filters.yadm]
 description = "Compact yadm git wrapper output"
-match_command = "^yadm\\b"
+match_command_regex = "^yadm\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1907,7 +1907,7 @@ expected = "Already up to date."
 
 [filters.jj]
 description = "Compact Jujutsu jj output - strip blank lines, truncate"
-match_command = "^jj\\b"
+match_command_regex = "^jj\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1936,7 +1936,7 @@ expected = ""
 
 [filters.jira]
 description = "Compact Jira CLI output - strip verbose metadata, keep essentials"
-match_command = "^jira\\b"
+match_command_regex = "^jira\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1957,7 +1957,7 @@ expected = "KEY: PROJ-123\nSummary: Add login feature\nStatus: In Progress\nAssi
 
 [filters.shopify-theme]
 description = "Compact shopify theme push/pull output"
-match_command = "^shopify\\s+theme\\s+(push|pull)"
+match_command_regex = "^shopify\\s+theme\\s+(push|pull)"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -1987,7 +1987,7 @@ expected = "shopify theme: ok"
 
 [filters.ollama]
 description = "Strip ANSI spinners and cursor control from ollama output, keep final text"
-match_command = "^ollama\\s+run\\b"
+match_command_regex = "^ollama\\s+run\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^[\\u{280b}\\u{2819}\\u{2839}\\u{2838}\\u{283c}\\u{2834}\\u{2826}\\u{2827}\\u{2807}\\u{280f}\\s]*$",
@@ -2011,7 +2011,7 @@ expected = ""
 
 [filters.stat]
 description = "Compact stat output - strip device/inode/birth noise"
-match_command = "^stat\\b"
+match_command_regex = "^stat\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -2056,7 +2056,7 @@ expected = ""
 
 [filters.basedpyright]
 description = "Compact basedpyright type checker output - strip blank lines, keep errors"
-match_command = "^basedpyright\\b"
+match_command_regex = "^basedpyright\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -2104,7 +2104,7 @@ expected = "basedpyright: ok"
 
 [filters.ty]
 description = "Compact ty type checker output - strip blank lines, keep errors"
-match_command = "^ty\\b"
+match_command_regex = "^ty\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -2155,7 +2155,7 @@ expected = "ty: ok"
 
 [filters.helm]
 description = "Compact helm output"
-match_command = "^helm\\b"
+match_command_regex = "^helm\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -2185,7 +2185,7 @@ expected = "NAME: my-chart\nSTATUS: deployed"
 
 [filters.just]
 description = "Compact just task runner output - strip recipe headers, keep command output"
-match_command = "^just\\b"
+match_command_regex = "^just\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -2212,7 +2212,7 @@ expected = ""
 
 [filters.make]
 description = "Compact make output"
-match_command = "^make\\b"
+match_command_regex = "^make\\b"
 strip_lines_matching = [
   "^make\\[\\d+\\]:",
   "^\\s*$",
@@ -2249,7 +2249,7 @@ expected = "make: ok"
 
 [filters.gt-log]
 description = "Compact Graphite log output - strip email addresses and cap stacked-PR graph rows"
-match_command = "^gt\\s+log\\b"
+match_command_regex = "^gt\\s+log\\b"
 strip_ansi = true
 replace = [
   { pattern = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b", replacement = "" },
@@ -2270,7 +2270,7 @@ expected = "◉  abc1234 feat/add-auth 2d ago \n│  feat(auth): add login endpo
 
 [filters.gt-submit]
 description = "Compact Graphite submit output - strip blank lines and cap branch/PR status"
-match_command = "^gt\\s+submit\\b"
+match_command_regex = "^gt\\s+submit\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",
@@ -2290,7 +2290,7 @@ expected = "Pushed branch feat/add-auth\nCreated pull request #42 for feat/add-a
 
 [filters.gt-sync]
 description = "Compact Graphite sync/restack/create output"
-match_command = "^gt\\s+(sync|restack|create)\\b"
+match_command_regex = "^gt\\s+(sync|restack|create)\\b"
 strip_ansi = true
 strip_lines_matching = [
   "^\\s*$",

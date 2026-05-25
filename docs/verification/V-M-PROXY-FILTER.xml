@@ -4,6 +4,9 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_apply_strip_ansi_without_panics --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_apply_truncate_lines_at_preserves_utf8_boundaries --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_match_command_regex_matches_explicit_regex_only --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_match_command_literal_does_not_require_valid_regex --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_legacy_regex_like_match_command_warns_and_matches --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_parse_named_rtk_filter_with_inline_test --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_rtk_builtin_filter_pack_loads_and_verifies --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_project_filters_require_trust --lib</COMMAND>
@@ -76,8 +79,11 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>TOML filter ANSI stripping uses cached fallback regex construction and does not unwrap.</ASSERTION>
+    <ASSERTION>TOML filter ANSI stripping delegates to the shared M-UTILS strip_ansi implementation.</ASSERTION>
     <ASSERTION>TOML filter line truncation preserves UTF-8 boundaries.</ASSERTION>
+    <ASSERTION>match_command is treated as literal command prefix matching and no longer requires regex validation.</ASSERTION>
+    <ASSERTION>match_command_regex is the explicit regex command matcher for RTK-style filters.</ASSERTION>
+    <ASSERTION>Legacy regex-like match_command values remain compatible and emit migration warnings.</ASSERTION>
     <ASSERTION>Expanded built-in filters cover RTK-style Python, JS, VCS hosting, container, infrastructure, and search commands.</ASSERTION>
     <ASSERTION>Project-local filters are skipped until the exact file hash is trusted or an explicit environment override is set.</ASSERTION>
     <ASSERTION>Project filter trust tests serialize process environment overrides so trust-store paths remain isolated in parallel test runs.</ASSERTION>
@@ -97,5 +103,5 @@
     <ASSERTION>The RTK built-in filter pack verifies Phase-48 cloud/container filters for Docker/Podman listings, container logs, kubectl listings/logs, and psql tables through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies Graphite stacked-PR filters for gt log, gt submit, and gt sync/restack/create through the CLI.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-60</PHASE_GATE>
 </VERIFICATION>
