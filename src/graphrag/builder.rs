@@ -12,17 +12,17 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.15.0 — Stabilized cache keys after SQLite metadata changes during graph builds]
+// LAST_CHANGE: [v2.16.0 — Replaced filesystem timestamp cache keys with stable index content fingerprints]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile, TypedLink};
 use crate::graphrag::types::*;
 use crate::indexer::storage::Storage;
 use crate::indexer::walker::Walker;
-use std::collections::BTreeMap;
+use std::collections::{hash_map::DefaultHasher, BTreeMap};
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::{OnceLock, RwLock};
-use std::time::UNIX_EPOCH;
 
 #[cfg(not(test))]
 const GRAPH_BUILD_CACHE_MAX_ENTRIES: usize = 8;
@@ -42,7 +42,7 @@ pub struct GraphBuilder;
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct GraphBuildCacheKey {
     root: PathBuf,
-    index_modified_nanos: u128,
+    index_fingerprint: u64,
     index_len: u64,
 }
 // END_GraphBuildCacheKey
@@ -371,24 +371,20 @@ impl GraphBuilder {
 
 impl GraphBuildCacheKey {
     // START_CONTRACT_GraphBuildCacheKey::for_root
-    // PURPOSE: Build a cache key from canonical project root and persisted index metadata
+    // PURPOSE: Build a cache key from canonical project root and persisted index content
     // INPUTS: { root: &Path }
     // OUTPUTS: { Option<GraphBuildCacheKey> }
     // START_graph_build_cache_key_for_root
     fn for_root(root: &Path) -> Option<Self> {
         let canonical_root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
         let index_path = Storage::db_path_for_root(&canonical_root);
-        let metadata = std::fs::metadata(index_path).ok()?;
-        let index_modified_nanos = metadata
-            .modified()
-            .ok()?
-            .duration_since(UNIX_EPOCH)
-            .ok()?
-            .as_nanos();
+        let index_bytes = std::fs::read(index_path).ok()?;
+        let mut hasher = DefaultHasher::new();
+        index_bytes.hash(&mut hasher);
         Some(Self {
             root: canonical_root,
-            index_modified_nanos,
-            index_len: metadata.len(),
+            index_fingerprint: hasher.finish(),
+            index_len: index_bytes.len() as u64,
         })
     }
     // END_graph_build_cache_key_for_root
