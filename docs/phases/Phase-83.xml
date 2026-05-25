@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-83" status="active">
+<PHASE id="Phase-83" status="done">
   <NAME>UPGRADE_4 Tool Schema Economy</NAME>
   <GOAL>Implement T1 progressive tool disclosure and T7 terse tool schemas without breaking default MCP tools/list compatibility.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/README.md</SOURCE_PLAN>
@@ -26,13 +26,13 @@
     <step-4 module="M-TESTS-MCP-PROTOCOL" status="done">Add protocol tests for all, verification, minimal, custom, full, terse, and profile+terse combinations.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test mcp::server_tools::tests --lib</CHECK>
-    <CHECK status="planned">cargo test --test e2e_mcp tools_list</CHECK>
-    <CHECK status="planned">tools/list without profile returns all tools.</CHECK>
-    <CHECK status="planned">tools/list profile=verification returns no more than 10 tools.</CHECK>
-    <CHECK status="planned">tools/list profile=minimal returns exactly 6 tools.</CHECK>
-    <CHECK status="planned">tools/list profile=custom:semantic_search,verify_project returns exactly 2 tools.</CHECK>
-    <CHECK status="planned">tools/list style=terse returns schemas without description fields and at least 60 percent smaller than full.</CHECK>
+    <CHECK status="done">cargo test mcp::server_tools::tests --lib</CHECK>
+    <CHECK status="done">cargo test --test e2e_mcp tools_list</CHECK>
+    <CHECK status="done">tools/list without profile returns all tools.</CHECK>
+    <CHECK status="done">tools/list profile=verification returns no more than 10 tools.</CHECK>
+    <CHECK status="done">tools/list profile=minimal returns exactly 6 tools.</CHECK>
+    <CHECK status="done">tools/list profile=custom:semantic_search,verify_project returns exactly 2 tools.</CHECK>
+    <CHECK status="done">tools/list style=terse returns schemas without description fields and at least 60 percent smaller than full.</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-83-1">Skill-provided dynamic tools may not have static profile metadata; default them to implementation plus all rather than hiding them.</RISK>
