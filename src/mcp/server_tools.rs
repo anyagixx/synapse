@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including response economy parameters, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including response economy parameters, cache validator hints, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -24,10 +24,11 @@
 // tool_supports_response_economy — Checks response economy schema membership
 // add_response_economy_schemas — Adds max_tokens/style schema fields to selected tools
 // add_response_economy_schema — Adds response economy fields to one tool definition
+// add_cache_hint_schema — Adds one optional cache validator field to one tool definition
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.7.0 - Exposed response economy params on high-output tool schemas]
+// LAST_CHANGE: [v4.8.0 - Exposed optional _if_none_match schemas for cacheable tools]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -48,6 +49,15 @@ const RESPONSE_ECONOMY_TOOL_NAMES: &[&str] = &[
     "refresh_project",
     "cascade_impact",
     "cascade_execute",
+];
+
+const CACHE_HINT_TOOL_NAMES: &[&str] = &[
+    "graphrag_query",
+    "view_signatures",
+    "lsp_hover",
+    "lsp_references",
+    "project_status",
+    "traceability_report",
 ];
 
 // START_public_api
@@ -374,6 +384,30 @@ fn add_response_economy_schema(tool: &mut serde_json::Value) {
     );
 }
 // END_add_response_economy_schema
+
+// START_CONTRACT_add_cache_hint_schema
+// PURPOSE: Add _if_none_match as an optional cache validator property to one tool schema
+// INPUTS: { tool: &mut serde_json::Value }
+// SIDE_EFFECTS: mutates tool inputSchema properties
+// START_add_cache_hint_schema
+fn add_cache_hint_schema(tool: &mut serde_json::Value) {
+    let Some(properties) = tool
+        .get_mut("inputSchema")
+        .and_then(|schema| schema.get_mut("properties"))
+        .and_then(serde_json::Value::as_object_mut)
+    else {
+        return;
+    };
+
+    properties.insert(
+        "_if_none_match".into(),
+        serde_json::json!({
+            "type": "string",
+            "description": "Previous _meta.cache.etag; matching fresh cache validators return _not_modified"
+        }),
+    );
+}
+// END_add_cache_hint_schema
 
 // START_CONTRACT_tool_definitions
 // PURPOSE: Build MCP tools/list definitions for built-in tools and registered grace_* skills
@@ -738,6 +772,15 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
     ];
 
     add_response_economy_schemas(&mut tools);
+    for tool in &mut tools {
+        if tool
+            .get("name")
+            .and_then(serde_json::Value::as_str)
+            .is_some_and(|name| CACHE_HINT_TOOL_NAMES.contains(&name))
+        {
+            add_cache_hint_schema(tool);
+        }
+    }
 
     for skill in SKILL_DEFS {
         tools.push(serde_json::json!({
@@ -940,6 +983,52 @@ mod tests {
         assert_eq!(covered, response_economy_tool_names().len());
     }
     // END_test_response_economy_schema_covers_at_least_ten_tools
+
+    // START_CONTRACT_test_cache_hint_schema_exposes_if_none_match
+    // PURPOSE: Verify cacheable tools expose optional _if_none_match schema fields
+    // START_test_cache_hint_schema_exposes_if_none_match
+    #[test]
+    fn test_cache_hint_schema_exposes_if_none_match() {
+        let tools = tool_definitions();
+
+        for expected in CACHE_HINT_TOOL_NAMES {
+            let tool = tools
+                .iter()
+                .find(|tool| tool["name"] == *expected)
+                .unwrap_or_else(|| panic!("{expected} tool"));
+            let properties = tool["inputSchema"]["properties"]
+                .as_object()
+                .unwrap_or_else(|| panic!("{expected} properties"));
+            let required = tool["inputSchema"]["required"].as_array();
+
+            assert!(
+                properties.contains_key("_if_none_match"),
+                "{expected} missing _if_none_match"
+            );
+            assert!(
+                required
+                    .map(|required| {
+                        !required
+                            .iter()
+                            .any(|entry| entry.as_str() == Some("_if_none_match"))
+                    })
+                    .unwrap_or(true),
+                "{expected} must not require _if_none_match"
+            );
+        }
+
+        let semantic_search = tools
+            .iter()
+            .find(|tool| tool["name"] == "semantic_search")
+            .expect("semantic_search tool");
+        let properties = semantic_search["inputSchema"]["properties"]
+            .as_object()
+            .expect("properties");
+
+        assert!(!properties.contains_key("_if_none_match"));
+        assert!(!CACHE_HINT_TOOL_NAMES.contains(&"semantic_search"));
+    }
+    // END_test_cache_hint_schema_exposes_if_none_match
 
     // START_CONTRACT_test_terse_tool_definition_preserves_machine_schema
     // PURPOSE: Verify terse schemas remove descriptions recursively while preserving JSON schema shape
