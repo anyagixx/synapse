@@ -16,10 +16,11 @@
 // FilterFile — Backwards-compatible TOML file containing legacy or named filter definitions
 // FilterSource — Source of a filter (BuiltIn, User, Project)
 // FilterEngine — Loads, applies, and verifies TOML output filters
+// FilterEngine::new_with_project_filter_store — Test-only engine with explicit project trust store
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.2.0 — Load RTK built-ins before legacy built-ins for overlapping command parity]
+// LAST_CHANGE: [v4.3.0 — Replaced project-filter test env mutation with scoped guards]
 // END_CHANGE_SUMMARY
 
 use regex::Regex;
@@ -226,6 +227,21 @@ impl FilterEngine {
     }
     // END_fe_new
 
+    #[cfg(test)]
+    fn new_with_project_filter_store(root: &Path, trust_store_path: &Path) -> Self {
+        let mut engine = Self {
+            filters: Vec::new(),
+            tests: BTreeMap::new(),
+            warnings: Vec::new(),
+        };
+        engine.load_project_filters_from(
+            &root.join(".synapse").join("filters.toml"),
+            Some(trust_store_path),
+        );
+        engine.load_builtin_filters();
+        engine
+    }
+
     // START_CONTRACT_FilterEngine::from_toml
     // PURPOSE: Build an isolated filter engine from a TOML string for verification and tests
     // INPUTS: { content: &str }, { source_label: &str }
@@ -348,14 +364,25 @@ impl FilterEngine {
 
     fn load_project_filters(&mut self) {
         let project_path = Path::new(".synapse").join("filters.toml");
+        self.load_project_filters_from(&project_path, None);
+    }
+
+    fn load_project_filters_from(&mut self, project_path: &Path, trust_store_path: Option<&Path>) {
         if !project_path.exists() {
             return;
         }
 
-        match super::filter_trust::check_trust(&project_path) {
+        let status = match trust_store_path {
+            Some(store_path) => {
+                super::filter_trust::check_trust_with_store(project_path, store_path)
+            }
+            None => super::filter_trust::check_trust(project_path),
+        };
+
+        match status {
             Ok(super::filter_trust::TrustStatus::Trusted)
             | Ok(super::filter_trust::TrustStatus::EnvOverride) => {
-                self.extend_from_file(&project_path, FilterSource::Project, "project");
+                self.extend_from_file(project_path, FilterSource::Project, "project");
             }
             Ok(status) => self.warnings.push(format!(
                 "project filters skipped: {} ({})",
@@ -749,7 +776,6 @@ fn env_enabled(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_cwd_lock;
 
     #[test]
     fn test_builtin_filters_load() {
@@ -952,44 +978,26 @@ unless = "error"
 
     #[test]
     fn test_project_filters_require_trust() {
-        let _lock = test_cwd_lock().blocking_lock();
         let dir = tempfile::tempdir().unwrap();
-        let data_home = tempfile::tempdir().unwrap();
-        let old_data_home = std::env::var_os("XDG_DATA_HOME");
-        let old_trust = std::env::var_os("SYNAPSE_TRUST_PROJECT_FILTERS");
-        let old_cwd = std::env::current_dir().unwrap();
+        let store_path = dir.path().join("filter-trust.json");
 
-        std::env::set_var("XDG_DATA_HOME", data_home.path());
-        std::env::remove_var("SYNAPSE_TRUST_PROJECT_FILTERS");
-        std::env::set_current_dir(dir.path()).unwrap();
-        std::fs::create_dir(".synapse").unwrap();
+        std::fs::create_dir(dir.path().join(".synapse")).unwrap();
+        let filter_path = dir.path().join(".synapse").join("filters.toml");
         std::fs::write(
-            ".synapse/filters.toml",
+            &filter_path,
             "[[filters]]\nmatch_command = \"unit-only\"\nmax_lines = 1\n",
         )
         .unwrap();
 
-        let engine = FilterEngine::new();
+        let engine = FilterEngine::new_with_project_filter_store(dir.path(), &store_path);
         assert!(engine.find_filter("unit-only").is_none());
         assert!(engine
             .warnings()
             .iter()
             .any(|warning| warning.contains("project filters skipped")));
 
-        super::super::filter_trust::trust_project_filters().unwrap();
-        let engine = FilterEngine::new();
+        super::super::filter_trust::trust_path_with_store(&filter_path, &store_path).unwrap();
+        let engine = FilterEngine::new_with_project_filter_store(dir.path(), &store_path);
         assert!(engine.find_filter("unit-only").is_some());
-
-        std::env::set_current_dir(old_cwd).unwrap();
-        restore_env("XDG_DATA_HOME", old_data_home);
-        restore_env("SYNAPSE_TRUST_PROJECT_FILTERS", old_trust);
-    }
-
-    fn restore_env(name: &str, value: Option<std::ffi::OsString>) {
-        if let Some(value) = value {
-            std::env::set_var(name, value);
-        } else {
-            std::env::remove_var(name);
-        }
     }
 }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-60" status="planned">
+  <NAME>Filter Engine Semantics And Shared ANSI</NAME>
+  <GOAL>Resolve FIX/C3 and FIX/M3 by centralizing ANSI stripping and making command match semantics explicit.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/CRITICAL/C3-duplicate-ansi.md,/home/truffle/Загрузки/synapse-main/FIX/MEDIUM/M3-match-cmd-ambiguity.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-FILTER" />
+    <MODULE_REF id="M-UTILS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-60-1">FilterEngine delegates ANSI stripping to M-UTILS so proxy output and shared utility behavior cannot diverge.</FLOW>
+    <FLOW id="DF-60-2">Filter definitions route literal command prefixes through match_command and regex command matching through match_command_regex.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-UTILS" status="pending">Add ANSI stripping regression coverage for common SGR sequences.</step-1>
+    <step-2 module="M-PROXY-FILTER" status="pending">Remove duplicate ANSI regex state and use crate::utils::strip_ansi from filter application.</step-2>
+    <step-3 module="M-PROXY-FILTER" status="pending">Add match_command_regex, validation, migration warnings, and built-in filter audit.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">rg -n "ANSI_RE|ANSI_PATTERN|fn remove_ansi" src</CHECK>
+    <CHECK status="planned">cargo test utils::tests --lib</CHECK>
+    <CHECK status="planned">cargo test proxy::toml_filter::tests --lib</CHECK>
+    <CHECK status="planned">cargo run --quiet -- filters verify</CHECK>
+    <CHECK status="planned">cargo test --all-targets</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-60-1">Existing user filters may rely on regex-like match_command behavior; preserve compatibility with warnings before making any breaking change.</RISK>
+  </RISKS>
+</PHASE>

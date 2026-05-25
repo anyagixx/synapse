@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-58" status="done">
+  <NAME>Test Environment Soundness</NAME>
+  <GOAL>Resolve FIX/C1 by removing unsafe process environment mutation from tests while preserving isolated tracking and filter behavior.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/CRITICAL/C1-unsafe-test-env.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-PROXY-FILTER" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-DASHBOARD" />
+    <MODULE_REF id="M-SKILLS-ENGINE" />
+    <MODULE_REF id="M-MCP-SERVER-CASCADE-TOOLS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-58-1">Test-specific data directories, project roots, trust stores, and session ids are passed through explicit test seams instead of runtime process environment mutation.</FLOW>
+    <FLOW id="DF-58-2">Tracking, filter trust, indexer, dashboard, skill, and cascade tests exercise project-local behavior without changing process-wide cwd or environment in the unit-test process.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TRACKING" status="done">Replaced tracking test env/cwd mutation with Tracker::new_for_test explicit db path, project key, and session id overrides.</step-1>
+    <step-2 module="M-PROXY-FILTER" status="done">Replaced project filter and filter trust env/cwd mutation with explicit filter path and trust-store test helpers.</step-2>
+    <step-3 module="M-INDEXER" status="done">Added explicit-root search helpers so graph-aware search tests no longer mutate cwd.</step-3>
+    <step-4 module="M-DASHBOARD" status="done">Added explicit-root search explanation helper for dashboard tests.</step-4>
+    <step-5 module="M-SKILLS-ENGINE" status="done">Added explicit-root SkillEngine construction for run-history tests.</step-5>
+    <step-6 module="M-MCP-SERVER-CASCADE-TOOLS" status="done">Added explicit-root cascade MCP test handlers to avoid cwd mutation.</step-6>
+    <step-7 module="M-TESTS-INTEGRATION" status="done">Audited integration tests; remaining cwd mutation is isolated to a separate integration-test process and does not mutate env.</step-7>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">rg -n "std::env::set_var|std::env::remove_var|unsafe\s*\{" src tests</CHECK>
+    <CHECK status="passed">cargo test tracking::tests --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test proxy::toml_filter::tests::test_project_filters_require_trust --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test proxy::filter_trust::tests::test_trust_status_changes_after_file_update --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase58-data cargo test --all-targets -- --test-threads=8</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-58-1">std::env mutation is process-global; test isolation must serialize all remaining mutations until production APIs accept explicit paths.</RISK>
+  </RISKS>
+</PHASE>

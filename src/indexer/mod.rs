@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
 // PURPOSE: Code indexer — walks, parses, stores full snapshots, and searches code blocks with guarded storage health checks
-// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, search, hybrid_search, storage health propagation, view_signatures
+// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS: N/A
 
@@ -10,11 +10,13 @@
 // Indexer — Main indexer combining walker, parser, and storage
 // Indexer::storage_count — Returns loaded storage count through guarded lock access
 // Indexer::index_directory_with_gitignore — Rebuilds index snapshot with configurable gitignore handling
+// Indexer::search_in_root — Searches indexed blocks for an explicit project root
+// Indexer::hybrid_search_in_root — Runs graph-aware hybrid search for an explicit project root
 // ensure_storage_ready — Converts storage load-health errors into actionable search errors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 - Named index size and signature preview thresholds]
+// LAST_CHANGE: [v3.3.0 - Added explicit-root search helpers for parallel test isolation]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
@@ -193,7 +195,22 @@ impl Indexer {
         max_results: usize,
     ) -> anyhow::Result<Vec<SearchResult>> {
         let root = std::env::current_dir()?;
-        let storage_guard = self.get_storage(&root)?;
+        self.search_in_root(&root, query, max_results).await
+    }
+    // END_indexer_search
+
+    // START_CONTRACT_Indexer::search_in_root
+    // PURPOSE: BM25 search across indexed code blocks for an explicit project root
+    // INPUTS: { root: &Path }, { query: &str }, { max_results: usize }
+    // OUTPUTS: { anyhow::Result<Vec<SearchResult>> }
+    // START_indexer_search_in_root
+    pub async fn search_in_root(
+        &self,
+        root: &Path,
+        query: &str,
+        max_results: usize,
+    ) -> anyhow::Result<Vec<SearchResult>> {
+        let storage_guard = self.get_storage(root)?;
         let storage = storage_guard
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
@@ -214,7 +231,7 @@ impl Indexer {
             })
             .collect())
     }
-    // END_indexer_search
+    // END_indexer_search_in_root
 
     // START_CONTRACT_Indexer::hybrid_search
     // PURPOSE: Combined BM25 + vector search with deduplication
@@ -227,7 +244,22 @@ impl Indexer {
         max_results: usize,
     ) -> anyhow::Result<Vec<SearchResult>> {
         let root = std::env::current_dir()?;
-        let storage_guard = self.get_storage(&root)?;
+        self.hybrid_search_in_root(&root, query, max_results).await
+    }
+    // END_indexer_hybrid_search
+
+    // START_CONTRACT_Indexer::hybrid_search_in_root
+    // PURPOSE: Combined BM25 + vector search with graph proximity for an explicit project root
+    // INPUTS: { root: &Path }, { query: &str }, { max_results: usize }
+    // OUTPUTS: { anyhow::Result<Vec<SearchResult>> }
+    // START_indexer_hybrid_search_in_root
+    pub async fn hybrid_search_in_root(
+        &self,
+        root: &Path,
+        query: &str,
+        max_results: usize,
+    ) -> anyhow::Result<Vec<SearchResult>> {
+        let storage_guard = self.get_storage(root)?;
         let storage = storage_guard
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
@@ -255,7 +287,7 @@ impl Indexer {
         }
 
         let mut results: Vec<_> = combined.into_values().collect();
-        let graph = GraphBuilder::build(&root).ok();
+        let graph = GraphBuilder::build(root).ok();
         let query_words: Vec<String> = query
             .to_lowercase()
             .split_whitespace()
@@ -293,7 +325,7 @@ impl Indexer {
             })
             .collect())
     }
-    // END_indexer_hybrid_search
+    // END_indexer_hybrid_search_in_root
 
     // START_CONTRACT_Indexer::view_signatures
     // PURPOSE: Parse and return function/class signatures from a file
@@ -476,7 +508,6 @@ mod tests {
     }
     #[tokio::test]
     async fn test_hybrid_search_uses_graph_call_edges_for_related_results() {
-        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let dir = tempfile::tempdir().expect("tempdir");
         let src = dir.path().join("src");
         std::fs::create_dir_all(&src).expect("create src");
@@ -513,15 +544,12 @@ mod tests {
             ),
         )
         .expect("write source");
-        let old_cwd = std::env::current_dir().expect("cwd");
-        std::env::set_current_dir(dir.path()).expect("set cwd");
         let indexer = Indexer::new(&Config::default());
         indexer.index_directory(dir.path()).await.expect("index");
         let results = indexer
-            .hybrid_search("first_step", 5)
+            .hybrid_search_in_root(dir.path(), "first_step", 5)
             .await
             .expect("search");
-        std::env::set_current_dir(old_cwd).expect("restore cwd");
         assert!(results
             .iter()
             .any(|result| result.name.contains("second_step")));
@@ -529,7 +557,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_search_expands_module_identifier_terms() {
-        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let dir = tempfile::tempdir().expect("tempdir");
         let src = dir.path().join("src");
         std::fs::create_dir_all(&src).expect("create src");
@@ -559,15 +586,12 @@ mod tests {
             ),
         )
         .expect("write source");
-        let old_cwd = std::env::current_dir().expect("cwd");
-        std::env::set_current_dir(dir.path()).expect("set cwd");
         let indexer = Indexer::new(&Config::default());
         indexer.index_directory(dir.path()).await.expect("index");
         let results = indexer
-            .search("runner workflow M-WORKFLOW", 5)
+            .search_in_root(dir.path(), "runner workflow M-WORKFLOW", 5)
             .await
             .expect("search");
-        std::env::set_current_dir(old_cwd).expect("restore cwd");
         assert!(results
             .iter()
             .any(|result| result.name.contains("first_step")));
@@ -575,7 +599,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_hybrid_search_uses_multi_hop_graph_proximity() {
-        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let dir = tempfile::tempdir().expect("tempdir");
         let src = dir.path().join("src");
         std::fs::create_dir_all(&src).expect("create src");
@@ -619,15 +642,12 @@ mod tests {
             ),
         )
         .expect("write source");
-        let old_cwd = std::env::current_dir().expect("cwd");
-        std::env::set_current_dir(dir.path()).expect("set cwd");
         let indexer = Indexer::new(&Config::default());
         indexer.index_directory(dir.path()).await.expect("index");
         let results = indexer
-            .hybrid_search("third_step", 10)
+            .hybrid_search_in_root(dir.path(), "third_step", 10)
             .await
             .expect("search");
-        std::env::set_current_dir(old_cwd).expect("restore cwd");
         assert!(results.iter().any(
             |result| result.name.contains("second_step") || result.name.contains("first_step")
         ));

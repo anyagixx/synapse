@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-SKILLS-ENGINE" module="M-SKILLS-ENGINE" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test skills::engine::tests::grace_run_history_reports_current_run_state --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -11,6 +12,7 @@
     <ASSERTION>grace_plan and grace_execute guidance read docs/development-plan.xml and report DataFlow plus GenerationOrder coverage.</ASSERTION>
     <ASSERTION>grace_plan, grace_execute, and grace_fix guidance require MentalTests before critical code generation or fixes.</ASSERTION>
     <ASSERTION>grace_multiagent_execute, grace_setup_subagents, and grace_fix guidance include Tester agent workflows and test failure reports.</ASSERTION>
+    <ASSERTION>Run-history skill tests bind SkillEngine to explicit project roots without mutating process cwd.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13</PHASE_GATE>
+  <PHASE_GATE>Phase-58</PHASE_GATE>
 </VERIFICATION>

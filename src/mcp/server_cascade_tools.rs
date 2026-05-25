@@ -8,15 +8,18 @@
 // START_MODULE_MAP
 // handle_cascade_impact - Runs cascade impact analysis and optionally immediate execution
 // handle_cascade_execute - Executes a cached cascade preview
+// handle_cascade_impact_at - Test helper for explicit-root cascade impact handling
+// handle_cascade_execute_at - Test helper for explicit-root cascade execution handling
 // parse_phase_list - Parses optional apply_to_phases MCP argument
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added cascade MCP handlers]
+// LAST_CHANGE: [v1.1.0 - Added explicit-root cascade handlers for parallel test isolation]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result};
 use crate::grace::cascade::{CascadeExecuteOptions, CascadeReport};
+use std::path::Path;
 
 // START_public_api
 
@@ -33,6 +36,14 @@ pub(crate) async fn handle_cascade_impact(
         Ok(root) => root,
         Err(error_value) => return error(id, -32603, format!("cwd error: {}", error_value)),
     };
+    handle_cascade_impact_at(&root, id, args).await
+}
+
+async fn handle_cascade_impact_at(
+    root: &Path,
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
     let changed_artifact = match args["changed_artifact"].as_str() {
         Some(value) if !value.trim().is_empty() => value.trim(),
         _ => return error(id, -32602, "Missing 'changed_artifact' parameter"),
@@ -41,13 +52,13 @@ pub(crate) async fn handle_cascade_impact(
         .as_str()
         .unwrap_or("Artifact changed");
     let preview_only = args["preview_only"].as_bool().unwrap_or(true);
-    match crate::grace::GraceEngine::cascade_impact(&root, changed_artifact, change_description) {
+    match crate::grace::GraceEngine::cascade_impact(root, changed_artifact, change_description) {
         Ok(analysis) => {
             let mut text = analysis.preview.clone();
             let mut execution: Option<CascadeReport> = None;
             if !preview_only {
                 match crate::grace::GraceEngine::cascade_execute(
-                    &root,
+                    root,
                     CascadeExecuteOptions {
                         cascade_id: analysis.cascade_id.clone(),
                         auto_apply_contracts: true,
@@ -98,6 +109,14 @@ pub(crate) async fn handle_cascade_execute(
         Ok(root) => root,
         Err(error_value) => return error(id, -32603, format!("cwd error: {}", error_value)),
     };
+    handle_cascade_execute_at(&root, id, args).await
+}
+
+async fn handle_cascade_execute_at(
+    root: &Path,
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
     let cascade_id = match args["cascade_id"].as_str() {
         Some(value) if !value.trim().is_empty() => value.trim().to_string(),
         _ => return error(id, -32602, "Missing 'cascade_id' parameter"),
@@ -108,7 +127,7 @@ pub(crate) async fn handle_cascade_execute(
         auto_apply_code: args["auto_apply_code"].as_bool().unwrap_or(false),
         apply_to_phases: parse_phase_list(args),
     };
-    match crate::grace::GraceEngine::cascade_execute(&root, options) {
+    match crate::grace::GraceEngine::cascade_execute(root, options) {
         Ok(report) => {
             let text = serde_json::to_string_pretty(&report).unwrap_or_default();
             result(
@@ -162,12 +181,10 @@ mod tests {
     // START_test_handle_cascade_impact_returns_preview
     #[tokio::test]
     async fn test_handle_cascade_impact_returns_preview() {
-        let _guard = crate::utils::test_cwd_lock().lock().await;
         let dir = tempfile::tempdir().expect("tempdir");
-        let old = std::env::current_dir().expect("cwd");
-        std::env::set_current_dir(dir.path()).expect("set cwd");
 
-        let response = handle_cascade_impact(
+        let response = handle_cascade_impact_at(
+            dir.path(),
             Some(serde_json::json!(1)),
             &serde_json::json!({
                 "changed_artifact": "UC-001",
@@ -176,7 +193,6 @@ mod tests {
         )
         .await;
 
-        let _ = std::env::set_current_dir(old);
         let text = response["result"]["content"][0]["text"]
             .as_str()
             .unwrap_or("");
@@ -196,12 +212,10 @@ mod tests {
     // START_test_handle_cascade_execute_writes_report
     #[tokio::test]
     async fn test_handle_cascade_execute_writes_report() {
-        let _guard = crate::utils::test_cwd_lock().lock().await;
         let dir = tempfile::tempdir().expect("tempdir");
-        let old = std::env::current_dir().expect("cwd");
-        std::env::set_current_dir(dir.path()).expect("set cwd");
 
-        let preview = handle_cascade_impact(
+        let preview = handle_cascade_impact_at(
+            dir.path(),
             Some(serde_json::json!(1)),
             &serde_json::json!({
                 "changed_artifact": "UC-001",
@@ -213,7 +227,8 @@ mod tests {
             .as_str()
             .unwrap_or_default()
             .to_string();
-        let response = handle_cascade_execute(
+        let response = handle_cascade_execute_at(
+            dir.path(),
             Some(serde_json::json!(2)),
             &serde_json::json!({
                 "cascade_id": cascade_id,
@@ -224,7 +239,6 @@ mod tests {
         )
         .await;
 
-        let _ = std::env::set_current_dir(old);
         let text = response["result"]["content"][0]["text"]
             .as_str()
             .unwrap_or("");

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-59" status="active">
+  <NAME>Persistent Configurable LSP Runtime</NAME>
+  <GOAL>Resolve FIX/C2 and FIX/L3 by replacing per-request LSP spawning with a reusable manager and configurable language-server commands.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/CRITICAL/C2-lsp-per-request.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L3-hardcoded-lsp.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MCP-LSP" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-CONFIG" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-59-1">MCP LSP requests resolve a language and root, obtain a pooled LSP connection, send didOpen as needed, then dispatch hover/definition/references.</FLOW>
+    <FLOW id="DF-59-2">Config-provided LSP server commands override built-in defaults without changing existing fallback behavior.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-CONFIG" status="pending">Add an LSP config section for per-language server command overrides.</step-1>
+    <step-2 module="M-MCP-LSP" status="pending">Introduce an LSP connection manager with lifecycle, request ids, didOpen tracking, shutdown cleanup, and graceful missing-binary errors.</step-2>
+    <step-3 module="M-MCP-SERVER" status="pending">Thread config into LSP tool handling and verify MCP tool behavior remains stdio-safe.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test mcp::lsp::tests --lib</CHECK>
+    <CHECK status="planned">cargo test --test mcp_protocol</CHECK>
+    <CHECK status="planned">cargo test --all-targets</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-59-1">Returning references from pooled process state requires avoiding borrowed values across locks; use owned Arc-managed connections.</RISK>
+    <RISK id="R-59-2">External LSP binaries may be absent in CI; tests should use protocol helpers or fake server processes rather than requiring rust-analyzer.</RISK>
+  </RISKS>
+</PHASE>

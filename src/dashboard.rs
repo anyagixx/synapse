@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-DASHBOARD
 // PURPOSE: Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, token-economy, cascade, and run cockpit views/APIs
-// SCOPE: HTTP server with health/status/graph/tokens APIs, token adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, cascade previews, and cascade history
+// SCOPE: HTTP server with health/status/graph/tokens APIs, token adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, graph-aware search explanation with explicit-root test helper, cascade previews, and cascade history
 // DEPENDS: M-GRACE-STATUS, M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRAPHRAG, M-TRACKING, M-RUNNER, M-CONFIG
 // LINKS:
 //   -> V-M-DASHBOARD (verified_by) - dashboard route and JSON payload tests
@@ -12,13 +12,14 @@
 // mental_tests_payload — Build JSON for MentalTest status and definitions
 // traceability_payload — Build JSON for full or artifact-scoped traceability chains
 // runs::runs_payload — Build JSON for run queue, blocked runs, and provenance timeline
+// api_search_explain_at_root — Build search explanation JSON for an explicit project root
 // cascade_impact_payload — Build JSON for cascade impact preview
 // cascade_history_payload — Build JSON for cascade changelog history
 // render_*_page — Render local HTML pages backed by the JSON payload helpers
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.3.0 — Exposed adapter and session token stats in tokens API]
+// LAST_CHANGE: [v3.4.0 — Added explicit-root dashboard search helper for parallel test isolation]
 // END_CHANGE_SUMMARY
 
 mod render;
@@ -432,13 +433,17 @@ async fn api_runs_review(Form(form): Form<runs::RunReviewForm>) -> Json<Value> {
 // OUTPUTS: { Json<Value> }
 // START_api_search_explain
 async fn api_search_explain(Query(query): Query<SearchExplainQuery>) -> Json<Value> {
+    api_search_explain_at_root(current_root(), query).await
+}
+
+async fn api_search_explain_at_root(root: PathBuf, query: SearchExplainQuery) -> Json<Value> {
     let q = query.query.unwrap_or_default();
     if q.trim().is_empty() {
         return Json(json!({"error": "missing query"}));
     }
     let max = query.max.unwrap_or(10);
     let indexer = crate::indexer::Indexer::new(&crate::config::Config::load_or_default());
-    match indexer.hybrid_search(&q, max).await {
+    match indexer.hybrid_search_in_root(&root, &q, max).await {
         Ok(results) => Json(json!({
             "query": q,
             "results": results.into_iter().map(|r| json!({
@@ -1082,17 +1087,17 @@ mod tests {
             ),
         )
         .expect("write source");
-        let old_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
-        std::env::set_current_dir(dir.path()).expect("set cwd");
         let indexer = crate::indexer::Indexer::new(&crate::config::Config::default());
         indexer.index_directory(dir.path()).await.expect("index");
-        let payload = api_search_explain(Query(SearchExplainQuery {
-            query: Some("dashboard".into()),
-            max: Some(5),
-        }))
+        let payload = api_search_explain_at_root(
+            dir.path().to_path_buf(),
+            SearchExplainQuery {
+                query: Some("dashboard".into()),
+                max: Some(5),
+            },
+        )
         .await
         .0;
-        let _ = std::env::set_current_dir(old_cwd);
         assert_eq!(payload["query"], "dashboard");
         assert!(payload.get("results").is_some() || payload.get("error").is_some());
     }

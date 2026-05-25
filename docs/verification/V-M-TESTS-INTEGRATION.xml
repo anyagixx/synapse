@@ -14,10 +14,12 @@
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
     <COMMAND>cargo test --test integration_test test_tracking_is_scoped_by_canonical_project_path</COMMAND>
+    <COMMAND>rg -n "std::env::set_var|std::env::remove_var" src tests -g "!src/utils/mod.rs"</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Integration tests cover clean config bootstrap, canonical tracking identity, bounded run scenario/action queue JSON, proxy exit-code propagation, RTK shortcuts, local RTK adapters and system adapters, RTK built-in filter verification, rewrite hook decisions including safe command chains, pipelines, fd redirects, and shell prefixes, route preview, Unicode truncation, and gain graph/session/adapter regressions.</ASSERTION>
+    <ASSERTION>Integration tests avoid unguarded process environment mutation and use per-command environment injection where possible.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-46</PHASE_GATE>
+  <PHASE_GATE>Phase-58</PHASE_GATE>
 </VERIFICATION>

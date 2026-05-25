@@ -10,6 +10,6 @@
     <FILE>src/proxy/rtk_builtin_filters.toml</FILE>
   </FILES>
   <DEPENDS>M-UTILS</DEPENDS>
-  <LINKS>builtin_filters.toml,rtk_builtin_filters.toml,~/.config/synapse/filters.toml,.synapse/filters.toml,docs/phases/Phase-21.xml,docs/phases/Phase-24.xml,docs/phases/Phase-33.xml,docs/phases/Phase-34.xml,docs/phases/Phase-35.xml,docs/phases/Phase-36.xml,docs/phases/Phase-37.xml,docs/phases/Phase-38.xml,docs/phases/Phase-39.xml,docs/phases/Phase-40.xml,docs/phases/Phase-41.xml,docs/phases/Phase-42.xml,docs/phases/Phase-43.xml,docs/phases/Phase-48.xml,docs/phases/Phase-54.xml</LINKS>
+  <LINKS>builtin_filters.toml,rtk_builtin_filters.toml,~/.config/synapse/filters.toml,.synapse/filters.toml,docs/phases/Phase-21.xml,docs/phases/Phase-24.xml,docs/phases/Phase-33.xml,docs/phases/Phase-34.xml,docs/phases/Phase-35.xml,docs/phases/Phase-36.xml,docs/phases/Phase-37.xml,docs/phases/Phase-38.xml,docs/phases/Phase-39.xml,docs/phases/Phase-40.xml,docs/phases/Phase-41.xml,docs/phases/Phase-42.xml,docs/phases/Phase-43.xml,docs/phases/Phase-48.xml,docs/phases/Phase-54.xml,docs/phases/Phase-58.xml</LINKS>
   <VERIFICATION_REF>V-M-PROXY-FILTER</VERIFICATION_REF>
 </MODULE>

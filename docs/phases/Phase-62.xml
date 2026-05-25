@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-62" status="planned">
+  <NAME>GraphRAG And MCP Robustness</NAME>
+  <GOAL>Resolve FIX/M4 and FIX/L5 by caching expensive graph builds and bounding MCP JSON-RPC message input.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/MEDIUM/M4-graph-rebuild.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L5-no-message-limit.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRAPHRAG-BUILDER" />
+    <MODULE_REF id="M-GRAPHRAG-TYPES" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-MCP-SERVER" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-62-1">MCP GraphRAG calls read a cached CodeGraph for the current root and invalidate/rebuild only when indexing state changes.</FLOW>
+    <FLOW id="DF-62-2">MCP stdio reads reject oversized JSON-RPC messages before allocating unbounded buffers.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-GRAPHRAG-TYPES" status="pending">Make CodeGraph clone cheap enough for cache return paths without duplicating large graph vectors.</step-1>
+    <step-2 module="M-MCP-SERVER" status="pending">Add graph cache storage, root validation, and invalidation surface in SynapseHandler.</step-2>
+    <step-3 module="M-INDEXER" status="pending">Coordinate index rebuilds with graph cache invalidation or a conservative root/mtime cache key.</step-3>
+    <step-4 module="M-MCP-SERVER" status="pending">Replace unbounded stdin lines reading with a bounded JSON-RPC line reader.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test graphrag::types::tests --lib</CHECK>
+    <CHECK status="planned">cargo test graphrag::builder::tests --lib</CHECK>
+    <CHECK status="planned">cargo test mcp::server::tests --lib</CHECK>
+    <CHECK status="planned">cargo test --test mcp_protocol</CHECK>
+    <CHECK status="planned">cargo test --all-targets</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-62-1">Graph cache invalidation must avoid stale results after syn index while still reducing repeated full rebuilds.</RISK>
+  </RISKS>
+</PHASE>

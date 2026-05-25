@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TRACKING
 // PURPOSE: SQLite tracking and provenance ledger — records route-aware token usage plus autonomous run events by canonical project identity and provides stats
-// SCOPE: Tracker struct, canonical project identity, SQLite schema, route-aware token recording, provenance event recording, RTK coverage counts, session/adapter stats querying, route adoption and missed-route candidate querying, TrackingStats and RunEvent models
+// SCOPE: Tracker struct, canonical project identity, explicit test state overrides, SQLite schema, route-aware token recording, provenance event recording, RTK coverage counts, session/adapter stats querying, route adoption and missed-route candidate querying, TrackingStats and RunEvent models
 // DEPENDS: M-CONFIG
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - adapter and route metadata source
@@ -10,6 +10,7 @@
 
 // START_MODULE_MAP
 // Tracker — Token usage and provenance ledger backed by SQLite
+// Tracker::new_for_test — Test-only tracker with explicit db path, project key, and session id
 // TrackingStats — Aggregate token economy statistics
 // TrackingAdapterStat — Aggregate savings grouped by routed adapter
 // TrackingSessionStat — Aggregate savings grouped by session id
@@ -19,10 +20,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Added route adoption and missed-route candidate queries]
+// LAST_CHANGE: [v3.3.0 — Replaced unsafe test env mutation with scoped guards]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
+#[cfg(test)]
+use std::path::Path;
 use std::path::PathBuf;
 
 const DEFAULT_MISSED_ROUTE_LIMIT: usize = 12;
@@ -33,6 +36,12 @@ const MAX_MISSED_ROUTE_COMMAND_CHARS: i64 = 160;
 // START_Tracker
 pub struct Tracker {
     config: Config,
+    #[cfg(test)]
+    db_path_override: Option<PathBuf>,
+    #[cfg(test)]
+    project_key_override: Option<String>,
+    #[cfg(test)]
+    session_id_override: Option<String>,
 }
 
 // END_Tracker
@@ -46,9 +55,41 @@ impl Tracker {
     pub fn new(config: &Config) -> Self {
         Self {
             config: config.clone(),
+            #[cfg(test)]
+            db_path_override: None,
+            #[cfg(test)]
+            project_key_override: None,
+            #[cfg(test)]
+            session_id_override: None,
         }
     }
     // END_tracker_new
+
+    // START_CONTRACT_Tracker::new_for_test
+    // PURPOSE: Create a test tracker with explicit data, project, and session state without mutating process globals
+    // INPUTS: { config: &Config }, { data_home: &Path }, { project_root: &Path }, { session_id: Option<&str> }
+    // OUTPUTS: { Self }
+    // START_tracker_new_for_test
+    #[cfg(test)]
+    pub fn new_for_test(
+        config: &Config,
+        data_home: &Path,
+        project_root: &Path,
+        session_id: Option<&str>,
+    ) -> Self {
+        let project_key = project_root
+            .canonicalize()
+            .unwrap_or_else(|_| project_root.to_path_buf())
+            .to_string_lossy()
+            .to_string();
+        Self {
+            config: config.clone(),
+            db_path_override: Some(data_home.join("synapse").join("tracking.db")),
+            project_key_override: Some(project_key),
+            session_id_override: session_id.map(ToOwned::to_owned),
+        }
+    }
+    // END_tracker_new_for_test
 
     // START_CONTRACT_Tracker::db_path
     // PURPOSE: Return the path to the SQLite tracking database
@@ -61,6 +102,30 @@ impl Tracker {
         Ok(data_dir.join("tracking.db"))
     }
     // END_tracker_db_path
+
+    fn db_path_for(&self) -> anyhow::Result<PathBuf> {
+        #[cfg(test)]
+        if let Some(path) = &self.db_path_override {
+            return Ok(path.clone());
+        }
+        Self::db_path()
+    }
+
+    fn project_key(&self) -> String {
+        #[cfg(test)]
+        if let Some(project) = &self.project_key_override {
+            return project.clone();
+        }
+        current_project_key()
+    }
+
+    fn session_id(&self) -> String {
+        #[cfg(test)]
+        if let Some(session_id) = &self.session_id_override {
+            return session_id.clone();
+        }
+        current_session_id()
+    }
 
     #[allow(dead_code)]
     fn project_db_path() -> anyhow::Result<PathBuf> {
@@ -125,10 +190,10 @@ impl Tracker {
         } else {
             0
         };
-        let project = current_project_key();
-        let session_id = current_session_id();
+        let project = self.project_key();
+        let session_id = self.session_id();
 
-        let db_path = Self::db_path()?;
+        let db_path = self.db_path_for()?;
         if let Some(parent) = db_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
@@ -175,8 +240,8 @@ impl Tracker {
         if !self.config.tracking.enabled() {
             return Ok(());
         }
-        let project = current_project_key();
-        let db_path = Self::db_path()?;
+        let project = self.project_key();
+        let db_path = self.db_path_for()?;
         if let Some(parent) = db_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
@@ -200,8 +265,8 @@ impl Tracker {
     //   → UC-002 (implements) - run event retrieval supports audit and replay
     // START_tracker_get_run_events
     pub async fn get_run_events(&self, run_id: Option<&str>) -> anyhow::Result<Vec<RunEvent>> {
-        let db_path = Self::db_path()?;
-        let project = current_project_key();
+        let db_path = self.db_path_for()?;
+        let project = self.project_key();
         if let Some(parent) = db_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
@@ -265,8 +330,8 @@ impl Tracker {
     //   → NFR-003 (traces_to) - reports command, adapter, and session savings
     // START_tracker_get_stats
     pub async fn get_stats(&self) -> anyhow::Result<TrackingStats> {
-        let db_path = Self::db_path()?;
-        let project = current_project_key();
+        let db_path = self.db_path_for()?;
+        let project = self.project_key();
         let mut stats = TrackingStats::default();
 
         if let Some(parent) = db_path.parent() {
@@ -407,8 +472,8 @@ impl Tracker {
     //   → Phase-56 (implements) - tracking-backed missed-route surface
     // START_tracker_get_adoption_stats
     pub async fn get_adoption_stats(&self, limit: usize) -> anyhow::Result<TrackingAdoptionStats> {
-        let db_path = Self::db_path()?;
-        let project = current_project_key();
+        let db_path = self.db_path_for()?;
+        let project = self.project_key();
         if let Some(parent) = db_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
@@ -712,15 +777,14 @@ mod tests {
 
     #[tokio::test]
     async fn tracker_records_and_reads_run_events() {
-        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let data_home = tempfile::tempdir().unwrap();
-        unsafe {
-            std::env::set_var("XDG_DATA_HOME", data_home.path());
-        }
         let project_home = tempfile::tempdir().unwrap();
-        let old_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
-        std::env::set_current_dir(project_home.path()).unwrap();
-        let tracker = Tracker::new(&Config::default());
+        let tracker = Tracker::new_for_test(
+            &Config::default(),
+            data_home.path(),
+            project_home.path(),
+            None,
+        );
         tracker
             .record_run_event(
                 "run-test-1",
@@ -745,7 +809,6 @@ mod tests {
             .unwrap();
 
         let events = tracker.get_run_events(Some("run-test-1")).await.unwrap();
-        std::env::set_current_dir(old_cwd).unwrap();
         assert_eq!(events.len(), 2);
         assert_eq!(events[0].event_type, "create_run");
         assert_eq!(events[1].status, "running");
@@ -753,16 +816,14 @@ mod tests {
 
     #[tokio::test]
     async fn tracker_records_routed_adapter_and_session_stats() {
-        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let data_home = tempfile::tempdir().unwrap();
-        unsafe {
-            std::env::set_var("XDG_DATA_HOME", data_home.path());
-            std::env::set_var("SYNAPSE_SESSION_ID", "session-router-test");
-        }
         let project_home = tempfile::tempdir().unwrap();
-        let old_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
-        std::env::set_current_dir(project_home.path()).unwrap();
-        let tracker = Tracker::new(&Config::default());
+        let tracker = Tracker::new_for_test(
+            &Config::default(),
+            data_home.path(),
+            project_home.path(),
+            Some("session-router-test"),
+        );
         tracker
             .record_routed("cargo test --all", 100, 25, "rust-cargo", "cargo test")
             .await
@@ -775,10 +836,6 @@ mod tests {
 
         let adoption = tracker.get_adoption_stats(10).await.unwrap();
         let stats = tracker.get_stats().await.unwrap();
-        std::env::set_current_dir(old_cwd).unwrap();
-        unsafe {
-            std::env::remove_var("SYNAPSE_SESSION_ID");
-        }
 
         assert_eq!(stats.total_commands, 3);
         assert_eq!(stats.adapter_groups, 3);

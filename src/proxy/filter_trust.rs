@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Added project filter trust store]
+// LAST_CHANGE: [v1.1.0 — Replaced trust-store test env mutation with scoped guards]
 // END_CHANGE_SUMMARY
 
 use sha2::{Digest, Sha256};
@@ -83,6 +83,14 @@ pub fn project_filter_path() -> PathBuf {
 //   → Phase-24 (implements) - project filters are skipped unless trusted
 // START_check_trust
 pub fn check_trust(path: &Path) -> anyhow::Result<TrustStatus> {
+    let store_path = store_path()?;
+    check_trust_with_store(path, &store_path)
+}
+
+pub(crate) fn check_trust_with_store(
+    path: &Path,
+    store_path: &Path,
+) -> anyhow::Result<TrustStatus> {
     if !path.exists() {
         return Ok(TrustStatus::Missing);
     }
@@ -92,7 +100,7 @@ pub fn check_trust(path: &Path) -> anyhow::Result<TrustStatus> {
 
     let key = trust_key(path)?;
     let current_sha256 = file_sha256(path)?;
-    let store = read_store()?;
+    let store = read_store_at(store_path)?;
     match store.trusted.get(&key) {
         Some(entry) if entry.sha256 == current_sha256 => Ok(TrustStatus::Trusted),
         Some(entry) => Ok(TrustStatus::ContentChanged {
@@ -141,6 +149,11 @@ struct TrustStore {
 }
 
 fn trust_path(path: &Path) -> anyhow::Result<TrustEntry> {
+    let store_path = store_path()?;
+    trust_path_with_store(path, &store_path)
+}
+
+pub(crate) fn trust_path_with_store(path: &Path, store_path: &Path) -> anyhow::Result<TrustEntry> {
     if !path.exists() {
         anyhow::bail!("project filter file not found: {}", path.display());
     }
@@ -150,20 +163,25 @@ fn trust_path(path: &Path) -> anyhow::Result<TrustEntry> {
         sha256: file_sha256(path)?,
         trusted_at_unix: unix_now(),
     };
-    let mut store = read_store()?;
+    let mut store = read_store_at(store_path)?;
     store.trusted.insert(key, entry.clone());
-    write_store(&store)?;
+    write_store_at(store_path, &store)?;
     Ok(entry)
 }
 
 fn untrust_path(path: &Path) -> anyhow::Result<bool> {
+    let store_path = store_path()?;
+    untrust_path_with_store(path, &store_path)
+}
+
+fn untrust_path_with_store(path: &Path, store_path: &Path) -> anyhow::Result<bool> {
     if !path.exists() {
         return Ok(false);
     }
     let key = trust_key(path)?;
-    let mut store = read_store()?;
+    let mut store = read_store_at(store_path)?;
     let removed = store.trusted.remove(&key).is_some();
-    write_store(&store)?;
+    write_store_at(store_path, &store)?;
     Ok(removed)
 }
 
@@ -183,18 +201,16 @@ fn file_sha256(path: &Path) -> anyhow::Result<String> {
         .collect::<String>())
 }
 
-fn read_store() -> anyhow::Result<TrustStore> {
-    let path = store_path()?;
+fn read_store_at(path: &Path) -> anyhow::Result<TrustStore> {
     if !path.exists() {
         return Ok(TrustStore::default());
     }
-    let content = std::fs::read_to_string(&path)?;
+    let content = std::fs::read_to_string(path)?;
     let store = serde_json::from_str(&content)?;
     Ok(store)
 }
 
-fn write_store(store: &TrustStore) -> anyhow::Result<()> {
-    let path = store_path()?;
+fn write_store_at(path: &Path, store: &TrustStore) -> anyhow::Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
@@ -224,44 +240,30 @@ fn unix_now() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_cwd_lock;
 
     #[test]
     fn test_trust_status_changes_after_file_update() {
-        let _lock = test_cwd_lock().blocking_lock();
         let dir = tempfile::tempdir().unwrap();
-        let data_home = tempfile::tempdir().unwrap();
-        let old_data_home = std::env::var_os("XDG_DATA_HOME");
-        let old_cwd = std::env::current_dir().unwrap();
+        let store_path = dir.path().join("filter-trust.json");
+        let filter_path = dir.path().join(".synapse").join("filters.toml");
 
-        std::env::set_var("XDG_DATA_HOME", data_home.path());
-        std::env::set_current_dir(dir.path()).unwrap();
-        std::fs::create_dir(".synapse").unwrap();
-        std::fs::write(
-            ".synapse/filters.toml",
-            "[[filters]]\nmatch_command = \"x\"\n",
-        )
-        .unwrap();
+        std::fs::create_dir(dir.path().join(".synapse")).unwrap();
+        std::fs::write(&filter_path, "[[filters]]\nmatch_command = \"x\"\n").unwrap();
 
-        assert_eq!(project_filter_status().unwrap(), TrustStatus::Untrusted);
-        trust_project_filters().unwrap();
-        assert_eq!(project_filter_status().unwrap(), TrustStatus::Trusted);
+        assert_eq!(
+            check_trust_with_store(&filter_path, &store_path).unwrap(),
+            TrustStatus::Untrusted
+        );
+        trust_path_with_store(&filter_path, &store_path).unwrap();
+        assert_eq!(
+            check_trust_with_store(&filter_path, &store_path).unwrap(),
+            TrustStatus::Trusted
+        );
 
-        std::fs::write(
-            ".synapse/filters.toml",
-            "[[filters]]\nmatch_command = \"y\"\n",
-        )
-        .unwrap();
+        std::fs::write(&filter_path, "[[filters]]\nmatch_command = \"y\"\n").unwrap();
         assert!(matches!(
-            project_filter_status().unwrap(),
+            check_trust_with_store(&filter_path, &store_path).unwrap(),
             TrustStatus::ContentChanged { .. }
         ));
-
-        std::env::set_current_dir(old_cwd).unwrap();
-        if let Some(value) = old_data_home {
-            std::env::set_var("XDG_DATA_HOME", value);
-        } else {
-            std::env::remove_var("XDG_DATA_HOME");
-        }
     }
 }

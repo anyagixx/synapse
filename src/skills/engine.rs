@@ -8,11 +8,12 @@
 
 // START_MODULE_MAP
 // SkillEngine — Main skill runtime facade
+// SkillEngine::new_with_root — Construct engine with explicit root for tests and embedding
 // execute — Dispatch skill by name to structured response
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 — Added run history skill dispatch]
+// LAST_CHANGE: [v2.23.0 — Added explicit-root test construction for parallel test isolation]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -42,6 +43,16 @@ impl SkillEngine {
     // START_skill_engine_new
     pub fn new(config: &Config) -> Self {
         let root = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+        Self::new_with_root(config, root)
+    }
+    // END_skill_engine_new
+
+    // START_CONTRACT_SkillEngine::new_with_root
+    // PURPOSE: Create a SkillEngine bound to an explicit project directory
+    // INPUTS: { config: &Config }, { root: PathBuf }
+    // OUTPUTS: { SkillEngine }
+    // START_skill_engine_new_with_root
+    pub fn new_with_root(config: &Config, root: std::path::PathBuf) -> Self {
         Self {
             context: SkillContext {
                 root,
@@ -49,7 +60,7 @@ impl SkillEngine {
             },
         }
     }
-    // END_skill_engine_new
+    // END_skill_engine_new_with_root
 
     // START_CONTRACT_SkillEngine::defs
     // PURPOSE: Return all registered skill definitions
@@ -443,18 +454,14 @@ fn first_module_id(layout: &DocsLayout) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
 
     #[tokio::test]
     async fn grace_run_history_reports_current_run_state() {
-        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let dir = tempfile::tempdir().unwrap();
         let layout = DocsLayout::new(dir.path());
         layout.ensure_initialized().unwrap();
-        let old_cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
-        std::env::set_current_dir(dir.path()).unwrap();
         let config = Config::default();
-        let engine = SkillEngine::new(&config);
+        let engine = SkillEngine::new_with_root(&config, dir.path().to_path_buf());
         let tracker = Tracker::new(&config);
         let run_manager = RunManager::new(dir.path());
         let report = crate::grace::status::StatusCollector::collect(dir.path())
@@ -487,7 +494,6 @@ mod tests {
             })
             .await
             .unwrap();
-        std::env::set_current_dir(old_cwd).unwrap();
         assert!(response.body.contains("Run history view"));
         assert!(response.body.contains("create_run"));
     }
