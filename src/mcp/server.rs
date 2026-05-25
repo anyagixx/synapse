@@ -14,11 +14,12 @@
 // tools_list_profile — Parses tools/list profile params
 // tools_list_profile_label — Returns stable tools/list profile metadata
 // tools_list_style — Parses tools/list schema style params
+// schema_savings_pct — Computes tools/list schema economy percent
 // classify_mcp_response — Converts JSON-RPC tool responses into tracking status metadata
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.21.0 - Added profile-aware tools/list routing metadata]
+// LAST_CHANGE: [v3.22.0 - Wired terse tools/list schema economy metadata]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -250,25 +251,26 @@ impl SynapseHandler {
                 let params = &msg["params"];
                 let profile = tools_list_profile(params);
                 let style = tools_list_style(params);
-                let all_tools = server_tools::tool_definitions();
-                let total_available = all_tools.len();
-                let tools: Vec<_> = all_tools
-                    .into_iter()
-                    .filter(|tool| {
-                        tool["name"]
-                            .as_str()
-                            .is_some_and(|name| server_tools::tool_matches_profile(name, &profile))
-                    })
-                    .collect();
+                let total_available = server_tools::tool_definitions().len();
+                let full_tools = server_tools::tool_definitions_for_profile(&profile);
+                let full_schema_bytes = server_tools::tool_definitions_json_bytes(&full_tools);
+                let tools = server_tools::apply_tool_schema_style(full_tools, style);
+                let schema_bytes = server_tools::tool_definitions_json_bytes(&tools);
                 let total_visible = tools.len();
                 server_response::result(
                     id,
                     serde_json::json!({
                         "tools": tools,
                         "profile": tools_list_profile_label(&profile),
-                        "style": style,
+                        "style": style.label(),
                         "total_available": total_available,
-                        "total_visible": total_visible
+                        "total_visible": total_visible,
+                        "schema_economy": {
+                            "full_bytes": full_schema_bytes,
+                            "visible_bytes": schema_bytes,
+                            "saved_bytes": full_schema_bytes.saturating_sub(schema_bytes),
+                            "savings_pct": schema_savings_pct(full_schema_bytes, schema_bytes)
+                        }
                     }),
                 )
             }
@@ -494,23 +496,34 @@ fn tools_list_profile_label(profile: &server_tools::ToolProfile) -> &'static str
 // START_CONTRACT_tools_list_style
 // PURPOSE: Parse tools/list schema style params while defaulting to backward-compatible full schemas
 // INPUTS: { params: &serde_json::Value }
-// OUTPUTS: { &'static str }
+// OUTPUTS: { server_tools::ToolSchemaStyle }
 // LINKS:
 //   -> NFR-003 (traces_to) - style metadata exposes token economy mode
 // START_tools_list_style
-fn tools_list_style(params: &serde_json::Value) -> &'static str {
-    match params
+fn tools_list_style(params: &serde_json::Value) -> server_tools::ToolSchemaStyle {
+    let value = params
         .get("style")
         .and_then(serde_json::Value::as_str)
-        .map(str::trim)
-        .map(str::to_ascii_lowercase)
-        .as_deref()
-    {
-        Some("terse") => "terse",
-        _ => "full",
-    }
+        .unwrap_or("full");
+    server_tools::ToolSchemaStyle::parse(value)
 }
 // END_tools_list_style
+
+// START_CONTRACT_schema_savings_pct
+// PURPOSE: Compute one-decimal percentage savings for tools/list schema economy metadata
+// INPUTS: { full_bytes: usize }, { visible_bytes: usize }
+// OUTPUTS: { f64 }
+// LINKS:
+//   -> NFR-003 (traces_to) - tools/list reports observable token-economy impact
+// START_schema_savings_pct
+fn schema_savings_pct(full_bytes: usize, visible_bytes: usize) -> f64 {
+    if full_bytes == 0 {
+        return 0.0;
+    }
+    let saved = full_bytes.saturating_sub(visible_bytes) as f64;
+    ((saved / full_bytes as f64) * 1000.0).round() / 10.0
+}
+// END_schema_savings_pct
 
 // START_CONTRACT_classify_mcp_response
 // PURPOSE: Convert one JSON-RPC response into MCP metrics status and error text
@@ -578,7 +591,10 @@ mod tests {
         let params = serde_json::json!({});
 
         assert_eq!(tools_list_profile(&params), server_tools::ToolProfile::All);
-        assert_eq!(tools_list_style(&params), "full");
+        assert_eq!(
+            tools_list_style(&params),
+            server_tools::ToolSchemaStyle::Full
+        );
     }
 
     #[test]
@@ -595,7 +611,10 @@ mod tests {
                 "verify_project".into()
             ])
         );
-        assert_eq!(tools_list_style(&params), "terse");
+        assert_eq!(
+            tools_list_style(&params),
+            server_tools::ToolSchemaStyle::Terse
+        );
     }
 
     #[tokio::test]
@@ -622,6 +641,17 @@ mod tests {
         assert_eq!(result["profile"], "minimal");
         assert_eq!(result["style"], "full");
         assert_eq!(result["total_visible"], 6);
+        assert_eq!(
+            result["schema_economy"]["savings_pct"],
+            schema_savings_pct(
+                result["schema_economy"]["full_bytes"]
+                    .as_u64()
+                    .expect("full bytes") as usize,
+                result["schema_economy"]["visible_bytes"]
+                    .as_u64()
+                    .expect("visible bytes") as usize,
+            )
+        );
         assert!(result["total_available"].as_u64().unwrap_or(0) > 6);
         assert_eq!(
             names,
@@ -634,6 +664,36 @@ mod tests {
                 "mental_test_run"
             ]
         );
+    }
+
+    #[tokio::test]
+    async fn test_tools_list_terse_style_removes_descriptions() {
+        let handler = SynapseHandler::new();
+        handler
+            .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
+            .await
+            .expect("initialize response");
+
+        let response = handler
+            .handle_message(
+                r#"{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"profile":"custom:semantic_search","style":"terse"}}"#,
+            )
+            .await
+            .expect("tools/list response");
+        let result = &response["result"];
+        let tool = &result["tools"][0];
+
+        assert_eq!(result["profile"], "custom");
+        assert_eq!(result["style"], "terse");
+        assert_eq!(result["total_visible"], 1);
+        assert!(tool.get("description").is_none());
+        assert!(tool["inputSchema"]["properties"]["query"]
+            .get("description")
+            .is_none());
+        assert_eq!(tool["inputSchema"]["required"][0], "query");
+        assert!(result["schema_economy"]["savings_pct"]
+            .as_f64()
+            .is_some_and(|pct| pct > 0.0));
     }
 }
 

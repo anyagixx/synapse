@@ -12,12 +12,18 @@
 // tool_definitions — Builds the tools/list payload
 // ToolProfile — Workflow-oriented MCP tool visibility profile
 // ToolProfile::parse — Parses profile arguments for tools/list
+// ToolSchemaStyle — MCP tools/list schema verbosity style
+// ToolSchemaStyle::parse — Parses tools/list style arguments
 // tool_profile_membership — Returns workflow profiles for one tool
 // tool_matches_profile — Checks whether a tool is visible for a requested profile
+// tool_definitions_for_profile — Builds profile-filtered tool definitions
+// apply_tool_schema_style — Applies full or terse schema style
+// terse_tool_definition — Removes description fields recursively
+// tool_definitions_json_bytes — Estimates serialized schema size
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.5.0 - Added workflow profile classification for MCP tool disclosure]
+// LAST_CHANGE: [v4.6.0 - Added terse tool schema transform and size accounting]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -65,6 +71,41 @@ impl ToolProfile {
         }
     }
     // END_tool_profile_parse
+}
+
+// START_ToolSchemaStyle
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ToolSchemaStyle {
+    Full,
+    Terse,
+}
+// END_ToolSchemaStyle
+
+impl ToolSchemaStyle {
+    // START_CONTRACT_ToolSchemaStyle::parse
+    // PURPOSE: Parse a tools/list style argument into a stable schema verbosity style
+    // INPUTS: { value: &str }
+    // OUTPUTS: { ToolSchemaStyle }
+    // START_tool_schema_style_parse
+    pub(crate) fn parse(value: &str) -> Self {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "terse" => Self::Terse,
+            _ => Self::Full,
+        }
+    }
+    // END_tool_schema_style_parse
+
+    // START_CONTRACT_ToolSchemaStyle::label
+    // PURPOSE: Return response metadata label for a tools/list schema style
+    // OUTPUTS: { &'static str }
+    // START_tool_schema_style_label
+    pub(crate) fn label(self) -> &'static str {
+        match self {
+            Self::Full => "full",
+            Self::Terse => "terse",
+        }
+    }
+    // END_tool_schema_style_label
 }
 
 // START_CONTRACT_tool_profile_membership
@@ -145,6 +186,102 @@ pub(crate) fn tool_matches_profile(tool_name: &str, profile: &ToolProfile) -> bo
     }
 }
 // END_tool_matches_profile
+
+// START_CONTRACT_tool_definitions_for_profile
+// PURPOSE: Build tool definitions visible under one disclosure profile
+// INPUTS: { profile: &ToolProfile }
+// OUTPUTS: { Vec<serde_json::Value> }
+// START_tool_definitions_for_profile
+pub(crate) fn tool_definitions_for_profile(profile: &ToolProfile) -> Vec<serde_json::Value> {
+    tool_definitions()
+        .into_iter()
+        .filter(|tool| {
+            tool["name"]
+                .as_str()
+                .is_some_and(|name| tool_matches_profile(name, profile))
+        })
+        .collect()
+}
+// END_tool_definitions_for_profile
+
+// START_CONTRACT_apply_tool_schema_style
+// PURPOSE: Apply full or terse schema style to already-selected tool definitions
+// INPUTS: { tools: Vec<serde_json::Value> }, { style: ToolSchemaStyle }
+// OUTPUTS: { Vec<serde_json::Value> }
+// START_apply_tool_schema_style
+pub(crate) fn apply_tool_schema_style(
+    tools: Vec<serde_json::Value>,
+    style: ToolSchemaStyle,
+) -> Vec<serde_json::Value> {
+    match style {
+        ToolSchemaStyle::Full => tools,
+        ToolSchemaStyle::Terse => tools.into_iter().map(terse_tool_definition).collect(),
+    }
+}
+// END_apply_tool_schema_style
+
+// START_CONTRACT_terse_tool_definition
+// PURPOSE: Remove human-facing schema prose from one tool definition while preserving callable argument shape
+// INPUTS: { tool: serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_terse_tool_definition
+pub(crate) fn terse_tool_definition(mut tool: serde_json::Value) -> serde_json::Value {
+    strip_description_fields(&mut tool);
+    if let Some(input_schema) = tool
+        .get_mut("inputSchema")
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        input_schema.remove("type");
+    }
+    tool
+}
+// END_terse_tool_definition
+
+// START_CONTRACT_strip_description_fields
+// PURPOSE: Recursively remove schema description keys without deleting parameters named description
+// INPUTS: { value: &mut serde_json::Value }
+// SIDE_EFFECTS: mutates value in place
+// START_strip_description_fields
+fn strip_description_fields(value: &mut serde_json::Value) {
+    strip_description_fields_in_context(value, false);
+}
+// END_strip_description_fields
+
+// START_CONTRACT_strip_description_fields_in_context
+// PURPOSE: Remove description metadata while preserving property maps that may contain a description argument
+// INPUTS: { value: &mut serde_json::Value }, { is_properties_map: bool }
+// SIDE_EFFECTS: mutates value in place
+// START_strip_description_fields_in_context
+fn strip_description_fields_in_context(value: &mut serde_json::Value, is_properties_map: bool) {
+    match value {
+        serde_json::Value::Object(object) => {
+            if !is_properties_map {
+                object.remove("description");
+            }
+            for (key, child) in object.iter_mut() {
+                let child_is_properties_map = !is_properties_map && key == "properties";
+                strip_description_fields_in_context(child, child_is_properties_map);
+            }
+        }
+        serde_json::Value::Array(items) => {
+            for item in items {
+                strip_description_fields_in_context(item, false);
+            }
+        }
+        _ => {}
+    }
+}
+// END_strip_description_fields_in_context
+
+// START_CONTRACT_tool_definitions_json_bytes
+// PURPOSE: Count compact JSON bytes for one tools/list payload subset
+// INPUTS: { tools: &[serde_json::Value] }
+// OUTPUTS: { usize }
+// START_tool_definitions_json_bytes
+pub(crate) fn tool_definitions_json_bytes(tools: &[serde_json::Value]) -> usize {
+    serde_json::to_vec(tools).map_or(0, |bytes| bytes.len())
+}
+// END_tool_definitions_json_bytes
 
 // START_CONTRACT_tool_definitions
 // PURPOSE: Build MCP tools/list definitions for built-in tools and registered grace_* skills
@@ -525,6 +662,41 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
+    // START_CONTRACT_contains_description_key
+    // PURPOSE: Detect description keys recursively in JSON values for terse schema tests
+    // INPUTS: { value: &serde_json::Value }
+    // OUTPUTS: { bool }
+    // START_contains_description_key
+    fn contains_description_key(value: &serde_json::Value) -> bool {
+        contains_description_key_in_context(value, false)
+    }
+    // END_contains_description_key
+
+    // START_CONTRACT_contains_description_key_in_context
+    // PURPOSE: Detect schema description metadata without flagging arguments named description
+    // INPUTS: { value: &serde_json::Value }, { is_properties_map: bool }
+    // OUTPUTS: { bool }
+    // START_contains_description_key_in_context
+    fn contains_description_key_in_context(
+        value: &serde_json::Value,
+        is_properties_map: bool,
+    ) -> bool {
+        match value {
+            serde_json::Value::Object(object) => {
+                (!is_properties_map && object.contains_key("description"))
+                    || object.iter().any(|(key, child)| {
+                        let child_is_properties_map = !is_properties_map && key == "properties";
+                        contains_description_key_in_context(child, child_is_properties_map)
+                    })
+            }
+            serde_json::Value::Array(items) => items
+                .iter()
+                .any(|item| contains_description_key_in_context(item, false)),
+            _ => false,
+        }
+    }
+    // END_contains_description_key_in_context
+
     // START_CONTRACT_test_tool_profile_parse_supports_workflow_aliases
     // PURPOSE: Verify tools/list profile aliases parse into stable workflow profiles
     // START_test_tool_profile_parse_supports_workflow_aliases
@@ -542,6 +714,19 @@ mod tests {
         );
     }
     // END_test_tool_profile_parse_supports_workflow_aliases
+
+    // START_CONTRACT_test_tool_schema_style_parse_supports_terse
+    // PURPOSE: Verify tools/list style parsing defaults to full and accepts terse
+    // START_test_tool_schema_style_parse_supports_terse
+    #[test]
+    fn test_tool_schema_style_parse_supports_terse() {
+        assert_eq!(ToolSchemaStyle::parse(""), ToolSchemaStyle::Full);
+        assert_eq!(ToolSchemaStyle::parse("full"), ToolSchemaStyle::Full);
+        assert_eq!(ToolSchemaStyle::parse(" TERSE "), ToolSchemaStyle::Terse);
+        assert_eq!(ToolSchemaStyle::Full.label(), "full");
+        assert_eq!(ToolSchemaStyle::Terse.label(), "terse");
+    }
+    // END_test_tool_schema_style_parse_supports_terse
 
     // START_CONTRACT_test_minimal_profile_matches_exactly_six_tools
     // PURPOSE: Verify the minimal disclosure profile exposes the six core tools planned by Phase-83
@@ -618,6 +803,110 @@ mod tests {
         assert!(unclassified.is_empty(), "{unclassified:?}");
     }
     // END_test_all_current_tools_have_profile_membership
+
+    // START_CONTRACT_test_terse_tool_definition_preserves_machine_schema
+    // PURPOSE: Verify terse schemas remove descriptions recursively while preserving JSON schema shape
+    // START_test_terse_tool_definition_preserves_machine_schema
+    #[test]
+    fn test_terse_tool_definition_preserves_machine_schema() {
+        let tool = serde_json::json!({
+            "name": "sample",
+            "description": "Human-facing text",
+            "inputSchema": {
+                "type": "object",
+                "description": "Schema text",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "description": "Mode text",
+                        "default": "fast",
+                        "enum": ["fast", "safe"]
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "description": "Nested item text",
+                            "properties": {
+                                "path": {
+                                    "type": "string",
+                                    "description": "Nested path text"
+                                }
+                            },
+                            "required": ["path"]
+                        }
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "A legitimate argument named description"
+                    }
+                },
+                "required": ["mode"]
+            }
+        });
+
+        let terse = terse_tool_definition(tool);
+
+        assert!(!contains_description_key(&terse));
+        assert_eq!(terse["name"], "sample");
+        assert!(terse["inputSchema"].get("type").is_none());
+        assert_eq!(terse["inputSchema"]["required"][0], "mode");
+        assert_eq!(
+            terse["inputSchema"]["properties"]["mode"]["default"],
+            "fast"
+        );
+        assert_eq!(
+            terse["inputSchema"]["properties"]["mode"]["enum"][1],
+            "safe"
+        );
+        assert_eq!(
+            terse["inputSchema"]["properties"]["items"]["items"]["properties"]["path"]["type"],
+            "string"
+        );
+        assert_eq!(
+            terse["inputSchema"]["properties"]["items"]["items"]["type"],
+            "object"
+        );
+        assert_eq!(
+            terse["inputSchema"]["properties"]["items"]["items"]["required"][0],
+            "path"
+        );
+        assert_eq!(
+            terse["inputSchema"]["properties"]["description"]["type"],
+            "string"
+        );
+    }
+    // END_test_terse_tool_definition_preserves_machine_schema
+
+    // START_CONTRACT_test_terse_tool_definitions_strip_all_current_descriptions
+    // PURPOSE: Verify terse style removes every description key from the current tool registry
+    // START_test_terse_tool_definitions_strip_all_current_descriptions
+    #[test]
+    fn test_terse_tool_definitions_strip_all_current_descriptions() {
+        let full_tools = tool_definitions_for_profile(&ToolProfile::All);
+        let terse_tools = apply_tool_schema_style(full_tools, ToolSchemaStyle::Terse);
+
+        assert!(!terse_tools.iter().any(contains_description_key));
+    }
+    // END_test_terse_tool_definitions_strip_all_current_descriptions
+
+    // START_CONTRACT_test_terse_tool_definitions_save_at_least_sixty_percent
+    // PURPOSE: Verify terse style reaches the Phase-83 schema economy target for the full registry
+    // START_test_terse_tool_definitions_save_at_least_sixty_percent
+    #[test]
+    fn test_terse_tool_definitions_save_at_least_sixty_percent() {
+        let full_tools = tool_definitions_for_profile(&ToolProfile::All);
+        let full_bytes = tool_definitions_json_bytes(&full_tools);
+        let terse_tools = apply_tool_schema_style(full_tools, ToolSchemaStyle::Terse);
+        let terse_bytes = tool_definitions_json_bytes(&terse_tools);
+        let saved_pct = (full_bytes.saturating_sub(terse_bytes) as f64 / full_bytes as f64) * 100.0;
+
+        assert!(
+            saved_pct >= 60.0,
+            "terse saved {saved_pct:.1}% ({full_bytes} -> {terse_bytes} bytes)"
+        );
+    }
+    // END_test_terse_tool_definitions_save_at_least_sixty_percent
 
     // START_CONTRACT_test_semantic_search_schema_exposes_filters
     // PURPOSE: Verify tools/list declares semantic_search language and path filters for MCP clients
