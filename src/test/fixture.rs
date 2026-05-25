@@ -19,7 +19,7 @@ use tempfile::TempDir;
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Implemented UPGRADE_3 fixture factory]
+// LAST_CHANGE: [v1.0.1 - Removed owned path allocation from broken fixture filtering]
 // END_CHANGE_SUMMARY
 
 // START_public_api
@@ -364,7 +364,7 @@ fn multi_module_files() -> Vec<FixtureFile> {
 // START_broken_files
 fn broken_files() -> Vec<FixtureFile> {
     let mut files = minimal_files();
-    files.retain(|file| file.path != PathBuf::from("docs/verification/V-M-CORE.xml"));
+    files.retain(|file| file.path != Path::new("docs/verification/V-M-CORE.xml"));
     files.push(FixtureFile::new(
         "docs/graph-index.xml",
         "<GRAPH_INDEX><META><MODEL>broken</MODEL>",
