@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-RUNNER-AGENT-CONTEXT" module="M-RUNNER-AGENT-CONTEXT" priority="critical" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test run::agent_context --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>latest_incomplete_run ignores terminal Completed, Failed, and Escalated runs.</ASSERTION>
+    <ASSERTION>build_agent_context includes next action, evidence refs, belief-state path, latest handoff, and compact summary.</ASSERTION>
+    <ASSERTION>AgentContext is serializable for JSON resume/status output.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-74</PHASE_GATE>
+</VERIFICATION>

@@ -5,6 +5,8 @@
     <COMMAND>cargo test run::actions::tests --lib</COMMAND>
     <COMMAND>cargo test run::phase --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test run::pre_commit --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test run::handoff --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test run::agent_context --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test run::actions::tests::test_pre_commit_blocks_final_completion --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test run::self_heal --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test run::scenario::tests --lib</COMMAND>
@@ -21,6 +23,8 @@
     <TEST>run action queue plans SelfHeal for blocked verification failures</TEST>
     <TEST>blocked run review approval persists and gates resume behavior</TEST>
     <TEST>run replay timeline includes review decisions and evidence</TEST>
+    <TEST>run handoff artifacts persist latest role-to-role context</TEST>
+    <TEST>agent context resumes latest incomplete run with belief and handoff refs</TEST>
     <TEST>autonomous E2E scenario completes happy path with evidence and replay</TEST>
     <TEST>autonomous E2E scenario blocks, records approval, resumes, and completes</TEST>
     <TEST>dashboard and grace_run_history expose persisted run state</TEST>
@@ -30,11 +34,12 @@
     <ASSERTION>Autonomous run state stores goal, phase, module, objective, status, gates, steps, and outcome fields</ASSERTION>
     <ASSERTION>Blocked runs require an approved human review before dashboard-driven resume can continue.</ASSERTION>
     <ASSERTION>Replay events preserve state, gate, step, review, outcome, and evidence references.</ASSERTION>
+    <ASSERTION>Latest handoff metadata and compact agent context are durable and reloadable for resumed work.</ASSERTION>
     <ASSERTION>Action queue exposes explicit plan, next action, bounded loop, retry, and replay controls for persisted runs.</ASSERTION>
     <ASSERTION>Action queue injects PreCommitVerify before final completion and blocks completion when required gates fail.</ASSERTION>
     <ASSERTION>Phase engine supports dry-run and applied advancement only after active phase gates pass.</ASSERTION>
     <ASSERTION>Action queue exposes SelfHeal as the next safe action for verification failures unless a diagnosis is already awaiting review.</ASSERTION>
     <ASSERTION>Scenario runs preserve bounded objective to gates, evidence, review, completion, and replay.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-23,Phase-70,Phase-73</PHASE_GATE>
+  <PHASE_GATE>Phase-23,Phase-70,Phase-73,Phase-74</PHASE_GATE>
 </VERIFICATION>

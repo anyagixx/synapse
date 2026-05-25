@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-75" status="planned">
+<PHASE id="Phase-75" status="active">
   <NAME>UPGRADE_2 Integration Hardening</NAME>
   <GOAL>Run full autonomy integration verification across self-heal, diagnosis, contract repair, impact analysis, phase progression, pre-commit, resume, and handoff.</GOAL>
   <SOURCE_PLAN>UPGRADE_2/README.md</SOURCE_PLAN>

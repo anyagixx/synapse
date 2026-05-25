@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CLI-AGENT-COMMANDS" type="ENTRY_POINT" status="active">
+  <NAME>M-CLI-AGENT-COMMANDS</NAME>
+  <PURPOSE>CLI agent resume/status commands backed by compact run agent context.</PURPOSE>
+  <SCOPE>AgentCmd dispatch, resume/status text rendering, JSON output, and run-id selection.</SCOPE>
+  <FILES>
+    <FILE>src/cli/agent_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-RUNNER,M-RUNNER-AGENT-CONTEXT</DEPENDS>
+  <LINKS>V-M-CLI-AGENT-COMMANDS,docs/phases/Phase-74.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_2/A3-wip-persistence.md</LINKS>
+  <VERIFICATION_REF>V-M-CLI-AGENT-COMMANDS</VERIFICATION_REF>
+</MODULE>

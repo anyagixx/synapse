@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-RUNNER-AGENT-CONTEXT" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Build a compact resume packet from persisted run state.
+    Key data flows:
+      - INPUT: optional run id, run store, action planner, belief-state shard, latest handoff.
+      - PROCESSING: Select latest non-terminal run, summarize next action, attach evidence and handoff refs.
+      - OUTPUT: serializable AgentContext for CLI and future MCP/agent consumers.
+    Critical invariants:
+      - Terminal runs are not selected for implicit resume.
+      - Context stays compact and evidence-linked.
+      - Missing belief state is optional, not fatal.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Reuse RunManager persistence and action planning, then add only compact references.
+    Complexity_areas: deterministic latest run selection, avoiding full artifact reads.
+    Patterns_applied: lazy belief-state reference, handoff-aware summary, serializable context model.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test run::agent_context --lib -- --test-threads=8 passes
+  RISKS_ACKNOWLEDGED:
+    - Resume output can become too verbose if future fields embed full artifact contents.
+</BELIEF_STATE>

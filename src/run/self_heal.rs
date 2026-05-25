@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER-SELF-HEAL
-// PURPOSE: Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, delegates safe contract repairs, and escalates when retry budget is exhausted
-// SCOPE: SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, verification execution, diagnosis capture, dry-run repair action capture, and bounded escalation
-// DEPENDS: M-RUNNER, M-GRACE, M-GRACE-CONTRACT-GENERATOR, M-GRACE-FIX, M-GRACE-VERIFY-TYPES
+// PURPOSE: Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, creates fixer handoffs, delegates safe contract repairs, and escalates when retry budget is exhausted
+// SCOPE: SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, verification execution, diagnosis capture, verifier-to-fixer handoff creation, dry-run repair action capture, and bounded escalation
+// DEPENDS: M-RUNNER, M-RUNNER-HANDOFF, M-GRACE, M-GRACE-CONTRACT-GENERATOR, M-GRACE-FIX, M-GRACE-VERIFY-TYPES
 // LINKS:
 //   -> M-RUNNER (depends) - persists self-heal state inside durable run records
 //   -> M-GRACE (depends) - runs profile-aware verification
@@ -19,12 +19,14 @@
 // RunManager::load_self_heal_plan - Reads self-heal metadata from a run record
 // RunManager::save_self_heal_plan - Persists self-heal metadata to a run record
 // RunManager::execute_self_heal - Runs one bounded verify/diagnose/escalate iteration
+// self-heal handoff - Creates verifier-to-fixer handoff when diagnoses remain unresolved
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Attached dry-run contract repair actions to self-heal diagnoses]
+// LAST_CHANGE: [v1.2.0 - Added verifier-to-fixer handoff creation]
 // END_CHANGE_SUMMARY
 
+use super::handoff::HandoffRole;
 use super::{write_provenance_event, RunManager, RunOutcome, RunOutcomeKind, RunRecord, RunStatus};
 use crate::grace::contract_generator::{ContractGenerator, ContractRepairResult};
 use crate::grace::verify::VerificationResult;
@@ -285,6 +287,15 @@ impl RunManager {
         record.metadata.remove(SELF_HEAL_REQUESTED_KEY);
         record.metadata.remove(SELF_HEAL_SUGGESTED_ACTION_KEY);
         self.save_self_heal_plan(&mut record, &plan)?;
+        self.create_handoff(
+            &record.run_id,
+            HandoffRole::Verifier,
+            HandoffRole::Fixer,
+            message.clone(),
+            vec!["self-heal://diagnosis".into()],
+            handoff_next_actions(&plan),
+        )?;
+        record = self.load(&record.run_id)?;
         write_provenance_event(
             &record.run_id,
             &record.module_id,
@@ -329,6 +340,37 @@ fn self_heal_budget(record: &RunRecord) -> u32 {
         .unwrap_or(3)
 }
 // END_self_heal_budget
+
+// START_CONTRACT_handoff_next_actions
+// PURPOSE: Build compact fixer next actions from the latest unresolved self-heal diagnoses.
+// INPUTS: { plan: &SelfHealPlan }
+// OUTPUTS: { Vec<String> }
+// START_handoff_next_actions
+fn handoff_next_actions(plan: &SelfHealPlan) -> Vec<String> {
+    let mut actions: Vec<String> = plan
+        .diagnoses
+        .iter()
+        .rev()
+        .filter(|diagnosis| !diagnosis.fix_applied)
+        .take(3)
+        .map(|diagnosis| {
+            format!(
+                "{}: {}",
+                diagnosis.failure_group,
+                diagnosis
+                    .failed_checks
+                    .first()
+                    .map(String::as_str)
+                    .unwrap_or("inspect failing check")
+            )
+        })
+        .collect();
+    if actions.is_empty() {
+        actions.push("inspect self-heal diagnosis and apply smallest safe fix".into());
+    }
+    actions
+}
+// END_handoff_next_actions
 
 // START_CONTRACT_failing_results
 // PURPOSE: Extract failed verification groups from a verification result list
@@ -504,6 +546,10 @@ mod tests {
         assert!(!first.escalated);
         assert_eq!(first.iteration, 1);
         assert_eq!(first.max_iterations, 1);
+        let handoff = manager.latest_handoff(&run_id).unwrap().unwrap();
+        assert_eq!(handoff.from_role, HandoffRole::Verifier);
+        assert_eq!(handoff.to_role, HandoffRole::Fixer);
+        assert!(!handoff.next_actions.is_empty());
 
         let second = manager.execute_self_heal(&run_id, "lite").unwrap();
         assert!(!second.complete);

@@ -1,10 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
-// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, phase gates, pre-commit gates, action queues, self-heal plans, scenarios, and outcomes for controlled execution
-// SCOPE: Run state model, task model, step model, gate model, review model, replay model, action queue executor, phase gate engine, pre-commit verification, self-heal metadata, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
-// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-GRACE-VERIFY, M-RUNNER-PHASE-ENGINE, M-RUNNER-PRECOMMIT, M-RUNNER-SELF-HEAL, M-TRACKING
+// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, handoffs, resumable context, phase gates, pre-commit gates, action queues, self-heal plans, scenarios, and outcomes for controlled execution
+// SCOPE: Run state model, task model, step model, gate model, review model, replay model, structured handoffs, agent context, action queue executor, phase gate engine, pre-commit verification, self-heal metadata, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
+// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-GRACE-VERIFY, M-RUNNER-HANDOFF, M-RUNNER-AGENT-CONTEXT, M-RUNNER-PHASE-ENGINE, M-RUNNER-PRECOMMIT, M-RUNNER-SELF-HEAL, M-TRACKING
 // LINKS:
-//   → M-SKILLS (depends) - future execution bridge
 //   → UC-002 (implements) - verify and review bounded autonomous changes
 //   → NFR-002 (traces_to) - runtime persistence must not panic on malformed local state
 //   → NFR-003 (traces_to) - durable bounded runs reduce context overhead for long agent work
@@ -23,10 +22,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.6.0 - Added phase gate and pre-commit verification modules]
+// LAST_CHANGE: [v0.7.0 - Added handoff and resumable agent context modules]
 // END_CHANGE_SUMMARY
 
 pub mod actions;
+pub mod agent_context;
+pub mod handoff;
 pub mod phase;
 pub mod pre_commit;
 mod replay;
@@ -44,7 +45,6 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 // START_public_api
-
 // START_RunStatus
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]

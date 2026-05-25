@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-RUNNER-AGENT-CONTEXT" type="RUNTIME" status="active">
+  <NAME>M-RUNNER-AGENT-CONTEXT</NAME>
+  <PURPOSE>Compact resumable agent context for long-running bounded work.</PURPOSE>
+  <SCOPE>AgentContext model, latest incomplete run discovery, action queue summary, belief-state reference, latest handoff inclusion, and resume/status builders.</SCOPE>
+  <FILES>
+    <FILE>src/run/agent_context.rs</FILE>
+  </FILES>
+  <DEPENDS>M-RUNNER,M-RUNNER-HANDOFF,M-GRACE-BELIEF-STATE</DEPENDS>
+  <LINKS>V-M-RUNNER-AGENT-CONTEXT,docs/phases/Phase-74.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_2/A3-wip-persistence.md</LINKS>
+  <VERIFICATION_REF>V-M-RUNNER-AGENT-CONTEXT</VERIFICATION_REF>
+</MODULE>

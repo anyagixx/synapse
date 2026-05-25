@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-RUNNER-HANDOFF" module="M-RUNNER-HANDOFF" priority="critical" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test run::handoff --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>AgentHandoff artifacts persist under docs/runs/handoffs/&lt;run_id&gt; with stable JSON schema.</ASSERTION>
+    <ASSERTION>Run metadata records latest_handoff_id and latest_handoff_path after handoff creation.</ASSERTION>
+    <ASSERTION>latest_handoff reloads the metadata-selected handoff and falls back to newest JSON artifact.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-74</PHASE_GATE>
+</VERIFICATION>

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, command dispatch, and command argument structs
-// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
-// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-CONFIG-COMMANDS, M-CLI-FILTER-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
+// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs, run scenario/action flags, agent resume/status flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
+// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-CONFIG-COMMANDS, M-CLI-FILTER-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-AGENT-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
@@ -10,6 +10,7 @@
 // Command — Enum of all supported CLI commands
 // RunCommand — Dispatch trait implemented by Command next to the CLI schema
 // *Cmd structs — Clap argument schemas for supported commands
+// AgentCmd — Agent resume/status command schema
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
 // PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
@@ -26,9 +27,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v6.0.0 — Added filters dry-run command schema]
+// LAST_CHANGE: [v6.1.0 — Added agent resume/status command schema]
 // END_CHANGE_SUMMARY
 
+mod agent_commands;
 mod code_commands;
 mod config_commands;
 mod filter_commands;
@@ -253,6 +255,8 @@ pub enum Command {
     Rewrite(RewriteCmd),
     #[command(about = "Process RTK-style agent hook JSON or dry-run hook rewrites")]
     Hook(HookCmd),
+    #[command(about = "Resume or inspect compact bounded-run agent context")]
+    Agent(AgentCmd),
     Run(RunCmd),
     Proxy(ProxyCmd),
     Filters(FiltersCmd),
@@ -530,6 +534,7 @@ impl RunCommand for Command {
             Command::RtkParity(cmd) => cmd.run(config).await,
             Command::Rewrite(cmd) => cmd.run(config).await,
             Command::Hook(cmd) => cmd.run(config).await,
+            Command::Agent(cmd) => cmd.run(config).await,
             Command::Run(cmd) => cmd.run(config).await,
             Command::Proxy(cmd) => cmd.run(config).await,
             Command::Filters(cmd) => cmd.run(config).await,
@@ -850,6 +855,33 @@ pub struct RtkParityCmd {
     pub full: bool,
 }
 // END_RtkParityCmd
+
+// START_AgentCmd
+#[derive(clap::Args)]
+#[command(about = "Resume or inspect compact bounded-run agent context")]
+pub struct AgentCmd {
+    #[command(subcommand)]
+    pub action: AgentAction,
+}
+// END_AgentCmd
+
+// START_AgentAction
+#[derive(Subcommand)]
+pub enum AgentAction {
+    Resume(AgentContextCmd),
+    Status(AgentContextCmd),
+}
+// END_AgentAction
+
+// START_AgentContextCmd
+#[derive(clap::Args)]
+pub struct AgentContextCmd {
+    #[arg(long = "run-id")]
+    pub run_id: Option<String>,
+    #[arg(long)]
+    pub json: bool,
+}
+// END_AgentContextCmd
 
 // START_RunCmd
 #[derive(clap::Args)]

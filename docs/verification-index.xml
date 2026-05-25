@@ -10,6 +10,7 @@
     <VERIFICATION id="V-M-CI-RELEASE-SMOKE" module="M-CI-RELEASE-SMOKE" path="docs/verification/V-M-CI-RELEASE-SMOKE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CI-RUNTIME-GUARD" module="M-CI-RUNTIME-GUARD" path="docs/verification/V-M-CI-RUNTIME-GUARD.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI" module="M-CLI" path="docs/verification/V-M-CLI.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CLI-AGENT-COMMANDS" module="M-CLI-AGENT-COMMANDS" path="docs/verification/V-M-CLI-AGENT-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-CODE-COMMANDS" module="M-CLI-CODE-COMMANDS" path="docs/verification/V-M-CLI-CODE-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-CONFIG-COMMANDS" module="M-CLI-CONFIG-COMMANDS" path="docs/verification/V-M-CLI-CONFIG-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-FILTER-COMMANDS" module="M-CLI-FILTER-COMMANDS" path="docs/verification/V-M-CLI-FILTER-COMMANDS.xml" priority="normal" status="active" />
@@ -91,6 +92,8 @@
     <VERIFICATION id="V-M-PROXY-ROUTER" module="M-PROXY-ROUTER" path="docs/verification/V-M-PROXY-ROUTER.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-PROXY-RUNNER" module="M-PROXY-RUNNER" path="docs/verification/V-M-PROXY-RUNNER.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-RUNNER" module="M-RUNNER" path="docs/verification/V-M-RUNNER.xml" priority="critical" status="active" />
+    <VERIFICATION id="V-M-RUNNER-AGENT-CONTEXT" module="M-RUNNER-AGENT-CONTEXT" path="docs/verification/V-M-RUNNER-AGENT-CONTEXT.xml" priority="critical" status="active" />
+    <VERIFICATION id="V-M-RUNNER-HANDOFF" module="M-RUNNER-HANDOFF" path="docs/verification/V-M-RUNNER-HANDOFF.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-RUNNER-PHASE-ENGINE" module="M-RUNNER-PHASE-ENGINE" path="docs/verification/V-M-RUNNER-PHASE-ENGINE.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-RUNNER-PRECOMMIT" module="M-RUNNER-PRECOMMIT" path="docs/verification/V-M-RUNNER-PRECOMMIT.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-RUNNER-SELF-HEAL" module="M-RUNNER-SELF-HEAL" path="docs/verification/V-M-RUNNER-SELF-HEAL.xml" priority="critical" status="active" />
