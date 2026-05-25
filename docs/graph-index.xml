@@ -202,6 +202,7 @@
     <REL source="M-CLI-TEST-COMMANDS" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-HARNESS" type="DEPENDS" />
     <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-E2E-RUNNER" type="DEPENDS" />
+    <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-MCP-REGRESSION" type="DEPENDS" />
     <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-SNAPSHOT" type="DEPENDS" />
     <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-COVERAGE-MATRIX" type="DEPENDS" />
     <REL source="M-CLI-TEST-COMMANDS" target="M-TEST-PERF-REGRESSION" type="DEPENDS" />

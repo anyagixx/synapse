@@ -10,6 +10,7 @@
     <TEST>syn test coverage --json emits machine-readable matrix output.</TEST>
     <TEST>syn test snapshot and syn test snapshot --json emit bounded snapshot reports.</TEST>
     <TEST>syn test e2e without --scenario keeps planned output while --scenario runs the E2E runner.</TEST>
+    <TEST>syn test mcp invokes cargo test --test e2e_mcp and emits bounded text or JSON reports.</TEST>
   </INTEGRATION_TESTS>
   <REQUIRED_LOG_MARKERS>
     <LOG>test_command_dispatch</LOG>
@@ -18,5 +19,5 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>CLI schema links to M-TEST-HARNESS and all UPGRADE_3 test modules.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-76,Phase-77</PHASE_GATE>
+  <PHASE_GATE>Phase-76,Phase-77,Phase-78</PHASE_GATE>
 </VERIFICATION>

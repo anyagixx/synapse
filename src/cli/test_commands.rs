@@ -2,10 +2,12 @@
 // MODULE_ID: M-CLI-TEST-COMMANDS
 // PURPOSE: Structured Synapse test command dispatcher with E2E/snapshot handlers and RTK legacy fallback.
 // SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, snapshot listing, and legacy RTK fallback dispatch.
-// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-SNAPSHOT
+// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-MCP-REGRESSION, M-TEST-SNAPSHOT
 // LINKS:
 //   -> Phase-76 (implements) - UPGRADE_3 test command foundation
+//   -> Phase-78 (implements) - MCP regression command wiring
 //   -> M-CLI-RTK-COMMANDS (depends) - legacy compact test adapter
+//   -> M-TEST-MCP-REGRESSION (depends) - real MCP stdio regression suite
 //   <- V-M-CLI-TEST-COMMANDS (verified_by) - command parsing and compatibility verification
 
 // START_MODULE_MAP
@@ -13,13 +15,14 @@
 // StructuredTestArgs - Shared structured test action options
 // TestCmd::run - Dispatches structured actions or delegates legacy commands to RTK fallback
 // run_e2e_action - Runs one or more E2E scenario TOML files
+// run_mcp_action - Runs the real MCP regression cargo target
 // run_snapshot_action - Lists or acknowledges snapshot check/update mode
 // render_structured_action - Emits compact text or machine-readable JSON planning output
 // normalize_legacy_command - Converts clap external subcommand args into executable command argv
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Wired syn test e2e and snapshot handlers]
+// LAST_CHANGE: [v1.2.0 - Wired syn test mcp to the MCP regression suite]
 // END_CHANGE_SUMMARY
 
 use super::TestCmd;
@@ -29,6 +32,10 @@ use serde::Serialize;
 use serde_json::json;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
+use std::process::Command as ProcessCommand;
+
+const MCP_OUTPUT_TAIL_LINES: usize = 40;
+const MCP_OUTPUT_CHAR_LIMIT: usize = 6000;
 
 // START_public_api
 
@@ -88,8 +95,10 @@ impl TestCmd {
     //   -> M-CLI-TEST-COMMANDS (depends) - structured test command schema
     //   -> M-CLI-RTK-COMMANDS (depends) - legacy test command fallback
     //   -> M-TEST-E2E-RUNNER (depends) - E2E scenario execution
+    //   -> M-TEST-MCP-REGRESSION (depends) - MCP regression command surface
     //   -> M-TEST-SNAPSHOT (depends) - snapshot command surface
     //   -> Phase-77 (implements) - E2E and snapshot handler wiring
+    //   -> Phase-78 (implements) - MCP regression handler wiring
     //   -> NFR-002 (traces_to) - release verification commands must route deterministically
     //   <- V-M-CLI-TEST-COMMANDS (verified_by) - parse and dispatch tests
     // <LOG id="test_command_dispatch" level="INFO" ref="test-command-dispatch" module="M-CLI-TEST-COMMANDS" contract="TestCmd::run">
@@ -114,6 +123,7 @@ impl TestCmd {
 
         match action {
             TestAction::E2e(args) => run_e2e_action(args),
+            TestAction::Mcp(args) => run_mcp_action(args),
             TestAction::Snapshot(args) => run_snapshot_action(args),
             _ => {
                 println!("{}", render_structured_action(action)?);
@@ -189,7 +199,8 @@ impl TestActionKind {
     // START_test_action_kind_phase_id
     fn phase_id(self) -> &'static str {
         match self {
-            Self::E2e | Self::Mcp | Self::Snapshot => "Phase-77",
+            Self::E2e | Self::Snapshot => "Phase-77",
+            Self::Mcp => "Phase-78",
             Self::Coverage => "Phase-79",
             Self::Perf => "Phase-80",
             Self::Contract => "Phase-81",
@@ -253,6 +264,20 @@ struct E2ECliReport {
 }
 // END_E2ECliReport
 
+// START_McpCliReport
+#[derive(Debug, Serialize)]
+struct McpCliReport {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    passed: bool,
+    project: String,
+    command: Vec<String>,
+    status_code: Option<i32>,
+    stdout_tail: String,
+    stderr_tail: String,
+}
+// END_McpCliReport
+
 // START_SnapshotCliReport
 #[derive(Debug, Serialize)]
 struct SnapshotCliReport {
@@ -315,6 +340,48 @@ fn run_e2e_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
     Ok(())
 }
 // END_run_e2e_action
+
+// START_CONTRACT_run_mcp_action
+// PURPOSE: Run the structured syn test mcp regression target through cargo
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: executes cargo test --test e2e_mcp in the requested project, writes bounded stdout
+// LINKS:
+//   -> M-TEST-MCP-REGRESSION (depends) - real stdio MCP regression suite
+//   -> M-CLI-TEST-COMMANDS (depends) - CLI handler wiring
+//   -> Phase-78 (implements) - syn test mcp handler
+//   -> NFR-002 (traces_to) - MCP regression suite must be invokable from CLI
+// START_run_mcp_action
+fn run_mcp_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
+    let project = args.project.clone();
+    let cargo_args = build_mcp_cargo_args(args);
+    let output = ProcessCommand::new("cargo")
+        .args(&cargo_args)
+        .current_dir(&project)
+        .output()?;
+    let report = McpCliReport {
+        kind: "synapse.test.mcp",
+        passed: output.status.success(),
+        project: project.display().to_string(),
+        command: std::iter::once("cargo".to_string())
+            .chain(cargo_args.iter().cloned())
+            .collect(),
+        status_code: output.status.code(),
+        stdout_tail: compact_command_output(&output.stdout),
+        stderr_tail: compact_command_output(&output.stderr),
+    };
+
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+    } else {
+        println!("{}", render_mcp_report(&report));
+    }
+    if !report.passed {
+        anyhow::bail!("MCP regression suite failed");
+    }
+    Ok(())
+}
+// END_run_mcp_action
 
 // START_CONTRACT_run_snapshot_action
 // PURPOSE: Run structured syn test snapshot listing/check/update command surface
@@ -385,6 +452,67 @@ fn render_e2e_report(report: &E2ECliReport) -> String {
 }
 // END_render_e2e_report
 
+// START_CONTRACT_build_mcp_cargo_args
+// PURPOSE: Build the cargo argv for syn test mcp from shared structured options
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { Vec<String> }
+// LINKS:
+//   -> M-TEST-MCP-REGRESSION (depends) - e2e_mcp cargo target
+//   -> NFR-002 (traces_to) - command construction must be deterministic and testable
+// START_build_mcp_cargo_args
+fn build_mcp_cargo_args(args: &StructuredTestArgs) -> Vec<String> {
+    let mut cargo_args = vec![
+        "test".to_string(),
+        "--quiet".to_string(),
+        "--test".to_string(),
+        "e2e_mcp".to_string(),
+    ];
+    if let Some(filter) = args.filter.as_ref().filter(|value| !value.is_empty()) {
+        cargo_args.push(filter.clone());
+    }
+
+    let mut harness_args = Vec::new();
+    if args.list {
+        harness_args.push("--list".to_string());
+    }
+    harness_args.extend(args.passthrough.iter().cloned());
+    if !harness_args.is_empty() {
+        cargo_args.push("--".to_string());
+        cargo_args.extend(harness_args);
+    }
+    cargo_args
+}
+// END_build_mcp_cargo_args
+
+// START_CONTRACT_render_mcp_report
+// PURPOSE: Render compact text output for the MCP regression CLI runner
+// INPUTS: { report: &McpCliReport }
+// OUTPUTS: { String }
+// LINKS:
+//   -> M-TEST-MCP-REGRESSION (depends) - regression result summary
+//   -> NFR-003 (traces_to) - bounded MCP CLI output
+// START_render_mcp_report
+fn render_mcp_report(report: &McpCliReport) -> String {
+    let mut lines = vec![
+        format!(
+            "MCP regression: {}",
+            if report.passed { "passed" } else { "failed" }
+        ),
+        format!("project: {}", report.project),
+        format!("command: {}", report.command.join(" ")),
+    ];
+    if !report.stdout_tail.is_empty() {
+        lines.push("stdout:".to_string());
+        lines.push(report.stdout_tail.clone());
+    }
+    if !report.stderr_tail.is_empty() {
+        lines.push("stderr:".to_string());
+        lines.push(report.stderr_tail.clone());
+    }
+    lines.join("\n")
+}
+// END_render_mcp_report
+
 // START_CONTRACT_render_snapshot_report
 // PURPOSE: Render compact text output for snapshot CLI mode
 // INPUTS: { report: &SnapshotCliReport }
@@ -443,6 +571,26 @@ fn collect_snapshot_files(
     Ok(snapshots)
 }
 // END_collect_snapshot_files
+
+// START_CONTRACT_compact_command_output
+// PURPOSE: Return a bounded UTF-8 tail from command output bytes
+// INPUTS: { bytes: &[u8] }
+// OUTPUTS: { String }
+// LINKS:
+//   -> NFR-003 (traces_to) - CLI test runner output must stay token-bounded
+// START_compact_command_output
+fn compact_command_output(bytes: &[u8]) -> String {
+    let text = String::from_utf8_lossy(bytes);
+    let mut lines = text
+        .lines()
+        .rev()
+        .take(MCP_OUTPUT_TAIL_LINES)
+        .collect::<Vec<_>>();
+    lines.reverse();
+    let tail = lines.join("\n");
+    crate::utils::truncate_chars(&tail, MCP_OUTPUT_CHAR_LIMIT)
+}
+// END_compact_command_output
 
 // START_CONTRACT_resolve_project_path
 // PURPOSE: Resolve a possibly relative CLI path against --project
@@ -635,6 +783,73 @@ mod tests {
         assert_eq!(value["type"], "synapse.test.action");
         assert_eq!(value["matrix"][0]["action"], "coverage");
         assert_eq!(value["matrix"][0]["module"], "M-TEST-COVERAGE-MATRIX");
+    }
+
+    #[test]
+    fn cli_test_mcp_action_points_to_phase_78() {
+        let action = parse_test_action(&["syn", "test", "mcp", "--json"]);
+        let rendered = render_structured_action(&action).expect("mcp JSON should render");
+        let value: serde_json::Value =
+            serde_json::from_str(&rendered).expect("mcp output should be JSON");
+
+        assert_eq!(value["matrix"][0]["action"], "mcp");
+        assert_eq!(value["matrix"][0]["module"], "M-TEST-MCP-REGRESSION");
+        assert_eq!(value["matrix"][0]["phase"], "Phase-78");
+    }
+
+    #[test]
+    fn cli_test_mcp_cargo_args_include_filter_list_and_passthrough() {
+        let action = parse_test_action(&[
+            "syn",
+            "test",
+            "mcp",
+            "--filter",
+            "malformed",
+            "--list",
+            "--",
+            "--nocapture",
+        ]);
+        let TestAction::Mcp(args) = action else {
+            panic!("expected mcp action");
+        };
+
+        assert_eq!(
+            build_mcp_cargo_args(&args),
+            [
+                "test",
+                "--quiet",
+                "--test",
+                "e2e_mcp",
+                "malformed",
+                "--",
+                "--list",
+                "--nocapture"
+            ]
+        );
+    }
+
+    #[test]
+    fn cli_test_mcp_report_renders_bounded_summary() {
+        let report = McpCliReport {
+            kind: "synapse.test.mcp",
+            passed: true,
+            project: ".".into(),
+            command: vec![
+                "cargo".into(),
+                "test".into(),
+                "--test".into(),
+                "e2e_mcp".into(),
+            ],
+            status_code: Some(0),
+            stdout_tail: "7 passed".into(),
+            stderr_tail: String::new(),
+        };
+
+        let rendered = render_mcp_report(&report);
+
+        assert!(rendered.contains("MCP regression: passed"));
+        assert!(rendered.contains("cargo test --test e2e_mcp"));
+        assert!(rendered.contains("7 passed"));
     }
 
     #[test]
