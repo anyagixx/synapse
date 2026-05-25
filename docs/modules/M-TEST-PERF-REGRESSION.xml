@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MODULE id="M-TEST-PERF-REGRESSION" type="UTILITY" status="pending">
+<MODULE id="M-TEST-PERF-REGRESSION" type="UTILITY" status="active">
   <NAME>M-TEST-PERF-REGRESSION</NAME>
   <PURPOSE>Detect performance regressions by comparing current benchmark medians with platform-aware JSON baselines.</PURPOSE>
   <SCOPE>Index, cold search, warm search, verify, graphrag benchmarks, warmup, threshold comparison, baseline save, and non-flaky CI mode.</SCOPE>
