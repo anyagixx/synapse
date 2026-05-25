@@ -1,12 +1,15 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
 // PURPOSE: MCP handlers for code search, GraphRAG typed queries, impact analysis, signature views, and guarded LSP lookups
-// SCOPE: semantic_search with optional language/path filters, graphrag_query with indexed GraphRAG cache key validation, impact analysis, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover/lsp_references handlers with optional content override
+// SCOPE: semantic_search with optional language/path filters and response economy, graphrag_query with indexed GraphRAG cache key validation, impact analysis, Mermaid output, type filters, and response economy, GraphRAG lock health, view_signatures response economy, config-aware lsp_hover/lsp_references handlers with optional content override and response economy
 // DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-GRAPHRAG-IMPACT, M-GRAPHRAG-MERMAID, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
 // handle_search — Runs indexed semantic search with optional filters and formats MCP text content
+// apply_text_response_economy — Applies max_tokens/style metadata to MCP text responses
+// apply_text_response_economy_with_options — Applies already parsed response economy options
+// terse_text_preview — Builds a compact line-oriented text preview
 // search_filters_from_args — Builds validated SearchFilters from MCP arguments
 // handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship/impact/Mermaid operations
 // parse_mermaid_options_arg — Builds Mermaid render options from GraphRAG MCP arguments
@@ -19,11 +22,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.1.0 — Added GraphRAG impact analysis MCP operation]
+// LAST_CHANGE: [v4.2.0 — Added response economy to code MCP tools]
 // END_CHANGE_SUMMARY
 
 use super::server::GraphCacheKey;
-use super::server_response::{error, result};
+use super::server_response::{
+    error, result, trim_text_to_budget, ResponseStyle, ResponseTrimOptions,
+};
 use crate::config::Config;
 use crate::grace::contract::LinkType;
 use crate::graphrag::{render_mermaid, GraphRag, MermaidGraphSubset, MermaidRenderOptions};
@@ -32,6 +37,86 @@ use crate::indexer::Indexer;
 use std::sync::{RwLock, RwLockReadGuard};
 
 // START_public_api
+
+// START_CONTRACT_apply_text_response_economy
+// PURPOSE: Apply max_tokens/style response economy to an MCP JSON-RPC text response
+// INPUTS: { response: serde_json::Value }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_apply_text_response_economy
+fn apply_text_response_economy(
+    response: serde_json::Value,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let options = ResponseTrimOptions::from_args(args);
+    apply_text_response_economy_with_options(response, options)
+}
+// END_apply_text_response_economy
+
+// START_CONTRACT_apply_text_response_economy_with_options
+// PURPOSE: Add response economy metadata and trim content text using already parsed options
+// INPUTS: { response: serde_json::Value }, { options: ResponseTrimOptions }
+// OUTPUTS: { serde_json::Value }
+// START_apply_text_response_economy_with_options
+fn apply_text_response_economy_with_options(
+    mut response: serde_json::Value,
+    options: ResponseTrimOptions,
+) -> serde_json::Value {
+    if response.get("error").is_some() {
+        return response;
+    }
+    let Some(text) = response["result"]["content"][0]["text"]
+        .as_str()
+        .map(ToOwned::to_owned)
+    else {
+        return response;
+    };
+
+    let styled_text = match options.style {
+        ResponseStyle::Full => text,
+        ResponseStyle::Terse => terse_text_preview(&text),
+    };
+    let trimmed = trim_text_to_budget(&styled_text, options.max_tokens);
+    response["result"]["content"][0]["text"] = serde_json::json!(trimmed.text);
+    response["result"]["style"] = serde_json::json!(options.style.label());
+    response["result"]["was_trimmed"] = serde_json::json!(trimmed.metadata.was_trimmed);
+    response["result"]["tokens"] = trimmed.metadata.to_json();
+    response
+}
+// END_apply_text_response_economy_with_options
+
+// START_CONTRACT_terse_text_preview
+// PURPOSE: Build a compact line-oriented preview for terse response style
+// INPUTS: { text: &str }
+// OUTPUTS: { String }
+// START_terse_text_preview
+fn terse_text_preview(text: &str) -> String {
+    const TERSE_LINES: usize = 8;
+    const TERSE_LINE_CHARS: usize = 120;
+    let lines = text
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>();
+    if lines.len() <= TERSE_LINES {
+        return lines
+            .iter()
+            .map(|line| crate::utils::truncate_chars(line, TERSE_LINE_CHARS))
+            .collect::<Vec<_>>()
+            .join("\n");
+    }
+
+    let mut compact = lines
+        .iter()
+        .take(TERSE_LINES)
+        .map(|line| crate::utils::truncate_chars(line, TERSE_LINE_CHARS))
+        .collect::<Vec<_>>();
+    compact.push(format!(
+        "[terse: {} more lines hidden]",
+        lines.len() - TERSE_LINES
+    ));
+    compact.join("\n")
+}
+// END_terse_text_preview
 
 // START_CONTRACT_handle_search
 // PURPOSE: Execute semantic_search and return formatted code block matches
@@ -45,6 +130,7 @@ pub(crate) async fn handle_search(
 ) -> serde_json::Value {
     let query = args["query"].as_str().unwrap_or("");
     let max = args["max_results"].as_u64().unwrap_or(10) as usize;
+    let response_options = ResponseTrimOptions::from_args(args);
     let filters = match search_filters_from_args(args) {
         Ok(filters) => filters,
         Err(message) => return error(id, -32602, message),
@@ -59,6 +145,16 @@ pub(crate) async fn handle_search(
                     .iter()
                     .enumerate()
                     .map(|(i, r)| {
+                        if response_options.style.is_terse() {
+                            return format!(
+                                "{}. {}:{}-{} ({})",
+                                i + 1,
+                                r.path,
+                                r.start_line,
+                                r.end_line,
+                                r.language
+                            );
+                        }
                         let preview = crate::utils::truncate_chars(&r.content, 150);
                         format!(
                             "{}. {} ({}:{}-{})\n   {}\n   reason: {}",
@@ -74,12 +170,15 @@ pub(crate) async fn handle_search(
                     .collect::<Vec<_>>()
                     .join("\n\n")
             };
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
+            apply_text_response_economy_with_options(
+                result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                ),
+                response_options,
             )
         }
         Err(e) => error(id, -32603, format!("Search error: {}", e)),
@@ -139,7 +238,7 @@ pub(crate) fn handle_graphrag(
         None => return error(id, -32603, "GraphRAG not built. Run `syn index` first."),
     };
 
-    match operation {
+    let response = match operation {
         "overview" => match graphrag.overview() {
             Some(ov) => result(
                 id,
@@ -254,12 +353,15 @@ pub(crate) fn handle_graphrag(
                         .collect::<Vec<_>>()
                         .join("\n")
                 };
-                return result(
-                    id,
-                    serde_json::json!({
-                        "content": [{"type": "text", "text": text}],
-                        "isError": false
-                    }),
+                return apply_text_response_economy(
+                    result(
+                        id,
+                        serde_json::json!({
+                            "content": [{"type": "text", "text": text}],
+                            "isError": false
+                        }),
+                    ),
+                    args,
                 );
             }
             let rels = graphrag.get_relationships(node_id);
@@ -439,7 +541,8 @@ pub(crate) fn handle_graphrag(
             -32601,
             format!("Unknown graphrag operation: {}", operation),
         ),
-    }
+    };
+    apply_text_response_economy(response, args)
 }
 // END_handle_graphrag
 
@@ -667,12 +770,15 @@ pub(crate) async fn handle_view_signatures(
             } else {
                 sigs.join("\n")
             };
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
+            apply_text_response_economy(
+                result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                ),
+                args,
             )
         }
         Err(e) => error(id, -32603, format!("Error: {}", e)),
@@ -698,12 +804,15 @@ pub(crate) async fn handle_lsp_hover(
     let col = args["column"].as_u64().unwrap_or(0) as u32;
     let content = args["content"].as_str();
     match crate::mcp::lsp::LspClient::new(config).hover_with_content(file, line, col, content) {
-        Ok(h) => result(
-            id,
-            serde_json::json!({
-                "content": [{"type": "text", "text": h.contents}],
-                "isError": false
-            }),
+        Ok(h) => apply_text_response_economy(
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": h.contents}],
+                    "isError": false
+                }),
+            ),
+            args,
         ),
         Err(e) => error(id, -32603, format!("LSP hover: {}", e)),
     }
@@ -738,12 +847,15 @@ pub(crate) async fn handle_lsp_references(
                     .collect::<Vec<_>>()
                     .join("\n")
             };
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
+            apply_text_response_economy(
+                result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": text}],
+                        "isError": false
+                    }),
+                ),
+                args,
             )
         }
         Err(e) => error(id, -32603, format!("LSP references: {}", e)),
@@ -795,6 +907,90 @@ mod tests {
         );
     }
     // END_test_semantic_search_accepts_filters
+
+    // START_CONTRACT_test_semantic_search_max_tokens_trims_response
+    // PURPOSE: Verify semantic_search enforces max_tokens and reports trim metadata
+    // START_test_semantic_search_max_tokens_trims_response
+    #[tokio::test]
+    async fn test_semantic_search_max_tokens_trims_response() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        for index in 0..12 {
+            std::fs::write(
+                src.join(format!("workflow_{index}.rs")),
+                format!(
+                    "pub fn shared_login_{index}() {{ println!(\"shared login workflow {index} with many searchable tokens\"); }}\n"
+                ),
+            )
+            .expect("write source");
+        }
+
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        let response = handle_search(
+            &indexer,
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "query": "shared_login",
+                "max_results": 12,
+                "max_tokens": 40
+            }),
+        )
+        .await;
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("response text");
+
+        assert_eq!(response["result"]["style"], "full");
+        assert_eq!(response["result"]["was_trimmed"], true);
+        assert!(
+            response["result"]["tokens"]["original"]
+                .as_u64()
+                .unwrap_or(0)
+                > 40
+        );
+        assert!(response["result"]["tokens"]["saved"].as_u64().unwrap_or(0) > 0);
+        assert!(text.contains("Response trimmed") || text.contains("Large response"));
+    }
+    // END_test_semantic_search_max_tokens_trims_response
+
+    // START_CONTRACT_test_semantic_search_terse_style_omits_snippets
+    // PURPOSE: Verify semantic_search terse style returns compact result lines without snippets or reasons
+    // START_test_semantic_search_terse_style_omits_snippets
+    #[tokio::test]
+    async fn test_semantic_search_terse_style_omits_snippets() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(
+            src.join("workflow.rs"),
+            "pub fn shared_login() { println!(\"shared login workflow\"); }\n",
+        )
+        .expect("write source");
+
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        let response = handle_search(
+            &indexer,
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "query": "shared_login",
+                "max_results": 3,
+                "style": "terse"
+            }),
+        )
+        .await;
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("response text");
+
+        assert_eq!(response["result"]["style"], "terse");
+        assert!(text.contains("src/workflow.rs"), "unexpected text: {text}");
+        assert!(!text.contains("reason:"), "unexpected text: {text}");
+        assert!(!text.contains("println!"), "unexpected text: {text}");
+    }
+    // END_test_semantic_search_terse_style_omits_snippets
 
     // START_CONTRACT_test_semantic_search_rejects_invalid_filter_type
     // PURPOSE: Verify semantic_search reports invalid params for non-string filter values

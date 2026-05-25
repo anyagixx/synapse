@@ -3,6 +3,8 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_semantic_search_accepts_filters --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_code_tools::tests::test_semantic_search_max_tokens_trims_response --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_code_tools::tests::test_semantic_search_terse_style_omits_snippets --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_semantic_search_rejects_invalid_filter_type --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_graphrag_query_impact --lib -- --test-threads=8</COMMAND>
@@ -20,6 +22,9 @@
     <ASSERTION>semantic_search accepts language/path filters and rejects incompatible filter argument types.</ASSERTION>
     <ASSERTION>lsp_hover and lsp_references handlers construct LspClient with the active runtime Config.</ASSERTION>
     <ASSERTION>lsp_hover and lsp_references pass optional content overrides to M-MCP-LSP so didOpen can use current unsaved buffer text.</ASSERTION>
+    <ASSERTION>semantic_search max_tokens trims content and reports was_trimmed plus token metadata.</ASSERTION>
+    <ASSERTION>semantic_search style=terse returns compact lines without snippets or reasons.</ASSERTION>
+    <ASSERTION>graphrag_query, view_signatures, lsp_hover, and lsp_references responses pass through shared response economy metadata.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-62,Phase-65,Phase-68,Phase-72</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-62,Phase-65,Phase-68,Phase-72,Phase-84</PHASE_GATE>
 </VERIFICATION>
