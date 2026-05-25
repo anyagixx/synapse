@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-79" status="active">
+<PHASE id="Phase-79" status="done">
   <NAME>UPGRADE_3 Coverage Matrix And Contract Differential</NAME>
   <GOAL>Expose test coverage visibility and cascade differential assertions as first-class Synapse test commands.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/E5-coverage-matrix.md,/home/truffle/Загрузки/synapse-main/UPGRADE_3/E7-contract-differential.md</SOURCE_PLAN>
@@ -18,10 +18,10 @@
     <step-3 module="M-CLI-TEST-COMMANDS" status="done">Wire syn test coverage and syn test contract CLI handlers.</step-3>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test --all-targets coverage</CHECK>
-    <CHECK status="planned">cargo test --all-targets contract_test</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test coverage --json</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test contract tests/e2e/contract-tests/module-change.toml</CHECK>
+    <CHECK status="passed">cargo test --all-targets coverage</CHECK>
+    <CHECK status="passed">cargo test --all-targets contract_test</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test coverage --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test contract tests/e2e/contract-tests/module-change.toml</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-79-1">Coverage matrix must not scan all shard files before reading indexes.</RISK>
