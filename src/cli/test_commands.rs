@@ -1,13 +1,16 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-TEST-COMMANDS
-// PURPOSE: Structured Synapse test command dispatcher with E2E/snapshot handlers and RTK legacy fallback.
-// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, snapshot listing, and legacy RTK fallback dispatch.
-// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-MCP-REGRESSION, M-TEST-SNAPSHOT
+// PURPOSE: Structured Synapse test command dispatcher with E2E/MCP/coverage/contract/snapshot handlers and RTK legacy fallback.
+// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, MCP cargo target execution, coverage matrix rendering, contract differential spec execution, snapshot listing, and legacy RTK fallback dispatch.
+// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-MCP-REGRESSION, M-TEST-COVERAGE-MATRIX, M-TEST-CONTRACT-DIFFERENTIAL, M-TEST-SNAPSHOT
 // LINKS:
 //   -> Phase-76 (implements) - UPGRADE_3 test command foundation
 //   -> Phase-78 (implements) - MCP regression command wiring
+//   -> Phase-79 (implements) - coverage and contract command wiring
 //   -> M-CLI-RTK-COMMANDS (depends) - legacy compact test adapter
 //   -> M-TEST-MCP-REGRESSION (depends) - real MCP stdio regression suite
+//   -> M-TEST-COVERAGE-MATRIX (depends) - coverage matrix command surface
+//   -> M-TEST-CONTRACT-DIFFERENTIAL (depends) - contract differential command surface
 //   <- V-M-CLI-TEST-COMMANDS (verified_by) - command parsing and compatibility verification
 
 // START_MODULE_MAP
@@ -16,17 +19,23 @@
 // TestCmd::run - Dispatches structured actions or delegates legacy commands to RTK fallback
 // run_e2e_action - Runs one or more E2E scenario TOML files
 // run_mcp_action - Runs the real MCP regression cargo target
+// run_coverage_action - Builds and renders the module evidence coverage matrix
+// run_contract_action - Runs one or more contract differential TOML specs
 // run_snapshot_action - Lists or acknowledges snapshot check/update mode
 // render_structured_action - Emits compact text or machine-readable JSON planning output
 // normalize_legacy_command - Converts clap external subcommand args into executable command argv
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 - Wired syn test mcp to the MCP regression suite]
+// LAST_CHANGE: [v1.3.0 - Wired syn test coverage and contract handlers]
 // END_CHANGE_SUMMARY
 
 use super::TestCmd;
 use crate::config::Config;
+use crate::test::contract_test::{
+    render_contract_test_report, run_contract_test_file, ContractTestOptions, ContractTestReport,
+};
+use crate::test::coverage::{build_coverage_matrix, render_coverage_json, render_coverage_table};
 use crate::test::e2e::{run_e2e_scenario, E2EResult};
 use serde::Serialize;
 use serde_json::json;
@@ -80,6 +89,8 @@ pub struct StructuredTestArgs {
     pub filter: Option<String>,
     #[arg(long, default_value = "tests/snapshots")]
     pub snapshot_dir: PathBuf,
+    #[arg(value_name = "SPEC")]
+    pub specs: Vec<PathBuf>,
     #[arg(last = true)]
     pub passthrough: Vec<String>,
 }
@@ -96,9 +107,12 @@ impl TestCmd {
     //   -> M-CLI-RTK-COMMANDS (depends) - legacy test command fallback
     //   -> M-TEST-E2E-RUNNER (depends) - E2E scenario execution
     //   -> M-TEST-MCP-REGRESSION (depends) - MCP regression command surface
+    //   -> M-TEST-COVERAGE-MATRIX (depends) - coverage matrix command surface
+    //   -> M-TEST-CONTRACT-DIFFERENTIAL (depends) - contract differential command surface
     //   -> M-TEST-SNAPSHOT (depends) - snapshot command surface
     //   -> Phase-77 (implements) - E2E and snapshot handler wiring
     //   -> Phase-78 (implements) - MCP regression handler wiring
+    //   -> Phase-79 (implements) - coverage and contract handler wiring
     //   -> NFR-002 (traces_to) - release verification commands must route deterministically
     //   <- V-M-CLI-TEST-COMMANDS (verified_by) - parse and dispatch tests
     // <LOG id="test_command_dispatch" level="INFO" ref="test-command-dispatch" module="M-CLI-TEST-COMMANDS" contract="TestCmd::run">
@@ -125,6 +139,8 @@ impl TestCmd {
             TestAction::E2e(args) => run_e2e_action(args),
             TestAction::Mcp(args) => run_mcp_action(args),
             TestAction::Snapshot(args) => run_snapshot_action(args),
+            TestAction::Coverage(args) => run_coverage_action(args),
+            TestAction::Contract(args) => run_contract_action(args),
             _ => {
                 println!("{}", render_structured_action(action)?);
                 Ok(())
@@ -201,9 +217,8 @@ impl TestActionKind {
         match self {
             Self::E2e | Self::Snapshot => "Phase-77",
             Self::Mcp => "Phase-78",
-            Self::Coverage => "Phase-79",
+            Self::Coverage | Self::Contract => "Phase-79",
             Self::Perf => "Phase-80",
-            Self::Contract => "Phase-81",
             Self::Resilience => "Phase-82",
         }
     }
@@ -277,6 +292,16 @@ struct McpCliReport {
     stderr_tail: String,
 }
 // END_McpCliReport
+
+// START_ContractCliReport
+#[derive(Debug, Serialize)]
+struct ContractCliReport {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    passed: bool,
+    reports: Vec<ContractTestReport>,
+}
+// END_ContractCliReport
 
 // START_SnapshotCliReport
 #[derive(Debug, Serialize)]
@@ -382,6 +407,77 @@ fn run_mcp_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
     Ok(())
 }
 // END_run_mcp_action
+
+// START_CONTRACT_run_coverage_action
+// PURPOSE: Build and render the module evidence coverage matrix for a project
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: reads MyGRACE indexes and evidence files, writes stdout
+// LINKS:
+//   -> M-TEST-COVERAGE-MATRIX (depends) - coverage matrix builder
+//   -> M-CLI-TEST-COMMANDS (depends) - CLI handler wiring
+//   -> Phase-79 (implements) - syn test coverage handler
+//   -> NFR-003 (traces_to) - coverage output is compact and JSON-capable
+// START_run_coverage_action
+fn run_coverage_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
+    let matrix = build_coverage_matrix(&args.project)?;
+    if args.json {
+        println!("{}", render_coverage_json(&matrix)?);
+    } else {
+        println!("{}", render_coverage_table(&matrix));
+    }
+    Ok(())
+}
+// END_run_coverage_action
+
+// START_CONTRACT_run_contract_action
+// PURPOSE: Run one or more TOML contract differential specs
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: runs cascade impact previews and writes stdout
+// LINKS:
+//   -> M-TEST-CONTRACT-DIFFERENTIAL (depends) - contract differential runner
+//   -> M-CLI-TEST-COMMANDS (depends) - CLI handler wiring
+//   -> Phase-79 (implements) - syn test contract handler
+//   -> NFR-002 (traces_to) - contract specs are deterministic release gates
+//   -> NFR-003 (traces_to) - contract reports are bounded and JSON-capable
+// START_run_contract_action
+fn run_contract_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
+    if args.specs.is_empty() {
+        println!(
+            "{}",
+            render_structured_action(&TestAction::Contract(args.clone()))?
+        );
+        return Ok(());
+    }
+
+    let options = ContractTestOptions {
+        project_root: args.project.clone(),
+        trigger_filter: args.filter.clone(),
+        cleanup_previews: true,
+    };
+    let mut reports = Vec::new();
+    for spec in &args.specs {
+        let path = resolve_project_path(&args.project, spec);
+        reports.push(run_contract_test_file(&path, &options)?);
+    }
+    let cli_report = ContractCliReport {
+        kind: "synapse.test.contract",
+        passed: reports.iter().all(|report| report.passed),
+        reports,
+    };
+
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&cli_report)?);
+    } else {
+        println!("{}", render_contract_cli_report(&cli_report));
+    }
+    if !cli_report.passed {
+        anyhow::bail!("one or more contract differential specs failed");
+    }
+    Ok(())
+}
+// END_run_contract_action
 
 // START_CONTRACT_run_snapshot_action
 // PURPOSE: Run structured syn test snapshot listing/check/update command surface
@@ -513,6 +609,27 @@ fn render_mcp_report(report: &McpCliReport) -> String {
 }
 // END_render_mcp_report
 
+// START_CONTRACT_render_contract_cli_report
+// PURPOSE: Render compact text output for one or more contract differential reports
+// INPUTS: { report: &ContractCliReport }
+// OUTPUTS: { String }
+// LINKS:
+//   -> M-TEST-CONTRACT-DIFFERENTIAL (depends) - contract report rendering
+//   -> NFR-003 (traces_to) - bounded multi-spec output
+// START_render_contract_cli_report
+fn render_contract_cli_report(report: &ContractCliReport) -> String {
+    let mut lines = vec![format!(
+        "Contract differential suites: {}/{} passed",
+        report.reports.iter().filter(|suite| suite.passed).count(),
+        report.reports.len()
+    )];
+    for suite in &report.reports {
+        lines.push(render_contract_test_report(suite));
+    }
+    lines.join("\n\n")
+}
+// END_render_contract_cli_report
+
 // START_CONTRACT_render_snapshot_report
 // PURPOSE: Render compact text output for snapshot CLI mode
 // INPUTS: { report: &SnapshotCliReport }
@@ -640,6 +757,7 @@ fn render_structured_action(action: &TestAction) -> anyhow::Result<String> {
                 "update": args.update,
                 "filter": args.filter,
                 "snapshot_dir": args.snapshot_dir.display().to_string(),
+                "specs": args.specs.iter().map(|path| path.display().to_string()).collect::<Vec<_>>(),
                 "passthrough": args.passthrough,
                 "runner": "pending"
             }]
@@ -664,6 +782,15 @@ fn render_structured_action(action: &TestAction) -> anyhow::Result<String> {
     }
     if let Some(filter) = &args.filter {
         lines.push(format!("filter: {filter}"));
+    }
+    if !args.specs.is_empty() {
+        let specs = args
+            .specs
+            .iter()
+            .map(|path| path.display().to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        lines.push(format!("specs: {specs}"));
     }
     lines.push(format!("snapshot_dir: {}", args.snapshot_dir.display()));
     if !args.passthrough.is_empty() {
@@ -783,6 +910,36 @@ mod tests {
         assert_eq!(value["type"], "synapse.test.action");
         assert_eq!(value["matrix"][0]["action"], "coverage");
         assert_eq!(value["matrix"][0]["module"], "M-TEST-COVERAGE-MATRIX");
+    }
+
+    #[test]
+    fn cli_test_contract_spec_path_is_parsed() {
+        let action = parse_test_action(&[
+            "syn",
+            "test",
+            "contract",
+            "tests/e2e/contract-tests/module-change.toml",
+        ]);
+        let TestAction::Contract(args) = action else {
+            panic!("expected contract action");
+        };
+
+        assert_eq!(
+            args.specs,
+            [PathBuf::from("tests/e2e/contract-tests/module-change.toml")]
+        );
+    }
+
+    #[test]
+    fn cli_test_contract_action_points_to_phase_79() {
+        let action = parse_test_action(&["syn", "test", "contract", "--json"]);
+        let rendered = render_structured_action(&action).expect("contract JSON should render");
+        let value: serde_json::Value =
+            serde_json::from_str(&rendered).expect("contract output should be JSON");
+
+        assert_eq!(value["matrix"][0]["action"], "contract");
+        assert_eq!(value["matrix"][0]["module"], "M-TEST-CONTRACT-DIFFERENTIAL");
+        assert_eq!(value["matrix"][0]["phase"], "Phase-79");
     }
 
     #[test]
