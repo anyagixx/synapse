@@ -28,8 +28,10 @@
     <VERIFICATION id="V-M-GRACE-CASCADE" module="M-GRACE-CASCADE" path="docs/verification/V-M-GRACE-CASCADE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-CASCADE-CHANGE" module="M-GRACE-CASCADE-CHANGE" path="docs/verification/V-M-GRACE-CASCADE-CHANGE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-CONTRACT" module="M-GRACE-CONTRACT" path="docs/verification/V-M-GRACE-CONTRACT.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-CONTRACT-GENERATOR" module="M-GRACE-CONTRACT-GENERATOR" path="docs/verification/V-M-GRACE-CONTRACT-GENERATOR.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-GRACE-DEVELOPMENT-PLAN" module="M-GRACE-DEVELOPMENT-PLAN" path="docs/verification/V-M-GRACE-DEVELOPMENT-PLAN.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-EXPLAIN" module="M-GRACE-EXPLAIN" path="docs/verification/V-M-GRACE-EXPLAIN.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRACE-FAILURE-DIAGNOSIS" module="M-GRACE-FAILURE-DIAGNOSIS" path="docs/verification/V-M-GRACE-FAILURE-DIAGNOSIS.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-GRACE-FIX" module="M-GRACE-FIX" path="docs/verification/V-M-GRACE-FIX.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-INVENTORY" module="M-GRACE-INVENTORY" path="docs/verification/V-M-GRACE-INVENTORY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRACE-INVENTORY-ARTIFACTS" module="M-GRACE-INVENTORY-ARTIFACTS" path="docs/verification/V-M-GRACE-INVENTORY-ARTIFACTS.xml" priority="normal" status="active" />

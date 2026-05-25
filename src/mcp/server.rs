@@ -315,6 +315,12 @@ impl SynapseHandler {
                     "token_savings" => server_grace_tools::handle_gain(id, args).await,
                     "compress_text" => server_grace_tools::handle_compress(id, args).await,
                     "refresh_project" => server_grace_tools::handle_refresh(id, args).await,
+                    "diagnose_failure" => {
+                        server_contract_tools::handle_diagnose_failure(id, args).await
+                    }
+                    "repair_contract" => {
+                        server_contract_tools::handle_repair_contract(id, args).await
+                    }
                     "suggest_contract" => {
                         server_contract_tools::handle_suggest_contract(id, args).await
                     }

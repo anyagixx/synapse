@@ -14,6 +14,8 @@
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_run_test_guide_writes_summary --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_submit_test_report_highlights_log_refs --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_self_heal --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_repair_contract --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::server_contract_tools::tests::test_handle_diagnose_failure --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -29,7 +31,9 @@
     <ASSERTION>MCP run_test_guide writes docs/tests result summaries and returns a tester-agent run report.</ASSERTION>
     <ASSERTION>MCP submit_test_report highlights LOG evidence refs for developer-agent handoff.</ASSERTION>
     <ASSERTION>MCP self_heal validates run_id, executes the bounded self-heal runtime, and returns a JSON SelfHealResult.</ASSERTION>
+    <ASSERTION>MCP diagnose_failure returns EnhancedFixResult JSON from tester-agent failure evidence.</ASSERTION>
+    <ASSERTION>MCP repair_contract defaults to dry_run and returns preview evidence without writing source content.</ASSERTION>
     <ASSERTION>MCP token_savings reports command, adapter, and recent session economics from M-TRACKING.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-21,Phase-70</PHASE_GATE>
+  <PHASE_GATE>Phase-21,Phase-70,Phase-71</PHASE_GATE>
 </VERIFICATION>

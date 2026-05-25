@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG Mermaid options, LSP content override options, GRACE profiles, self_heal, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG Mermaid options, LSP content override options, GRACE profiles, self_heal, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.1.0 - Added self_heal tool schema]
+// LAST_CHANGE: [v4.2.0 - Added diagnose_failure and repair_contract tool schemas]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -282,6 +282,39 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
             }
         }),
         serde_json::json!({
+            "name": "diagnose_failure",
+            "description": "Parse tester-agent XML or plain text failure evidence, extract identifiers, search exact source matches, and return an EnhancedFixResult.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "report": { "type": "string", "description": "Failure XML or plain text failure report" },
+                    "failure_xml": { "type": "string", "description": "Alias for report" },
+                    "description": { "type": "string", "description": "Plain text failure description alias" },
+                    "project_root": { "type": "string", "description": "Optional project root; defaults to current working directory" }
+                }
+            }
+        }),
+        serde_json::json!({
+            "name": "repair_contract",
+            "description": "Generate or apply a safe language-aware MODULE_CONTRACT repair. Defaults to dry_run=true.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file_path": { "type": "string", "description": "Project-relative source file path to repair" },
+                    "file": { "type": "string", "description": "Alias for file_path" },
+                    "module_id": { "type": "string", "description": "Optional MODULE_ID such as M-SAMPLE" },
+                    "purpose": { "type": "string", "description": "Optional generated contract purpose" },
+                    "scope": { "type": "string", "description": "Optional generated contract scope" },
+                    "depends": { "type": "array", "items": { "type": "string" }, "description": "Optional DEPENDS entries" },
+                    "links": { "type": "array", "items": { "type": "string" }, "description": "Optional typed LINKS entries" },
+                    "language": { "type": "string", "description": "Optional language override" },
+                    "dry_run": { "type": "boolean", "description": "When true, return preview without writing", "default": true },
+                    "project_root": { "type": "string", "description": "Optional project root; defaults to current working directory" }
+                },
+                "required": ["file_path"]
+            }
+        }),
+        serde_json::json!({
             "name": "suggest_contract",
             "description": "Generate a language-aware MODULE_CONTRACT template for a new module. Provide module name, purpose, and optional language.",
             "inputSchema": {
@@ -425,6 +458,29 @@ mod tests {
         assert_eq!(self_heal["inputSchema"]["required"][0], "run_id");
     }
     // END_test_self_heal_schema_exposes_run_id_and_profile
+
+    // START_CONTRACT_test_diagnose_and_repair_schemas_are_exposed
+    // PURPOSE: Verify tools/list declares diagnose_failure and repair_contract schemas
+    // START_test_diagnose_and_repair_schemas_are_exposed
+    #[test]
+    fn test_diagnose_and_repair_schemas_are_exposed() {
+        let tools = tool_definitions();
+        let diagnose = tools
+            .iter()
+            .find(|tool| tool["name"] == "diagnose_failure")
+            .expect("diagnose_failure tool");
+        let repair = tools
+            .iter()
+            .find(|tool| tool["name"] == "repair_contract")
+            .expect("repair_contract tool");
+
+        assert!(diagnose["inputSchema"]["properties"]
+            .as_object()
+            .expect("diagnose properties")
+            .contains_key("report"));
+        assert_eq!(repair["inputSchema"]["required"][0], "file_path");
+    }
+    // END_test_diagnose_and_repair_schemas_are_exposed
 }
 
 // END_public_api

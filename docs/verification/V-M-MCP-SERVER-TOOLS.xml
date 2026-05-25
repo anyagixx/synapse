@@ -6,6 +6,7 @@
     <COMMAND>cargo test mcp::server_tools::tests::test_graphrag_schema_exposes_mermaid_options --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::server_tools::tests::test_lsp_schema_exposes_content_override --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::server_tools::tests::test_self_heal_schema_exposes_run_id_and_profile --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::server_tools::tests::test_diagnose_and_repair_schemas_are_exposed --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -19,9 +20,10 @@
     <ASSERTION>tools/list exposes cascade_impact and cascade_execute schemas with cascade id and auto-apply controls.</ASSERTION>
     <ASSERTION>tools/list exposes run_test_guide and submit_test_report schemas for tester-agent workflows.</ASSERTION>
     <ASSERTION>tools/list exposes self_heal schema with run_id, profile, and optional project_root fields.</ASSERTION>
+    <ASSERTION>tools/list exposes diagnose_failure and repair_contract schemas for Phase-71 failure-to-fix workflows.</ASSERTION>
     <ASSERTION>tools/list exposes semantic_search language, path, and path_contains filter schema fields.</ASSERTION>
     <ASSERTION>tools/list exposes graphrag_query operation=mermaid with subset, focus_ids, and max_nodes schema fields.</ASSERTION>
     <ASSERTION>tools/list exposes optional content override fields for lsp_hover and lsp_references.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13,Phase-65,Phase-68,Phase-70</PHASE_GATE>
+  <PHASE_GATE>Phase-13,Phase-65,Phase-68,Phase-70,Phase-71</PHASE_GATE>
 </VERIFICATION>

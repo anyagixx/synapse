@@ -8,7 +8,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>Handler-level notifications return no response.</ASSERTION>
     <ASSERTION>Binary-level syn mcp stdout remains clean JSON-RPC when logs are emitted.</ASSERTION>
-    <ASSERTION>tools/list exposes the 40-tool MCP registry including extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, self_heal, and grace_run_history.</ASSERTION>
+    <ASSERTION>tools/list exposes the 42-tool MCP registry including extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, self_heal, diagnose_failure, repair_contract, and grace_run_history.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7,Phase-70</PHASE_GATE>
+  <PHASE_GATE>Phase-7,Phase-70,Phase-71</PHASE_GATE>
 </VERIFICATION>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-GRACE-FAILURE-DIAGNOSIS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Structured test failure diagnosis for XML failure reports, exact identifier search, and repair suggestions
+    Key data flows:
+      - INPUT: tester-agent XML or plain text failure evidence and project root
+      - PROCESSING: parse Test blocks, extract Expected/Actual/LOG refs, extract identifiers, run exact source search, and derive root-cause candidates
+      - OUTPUT: EnhancedFixResult with parsed report, exact matches, root-cause candidates, and suggested repair actions
+    Critical invariants:
+      - malformed or weak reports degrade into plain-text diagnosis
+      - exact search remains bounded
+      - missing-contract hints become explicit repair_contract suggestions
+  IMPLEMENTATION_STRATEGY:
+    Approach: parse common tester-agent XML shapes with conservative regexes and use Walker for bounded source discovery
+    Complexity_areas: weak failure locations, XML-like text, noisy identifiers, exact-search cost
+    Patterns_applied: explicit flow, typed links, bounded blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - parser tests extract failure cases, LOG refs, and identifiers
+    - exact-match tests find source locations for code-like identifiers
+    - repair-suggestion tests emit repair_contract hints for missing-contract failures
+  RISKS_ACKNOWLEDGED:
+    - this is a deterministic local diagnosis layer, not a semantic proof of root cause
+</BELIEF_STATE>

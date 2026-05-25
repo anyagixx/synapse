@@ -1,17 +1,18 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE
-// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability, non-human patterns, agent-based testing, cascade updates)
-// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability/non-human pattern/testing/cascade reporting, and anchor normalization export
-// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-TESTING, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
+// PURPOSE: GraceEngine facade — unified entry point for GRACE methodology tools (verify, review, inventory, semantic, refresh, belief state, anchors, requirements, technology, development plan, mental tests, traceability, non-human patterns, agent-based testing, cascade updates, failure diagnosis, and contract generation)
+// SCOPE: Module declarations, GraceEngine struct, profile-aware delegation to sub-modules, belief state/requirements/technology/development-plan/mental-test/traceability/non-human pattern/testing/cascade/failure-diagnosis/contract-generator reporting, and anchor normalization export
+// DEPENDS: M-GRACE-ANCHOR, M-GRACE-BOOTSTRAP, M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRACE-CONTRACT, M-GRACE-CONTRACT-GENERATOR, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-FAILURE-DIAGNOSIS, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-TESTING, M-GRACE-INVENTORY, M-GRACE-INVENTORY-ARTIFACTS, M-GRACE-INVENTORY-PLAN, M-GRACE-INVENTORY-TYPES, M-GRACE-INVENTORY-VERIFICATION, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-VERIFY, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-GRACE-REVIEW, M-GRACE-SEMANTIC, M-GRACE-REFRESH
 // LINKS: N/A
 
 // START_MODULE_MAP
 // ModuleContract and GraceProfile — Re-exports from contract module
 // GraceEngine — Facade for all GRACE methodology operations and belief state reports
+// failure_diagnosis / contract_generator — Phase-71 diagnosis and safe repair helpers
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 - Registered traceability helper split modules]
+// LAST_CHANGE: [v2.24.0 - Registered failure diagnosis and contract generator modules]
 // END_CHANGE_SUMMARY
 
 pub mod anchor;
@@ -20,8 +21,10 @@ pub mod bootstrap;
 pub mod cascade;
 pub mod cascade_change;
 pub mod contract;
+pub mod contract_generator;
 pub mod development_plan;
 pub mod explain;
+pub mod failure_diagnosis;
 pub mod fix;
 pub mod inventory;
 pub mod inventory_artifacts;

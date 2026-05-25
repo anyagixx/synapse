@@ -1,11 +1,12 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER-SELF-HEAL
-// PURPOSE: Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, and escalates when retry budget is exhausted
-// SCOPE: SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, verification execution, diagnosis capture, and bounded escalation
-// DEPENDS: M-RUNNER, M-GRACE, M-GRACE-FIX, M-GRACE-VERIFY-TYPES
+// PURPOSE: Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, delegates safe contract repairs, and escalates when retry budget is exhausted
+// SCOPE: SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, verification execution, diagnosis capture, dry-run repair action capture, and bounded escalation
+// DEPENDS: M-RUNNER, M-GRACE, M-GRACE-CONTRACT-GENERATOR, M-GRACE-FIX, M-GRACE-VERIFY-TYPES
 // LINKS:
 //   -> M-RUNNER (depends) - persists self-heal state inside durable run records
 //   -> M-GRACE (depends) - runs profile-aware verification
+//   -> M-GRACE-CONTRACT-GENERATOR (depends) - builds dry-run contract repair actions
 //   -> M-GRACE-FIX (depends) - turns verification failures into indexed diagnoses
 //   -> UC-002 (implements) - verifies and reviews bounded autonomous changes
 //   -> NFR-002 (traces_to) - self-heal loops must stop with explicit failures
@@ -13,7 +14,7 @@
 
 // START_MODULE_MAP
 // SelfHealPlan - Persisted bounded self-heal plan embedded in run metadata
-// SelfHealDiagnosis - One diagnosed verification failure group
+// SelfHealDiagnosis - One diagnosed verification failure group with optional repair actions
 // SelfHealResult - Tool/action result returned after one self-heal iteration
 // RunManager::load_self_heal_plan - Reads self-heal metadata from a run record
 // RunManager::save_self_heal_plan - Persists self-heal metadata to a run record
@@ -21,10 +22,11 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added bounded self-heal plan persistence and execution]
+// LAST_CHANGE: [v1.1.0 - Attached dry-run contract repair actions to self-heal diagnoses]
 // END_CHANGE_SUMMARY
 
 use super::{write_provenance_event, RunManager, RunOutcome, RunOutcomeKind, RunRecord, RunStatus};
+use crate::grace::contract_generator::{ContractGenerator, ContractRepairResult};
 use crate::grace::verify::VerificationResult;
 use crate::grace::{GraceEngine, GraceProfile};
 use serde::{Deserialize, Serialize};
@@ -60,6 +62,8 @@ pub struct SelfHealDiagnosis {
     pub diagnosis: String,
     pub fix_applied: bool,
     pub fix_evidence_ref: Option<String>,
+    #[serde(default)]
+    pub repair_actions: Vec<ContractRepairResult>,
 }
 // END_SelfHealDiagnosis
 
@@ -370,6 +374,8 @@ fn diagnose_failure(root: &Path, failure: &VerificationResult) -> SelfHealDiagno
         failure.level,
         failed_checks.join("; ")
     );
+    let repair_actions =
+        ContractGenerator::repair_actions_from_failure_text(root, &description, true);
     match diagnose_sync(root.to_path_buf(), description.clone()) {
         Ok(result) => SelfHealDiagnosis {
             failure_group: failure.level.clone(),
@@ -379,6 +385,7 @@ fn diagnose_failure(root: &Path, failure: &VerificationResult) -> SelfHealDiagno
             diagnosis: result.diagnosis,
             fix_applied: false,
             fix_evidence_ref: None,
+            repair_actions,
         },
         Err(error) => SelfHealDiagnosis {
             failure_group: failure.level.clone(),
@@ -388,6 +395,7 @@ fn diagnose_failure(root: &Path, failure: &VerificationResult) -> SelfHealDiagno
             diagnosis: format!("diagnosis failed: {}", error),
             fix_applied: false,
             fix_evidence_ref: None,
+            repair_actions,
         },
     }
 }

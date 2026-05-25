@@ -28,8 +28,10 @@
     <MODULE id="M-GRACE-CASCADE" path="docs/modules/M-GRACE-CASCADE.xml" status="active" />
     <MODULE id="M-GRACE-CASCADE-CHANGE" path="docs/modules/M-GRACE-CASCADE-CHANGE.xml" status="active" />
     <MODULE id="M-GRACE-CONTRACT" path="docs/modules/M-GRACE-CONTRACT.xml" status="active" />
+    <MODULE id="M-GRACE-CONTRACT-GENERATOR" path="docs/modules/M-GRACE-CONTRACT-GENERATOR.xml" status="active" />
     <MODULE id="M-GRACE-DEVELOPMENT-PLAN" path="docs/modules/M-GRACE-DEVELOPMENT-PLAN.xml" status="active" />
     <MODULE id="M-GRACE-EXPLAIN" path="docs/modules/M-GRACE-EXPLAIN.xml" status="active" />
+    <MODULE id="M-GRACE-FAILURE-DIAGNOSIS" path="docs/modules/M-GRACE-FAILURE-DIAGNOSIS.xml" status="active" />
     <MODULE id="M-GRACE-FIX" path="docs/modules/M-GRACE-FIX.xml" status="active" />
     <MODULE id="M-GRACE-INVENTORY" path="docs/modules/M-GRACE-INVENTORY.xml" status="active" />
     <MODULE id="M-GRACE-INVENTORY-ARTIFACTS" path="docs/modules/M-GRACE-INVENTORY-ARTIFACTS.xml" status="active" />
@@ -203,7 +205,9 @@
     <REL source="M-GRACE" target="M-GRACE-CASCADE" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-CASCADE-CHANGE" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-CONTRACT" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-CONTRACT-GENERATOR" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-DEVELOPMENT-PLAN" type="DEPENDS" />
+    <REL source="M-GRACE" target="M-GRACE-FAILURE-DIAGNOSIS" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-MENTAL-TEST" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-TRACEABILITY" type="DEPENDS" />
     <REL source="M-GRACE" target="M-GRACE-NON-HUMAN-PATTERNS" type="DEPENDS" />
@@ -234,7 +238,10 @@
     <REL source="M-GRACE-CASCADE-CHANGE" target="M-GRACE-LAYOUT" type="DEPENDS" />
     <REL source="M-GRACE-CONTRACT" target="M-GRACE-ANCHOR" type="DEPENDS" />
     <REL source="M-GRACE-CONTRACT" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-GRACE-CONTRACT-GENERATOR" target="M-INDEXER-WALKER" type="DEPENDS" />
     <REL source="M-GRACE-EXPLAIN" target="M-INDEXER-STORAGE" type="DEPENDS" />
+    <REL source="M-GRACE-FAILURE-DIAGNOSIS" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-GRACE-FIX" target="M-GRACE-FAILURE-DIAGNOSIS" type="DEPENDS" />
     <REL source="M-GRACE-FIX" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-GRACE-FIX" target="M-UTILS" type="DEPENDS" />
     <REL source="M-GRACE-INVENTORY" target="M-GRACE-CONTRACT" type="DEPENDS" />
@@ -280,6 +287,7 @@
     <REL source="M-RUNNER" target="M-SKILLS" type="DEPENDS" />
     <REL source="M-RUNNER-SELF-HEAL" target="M-RUNNER" type="DEPENDS" />
     <REL source="M-RUNNER-SELF-HEAL" target="M-GRACE" type="DEPENDS" />
+    <REL source="M-RUNNER-SELF-HEAL" target="M-GRACE-CONTRACT-GENERATOR" type="DEPENDS" />
     <REL source="M-RUNNER-SELF-HEAL" target="M-GRACE-FIX" type="DEPENDS" />
     <REL source="M-RUNNER-SELF-HEAL" target="M-GRACE-VERIFY-TYPES" type="DEPENDS" />
     <REL source="M-GRACE-REVIEW" target="M-GRACE-ANCHOR" type="DEPENDS" />
@@ -415,6 +423,8 @@
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-GRACE-LOG" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-GRACE-REQUIREMENTS" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-GRACE-TECHNOLOGY" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-GRACE-CONTRACT-GENERATOR" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-GRACE-FAILURE-DIAGNOSIS" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-RUNNER-SELF-HEAL" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-COMPRESS" type="DEPENDS" />

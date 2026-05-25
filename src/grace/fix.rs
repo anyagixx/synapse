@@ -1,17 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-FIX
-// PURPOSE: Debug/fix module — diagnoses issues via knowledge graph navigation and indexed search
-// SCOPE: Debugger struct, FixResult, diagnose via semantic search
-// DEPENDS: M-INDEXER-STORAGE, M-UTILS
-// LINKS: N/A
+// PURPOSE: Debug/fix module — diagnoses issues via knowledge graph navigation, indexed search, and structured failure reports
+// SCOPE: Debugger struct, FixResult, diagnose via semantic search, diagnose_failure_report via enhanced failure diagnosis, and Unicode-safe snippet previews
+// DEPENDS: M-GRACE-FAILURE-DIAGNOSIS, M-INDEXER-STORAGE, M-UTILS
+// LINKS:
+//   -> UC-002 (implements) - diagnosis supports verified bounded changes
+//   -> NFR-002 (traces_to) - diagnosis failures must degrade explicitly
 
 // START_MODULE_MAP
 // FixResult — Debug/fix result with related modules, suggested blocks, diagnosis
-// Debugger — Diagnoses issues using indexed code
+// Debugger — Diagnoses issues using indexed code and structured failure reports
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.1.0 — Use Unicode-safe truncation for suggested fix snippets]
+// LAST_CHANGE: [v2.2.0 - Added structured failure report diagnosis]
 // END_CHANGE_SUMMARY
 
 use crate::indexer::storage::Storage;
@@ -103,5 +105,20 @@ impl Debugger {
         })
     }
     // END_debugger_diagnose
+
+    // START_CONTRACT_Debugger::diagnose_failure_report
+    // PURPOSE: Diagnose tester-agent XML or plain text failure with exact search and repair suggestions
+    // INPUTS: { report: &str }, { root: &Path }
+    // OUTPUTS: { anyhow::Result<EnhancedFixResult> }
+    // LINKS:
+    //   -> UC-002 (implements) - convert failure evidence into bounded repair context
+    // START_debugger_diagnose_failure_report
+    pub async fn diagnose_failure_report(
+        report: &str,
+        root: &Path,
+    ) -> anyhow::Result<crate::grace::failure_diagnosis::EnhancedFixResult> {
+        crate::grace::failure_diagnosis::diagnose_failure_text(root, report)
+    }
+    // END_debugger_diagnose_failure_report
 }
 // END_public_api

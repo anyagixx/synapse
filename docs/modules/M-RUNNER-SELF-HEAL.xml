@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-RUNNER-SELF-HEAL" type="RUNTIME" status="active">
   <NAME>M-RUNNER-SELF-HEAL</NAME>
-  <PURPOSE>Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, and escalates when retry budget is exhausted</PURPOSE>
-  <SCOPE>SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, verification execution, diagnosis capture, and bounded escalation</SCOPE>
+  <PURPOSE>Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, delegates safe contract repairs, and escalates when retry budget is exhausted</PURPOSE>
+  <SCOPE>SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, verification execution, diagnosis capture, dry-run repair action capture, and bounded escalation</SCOPE>
   <FILES>
     <FILE>src/run/self_heal.rs</FILE>
   </FILES>
-  <DEPENDS>M-RUNNER,M-GRACE,M-GRACE-FIX,M-GRACE-VERIFY-TYPES</DEPENDS>
-  <LINKS>V-M-RUNNER-SELF-HEAL,docs/phases/Phase-70.xml</LINKS>
+  <DEPENDS>M-RUNNER,M-GRACE,M-GRACE-CONTRACT-GENERATOR,M-GRACE-FIX,M-GRACE-VERIFY-TYPES</DEPENDS>
+  <LINKS>V-M-RUNNER-SELF-HEAL,docs/phases/Phase-70.xml,docs/phases/Phase-71.xml</LINKS>
   <VERIFICATION_REF>V-M-RUNNER-SELF-HEAL</VERIFICATION_REF>
 </MODULE>

@@ -1,23 +1,27 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP contract-template helper handlers for MyGRACE source scaffolding
-// SCOPE: suggest_contract handler, language comment-prefix detection, and canonical MODULE_ID normalization
-// DEPENDS: M-MCP-SERVER-RESPONSE
+// PURPOSE: MCP contract-template helper handlers for MyGRACE source scaffolding, failure diagnosis, and safe contract repair
+// SCOPE: suggest_contract handler, diagnose_failure handler, repair_contract handler, language comment-prefix detection, and canonical MODULE_ID normalization
+// DEPENDS: M-GRACE-CONTRACT-GENERATOR, M-GRACE-FAILURE-DIAGNOSIS, M-MCP-SERVER-RESPONSE
 // LINKS:
 //   -> V-M-MCP-SERVER-GRACE-TOOLS (verified_by) - MCP GRACE handler tests
 //   -> UC-002 (implements) - contract templates support verified bounded changes
 
 // START_MODULE_MAP
 // handle_suggest_contract - Generates a language-aware MODULE_CONTRACT template
+// handle_diagnose_failure - Parses failure reports and returns EnhancedFixResult
+// handle_repair_contract - Performs dry-run or write-mode MODULE_CONTRACT repair
 // comment_prefix_for_language - Maps language names to contract comment prefixes
 // module_id_from_name - Builds one canonical MODULE_ID from a free-form name
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Extracted contract suggestion helpers from server_grace_tools]
+// LAST_CHANGE: [v1.1.0 - Added diagnose_failure and repair_contract handlers]
 // END_CHANGE_SUMMARY
 
-use super::server_response::result;
+use super::server_response::{error, result};
+use crate::grace::contract_generator::{ContractGenerator, ContractRepairRequest};
+use std::path::PathBuf;
 
 // START_public_api
 
@@ -52,7 +56,114 @@ pub(crate) async fn handle_suggest_contract(
 }
 // END_handle_suggest_contract
 
+// START_CONTRACT_handle_diagnose_failure
+// PURPOSE: Diagnose tester-agent XML or plain text failure and return EnhancedFixResult
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_handle_diagnose_failure
+pub(crate) async fn handle_diagnose_failure(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let report = match args["report"]
+        .as_str()
+        .or_else(|| args["failure_xml"].as_str())
+        .or_else(|| args["description"].as_str())
+    {
+        Some(value) if !value.trim().is_empty() => value.trim(),
+        _ => return error(id, -32602, "Missing 'report' parameter"),
+    };
+    let root = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+    match crate::grace::failure_diagnosis::diagnose_failure_text(&root, report) {
+        Ok(report) => result(
+            id,
+            serde_json::json!({
+                "content": [{"type": "text", "text": serde_json::to_string_pretty(&report).unwrap_or_default()}],
+                "isError": false
+            }),
+        ),
+        Err(e) => error(id, -32603, format!("Diagnosis error: {}", e)),
+    }
+}
+// END_handle_diagnose_failure
+
+// START_CONTRACT_handle_repair_contract
+// PURPOSE: Generate or apply a safe MODULE_CONTRACT repair for one source file
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: writes the source file only when dry_run=false
+// START_handle_repair_contract
+pub(crate) async fn handle_repair_contract(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let file_path = match args["file_path"].as_str().or_else(|| args["file"].as_str()) {
+        Some(value) if !value.trim().is_empty() => value.trim().to_string(),
+        _ => return error(id, -32602, "Missing 'file_path' parameter"),
+    };
+    let root = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+    let request = ContractRepairRequest {
+        file_path,
+        module_id: args["module_id"]
+            .as_str()
+            .map(|value| value.trim().to_string()),
+        purpose: args["purpose"]
+            .as_str()
+            .map(|value| value.trim().to_string()),
+        scope: args["scope"].as_str().map(|value| value.trim().to_string()),
+        depends: string_array_arg(args, "depends"),
+        links: string_array_arg(args, "links"),
+        language: args["language"]
+            .as_str()
+            .map(|value| value.trim().to_string()),
+        dry_run: args["dry_run"].as_bool().unwrap_or(true),
+    };
+    match ContractGenerator::repair_contract(&root, request) {
+        Ok(report) => result(
+            id,
+            serde_json::json!({
+                "content": [{"type": "text", "text": serde_json::to_string_pretty(&report).unwrap_or_default()}],
+                "isError": false
+            }),
+        ),
+        Err(e) => error(id, -32603, format!("Contract repair error: {}", e)),
+    }
+}
+// END_handle_repair_contract
+
 // END_public_api
+
+// START_CONTRACT_string_array_arg
+// PURPOSE: Parse optional string-array MCP argument values
+// INPUTS: { args: &serde_json::Value }, { key: &str }
+// OUTPUTS: { Vec<String> }
+// START_string_array_arg
+fn string_array_arg(args: &serde_json::Value, key: &str) -> Vec<String> {
+    args[key]
+        .as_array()
+        .map(|values| {
+            values
+                .iter()
+                .filter_map(|value| value.as_str())
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+// END_string_array_arg
 
 // START_CONTRACT_comment_prefix_for_language
 // PURPOSE: Select the correct line comment prefix for generated contract templates
@@ -130,4 +241,59 @@ mod tests {
         assert_eq!(module_id_from_name("date parser"), "M-DATE-PARSER");
     }
     // END_test_module_id_from_name_removes_commas
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_repair_contract
+    // PURPOSE: Verify repair_contract returns a dry-run preview without writing source content
+    // START_test_handle_repair_contract
+    async fn test_handle_repair_contract() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir_all(dir.path().join("src")).expect("src");
+        std::fs::write(dir.path().join("src/sample.rs"), "pub fn run() {}\n").expect("source");
+
+        let response = handle_repair_contract(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "file_path": "src/sample.rs",
+                "module_id": "M-SAMPLE",
+                "purpose": "Sample repair",
+                "dry_run": true,
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("\"dry_run\": true"));
+        assert!(text.contains("MODULE_ID: M-SAMPLE"));
+        assert!(!std::fs::read_to_string(dir.path().join("src/sample.rs"))
+            .unwrap()
+            .contains("MODULE_CONTRACT"));
+    }
+    // END_test_handle_repair_contract
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_diagnose_failure
+    // PURPOSE: Verify diagnose_failure returns an EnhancedFixResult JSON envelope
+    // START_test_handle_diagnose_failure
+    async fn test_handle_diagnose_failure() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let response = handle_diagnose_failure(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "report": "contract-exists failed: src/missing.rs missing MODULE_CONTRACT",
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("repair_contract"));
+        assert!(text.contains("src/missing.rs"));
+    }
+    // END_test_handle_diagnose_failure
 }

@@ -1259,6 +1259,34 @@ mod tests {
             .contains("run_id"));
     }
     // END_test_handle_self_heal
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_repair_contract
+    // PURPOSE: Verify Phase-71 repair_contract handler is reachable through the MCP GRACE tool test surface
+    // START_test_handle_repair_contract
+    async fn test_handle_repair_contract() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir_all(dir.path().join("src")).expect("src");
+        std::fs::write(dir.path().join("src/sample.rs"), "pub fn run() {}\n").expect("source");
+
+        let response = crate::mcp::server_contract_tools::handle_repair_contract(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "file_path": "src/sample.rs",
+                "module_id": "M-SAMPLE",
+                "purpose": "Sample repair",
+                "dry_run": true,
+                "project_root": dir.path().to_string_lossy()
+            }),
+        )
+        .await;
+
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("text response");
+        assert!(text.contains("MODULE_ID: M-SAMPLE"));
+    }
+    // END_test_handle_repair_contract
 }
 
 // END_public_api
