@@ -21,7 +21,7 @@
     <step-1 module="M-MCP-PIPELINE" status="done">Add a bounded stdio pipeline with initialize ordering, concurrent request handling, single-writer response serialization, EOF shutdown, and handler panic isolation.</step-1>
     <step-2 module="M-MCP-SERVER" status="done">Route start_stdio through the pipeline while keeping existing request processing behavior and protocol tests intact.</step-2>
     <step-3 module="M-TRACKING-MCP-METRICS" status="done">Record request counts, active requests, latency summaries, per-tool errors, and last-seen timestamps without bloating token-savings analytics.</step-3>
-    <step-4 module="M-DASHBOARD-OBSERVABILITY" status="planned">Expose readiness and MCP stats endpoints from dashboard without weakening the existing /health behavior.</step-4>
+    <step-4 module="M-DASHBOARD-OBSERVABILITY" status="done">Expose readiness and MCP stats endpoints from dashboard without weakening the existing /health behavior.</step-4>
     <step-5 module="M-CONFIG" status="planned">Add observability toggles, retention bounds, and pipeline concurrency limits as typed runtime settings.</step-5>
   </STEPS>
   <VERIFICATION>
@@ -30,7 +30,8 @@
     <CHECK status="passed">cargo test --all-targets -- --test-threads=8</CHECK>
     <CHECK status="passed">cargo test tracking::mcp_metrics --lib -- --test-threads=8</CHECK>
     <CHECK status="passed">cargo test mcp::server::tests::test_classify_mcp_response_detects_error_status --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test dashboard::tests::test_health_ready_reports_mcp_state --lib</CHECK>
+    <CHECK status="passed">cargo test dashboard::observability --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test dashboard::tests::test_health_ready_reports_mcp_state --lib -- --test-threads=8</CHECK>
     <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
     <CHECK status="passed">cargo run --quiet -- review --mode scoped --ci</CHECK>
   </VERIFICATION>

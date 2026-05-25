@@ -3,6 +3,7 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test dashboard --all-targets</COMMAND>
+    <COMMAND>cargo test dashboard::tests::test_health_ready_reports_mcp_state --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test dashboard::tests::test_api_search_explain_returns_reasoned_results --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
@@ -11,8 +12,9 @@
     <ASSERTION>Dashboard renders pages for /belief-states, /belief-state/{module_id}, /mental-tests, /runs, /runs/queue, /runs/review, /search-explain, /traceability/{artifact_id}, /cascade/preview, and /cascade/history.</ASSERTION>
     <ASSERTION>Run cockpit payload classifies queued, blocked, and completed runs, renders blocked reasons, and records approve/reject decisions for agent workflow triage.</ASSERTION>
     <ASSERTION>Token API exposes command, adapter, and recent session token-economy aggregates.</ASSERTION>
+    <ASSERTION>Dashboard routes expose cheap /health liveness, /health/ready readiness, and /api/mcp-stats MCP observability payloads.</ASSERTION>
     <ASSERTION>Cascade preview routes use M-GRACE-CASCADE as the data source and preserve JSON validity.</ASSERTION>
     <ASSERTION>Dashboard search-explain tests use explicit roots and do not mutate process cwd.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-67</PHASE_GATE>
 </VERIFICATION>

@@ -1,13 +1,13 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-DASHBOARD
 // PURPOSE: Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, token-economy, cascade, and run cockpit views/APIs
-// SCOPE: HTTP server with health/status/graph/tokens APIs, observability module boundary, token adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, graph-aware search explanation with explicit-root test helper, cascade previews, and cascade history
+// SCOPE: HTTP server with health/readiness/status/graph/tokens/MCP stats APIs, observability endpoints, token adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, graph-aware search explanation with explicit-root test helper, cascade previews, and cascade history
 // DEPENDS: M-DASHBOARD-OBSERVABILITY, M-GRACE-STATUS, M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRAPHRAG, M-TRACKING, M-RUNNER, M-CONFIG
 // LINKS:
 //   -> V-M-DASHBOARD (verified_by) - dashboard route and JSON payload tests
 
 // START_MODULE_MAP
-// observability — Dashboard health/readiness/MCP metrics module boundary
+// observability — Dashboard health/readiness/MCP metrics endpoints
 // start_dashboard — Start Axum HTTP server with dashboard API routes
 // belief_states_payload — Build JSON for belief-state coverage and detail data
 // mental_tests_payload — Build JSON for MentalTest status and definitions
@@ -20,7 +20,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.5.0 — Added observability module boundary for Phase-67]
+// LAST_CHANGE: [v3.6.0 — Added dashboard readiness and MCP stats routes]
 // END_CHANGE_SUMMARY
 
 mod observability;
@@ -56,7 +56,8 @@ use render::{html_escape, json_pre, page_shell, primary_nav, status_badge, url_c
 pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", get(index_html))
-        .route("/health", get(health))
+        .route("/health", get(observability::health))
+        .route("/health/ready", get(observability::health_ready))
         .route("/belief-states", get(belief_states_html))
         .route("/belief-state/{module_id}", get(belief_state_detail_html))
         .route("/mental-tests", get(mental_tests_html))
@@ -70,6 +71,7 @@ pub async fn start_dashboard(bind: &str) -> anyhow::Result<()> {
         .route("/api/status", get(api_status))
         .route("/api/graph", get(api_graph))
         .route("/api/tokens", get(api_tokens))
+        .route("/api/mcp-stats", get(observability::api_mcp_stats))
         .route("/api/belief-states", get(api_belief_states))
         .route(
             "/api/belief-state/{module_id}",
@@ -189,19 +191,6 @@ async fn index_html() -> Html<String> {
     ))
 }
 // END_index_html
-
-// START_CONTRACT_health
-// PURPOSE: Return dashboard process health metadata
-// OUTPUTS: { Json<Value> }
-// START_health
-async fn health() -> Json<Value> {
-    Json(json!({
-        "status": "ok",
-        "version": crate::VERSION,
-        "name": crate::NAME
-    }))
-}
-// END_health
 
 // START_CONTRACT_belief_states_html
 // PURPOSE: Render the belief-state coverage page
@@ -1055,6 +1044,30 @@ mod tests {
         assert!(review_payload["events"]
             .as_array()
             .is_some_and(|events| events.iter().any(|event| event["kind"] == "review")));
+    }
+
+    #[tokio::test]
+    async fn test_health_ready_reports_mcp_state() {
+        let data_home = tempfile::tempdir().expect("data home");
+        let project_home = tempfile::tempdir().expect("project home");
+        let tracker = crate::tracking::Tracker::new_for_test(
+            &crate::config::Config::default(),
+            data_home.path(),
+            project_home.path(),
+            Some("dashboard-ready-test"),
+        );
+
+        tracker
+            .start_mcp_request("semantic_search")
+            .await
+            .expect("active request")
+            .expect("active id");
+        let payload =
+            observability::readiness_payload_with_tracker(project_home.path(), &tracker).await;
+
+        assert_eq!(payload["status"], "ready");
+        assert_eq!(payload["ready"], true);
+        assert_eq!(payload["mcp"]["active_requests"], 1);
     }
 
     #[tokio::test]
