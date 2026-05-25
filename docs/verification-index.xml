@@ -57,6 +57,7 @@
     <VERIFICATION id="V-M-HOOK-OPENCODE-REWRITE" module="M-HOOK-OPENCODE-REWRITE" path="docs/verification/V-M-HOOK-OPENCODE-REWRITE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-HOOKS" module="M-HOOKS" path="docs/verification/V-M-HOOKS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-INDEXER" module="M-INDEXER" path="docs/verification/V-M-INDEXER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-INDEXER-EMBEDDING" module="M-INDEXER-EMBEDDING" path="docs/verification/V-M-INDEXER-EMBEDDING.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-INDEXER-LANGS" module="M-INDEXER-LANGS" path="docs/verification/V-M-INDEXER-LANGS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-INDEXER-PARSER" module="M-INDEXER-PARSER" path="docs/verification/V-M-INDEXER-PARSER.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-INDEXER-PIPELINE" module="M-INDEXER-PIPELINE" path="docs/verification/V-M-INDEXER-PIPELINE.xml" priority="critical" status="active" />

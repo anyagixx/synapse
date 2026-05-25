@@ -2,8 +2,9 @@
 // MODULE_ID: M-INDEXER
 // PURPOSE: Code indexer — walks, delegates pipeline block construction, stores full or delta snapshots, and searches code blocks with guarded storage health checks
 // SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation, filtered search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
-// DEPENDS: M-INDEXER-PIPELINE, M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
+// DEPENDS: M-INDEXER-EMBEDDING, M-INDEXER-PIPELINE, M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS:
+//   → M-INDEXER-EMBEDDING (depends) — semantic embedding provider specification
 //   → M-INDEXER-PIPELINE (depends) — deterministic full-index block construction
 //   → M-INDEXER-WALKER (depends) — source discovery
 //   → M-INDEXER-PARSER (depends) — signature parsing
@@ -23,9 +24,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.8.0 - Added filtered search entrypoints]
+// LAST_CHANGE: [v3.9.0 - Added embedding provider module boundary]
 // END_CHANGE_SUMMARY
 
+pub mod embedding;
 pub mod parser;
 pub mod pipeline;
 pub mod storage;

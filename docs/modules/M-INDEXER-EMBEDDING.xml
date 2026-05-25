@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-EMBEDDING" type="CORE_LOGIC" status="active">
+  <NAME>M-INDEXER-EMBEDDING</NAME>
+  <PURPOSE>Embedding provider specification and helpers for local semantic code search</PURPOSE>
+  <SCOPE>provider dependency selection, model identity, cache path, batch limits, fallback policy</SCOPE>
+  <FILES>
+    <FILE>src/indexer/embedding.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-INDEXER-STORAGE-TYPES</DEPENDS>
+  <LINKS>docs/modules/M-CONFIG.xml,docs/modules/M-INDEXER-STORAGE-TYPES.xml,docs/phases/Phase-66.xml</LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-EMBEDDING</VERIFICATION_REF>
+</MODULE>
