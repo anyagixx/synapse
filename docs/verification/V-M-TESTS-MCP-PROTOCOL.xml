@@ -3,6 +3,7 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test --test mcp_protocol</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol cache</COMMAND>
     <COMMAND>cargo test --test e2e_mcp tools_list</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
@@ -16,6 +17,10 @@
     <ASSERTION>tools/list style=terse removes schema description metadata and reports at least 60 percent schema savings.</ASSERTION>
     <ASSERTION>tools/list combines profile filtering and terse schema style in one request.</ASSERTION>
     <ASSERTION>tools/list exposes max_tokens and style on at least 10 high-output MCP tools.</ASSERTION>
+    <ASSERTION>tools/list exposes optional _if_none_match for cacheable tools and does not require it.</ASSERTION>
+    <ASSERTION>project_status returns _meta.cache etag and ttl_secs.</ASSERTION>
+    <ASSERTION>Matching project_status _if_none_match returns _not_modified=true.</ASSERTION>
+    <ASSERTION>semantic_search returns ttl_secs=0 and never takes the not-modified cache-hit path.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7,Phase-70,Phase-71,Phase-73,Phase-83,Phase-84</PHASE_GATE>
+  <PHASE_GATE>Phase-7,Phase-70,Phase-71,Phase-73,Phase-83,Phase-84,Phase-85</PHASE_GATE>
 </VERIFICATION>

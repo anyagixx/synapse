@@ -1,12 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-MCP-PROTOCOL
-// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, response economy schemas, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
-// SCOPE: Direct handler tests, response economy schema assertions, and binary stdio protocol behavior
+// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, response economy/cache schemas, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
+// SCOPE: Direct handler tests, response economy/cache schema assertions, cache metadata behavior, and binary stdio protocol behavior
 // DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
 // test_initialize_then_list_tools — MCP handler lists all 44 tools after initialize
+// initialized_handler — Creates an initialized in-process MCP handler
 // initialized_tools_list — Creates a handler, initializes MCP, and returns tools/list
+// tools_call — Executes one initialized tools/call request against a handler
 // tool_names — Extracts tool names from a tools/list response
 // contains_schema_description_key — Detects schema description metadata in tools/list payloads
 // test_tools_list_contains_grace_and_core_tools — Tool list contains representative core and grace tools
@@ -14,13 +16,16 @@
 // test_tools_list_full_and_terse_styles — tools/list style controls schema verbosity and economy metadata
 // test_tools_list_profile_and_terse_style_compose — tools/list profile and terse style combine
 // test_tools_list_response_economy_schema_covers_core_tools — tools/list exposes max_tokens/style on 10+ tools
+// test_tools_list_cache_hint_schema_covers_cacheable_tools — tools/list exposes optional cache validators
+// test_tools_call_cache_metadata_and_not_modified — project_status emits _meta.cache and honors _if_none_match
+// test_tools_call_volatile_semantic_search_reports_zero_ttl — semantic_search stays volatile
 // test_tools_call_grace_status_returns_text — Representative grace tool call returns MCP content envelope
 // test_concurrent_requests_keep_response_ids — Pipelined stdio requests preserve JSON-RPC response IDs
 // test_stdio_keeps_logs_off_stdout_and_notifications_silent — Binary stdio emits only request responses on stdout
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.30.0 - Added response economy schema protocol coverage]
+// LAST_CHANGE: [v2.31.0 - Added MCP cache hint protocol coverage]
 // END_CHANGE_SUMMARY
 
 use serde_json::Value;
@@ -28,22 +33,53 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 use syn::mcp::server::SynapseHandler;
 
+// START_CONTRACT_initialized_handler
+// PURPOSE: Create an initialized in-process MCP handler for protocol tests
+// OUTPUTS: { SynapseHandler }
+// SIDE_EFFECTS: creates in-process MCP handler
+async fn initialized_handler() -> SynapseHandler {
+    let handler = SynapseHandler::new();
+    handler
+        .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#)
+        .await
+        .expect("initialize request should produce a response");
+    handler
+}
+
 // START_CONTRACT_initialized_tools_list
 // PURPOSE: Initialize an in-process MCP handler and execute one tools/list request
 // INPUTS: { params: &str }
 // OUTPUTS: { serde_json::Value }
 // SIDE_EFFECTS: creates in-process MCP handler
 async fn initialized_tools_list(params: &str) -> Value {
-    let handler = SynapseHandler::new();
-    handler
-        .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#)
-        .await
-        .expect("initialize request should produce a response");
+    let handler = initialized_handler().await;
     let request = format!(r#"{{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{params}}}"#);
     handler
         .handle_message(&request)
         .await
         .expect("tools/list request should produce a response")
+}
+
+// START_CONTRACT_tools_call
+// PURPOSE: Execute one tools/call request against an initialized in-process handler
+// INPUTS: { handler: &SynapseHandler }, { id: u64 }, { name: &str }, { arguments: serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: invokes MCP tool handler
+async fn tools_call(handler: &SynapseHandler, id: u64, name: &str, arguments: Value) -> Value {
+    let request = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "method": "tools/call",
+        "params": {
+            "name": name,
+            "arguments": arguments
+        }
+    })
+    .to_string();
+    handler
+        .handle_message(&request)
+        .await
+        .expect("tools/call request should produce a response")
 }
 
 // START_CONTRACT_tool_names
@@ -229,6 +265,111 @@ async fn test_tools_list_response_economy_schema_covers_core_tools() {
     }
 
     assert!(covered >= 10, "covered={covered}");
+}
+
+#[tokio::test]
+// START_CONTRACT_test_tools_list_cache_hint_schema_covers_cacheable_tools
+// PURPOSE: Verify tools/list exposes optional _if_none_match only for cacheable tools
+// SIDE_EFFECTS: creates in-process MCP handler
+async fn test_tools_list_cache_hint_schema_covers_cacheable_tools() {
+    let response = initialized_tools_list("{}").await;
+    let tools = response["result"]["tools"].as_array().expect("tools array");
+    let expected = [
+        "graphrag_query",
+        "view_signatures",
+        "lsp_hover",
+        "lsp_references",
+        "project_status",
+        "traceability_report",
+    ];
+
+    for name in expected {
+        let tool = tools
+            .iter()
+            .find(|tool| tool["name"] == name)
+            .unwrap_or_else(|| panic!("{name} tool"));
+        let properties = tool["inputSchema"]["properties"]
+            .as_object()
+            .unwrap_or_else(|| panic!("{name} properties"));
+        let required = tool["inputSchema"]["required"].as_array();
+        assert!(properties.contains_key("_if_none_match"), "{name} cache");
+        assert!(
+            required
+                .map(|required| {
+                    !required
+                        .iter()
+                        .any(|entry| entry.as_str() == Some("_if_none_match"))
+                })
+                .unwrap_or(true),
+            "{name} required _if_none_match"
+        );
+    }
+
+    let semantic_search = tools
+        .iter()
+        .find(|tool| tool["name"] == "semantic_search")
+        .expect("semantic_search tool");
+    let properties = semantic_search["inputSchema"]["properties"]
+        .as_object()
+        .expect("semantic_search properties");
+    assert!(!properties.contains_key("_if_none_match"));
+}
+
+#[tokio::test]
+// START_CONTRACT_test_tools_call_cache_metadata_and_not_modified
+// PURPOSE: Verify project_status emits _meta.cache and matching _if_none_match returns _not_modified
+// SIDE_EFFECTS: creates in-process MCP handler
+async fn test_tools_call_cache_metadata_and_not_modified() {
+    let handler = initialized_handler().await;
+    let status = tools_call(&handler, 2, "project_status", serde_json::json!({})).await;
+    let status_cache = &status["result"]["_meta"]["cache"];
+    let etag = status_cache["etag"].as_str().expect("project_status etag");
+
+    assert!(etag.starts_with("W/\"syn-"));
+    assert_eq!(status_cache["ttl_secs"], 15);
+
+    let not_modified = tools_call(
+        &handler,
+        3,
+        "project_status",
+        serde_json::json!({"_if_none_match": etag}),
+    )
+    .await;
+    assert_eq!(not_modified["result"]["_not_modified"], true);
+    assert_eq!(not_modified["result"]["_meta"]["cache"]["etag"], etag);
+}
+
+#[tokio::test]
+// START_CONTRACT_test_tools_call_volatile_semantic_search_reports_zero_ttl
+// PURPOSE: Verify semantic_search reports ttl_secs=0 and does not return _not_modified
+// SIDE_EFFECTS: creates in-process MCP handler and queries local index storage
+async fn test_tools_call_volatile_semantic_search_reports_zero_ttl() {
+    let handler = initialized_handler().await;
+    let first = tools_call(
+        &handler,
+        2,
+        "semantic_search",
+        serde_json::json!({"query": "Phase-85", "max_results": 1}),
+    )
+    .await;
+    let etag = first["result"]["_meta"]["cache"]["etag"]
+        .as_str()
+        .expect("semantic_search etag");
+    assert_eq!(first["result"]["_meta"]["cache"]["ttl_secs"], 0);
+
+    let second = tools_call(
+        &handler,
+        3,
+        "semantic_search",
+        serde_json::json!({
+            "query": "Phase-85",
+            "max_results": 1,
+            "_if_none_match": etag
+        }),
+    )
+    .await;
+    assert_ne!(second["result"]["_not_modified"], true);
+    assert_eq!(second["result"]["_meta"]["cache"]["ttl_secs"], 0);
 }
 
 #[tokio::test]

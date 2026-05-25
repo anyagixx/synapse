@@ -21,7 +21,7 @@
     <step-2 module="M-MCP-SERVER" status="done">Add an in-memory ETag cache with deterministic keys and clear-on-over-100 eviction.</step-2>
     <step-3 module="M-MCP-SERVER" status="done">Honor _if_none_match before expensive cacheable handlers when a cached ETag is available.</step-3>
     <step-4 module="M-MCP-SERVER-TOOLS" status="done">Expose _if_none_match in cacheable tool schemas without making it required.</step-4>
-    <step-5 module="M-TESTS-MCP-PROTOCOL" status="planned">Test cache metadata for cacheable tools and ttl_secs=0 behavior for volatile tools.</step-5>
+    <step-5 module="M-TESTS-MCP-PROTOCOL" status="done">Test cache metadata for cacheable tools and ttl_secs=0 behavior for volatile tools.</step-5>
   </STEPS>
   <VERIFICATION>
     <CHECK status="planned">cargo test mcp::server_response::tests --lib</CHECK>

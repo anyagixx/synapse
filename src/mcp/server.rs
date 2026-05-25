@@ -991,6 +991,42 @@ mod tests {
         assert_eq!(second["result"]["_meta"]["cache"]["ttl_secs"], 15);
     }
     // END_test_cache_not_modified_response_for_project_status
+
+    // START_CONTRACT_test_cache_metadata_attaches_to_graphrag_overview
+    // PURPOSE: Verify graphrag_query overview emits cache metadata without rebuilding an already-cached graph
+    // START_test_cache_metadata_attaches_to_graphrag_overview
+    #[tokio::test]
+    async fn test_cache_metadata_attaches_to_graphrag_overview() {
+        let handler = SynapseHandler::new();
+        let root = std::env::current_dir().expect("cwd");
+        *handler.graphrag.write().expect("graph lock") = Some(GraphRag::new());
+        *handler.graph_cache_key.write().expect("key lock") = Some(GraphCacheKey::for_root(&root));
+        handler
+            .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
+            .await
+            .expect("initialize response");
+
+        let request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {
+                "name": "graphrag_query",
+                "arguments": {"operation": "overview"}
+            }
+        })
+        .to_string();
+        let response = handler
+            .handle_message(&request)
+            .await
+            .expect("graphrag_query response");
+
+        assert_eq!(response["result"]["_meta"]["cache"]["ttl_secs"], 120);
+        assert!(response["result"]["_meta"]["cache"]["etag"]
+            .as_str()
+            .is_some_and(|etag| etag.starts_with("W/\"syn-")));
+    }
+    // END_test_cache_metadata_attaches_to_graphrag_overview
 }
 
 // END_public_api
