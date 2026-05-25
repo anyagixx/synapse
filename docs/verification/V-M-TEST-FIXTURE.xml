@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-TEST-FIXTURE" module="M-TEST-FIXTURE" priority="critical" status="pending">
+<VERIFICATION id="V-M-TEST-FIXTURE" module="M-TEST-FIXTURE" priority="critical" status="active">
   <UNIT_TESTS>
     <TEST>Minimal fixture creates synapsec.toml, sharded docs indexes, module shard, verification shard, phase shard, and src/main.rs.</TEST>
     <TEST>MultiModule fixture creates M-CORE, M-AUTH, and M-STORAGE with DataFlow and mental-test evidence.</TEST>

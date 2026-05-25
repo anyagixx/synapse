@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MODULE id="M-TEST-FIXTURE" type="UTILITY" status="pending">
+<MODULE id="M-TEST-FIXTURE" type="UTILITY" status="active">
   <NAME>M-TEST-FIXTURE</NAME>
   <PURPOSE>Create isolated temporary Synapse projects with reusable preset structures for E2E and regression tests.</PURPOSE>
   <SCOPE>TestFixture, FixtureBuilder, Empty, Minimal, MultiModule, Broken templates, custom file overrides, isolated config/data homes, and automatic cleanup.</SCOPE>
