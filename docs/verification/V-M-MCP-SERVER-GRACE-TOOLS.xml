@@ -5,6 +5,7 @@
     <COMMAND>cargo test mcp::server_contract_tools::tests::test_comment_prefix_for_python_and_sql --lib</COMMAND>
     <COMMAND>cargo test mcp::server_contract_tools::tests::test_module_id_from_name_removes_commas --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_analyze_logs_returns_report --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_response::tests::test_text_result_applies_terse_and_tokens --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_extract_belief_state_writes_artifact --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_requirements_writes_valid_artifact --lib</COMMAND>
     <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_technology_writes_valid_artifact --lib</COMMAND>
@@ -34,6 +35,7 @@
     <ASSERTION>MCP diagnose_failure returns EnhancedFixResult JSON from tester-agent failure evidence.</ASSERTION>
     <ASSERTION>MCP repair_contract defaults to dry_run and returns preview evidence without writing source content.</ASSERTION>
     <ASSERTION>MCP token_savings reports command, adapter, and recent session economics from M-TRACKING.</ASSERTION>
+    <ASSERTION>MCP verify_project, review_code, project_status, analyze_logs, mental_test_run, traceability_report, token_savings, and refresh_project return shared response economy metadata.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-21,Phase-70,Phase-71</PHASE_GATE>
+  <PHASE_GATE>Phase-21,Phase-70,Phase-71,Phase-84</PHASE_GATE>
 </VERIFICATION>

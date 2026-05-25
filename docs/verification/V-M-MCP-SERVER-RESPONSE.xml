@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-MCP-SERVER-RESPONSE" module="M-MCP-SERVER-RESPONSE" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test mcp::server_response::tests --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_response::tests::test_text_result_applies_terse_and_tokens --lib</COMMAND>
     <COMMAND>cargo test --all-targets</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
@@ -9,6 +10,7 @@
     <ASSERTION>max_tokens=0 preserves full text and reports was_trimmed=false.</ASSERTION>
     <ASSERTION>bounded responses include original, shown, saved, and was_trimmed metadata.</ASSERTION>
     <ASSERTION>style parsing defaults to full and accepts terse.</ASSERTION>
+    <ASSERTION>text_result wraps text content with style, was_trimmed, and token metadata.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-1,Phase-84</PHASE_GATE>
 </VERIFICATION>

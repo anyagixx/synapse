@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-RESPONSE
 // PURPOSE: MCP JSON-RPC response helpers, token-budget trimming, and verification failure suggestions
-// SCOPE: JSON-RPC result/error envelopes, response trim options/metadata, text token-budget trimming, FailurePacket, suggest_fix
+// SCOPE: JSON-RPC result/error/text envelopes, response trim options/metadata, text token-budget trimming, generic terse text previews, FailurePacket, suggest_fix
 // DEPENDS: M-UTILS
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server response envelopes
@@ -10,6 +10,7 @@
 // START_MODULE_MAP
 // result — Wrap a successful MCP tool payload in JSON-RPC format
 // error — Wrap an MCP error in JSON-RPC format
+// text_result — Wrap MCP text content with response economy metadata
 // ResponseStyle — Handler output verbosity style
 // ResponseStyle::parse — Parses style arguments
 // ResponseTrimOptions — max_tokens and style options shared by MCP handlers
@@ -18,12 +19,13 @@
 // ResponseTrimMetadata::to_json — Serializes trim metadata
 // TrimmedText — Text plus response trim metadata
 // trim_text_to_budget — Applies progressive token-budget trimming to final text content
+// compact_terse_text — Builds a generic compact line preview for terse text responses
 // FailurePacket — Human-readable verification failure packet
 // suggest_fix — Maps verification check names to suggested fixes
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.4.0 - Added shared MCP response trim model]
+// LAST_CHANGE: [v2.5.0 - Added shared text_result response economy envelope]
 // END_CHANGE_SUMMARY
 
 use crate::utils::{estimate_tokens, truncate_chars};
@@ -74,6 +76,35 @@ pub(crate) fn error(
     resp
 }
 // END_error
+
+// START_CONTRACT_text_result
+// PURPOSE: Build a JSON-RPC text content response with max_tokens/style response economy metadata
+// INPUTS: { id: Option<serde_json::Value> }, { text: impl Into<String> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_text_result
+pub(crate) fn text_result(
+    id: Option<serde_json::Value>,
+    text: impl Into<String>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let options = ResponseTrimOptions::from_args(args);
+    let text = match options.style {
+        ResponseStyle::Full => text.into(),
+        ResponseStyle::Terse => compact_terse_text(&text.into()),
+    };
+    let trimmed = trim_text_to_budget(&text, options.max_tokens);
+    result(
+        id,
+        serde_json::json!({
+            "content": [{"type": "text", "text": trimmed.text}],
+            "isError": false,
+            "style": options.style.label(),
+            "was_trimmed": trimmed.metadata.was_trimmed,
+            "tokens": trimmed.metadata.to_json()
+        }),
+    )
+}
+// END_text_result
 
 // START_ResponseStyle
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -310,6 +341,39 @@ fn fit_prefix_with_notice(text: &str, notice: &str, max_tokens: u32) -> String {
 }
 // END_fit_prefix_with_notice
 
+// START_CONTRACT_compact_terse_text
+// PURPOSE: Build a generic compact line preview for terse MCP text responses
+// INPUTS: { text: &str }
+// OUTPUTS: { String }
+// START_compact_terse_text
+fn compact_terse_text(text: &str) -> String {
+    const TERSE_LINES: usize = 8;
+    const TERSE_LINE_CHARS: usize = 120;
+    let lines = text
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>();
+    if lines.len() <= TERSE_LINES {
+        return lines
+            .iter()
+            .map(|line| truncate_chars(line, TERSE_LINE_CHARS))
+            .collect::<Vec<_>>()
+            .join("\n");
+    }
+    let mut compact = lines
+        .iter()
+        .take(TERSE_LINES)
+        .map(|line| truncate_chars(line, TERSE_LINE_CHARS))
+        .collect::<Vec<_>>();
+    compact.push(format!(
+        "[terse: {} more lines hidden]",
+        lines.len() - TERSE_LINES
+    ));
+    compact.join("\n")
+}
+// END_compact_terse_text
+
 // START_FailurePacket
 pub(crate) struct FailurePacket {
     pub(crate) check: String,
@@ -413,6 +477,33 @@ mod tests {
         assert_eq!(trimmed.metadata.to_json()["was_trimmed"], true);
     }
     // END_test_trim_text_to_budget_adds_notice
+
+    // START_CONTRACT_test_text_result_applies_terse_and_tokens
+    // PURPOSE: Verify text_result adds response economy metadata and terse formatting
+    // START_test_text_result_applies_terse_and_tokens
+    #[test]
+    fn test_text_result_applies_terse_and_tokens() {
+        let text = (0..20)
+            .map(|i| format!("line {i}: verbose response content with additional detail"))
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        let response = text_result(
+            Some(serde_json::json!(1)),
+            text,
+            &serde_json::json!({
+                "style": "terse",
+                "max_tokens": 0
+            }),
+        );
+
+        assert_eq!(response["result"]["style"], "terse");
+        assert_eq!(response["result"]["was_trimmed"], false);
+        assert!(response["result"]["content"][0]["text"]
+            .as_str()
+            .is_some_and(|text| text.contains("[terse:")));
+    }
+    // END_test_text_result_applies_terse_and_tokens
 }
 
 // END_public_api

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, self-heal, log analysis, belief extraction, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, self_heal, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, submit_test_report, token_savings with adapter/session stats, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, self-heal, log analysis, belief extraction, compression, tracking, skills, and response economy
+// SCOPE: profile-aware verify_project/review_code with response economy, project_status response economy, self_heal, analyze_logs response economy, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run response economy, traceability_report response economy, run_test_guide, submit_test_report, token_savings with adapter/session stats and response economy, compress_text, refresh_project response economy, language-aware suggest_contract, grace_* handlers
 // DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-RUNNER-SELF-HEAL, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -29,10 +29,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.24.0 - Added self_heal MCP handler]
+// LAST_CHANGE: [v2.25.0 - Added response economy to high-output GRACE MCP handlers]
 // END_CHANGE_SUMMARY
 
-use super::server_response::{error, result, suggest_fix, FailurePacket};
+use super::server_response::{error, result, suggest_fix, text_result, FailurePacket};
 use crate::grace::GraceProfile;
 use crate::skills::{SkillEngine, SkillRequest};
 use std::path::PathBuf;
@@ -94,13 +94,7 @@ pub(crate) async fn handle_verify(
                 }
             }
             text.push_str(&format!("\nProfile: {}\n", profile.as_str()));
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
-            )
+            text_result(id, text, args)
         }
         Err(e) => error(id, -32603, format!("Verify error: {}", e)),
     }
@@ -142,13 +136,7 @@ pub(crate) async fn handle_review(
             if report.passed {
                 text.push_str("\nAll checks passed.");
             }
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
-            )
+            text_result(id, text, args)
         }
         Err(e) => error(id, -32603, format!("Review error: {}", e)),
     }
@@ -162,7 +150,7 @@ pub(crate) async fn handle_review(
 // START_handle_status
 pub(crate) async fn handle_status(
     id: Option<serde_json::Value>,
-    _args: &serde_json::Value,
+    args: &serde_json::Value,
 ) -> serde_json::Value {
     let root = match std::env::current_dir() {
         Ok(r) => r,
@@ -171,13 +159,7 @@ pub(crate) async fn handle_status(
     match crate::grace::status::StatusCollector::collect(&root).await {
         Ok(report) => {
             let text = serde_json::to_string_pretty(&report).unwrap_or_default();
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
-            )
+            text_result(id, text, args)
         }
         Err(e) => error(id, -32603, format!("Status error: {}", e)),
     }
@@ -212,13 +194,7 @@ pub(crate) async fn handle_analyze_logs(
     let path = resolve_log_path(&root, log_path);
     let contract_ref = args["contract_ref"].as_str();
     match crate::grace::log::analyze_log_file(&path, mode, contract_ref) {
-        Ok(report) => result(
-            id,
-            serde_json::json!({
-                "content": [{"type": "text", "text": report.to_xml()}],
-                "isError": false
-            }),
-        ),
+        Ok(report) => text_result(id, report.to_xml(), args),
         Err(e) => error(id, -32603, format!("Log analysis error: {}", e)),
     }
 }
@@ -487,13 +463,7 @@ pub(crate) async fn handle_mental_test_run(
 
     match crate::grace::mental_test::run_mental_test(&root, module_id, mental_test_id, step_by_step)
     {
-        Ok(report) => result(
-            id,
-            serde_json::json!({
-                "content": [{"type": "text", "text": report.to_xml()}],
-                "isError": false
-            }),
-        ),
+        Ok(report) => text_result(id, report.to_xml(), args),
         Err(e) => error(id, -32603, format!("Mental test error: {}", e)),
     }
 }
@@ -551,13 +521,7 @@ pub(crate) async fn handle_traceability_report(
                 "\n<TraceabilityIndex>{}</TraceabilityIndex>",
                 index_path
             ));
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
-            )
+            text_result(id, text, args)
         }
         Err(e) => error(id, -32603, format!("Traceability error: {}", e)),
     }
@@ -714,7 +678,7 @@ pub(crate) async fn handle_self_heal(
 // START_handle_gain
 pub(crate) async fn handle_gain(
     id: Option<serde_json::Value>,
-    _args: &serde_json::Value,
+    args: &serde_json::Value,
 ) -> serde_json::Value {
     let config = crate::config::Config::load().unwrap_or_default();
     let tracker = crate::tracking::Tracker::new(&config);
@@ -760,13 +724,7 @@ pub(crate) async fn handle_gain(
                     ));
                 }
             }
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
-            )
+            text_result(id, text, args)
         }
         Err(e) => error(id, -32603, format!("Gain error: {}", e)),
     }
@@ -837,13 +795,7 @@ pub(crate) async fn handle_refresh(
     match result_report {
         Ok(report) => {
             let text = serde_json::to_string_pretty(&report).unwrap_or_default();
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false
-                }),
-            )
+            text_result(id, text, args)
         }
         Err(e) => error(id, -32603, format!("Refresh error: {}", e)),
     }
@@ -937,6 +889,9 @@ mod tests {
             .expect("text response");
         assert!(text.contains("<LogAnalysisReport"));
         assert!(text.contains("<TotalEvents>1</TotalEvents>"));
+        assert_eq!(response["result"]["style"], "full");
+        assert_eq!(response["result"]["was_trimmed"], false);
+        assert!(response["result"]["tokens"]["shown"].as_u64().unwrap_or(0) > 0);
     }
     // END_test_handle_analyze_logs_returns_report
 
