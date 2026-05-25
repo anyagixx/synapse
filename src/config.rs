@@ -10,7 +10,7 @@
 // ProjectConfig — Project metadata (name, version, strictness)
 // IndexConfig — Indexer settings (chunk_size, chunk_overlap, require_git)
 // SearchConfig — Search settings (max_results, similarity_threshold, hybrid_enabled)
-// ProxyConfig — Proxy settings (enabled, passthrough_max_chars)
+// ProxyConfig — Proxy settings (enabled, passthrough_max_chars, capture caps, command timeout)
 // CompressConfig — Compress settings (output_level, input_enabled)
 // TrackingConfig — Tracking settings (enabled, history_days)
 // GraphRagConfig — GraphRAG settings (enabled, use_llm)
@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.9.0 — Added configurable LSP server command overrides]
+// LAST_CHANGE: [v3.0.0 — Added configurable proxy capture caps and command timeout]
 // END_CHANGE_SUMMARY
 
 use std::collections::HashMap;
@@ -65,6 +65,10 @@ pub struct SearchConfig {
 pub struct ProxyConfig {
     pub enabled: bool,
     pub passthrough_max_chars: u32,
+    #[serde(default = "default_proxy_capture_cap_bytes")]
+    pub capture_cap_bytes: usize,
+    #[serde(default = "default_proxy_command_timeout_secs")]
+    pub command_timeout_secs: u64,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
@@ -94,6 +98,20 @@ impl TrackingConfig {
     pub fn enabled(&self) -> bool {
         self.enabled
     }
+}
+
+// START_CONTRACT_default_proxy_capture_cap_bytes
+// PURPOSE: Provide serde/default proxy stdout/stderr capture cap in bytes
+// OUTPUTS: { usize — 10 MiB default cap }
+fn default_proxy_capture_cap_bytes() -> usize {
+    10_485_760
+}
+
+// START_CONTRACT_default_proxy_command_timeout_secs
+// PURPOSE: Provide serde/default proxy command timeout in seconds
+// OUTPUTS: { u64 — 300 second default timeout, 0 disables timeout when configured explicitly }
+fn default_proxy_command_timeout_secs() -> u64 {
+    300
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
@@ -189,6 +207,8 @@ impl Default for Config {
             proxy: ProxyConfig {
                 enabled: true,
                 passthrough_max_chars: 2000,
+                capture_cap_bytes: default_proxy_capture_cap_bytes(),
+                command_timeout_secs: default_proxy_command_timeout_secs(),
             },
             compress: CompressConfig {
                 output_level: "full".into(),
@@ -204,6 +224,61 @@ impl Default for Config {
             },
             lsp: LspConfig::default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn proxy_config_deserializes_runtime_defaults_for_existing_files() {
+        let config: Config = toml::from_str(
+            r#"
+[project]
+name = "my-project"
+version = "0.1.0"
+strictness = false
+
+[index]
+chunk_size = 2000
+chunk_overlap = 100
+require_git = true
+
+[search]
+max_results = 20
+similarity_threshold = 0.65
+hybrid_enabled = false
+
+[proxy]
+enabled = true
+passthrough_max_chars = 2000
+
+[compress]
+output_level = "full"
+input_enabled = true
+
+[tracking]
+enabled = true
+history_days = 90
+
+[graphrag]
+enabled = false
+use_llm = false
+"#,
+        )
+        .expect("parse config");
+
+        assert_eq!(config.proxy.capture_cap_bytes, 10_485_760);
+        assert_eq!(config.proxy.command_timeout_secs, 300);
+    }
+
+    #[test]
+    fn default_proxy_runtime_limits_are_release_defaults() {
+        let config = Config::default();
+
+        assert_eq!(config.proxy.capture_cap_bytes, 10_485_760);
+        assert_eq!(config.proxy.command_timeout_secs, 300);
     }
 }
 // END_public_api

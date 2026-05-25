@@ -2,11 +2,11 @@
 <MODULE id="M-CONFIG" type="CORE_LOGIC" status="active">
   <NAME>M-CONFIG</NAME>
   <PURPOSE>Config model and explicit load/default/init semantics for synapsec.toml</PURPOSE>
-  <SCOPE>Config struct definitions, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, path resolution</SCOPE>
+  <SCOPE>Config struct definitions, proxy capture cap and command timeout defaults, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, path resolution</SCOPE>
   <FILES>
     <FILE>src/config.rs</FILE>
   </FILES>
   <DEPENDS></DEPENDS>
-  <LINKS>synapsec.toml,docs/phases/Phase-59.xml</LINKS>
+  <LINKS>synapsec.toml,docs/phases/Phase-59.xml,docs/phases/Phase-61.xml</LINKS>
   <VERIFICATION_REF>V-M-CONFIG</VERIFICATION_REF>
 </MODULE>

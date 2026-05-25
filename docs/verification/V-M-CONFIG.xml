@@ -2,11 +2,14 @@
 <VERIFICATION id="V-M-CONFIG" module="M-CONFIG" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test config::tests::proxy_config_deserializes_runtime_defaults_for_existing_files --lib</COMMAND>
+    <COMMAND>cargo test config::tests::default_proxy_runtime_limits_are_release_defaults --lib</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests::test_detect_lsp_command_uses_config_override --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>LSP server command overrides deserialize through Config and override built-in language-server defaults.</ASSERTION>
+    <ASSERTION>Proxy capture_cap_bytes and command_timeout_secs deserialize with release-safe defaults for existing config files.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-61</PHASE_GATE>
 </VERIFICATION>

@@ -4,6 +4,7 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test tracking::tests::tracker_records_and_reads_run_events --lib</COMMAND>
     <COMMAND>cargo test tracking::tests::tracker_records_routed_adapter_and_session_stats --lib</COMMAND>
+    <COMMAND>cargo test tracking::tests::tracker_reuses_cached_connection_after_first_operation --lib</COMMAND>
     <COMMAND>cargo test tracking::tests::tracker_records_and_reads_run_events --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test tracking::tests::tracker_records_routed_adapter_and_session_stats --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo run --quiet -- session --json</COMMAND>
@@ -21,6 +22,8 @@
     <ASSERTION>Tracking reports route_adoption_pct, routed_commands, passthrough_commands, and bounded missed_route_candidates from local SQLite data.</ASSERTION>
     <ASSERTION>Local RTK adapters and system adapters record adapter-level savings through the shared tracking path.</ASSERTION>
     <ASSERTION>Tracking tests serialize process environment overrides so XDG_DATA_HOME and SYNAPSE_SESSION_ID cannot cross-contaminate parallel test runs.</ASSERTION>
+    <ASSERTION>Tracker opens SQLite once per Tracker instance, enables WAL and busy_timeout, and reuses the cached connection across read/write operations.</ASSERTION>
+    <ASSERTION>Unused project_db_path dead code is removed; canonical project identity remains row-scoped in the shared tracking database.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-61</PHASE_GATE>
 </VERIFICATION>

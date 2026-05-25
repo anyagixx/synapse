@@ -42,6 +42,7 @@
     <ASSERTION>syn json, syn deps, syn env, and syn wc run as direct local adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn pipe, syn log, and syn smart run as direct local system adapters with compact output and adapter-level token tracking.</ASSERTION>
     <ASSERTION>syn err, syn test, syn diff, and syn summary run as direct core RTK adapters with compact output and adapter-level token tracking.</ASSERTION>
+    <ASSERTION>syn err and syn test use the shared configurable async CommandRunner for child process execution.</ASSERTION>
     <ASSERTION>syn discover reports routeable token-heavy commands, first-class Synapse replacement suggestions, and tracking-backed missed-route history without scanning private session history.</ASSERTION>
     <ASSERTION>syn learn reports bounded advisory learning rules plus measured local adoption signals without mutating project rules.</ASSERTION>
     <ASSERTION>syn rewrite uses CommandRouter as the hook rewrite source of truth and exits non-zero without stdout for unsupported commands.</ASSERTION>
@@ -55,5 +56,5 @@
     <ASSERTION>syn binlog, syn dotnet-format-report, and syn dotnet-trx summarize .NET build/test artifacts without dumping full files.</ASSERTION>
     <ASSERTION>syn session and syn cc-economics read local tracking stats and expose session/economics/adoption analytics without telemetry upload.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-56</PHASE_GATE>
+  <PHASE_GATE>Phase-56,Phase-61</PHASE_GATE>
 </VERIFICATION>

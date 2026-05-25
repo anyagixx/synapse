@@ -20,13 +20,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.3.0 — Replaced unsafe test env mutation with scoped guards]
+// LAST_CHANGE: [v3.4.0 — Added cached SQLite connection with WAL and busy timeout]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
-#[cfg(test)]
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
 const DEFAULT_MISSED_ROUTE_LIMIT: usize = 12;
 const MAX_MISSED_ROUTE_COMMAND_CHARS: i64 = 160;
@@ -36,6 +36,7 @@ const MAX_MISSED_ROUTE_COMMAND_CHARS: i64 = 160;
 // START_Tracker
 pub struct Tracker {
     config: Config,
+    conn: Mutex<Option<rusqlite::Connection>>,
     #[cfg(test)]
     db_path_override: Option<PathBuf>,
     #[cfg(test)]
@@ -55,6 +56,7 @@ impl Tracker {
     pub fn new(config: &Config) -> Self {
         Self {
             config: config.clone(),
+            conn: Mutex::new(None),
             #[cfg(test)]
             db_path_override: None,
             #[cfg(test)]
@@ -84,6 +86,7 @@ impl Tracker {
             .to_string();
         Self {
             config: config.clone(),
+            conn: Mutex::new(None),
             db_path_override: Some(data_home.join("synapse").join("tracking.db")),
             project_key_override: Some(project_key),
             session_id_override: session_id.map(ToOwned::to_owned),
@@ -127,21 +130,37 @@ impl Tracker {
         current_session_id()
     }
 
-    #[allow(dead_code)]
-    fn project_db_path() -> anyhow::Result<PathBuf> {
-        let project_hash = std::env::current_dir()
-            .ok()
-            .map(|p| {
-                use std::hash::{Hash, Hasher};
-                let mut h = std::collections::hash_map::DefaultHasher::new();
-                p.to_string_lossy().hash(&mut h);
-                format!("{:x}", h.finish())
-            })
-            .unwrap_or_default();
-        let data_dir = dirs::data_dir()
-            .ok_or_else(|| anyhow::anyhow!("Cannot find data directory"))?
-            .join("synapse");
-        Ok(data_dir.join(format!("tracking-{}.db", project_hash)))
+    // START_CONTRACT_Tracker::with_conn
+    // PURPOSE: Run one SQLite operation through the cached tracker connection
+    // INPUTS: { operation: impl FnOnce(&rusqlite::Connection) -> rusqlite::Result<T> }
+    // OUTPUTS: { anyhow::Result<T> }
+    // SIDE_EFFECTS: opens and initializes tracking DB on first use
+    // START_tracker_with_conn
+    fn with_conn<T>(
+        &self,
+        operation: impl FnOnce(&rusqlite::Connection) -> rusqlite::Result<T>,
+    ) -> anyhow::Result<T> {
+        let mut guard = self
+            .conn
+            .lock()
+            .map_err(|_| anyhow::anyhow!("tracker connection lock poisoned"))?;
+        if guard.is_none() {
+            let db_path = self.db_path_for()?;
+            *guard = Some(open_tracking_connection(&db_path)?);
+        }
+        let conn = guard
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("tracker connection unavailable after open"))?;
+        operation(conn).map_err(|e| anyhow::anyhow!("tracking DB operation failed: {}", e))
+    }
+    // END_tracker_with_conn
+
+    #[cfg(test)]
+    fn cached_connection_is_initialized_for_test(&self) -> bool {
+        self.conn
+            .lock()
+            .map(|guard| guard.is_some())
+            .unwrap_or(false)
     }
 
     // START_CONTRACT_Tracker::record
@@ -193,30 +212,24 @@ impl Tracker {
         let project = self.project_key();
         let session_id = self.session_id();
 
-        let db_path = self.db_path_for()?;
-        if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-
-        let conn = rusqlite::Connection::open(&db_path)
-            .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
-        ensure_schema(&conn)?;
-        conn.execute(
+        self.with_conn(|conn| {
+            conn.execute(
             "INSERT INTO commands (original_cmd, input_tokens, output_tokens, saved_tokens, savings_pct, project_path, adapter, route_key, session_id)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-            rusqlite::params![
-                cmd,
-                input_tokens,
-                output_tokens,
-                saved,
-                savings_pct,
-                project,
-                adapter,
-                route_key,
-                session_id
-            ],
-        )?;
-        Ok(())
+                rusqlite::params![
+                    cmd,
+                    input_tokens,
+                    output_tokens,
+                    saved,
+                    savings_pct,
+                    project,
+                    adapter,
+                    route_key,
+                    session_id
+                ],
+            )
+            .map(|_| ())
+        })
     }
     // END_tracker_record_routed
 
@@ -241,19 +254,14 @@ impl Tracker {
             return Ok(());
         }
         let project = self.project_key();
-        let db_path = self.db_path_for()?;
-        if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let conn = rusqlite::Connection::open(&db_path)
-            .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
-        ensure_schema(&conn)?;
-        conn.execute(
+        self.with_conn(|conn| {
+            conn.execute(
             "INSERT INTO run_events (run_id, event_type, module_id, phase, status, detail, project_path)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-            rusqlite::params![run_id, event_type, module_id, phase, status, detail, project],
-        )?;
-        Ok(())
+                rusqlite::params![run_id, event_type, module_id, phase, status, detail, project],
+            )
+            .map(|_| ())
+        })
     }
     // END_tracker_record_run_event
 
@@ -265,62 +273,57 @@ impl Tracker {
     //   → UC-002 (implements) - run event retrieval supports audit and replay
     // START_tracker_get_run_events
     pub async fn get_run_events(&self, run_id: Option<&str>) -> anyhow::Result<Vec<RunEvent>> {
-        let db_path = self.db_path_for()?;
         let project = self.project_key();
-        if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let conn = rusqlite::Connection::open(&db_path)
-            .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
-        ensure_schema(&conn)?;
-        let mut events = Vec::new();
-        match run_id {
-            Some(run_id) => {
-                let mut stmt = conn.prepare(
-                    "SELECT run_id, event_type, module_id, phase, status, detail, timestamp
+        self.with_conn(|conn| {
+            let mut events = Vec::new();
+            match run_id {
+                Some(run_id) => {
+                    let mut stmt = conn.prepare(
+                        "SELECT run_id, event_type, module_id, phase, status, detail, timestamp
                      FROM run_events
                      WHERE project_path = ?1 AND run_id = ?2
                      ORDER BY id ASC",
-                )?;
-                let rows = stmt.query_map(rusqlite::params![project, run_id], |row| {
-                    Ok(RunEvent {
-                        run_id: row.get(0)?,
-                        event_type: row.get(1)?,
-                        module_id: row.get(2)?,
-                        phase: row.get(3)?,
-                        status: row.get(4)?,
-                        detail: row.get(5)?,
-                        timestamp: row.get(6)?,
-                    })
-                })?;
-                for row in rows {
-                    events.push(row?);
+                    )?;
+                    let rows = stmt.query_map(rusqlite::params![project, run_id], |row| {
+                        Ok(RunEvent {
+                            run_id: row.get(0)?,
+                            event_type: row.get(1)?,
+                            module_id: row.get(2)?,
+                            phase: row.get(3)?,
+                            status: row.get(4)?,
+                            detail: row.get(5)?,
+                            timestamp: row.get(6)?,
+                        })
+                    })?;
+                    for row in rows {
+                        events.push(row?);
+                    }
                 }
-            }
-            None => {
-                let mut stmt = conn.prepare(
-                    "SELECT run_id, event_type, module_id, phase, status, detail, timestamp
+                None => {
+                    let mut stmt = conn.prepare(
+                        "SELECT run_id, event_type, module_id, phase, status, detail, timestamp
                      FROM run_events
                      WHERE project_path = ?1
                      ORDER BY id ASC",
-                )?;
-                let rows = stmt.query_map(rusqlite::params![project], |row| {
-                    Ok(RunEvent {
-                        run_id: row.get(0)?,
-                        event_type: row.get(1)?,
-                        module_id: row.get(2)?,
-                        phase: row.get(3)?,
-                        status: row.get(4)?,
-                        detail: row.get(5)?,
-                        timestamp: row.get(6)?,
-                    })
-                })?;
-                for row in rows {
-                    events.push(row?);
+                    )?;
+                    let rows = stmt.query_map(rusqlite::params![project], |row| {
+                        Ok(RunEvent {
+                            run_id: row.get(0)?,
+                            event_type: row.get(1)?,
+                            module_id: row.get(2)?,
+                            phase: row.get(3)?,
+                            status: row.get(4)?,
+                            detail: row.get(5)?,
+                            timestamp: row.get(6)?,
+                        })
+                    })?;
+                    for row in rows {
+                        events.push(row?);
+                    }
                 }
             }
-        }
-        Ok(events)
+            Ok(events)
+        })
     }
     // END_tracker_get_run_events
     // START_CONTRACT_Tracker::get_stats
@@ -330,33 +333,26 @@ impl Tracker {
     //   → NFR-003 (traces_to) - reports command, adapter, and session savings
     // START_tracker_get_stats
     pub async fn get_stats(&self) -> anyhow::Result<TrackingStats> {
-        let db_path = self.db_path_for()?;
         let project = self.project_key();
-        let mut stats = TrackingStats::default();
+        self.with_conn(|conn| {
+            let mut stats = TrackingStats::default();
 
-        if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let conn = rusqlite::Connection::open(&db_path)
-            .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
-        ensure_schema(&conn)?;
-
-        let mut stmt = conn.prepare(
-            "SELECT COUNT(*), COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0),
+            let mut stmt = conn.prepare(
+                "SELECT COUNT(*), COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0),
                     COALESCE(SUM(saved_tokens),0), COALESCE(AVG(savings_pct),0)
              FROM commands WHERE project_path = ?1",
-        )?;
-        stmt.query_row(rusqlite::params![project.clone()], |row| {
-            stats.total_commands = row.get(0)?;
-            stats.total_input_tokens = row.get(1)?;
-            stats.total_output_tokens = row.get(2)?;
-            stats.total_saved_tokens = row.get(3)?;
-            stats.avg_savings_pct = row.get(4)?;
-            Ok(())
-        })?;
+            )?;
+            stmt.query_row(rusqlite::params![project.clone()], |row| {
+                stats.total_commands = row.get(0)?;
+                stats.total_input_tokens = row.get(1)?;
+                stats.total_output_tokens = row.get(2)?;
+                stats.total_saved_tokens = row.get(3)?;
+                stats.avg_savings_pct = row.get(4)?;
+                Ok(())
+            })?;
 
-        let mut stmt = conn.prepare(
-            "SELECT
+            let mut stmt = conn.prepare(
+                "SELECT
                 COUNT(DISTINCT CASE
                     WHEN adapter IS NOT NULL AND adapter != '' THEN adapter
                     ELSE 'passthrough'
@@ -367,15 +363,15 @@ impl Tracker {
                 END)
              FROM commands
              WHERE project_path = ?1",
-        )?;
-        stmt.query_row(rusqlite::params![project.clone()], |row| {
-            stats.adapter_groups = row.get(0)?;
-            stats.session_groups = row.get(1)?;
-            Ok(())
-        })?;
+            )?;
+            stmt.query_row(rusqlite::params![project.clone()], |row| {
+                stats.adapter_groups = row.get(0)?;
+                stats.session_groups = row.get(1)?;
+                Ok(())
+            })?;
 
-        let mut stmt = conn.prepare(
-            "SELECT CASE
+            let mut stmt = conn.prepare(
+                "SELECT CASE
                     WHEN route_key IS NOT NULL AND route_key != '' THEN route_key
                     WHEN instr(original_cmd, ' ') > 0 THEN substr(original_cmd, 1, instr(original_cmd, ' ') - 1)
                     ELSE original_cmd
@@ -388,21 +384,21 @@ impl Tracker {
              GROUP BY command_name
              ORDER BY saved DESC, count DESC
              LIMIT 12",
-        )?;
-        let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
-            Ok(TrackingCommandStat {
-                command: row.get(0)?,
-                count: row.get(1)?,
-                saved_tokens: row.get(2)?,
-                avg_savings_pct: row.get(3)?,
-            })
-        })?;
-        for row in rows {
-            stats.top_commands.push(row?);
-        }
+            )?;
+            let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
+                Ok(TrackingCommandStat {
+                    command: row.get(0)?,
+                    count: row.get(1)?,
+                    saved_tokens: row.get(2)?,
+                    avg_savings_pct: row.get(3)?,
+                })
+            })?;
+            for row in rows {
+                stats.top_commands.push(row?);
+            }
 
-        let mut stmt = conn.prepare(
-            "SELECT CASE
+            let mut stmt = conn.prepare(
+                "SELECT CASE
                     WHEN adapter IS NOT NULL AND adapter != '' THEN adapter
                     ELSE 'passthrough'
                 END AS adapter_name,
@@ -414,21 +410,21 @@ impl Tracker {
              GROUP BY adapter_name
              ORDER BY saved DESC, count DESC
              LIMIT 12",
-        )?;
-        let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
-            Ok(TrackingAdapterStat {
-                adapter: row.get(0)?,
-                count: row.get(1)?,
-                saved_tokens: row.get(2)?,
-                avg_savings_pct: row.get(3)?,
-            })
-        })?;
-        for row in rows {
-            stats.top_adapters.push(row?);
-        }
+            )?;
+            let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
+                Ok(TrackingAdapterStat {
+                    adapter: row.get(0)?,
+                    count: row.get(1)?,
+                    saved_tokens: row.get(2)?,
+                    avg_savings_pct: row.get(3)?,
+                })
+            })?;
+            for row in rows {
+                stats.top_adapters.push(row?);
+            }
 
-        let mut stmt = conn.prepare(
-            "SELECT CASE
+            let mut stmt = conn.prepare(
+                "SELECT CASE
                     WHEN session_id IS NOT NULL AND session_id != '' THEN session_id
                     ELSE 'local'
                 END AS session_name,
@@ -443,23 +439,24 @@ impl Tracker {
              GROUP BY session_name
              ORDER BY last_seen DESC
              LIMIT 12",
-        )?;
-        let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
-            Ok(TrackingSessionStat {
-                session_id: row.get(0)?,
-                count: row.get(1)?,
-                input_tokens: row.get(2)?,
-                output_tokens: row.get(3)?,
-                saved_tokens: row.get(4)?,
-                avg_savings_pct: row.get(5)?,
-                last_seen: row.get(6)?,
-            })
-        })?;
-        for row in rows {
-            stats.recent_sessions.push(row?);
-        }
-        stats.adoption = query_adoption_stats(&conn, &project, DEFAULT_MISSED_ROUTE_LIMIT)?;
-        Ok(stats)
+            )?;
+            let rows = stmt.query_map(rusqlite::params![project.clone()], |row| {
+                Ok(TrackingSessionStat {
+                    session_id: row.get(0)?,
+                    count: row.get(1)?,
+                    input_tokens: row.get(2)?,
+                    output_tokens: row.get(3)?,
+                    saved_tokens: row.get(4)?,
+                    avg_savings_pct: row.get(5)?,
+                    last_seen: row.get(6)?,
+                })
+            })?;
+            for row in rows {
+                stats.recent_sessions.push(row?);
+            }
+            stats.adoption = query_adoption_stats(conn, &project, DEFAULT_MISSED_ROUTE_LIMIT)?;
+            Ok(stats)
+        })
     }
     // END_tracker_get_stats
 
@@ -472,19 +469,29 @@ impl Tracker {
     //   → Phase-56 (implements) - tracking-backed missed-route surface
     // START_tracker_get_adoption_stats
     pub async fn get_adoption_stats(&self, limit: usize) -> anyhow::Result<TrackingAdoptionStats> {
-        let db_path = self.db_path_for()?;
         let project = self.project_key();
-        if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let conn = rusqlite::Connection::open(&db_path)
-            .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
-        ensure_schema(&conn)?;
-        query_adoption_stats(&conn, &project, limit)
-            .map_err(|e| anyhow::anyhow!("query route adoption stats: {}", e))
+        self.with_conn(|conn| query_adoption_stats(conn, &project, limit))
     }
     // END_tracker_get_adoption_stats
 }
+
+// START_CONTRACT_open_tracking_connection
+// PURPOSE: Open and initialize the SQLite tracking connection once per Tracker
+// INPUTS: { db_path: &Path }
+// OUTPUTS: { anyhow::Result<rusqlite::Connection> }
+// SIDE_EFFECTS: creates parent directory, enables WAL/busy_timeout, migrates schema
+// START_open_tracking_connection
+fn open_tracking_connection(db_path: &Path) -> anyhow::Result<rusqlite::Connection> {
+    if let Some(parent) = db_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let conn = rusqlite::Connection::open(db_path)
+        .map_err(|e| anyhow::anyhow!("open tracking DB {}: {}", db_path.display(), e))?;
+    conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;")?;
+    ensure_schema(&conn)?;
+    Ok(conn)
+}
+// END_open_tracking_connection
 
 // START_CONTRACT_query_adoption_stats
 // PURPOSE: Query route adoption counts and passthrough commands that may be missed RTK routes
@@ -848,6 +855,29 @@ mod tests {
         assert_eq!(adoption.routed_commands, 2);
         assert_eq!(adoption.passthrough_commands, 1);
         assert_eq!(adoption.missed_route_candidates[0].command, "git status");
+    }
+
+    #[tokio::test]
+    async fn tracker_reuses_cached_connection_after_first_operation() {
+        let data_home = tempfile::tempdir().unwrap();
+        let project_home = tempfile::tempdir().unwrap();
+        let tracker = Tracker::new_for_test(
+            &Config::default(),
+            data_home.path(),
+            project_home.path(),
+            Some("session-cache-test"),
+        );
+
+        assert!(!tracker.cached_connection_is_initialized_for_test());
+        tracker
+            .record_routed("cargo check", 100, 40, "rust-cargo", "cargo check")
+            .await
+            .unwrap();
+        assert!(tracker.cached_connection_is_initialized_for_test());
+
+        let stats = tracker.get_stats().await.unwrap();
+        assert_eq!(stats.total_commands, 1);
+        assert!(tracker.cached_connection_is_initialized_for_test());
     }
 }
 

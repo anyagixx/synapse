@@ -8,19 +8,25 @@
 // START_MODULE_MAP
 // strip_ansi — Remove ANSI escape sequences from a string
 // truncate_chars — Truncate a string by Unicode scalar values without splitting UTF-8
-// estimate_tokens — Estimate token count as text length / 4
+// estimate_tokens — Estimate token count with a deterministic Unicode/code-aware heuristic
 // format_savings — Format token savings as percentage string
 // test_cwd_lock — Return a shared test-only lock for current-directory mutation
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.4.0 — Added ANSI stripping regression coverage for shared filter utility]
+// LAST_CHANGE: [v2.5.0 — Replaced bytes/4 token estimate with deterministic lexical heuristic]
 // END_CHANGE_SUMMARY
 
 use std::sync::OnceLock;
 
 static ANSI_RE: OnceLock<Result<regex::Regex, String>> = OnceLock::new();
 const ANSI_PATTERN: &str = "\x1b\\[[0-9;]*m";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum TokenRun {
+    AsciiWord,
+    NonAsciiWord,
+}
 
 // START_public_api
 
@@ -54,14 +60,83 @@ pub fn truncate_chars(s: &str, max_chars: usize) -> String {
 // END_truncate_chars
 
 // START_CONTRACT_estimate_tokens
-// PURPOSE: Naive token estimation — text length divided by 4
+// PURPOSE: Estimate token count using a deterministic Unicode/code-aware heuristic
 // INPUTS: { text: &str — text to estimate }
 // OUTPUTS: { u32 — estimated token count }
 // START_estimate_tokens
 pub fn estimate_tokens(text: &str) -> u32 {
-    (text.len() / 4) as u32
+    if text.is_empty() {
+        return 0;
+    }
+
+    let mut tokens = 0_u32;
+    let mut run: Option<(TokenRun, usize)> = None;
+    for ch in text.chars() {
+        if ch.is_whitespace() {
+            flush_token_run(&mut tokens, &mut run);
+            if ch == '\n' {
+                tokens = tokens.saturating_add(1);
+            }
+        } else if ch.is_ascii_alphanumeric() {
+            extend_token_run(&mut tokens, &mut run, TokenRun::AsciiWord);
+        } else if ch == '_' || ch.is_ascii_punctuation() {
+            flush_token_run(&mut tokens, &mut run);
+            tokens = tokens.saturating_add(1);
+        } else if ch.is_alphanumeric() {
+            extend_token_run(&mut tokens, &mut run, TokenRun::NonAsciiWord);
+        } else {
+            flush_token_run(&mut tokens, &mut run);
+            tokens = tokens.saturating_add(1);
+        }
+    }
+    flush_token_run(&mut tokens, &mut run);
+    tokens.max(1)
 }
 // END_estimate_tokens
+
+// START_CONTRACT_extend_token_run
+// PURPOSE: Extend or replace the current lexical run used by estimate_tokens
+// INPUTS: { tokens: &mut u32 }, { run: &mut Option<(TokenRun, usize)> }, { kind: TokenRun }
+// SIDE_EFFECTS: may flush a previous token run into tokens
+// START_extend_token_run
+fn extend_token_run(tokens: &mut u32, run: &mut Option<(TokenRun, usize)>, kind: TokenRun) {
+    match run {
+        Some((current, len)) if *current == kind => *len += 1,
+        Some(_) => {
+            flush_token_run(tokens, run);
+            *run = Some((kind, 1));
+        }
+        None => *run = Some((kind, 1)),
+    }
+}
+// END_extend_token_run
+
+// START_CONTRACT_flush_token_run
+// PURPOSE: Convert a lexical run into an estimated token count
+// INPUTS: { tokens: &mut u32 }, { run: &mut Option<(TokenRun, usize)> }
+// SIDE_EFFECTS: increments tokens and clears run
+// START_flush_token_run
+fn flush_token_run(tokens: &mut u32, run: &mut Option<(TokenRun, usize)>) {
+    let Some((kind, len)) = run.take() else {
+        return;
+    };
+    let divisor = match kind {
+        TokenRun::AsciiWord => 4,
+        TokenRun::NonAsciiWord => 2,
+    };
+    *tokens = (*tokens).saturating_add(div_ceil_to_u32(len, divisor));
+}
+// END_flush_token_run
+
+// START_CONTRACT_div_ceil_to_u32
+// PURPOSE: Convert a positive usize length to a ceil-divided u32 token estimate
+// INPUTS: { value: usize }, { divisor: usize }
+// OUTPUTS: { u32 }
+// START_div_ceil_to_u32
+fn div_ceil_to_u32(value: usize, divisor: usize) -> u32 {
+    value.div_ceil(divisor).min(u32::MAX as usize) as u32
+}
+// END_div_ceil_to_u32
 
 // START_CONTRACT_format_savings
 // PURPOSE: Format token savings as a rounded percentage string
@@ -108,6 +183,22 @@ mod tests {
         let input = "\x1b[1mbold\x1b[0m \x1b[31mred\x1b[0m \x1b[38;5;196mbright\x1b[0m";
 
         assert_eq!(strip_ansi(input), "bold red bright");
+    }
+
+    #[test]
+    fn test_estimate_tokens_is_not_bytes_div_four_for_code() {
+        let text = "fn main() {}";
+
+        assert_ne!(estimate_tokens(text), (text.len() / 4) as u32);
+        assert!(estimate_tokens(text) >= 6);
+    }
+
+    #[test]
+    fn test_estimate_tokens_handles_unicode_without_byte_penalty() {
+        let text = "привет мир";
+
+        assert_eq!(estimate_tokens(text), 5);
+        assert!(estimate_tokens(text) < text.len() as u32);
     }
 }
 // END_public_api

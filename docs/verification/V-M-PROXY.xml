@@ -19,6 +19,7 @@
     <ASSERTION>Proxy records adapter and route metadata from M-PROXY-ROUTER for token-economy analytics.</ASSERTION>
     <ASSERTION>Proxy only applies project-local filters after M-PROXY-FILTER trust checks pass.</ASSERTION>
     <ASSERTION>Proxy preserves raw evidence metadata from M-PROXY-RUNNER for explicit CLI evidence hints.</ASSERTION>
+    <ASSERTION>Proxy threads Config.proxy capture and timeout settings into CommandRunner while preserving route-aware token tracking.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-25</PHASE_GATE>
+  <PHASE_GATE>Phase-25,Phase-61</PHASE_GATE>
 </VERIFICATION>

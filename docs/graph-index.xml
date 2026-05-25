@@ -387,6 +387,7 @@
     <REL source="M-PROXY" target="M-PROXY-FILTER" type="DEPENDS" />
     <REL source="M-PROXY" target="M-UTILS" type="DEPENDS" />
     <REL source="M-PROXY-FILTER" target="M-UTILS" type="DEPENDS" />
+    <REL source="M-PROXY-RUNNER" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-RTK-FULL-PARITY" target="M-CLI" type="DEPENDS" />
     <REL source="M-RTK-FULL-PARITY" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-RTK-FULL-PARITY" target="M-PROXY-FILTER" type="DEPENDS" />

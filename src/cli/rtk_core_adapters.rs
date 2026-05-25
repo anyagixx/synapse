@@ -21,7 +21,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added core RTK adapters for err/test/diff/summary]
+// LAST_CHANGE: [v1.1.0 - Use configurable async CommandRunner for err/test adapters]
 // END_CHANGE_SUMMARY
 
 use super::{DiffCmd, ErrCmd, SummaryCmd, TestCmd};
@@ -51,7 +51,9 @@ impl ErrCmd {
         if self.command.is_empty() {
             anyhow::bail!("Usage: syn err -- <command> [args...]");
         }
-        let output = CommandRunner::new(&self.command).execute()?;
+        let output = CommandRunner::from_config(&self.command, &config)
+            .execute()
+            .await?;
         let rendered = render_matching_lines(
             &output.text,
             &[
@@ -96,7 +98,9 @@ impl TestCmd {
         if self.command.is_empty() {
             anyhow::bail!("Usage: syn test -- <test-command> [args...]");
         }
-        let output = CommandRunner::new(&self.command).execute()?;
+        let output = CommandRunner::from_config(&self.command, &config)
+            .execute()
+            .await?;
         let rendered = render_matching_lines(
             &output.text,
             &[

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY
 // PURPOSE: Proxy executor — routes shell commands, applies trusted TOML filters, and reports token tracking degradation
-// SCOPE: Proxy struct, command-router integration, trusted FilterEngine integration, streaming CommandRunner integration, raw evidence metadata, token tracking with degraded-mode logging
+// SCOPE: Proxy struct, command-router integration, trusted FilterEngine integration, async-friendly configurable CommandRunner integration, raw evidence metadata, token tracking with degraded-mode logging
 // DEPENDS: M-CONFIG, M-TRACKING, M-PROXY-ROUTER, M-PROXY-RUNNER, M-PROXY-FILTER, M-UTILS
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - RTK-style command classification
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.0.0 — Propagate streaming runner raw evidence metadata]
+// LAST_CHANGE: [v5.1.0 — Thread proxy runtime config into async CommandRunner execution]
 // END_CHANGE_SUMMARY
 
 pub mod filter_trust;
@@ -88,10 +88,10 @@ impl Proxy {
 
         let full_cmd = cmd_parts.join(" ");
         let route = self.router.route(cmd_parts);
-        let runner = CommandRunner::new(cmd_parts);
+        let runner = CommandRunner::from_config(cmd_parts, &self.config);
 
         // Execute the command
-        let raw = runner.execute()?;
+        let raw = runner.execute().await?;
         let raw_output = raw.text;
         let input_tokens = crate::utils::estimate_tokens(&raw_output);
 

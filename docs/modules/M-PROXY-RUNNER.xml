@@ -2,11 +2,11 @@
 <MODULE id="M-PROXY-RUNNER" type="INTEGRATION" status="active">
   <NAME>M-PROXY-RUNNER</NAME>
   <PURPOSE>Streaming command runner — executes shell commands, captures capped stdout/stderr with exit status, and tees bounded raw output into evidence artifacts</PURPOSE>
-  <SCOPE>CommandRunner struct, CommandOutput status/evidence model, RTK-style capped streaming stdout/stderr capture via std::process::Command, XDG data raw-output evidence files</SCOPE>
+  <SCOPE>CommandRunner struct, CommandOutput status/evidence model, async-friendly spawn_blocking execution, configurable RTK-style capped streaming stdout/stderr capture, configurable command timeout, XDG data raw-output evidence files</SCOPE>
   <FILES>
     <FILE>src/proxy/runner.rs</FILE>
   </FILES>
-  <DEPENDS></DEPENDS>
-  <LINKS>docs/phases/Phase-25.xml,docs/phases/Phase-52.xml</LINKS>
+  <DEPENDS>M-CONFIG</DEPENDS>
+  <LINKS>docs/phases/Phase-25.xml,docs/phases/Phase-52.xml,docs/phases/Phase-61.xml</LINKS>
   <VERIFICATION_REF>V-M-PROXY-RUNNER</VERIFICATION_REF>
 </MODULE>

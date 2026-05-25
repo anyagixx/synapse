@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-62" status="planned">
+<PHASE id="Phase-62" status="active">
   <NAME>GraphRAG And MCP Robustness</NAME>
   <GOAL>Resolve FIX/M4 and FIX/L5 by caching expensive graph builds and bounding MCP JSON-RPC message input.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/MEDIUM/M4-graph-rebuild.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L5-no-message-limit.md</SOURCE_PLAN>

@@ -2,11 +2,11 @@
 <MODULE id="M-UTILS" type="UTILITY" status="active">
   <NAME>M-UTILS</NAME>
   <PURPOSE>Token estimation, ANSI stripping, Unicode-safe truncation, savings formatting, and test synchronization — utility functions</PURPOSE>
-  <SCOPE>Shared ANSI escape stripping with SGR regression coverage, Unicode-safe string truncation, naive token estimation (chars/4), savings percentage formatting, shared test-only current-directory locking</SCOPE>
+  <SCOPE>Shared ANSI escape stripping with SGR regression coverage, Unicode-safe string truncation, deterministic Unicode/code-aware token estimation, savings percentage formatting, shared test-only current-directory locking</SCOPE>
   <FILES>
     <FILE>src/utils/mod.rs</FILE>
   </FILES>
   <DEPENDS></DEPENDS>
-  <LINKS></LINKS>
+  <LINKS>docs/phases/Phase-60.xml,docs/phases/Phase-61.xml</LINKS>
   <VERIFICATION_REF>V-M-UTILS</VERIFICATION_REF>
 </MODULE>
