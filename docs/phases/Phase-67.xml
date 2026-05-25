@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-67" status="planned">
+  <NAME>UPGRADE_1 MCP Runtime Observability</NAME>
+  <GOAL>Implement pipelined MCP stdio execution and expose runtime health, readiness, and MCP metrics through tracking and dashboard observability surfaces.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_1/U4-mcp-pipelining.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U8-observability.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MCP-PIPELINE" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-RESPONSE" />
+    <MODULE_REF id="M-TRACKING-MCP-METRICS" />
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-DASHBOARD-OBSERVABILITY" />
+    <MODULE_REF id="M-DASHBOARD" />
+    <MODULE_REF id="M-CONFIG" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-67-1">MCP stdio flow reads requests, assigns bounded handler tasks, preserves response IDs, writes responses through a single output queue, and reports latency or error metrics per tool call.</FLOW>
+    <FLOW id="DF-67-2">Observability flow aggregates MCP counters and runtime readiness into tracking storage, then serves /health/ready and /api/mcp-stats from dashboard routes.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-MCP-PIPELINE" status="planned">Add a bounded stdio pipeline with initialize ordering, concurrent request handling, single-writer response serialization, EOF shutdown, and handler panic isolation.</step-1>
+    <step-2 module="M-MCP-SERVER" status="planned">Route start_stdio through the pipeline while keeping existing request processing behavior and protocol tests intact.</step-2>
+    <step-3 module="M-TRACKING-MCP-METRICS" status="planned">Record request counts, active requests, latency summaries, per-tool errors, and last-seen timestamps without bloating token-savings analytics.</step-3>
+    <step-4 module="M-DASHBOARD-OBSERVABILITY" status="planned">Expose readiness and MCP stats endpoints from dashboard without weakening the existing /health behavior.</step-4>
+    <step-5 module="M-CONFIG" status="planned">Add observability toggles, retention bounds, and pipeline concurrency limits as typed runtime settings.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test mcp::pipeline --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test --test mcp_protocol_test test_concurrent_requests_keep_response_ids</CHECK>
+    <CHECK status="planned">cargo test tracking::mcp_metrics --lib</CHECK>
+    <CHECK status="planned">cargo test dashboard::tests::test_health_ready_reports_mcp_state --lib</CHECK>
+    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-67-1">Concurrent MCP execution must never interleave response writes or lose JSON-RPC request IDs.</RISK>
+    <RISK id="R-67-2">Metrics collection must stay cheap enough that token-saving proxy and MCP latency do not regress under load.</RISK>
+  </RISKS>
+</PHASE>

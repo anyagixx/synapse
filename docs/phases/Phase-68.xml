@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-68" status="planned">
+  <NAME>UPGRADE_1 Agent UX And LSP Correctness</NAME>
+  <GOAL>Improve agent-facing UX with Mermaid GraphRAG output, filter dry-run explanations, and correct LSP didOpen and didClose lifecycle handling for unsaved buffers.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_1/U6-graphrag-mermaid.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U7-filter-dry-run.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U9-lsp-did-open.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRAPHRAG-MERMAID" />
+    <MODULE_REF id="M-GRAPHRAG-TYPES" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-CLI-FILTER-COMMANDS" />
+    <MODULE_REF id="M-PROXY-FILTER" />
+    <MODULE_REF id="M-MCP-LSP" />
+    <MODULE_REF id="M-UTILS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-68-1">GraphRAG query flow can render selected graph neighborhoods as Mermaid while preserving existing JSON output for automated clients.</FLOW>
+    <FLOW id="DF-68-2">Filter dry-run flow accepts a command and sample output, runs the selected TOML filter pipeline in explain mode, and reports each transformation stage without executing the command.</FLOW>
+    <FLOW id="DF-68-3">LSP flow opens files with current or provided buffer content before hover and references calls, tracks open documents, and closes them when requested or when manager state is dropped.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-GRAPHRAG-MERMAID" status="planned">Add deterministic Mermaid rendering for module, symbol, and relation graph subsets with escaping for unsafe labels.</step-1>
+    <step-2 module="M-MCP-SERVER-CODE-TOOLS" status="planned">Expose Mermaid rendering through graphrag_query or a bounded operation field while preserving existing GraphRAG response schemas.</step-2>
+    <step-3 module="M-CLI-FILTER-COMMANDS" status="planned">Add filters dry-run command support for TOML filter selection, stdin or file sample input, and explain-stage output.</step-3>
+    <step-4 module="M-PROXY-FILTER" status="planned">Provide a reusable dry-run API that reports filter stage decisions without mutating command execution state.</step-4>
+    <step-5 module="M-MCP-LSP" status="planned">Complete didOpen content override handling and didClose lifecycle cleanup for hover, references, and diagnostics workflows.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test graphrag::mermaid --lib</CHECK>
+    <CHECK status="planned">cargo test mcp::server_code_tools::tests::test_graphrag_query_mermaid_output --lib</CHECK>
+    <CHECK status="planned">cargo test cli::filter_commands --lib</CHECK>
+    <CHECK status="planned">cargo test proxy::toml_filter::tests::test_filter_dry_run_reports_stages --lib</CHECK>
+    <CHECK status="planned">cargo test mcp::lsp_manager --lib</CHECK>
+    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-68-1">Mermaid output must be deterministic and escaped because agents may paste it directly into docs or issue reports.</RISK>
+    <RISK id="R-68-2">Dry-run output must explain filtering without accidentally executing user commands or reading unrelated files.</RISK>
+    <RISK id="R-68-3">LSP didOpen fixes must account for unsaved buffers while avoiding stale opened_files entries.</RISK>
+  </RISKS>
+</PHASE>

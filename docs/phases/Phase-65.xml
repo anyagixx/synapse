@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-65" status="planned">
+  <NAME>UPGRADE_1 Search Filters And Config CLI</NAME>
+  <GOAL>Implement precise search filtering and a persistent config CLI so MCP agents can narrow results by language and path while users can inspect and update Synapse settings safely.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_1/U5-search-filters.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U10-config-cli.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-INDEXER-STORAGE-SEARCH" />
+    <MODULE_REF id="M-INDEXER-STORAGE-TYPES" />
+    <MODULE_REF id="M-CLI-CONFIG-COMMANDS" />
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-65-1">MCP semantic_search receives query plus optional language and path filters, validates filter fields, applies them in the index search layer, and returns filtered SearchResult payloads.</FLOW>
+    <FLOW id="DF-65-2">CLI config get, set, list, and unset commands load the config source, apply typed key validation, persist supported values atomically, and print the resulting value without leaking unrelated config state.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-INDEXER-STORAGE-TYPES" status="planned">Define filterable metadata fields for language, file path, and relative path matching in StoredBlock or search request types.</step-1>
+    <step-2 module="M-INDEXER-STORAGE-SEARCH" status="planned">Apply language and path filters before ranking so filtered semantic or lexical searches do not include out-of-scope blocks.</step-2>
+    <step-3 module="M-MCP-SERVER-TOOLS" status="planned">Extend semantic_search tool schema and validation with optional language and path filters.</step-3>
+    <step-4 module="M-CLI-CONFIG-COMMANDS" status="planned">Replace trailing free-form config handling with explicit get, set, list, and unset subcommands backed by M-CONFIG persistence.</step-4>
+    <step-5 module="M-CONFIG" status="planned">Expose safe typed config key lookup and update helpers for CLI use without changing runtime defaults unexpectedly.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test indexer::storage::search::tests::test_search_filters_by_language --lib</CHECK>
+    <CHECK status="planned">cargo test indexer::storage::search::tests::test_search_filters_by_path_prefix --lib</CHECK>
+    <CHECK status="planned">cargo test mcp::server::tests::test_semantic_search_accepts_filters --lib</CHECK>
+    <CHECK status="planned">cargo test cli::config_commands --lib</CHECK>
+    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-65-1">Search filters must be additive and backward compatible so existing MCP clients that omit filters keep current behavior.</RISK>
+    <RISK id="R-65-2">Config persistence must avoid silently accepting unknown keys or stringly typed values that cannot be reloaded.</RISK>
+  </RISKS>
+</PHASE>

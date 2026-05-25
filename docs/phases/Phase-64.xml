@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-64" status="active">
+  <NAME>UPGRADE_1 Indexing Pipeline Foundation</NAME>
+  <GOAL>Implement the U2 and U3 indexing foundation: parallel file processing, deterministic full-index compatibility, incremental changed-file updates, deleted-file cleanup, and GraphRAG cache invalidation.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_1/U2-parallel-indexing.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U3-incremental-indexing.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-INDEXER-PIPELINE" />
+    <MODULE_REF id="M-INDEXER-STORAGE" />
+    <MODULE_REF id="M-INDEXER-STORAGE-TYPES" />
+    <MODULE_REF id="M-INDEXER-WALKER" />
+    <MODULE_REF id="M-INDEXER-PARSER" />
+    <MODULE_REF id="M-GRAPHRAG-BUILDER" />
+    <MODULE_REF id="M-CLI-SETUP-COMMANDS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-64-1">Full index flow: root discovery selects source files, M-INDEXER-PIPELINE parses files in parallel, results are ordered deterministically, M-INDEXER-STORAGE replaces the snapshot, and GraphBuilder cache entries are invalidated for the root.</FLOW>
+    <FLOW id="DF-64-2">Incremental flow: CLI or watch input provides changed and deleted paths, M-INDEXER-PIPELINE upserts changed blocks, removes deleted-file blocks, persists the delta, and invalidates graph cache only for affected roots.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-INDEXER-PIPELINE" status="planned">Extract shared file-processing and StoredBlock construction from M-INDEXER into a pipeline module with stable ordering and bounded error reporting.</step-1>
+    <step-2 module="M-INDEXER-PIPELINE" status="planned">Add Rayon-backed parallel parsing for full indexing while preserving existing gitignore behavior and search-result determinism.</step-2>
+    <step-3 module="M-INDEXER-STORAGE" status="planned">Add storage operations for per-file upsert and deleted-file removal without requiring a full snapshot rewrite.</step-3>
+    <step-4 module="M-INDEXER" status="planned">Expose an incremental indexing entrypoint for changed-file sets and route full indexing through the shared pipeline.</step-4>
+    <step-5 module="M-CLI-SETUP-COMMANDS" status="planned">Wire setup or watch-related entrypoints to request incremental index updates when a bounded changed-file list is available.</step-5>
+    <step-6 module="M-GRAPHRAG-BUILDER" status="planned">Keep GraphRAG cache invalidation scoped to the indexed root and affected deltas.</step-6>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test indexer::pipeline --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test indexer::tests::test_index_delta_upserts_changed_files --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test indexer::tests::test_index_delta_removes_deleted_files --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test --test reliability_test test_parallel_index_matches_sequential_snapshot</CHECK>
+    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-64-1">Parallel parsing can introduce nondeterministic result ordering unless StoredBlock ordering is normalized before persistence.</RISK>
+    <RISK id="R-64-2">Incremental updates can leave stale graph or search entries unless deletion and cache invalidation are part of the same implementation gate.</RISK>
+  </RISKS>
+</PHASE>

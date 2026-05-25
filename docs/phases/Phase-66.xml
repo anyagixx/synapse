@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-66" status="planned">
+  <NAME>UPGRADE_1 Real Semantic Embeddings</NAME>
+  <GOAL>Replace placeholder semantic vectors with a local embedding provider, persistent vector metadata, and deterministic lexical fallback for environments without embedding assets.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_1/U1-real-embeddings.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-INDEXER-EMBEDDING" />
+    <MODULE_REF id="M-INDEXER-PIPELINE" />
+    <MODULE_REF id="M-INDEXER-STORAGE" />
+    <MODULE_REF id="M-INDEXER-STORAGE-SEARCH" />
+    <MODULE_REF id="M-INDEXER-STORAGE-TYPES" />
+    <MODULE_REF id="M-CONFIG" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-66-1">Indexing flow sends block text to the configured embedding provider, stores vector dimensions and provider metadata with StoredBlock data, and keeps lexical data available for fallback.</FLOW>
+    <FLOW id="DF-66-2">Search flow embeds the query with the same provider, performs vector similarity when compatible vectors are present, and falls back to lexical ranking with an explicit warning when embeddings are unavailable.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-INDEXER-EMBEDDING" status="planned">Select and document exact local embedding dependencies, model format, model path config, batching limits, and fallback behavior before implementation.</step-1>
+    <step-2 module="M-INDEXER-STORAGE-TYPES" status="planned">Add embedding vector metadata to stored block types with versioning and dimension compatibility checks.</step-2>
+    <step-3 module="M-INDEXER-PIPELINE" status="planned">Generate embeddings during full and incremental indexing without blocking deterministic block persistence.</step-3>
+    <step-4 module="M-INDEXER-STORAGE-SEARCH" status="planned">Implement vector similarity ranking and hybrid fallback semantics while preserving existing lexical search tests.</step-4>
+    <step-5 module="M-CONFIG" status="planned">Expose embedding enablement, model path, provider, and batch-size settings through typed config.</step-5>
+    <step-6 module="M-GRACE-TECHNOLOGY" status="planned">Update docs/technology.xml with exact dependency versions and deployment notes when the embedding provider is chosen.</step-6>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test indexer::embedding --lib</CHECK>
+    <CHECK status="planned">cargo test indexer::storage::search::tests::test_semantic_vector_search_ranks_related_code --lib</CHECK>
+    <CHECK status="planned">cargo test indexer::storage::search::tests::test_semantic_search_falls_back_without_embeddings --lib</CHECK>
+    <CHECK status="planned">cargo test --test mcp_semantic_search_embeddings</CHECK>
+    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-66-1">Embedding provider choice can affect binary size, platform support, and release packaging, so technology.xml must be updated before code lands.</RISK>
+    <RISK id="R-66-2">Vector schema changes require backward-compatible loading of indexes created before embeddings existed.</RISK>
+  </RISKS>
+</PHASE>
