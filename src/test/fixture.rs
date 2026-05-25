@@ -19,7 +19,7 @@ use tempfile::TempDir;
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.1 - Removed owned path allocation from broken fixture filtering]
+// LAST_CHANGE: [v1.0.2 - Removed secret-like auth fixture literals from generated source]
 // END_CHANGE_SUMMARY
 
 // START_public_api
@@ -699,8 +699,8 @@ __SCL__
 // LINKS:
 //   -> NFR-002 (traces_to) - deterministic fixture behavior
 __SL__
-pub fn login(username: &str, password: &str) -> bool {
-    username == "admin" && password == "secret"
+pub fn login(username: &str, credential: &str) -> bool {
+    username == "admin" && credential == "fixture-pass"
 }
 __EL__
 "#

@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.7.0 - Advanced public installer URL parity to v2.6.4]
+// LAST_CHANGE: [v5.7.0 - Advanced public installer URL parity to v2.6.5]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -49,7 +49,7 @@ const FAQ: &str = include_str!("../docs/FAQ.md");
 const WORKFLOW_DOC: &str = include_str!("../docs/WORKFLOW.md");
 const SUPPORT_DOC: &str = include_str!("../docs/SUPPORT.md");
 const INSTALL_COMMAND: &str =
-    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.4/install.sh | sh";
+    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.5/install.sh | sh";
 const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
     "syn-x86_64-unknown-linux-gnu.tar.gz",
     "syn-aarch64-unknown-linux-gnu.tar.gz",

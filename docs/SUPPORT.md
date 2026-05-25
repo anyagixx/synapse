@@ -5,7 +5,7 @@
 For supported Linux and macOS install issues, collect the installer diagnostic report before opening an issue:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.4/install.sh -o /tmp/synapse-install.sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.5/install.sh -o /tmp/synapse-install.sh
 sh /tmp/synapse-install.sh --diagnose
 ```
 
@@ -14,7 +14,7 @@ The report is local and no-write. It shows OS and architecture support status, t
 If the install directory is not writable, use:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.4/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.5/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
 Windows packaging is deferred and is not part of the current release matrix.

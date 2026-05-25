@@ -6,7 +6,7 @@
 ## 1. Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.4/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.5/install.sh | sh
 syn --version
 ```
 
