@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-63" status="active">
+<PHASE id="Phase-63" status="done">
   <NAME>CLI Build Cleanup And Release Gate</NAME>
   <GOAL>Resolve FIX/L2 and FIX/L6, then run the full release-quality regression gate for the issue-resolution line.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/LOW/L2-main-match-arm.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L6-dockerfile-features.md</SOURCE_PLAN>
@@ -14,19 +14,25 @@
     <FLOW id="DF-63-2">Docker image build uses explicit cargo release semantics without no-op feature flags.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-CLI" status="pending">Move top-level Command dispatch into the CLI module through a RunCommand-style implementation.</step-1>
-    <step-2 module="M-MAIN" status="pending">Reduce main.rs to parse config, initialize tracing/runtime, and call CLI dispatch.</step-2>
-    <step-3 module="M-BUILD" status="pending">Remove Dockerfile no-op --no-default-features and audit system package requirements.</step-3>
-    <step-4 module="M-CI-RELEASE-SMOKE" status="pending">Run full issue-resolution release gates after all fixes are complete.</step-4>
+    <step-1 module="M-CLI" status="done">Moved top-level Command dispatch into the CLI module through the RunCommand implementation.</step-1>
+    <step-2 module="M-MAIN" status="done">Reduced main.rs to tracing setup, CLI parsing, config loading, tokio runtime creation, and CLI dispatch delegation.</step-2>
+    <step-3 module="M-BUILD" status="done">Removed Dockerfile no-op --no-default-features and replaced unused protobuf/OpenSSL build packages with ca-certificates only after dependency audit.</step-3>
+    <step-4 module="M-CI-RELEASE-SMOKE" status="done">Ran the full issue-resolution release gates after all fixes completed.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo fmt --all -- --check</CHECK>
-    <CHECK status="planned">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
-    <CHECK status="planned">cargo test --all-targets</CHECK>
-    <CHECK status="planned">cargo build --release</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
-    <CHECK status="planned">cargo run --quiet -- review --mode full --ci</CHECK>
-    <CHECK status="planned">bash scripts/rtk_full_release_gate.sh</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data cargo check — passed.</CHECK>
+    <CHECK status="passed">cargo fmt --all -- --check — passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data cargo clippy --all-targets --all-features -- -D warnings — no issues.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data cargo test --all-targets -- --test-threads=8 — 323 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data cargo build --release — release build passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data cargo run --quiet -- verify --ci — module, wave, and phase gates passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data cargo run --quiet -- review --mode full --ci — full review passed with no issues.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data cargo run --quiet -- refresh — 90 code modules synced; no drift detected.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data bash scripts/rtk_full_release_gate.sh — full RTK release gate passed including clippy, verify, and full review.</CHECK>
+    <CHECK status="passed">SYN_RELEASE_TAG=v2.6.1 bash scripts/release_version_guard.sh — tag matched Cargo.toml.</CHECK>
+    <CHECK status="passed">SYN_RELEASE_TAG=v2.6.1 bash scripts/release_freshness_guard.sh — release tag freshness validated.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase63-data bash scripts/release_install_smoke.sh — release/install smoke passed.</CHECK>
+    <CHECK status="environment-blocked">docker build -t synapse-phase63-test . — Docker daemon is not running in this environment; Dockerfile static audit, dependency audit, and cargo release build passed.</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-63-1">Dispatch refactor is intentionally last so behavior-changing fixes are not hidden behind broad CLI movement.</RISK>

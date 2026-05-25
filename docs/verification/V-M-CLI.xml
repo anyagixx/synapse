@@ -26,6 +26,7 @@
     <COMMAND>cargo test hooks::tests::test_hook_audit_trusts_generated_opencode_assets --lib</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
+    <COMMAND>cargo check</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -45,6 +46,7 @@
     <ASSERTION>CLI schema accepts syn run --action plan|next|loop|retry|replay with --run-id and --max-actions.</ASSERTION>
     <ASSERTION>CLI schema accepts verify/review --profile and doctor --deps as documented flags.</ASSERTION>
     <ASSERTION>CLI schema exposes syn mcp as stdio-only until HTTP/LSP transport flags are implemented.</ASSERTION>
+    <ASSERTION>CLI RunCommand owns top-level command dispatch so adding a Command variant no longer requires editing main.rs.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-56</PHASE_GATE>
+  <PHASE_GATE>Phase-63</PHASE_GATE>
 </VERIFICATION>

@@ -1,13 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
-// PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, and command argument structs
-// SCOPE: SynCli, Command enum, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle commands, CI action enum
+// PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, command dispatch, and command argument structs
+// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
 // SynCli — Top-level CLI parser struct
 // Command — Enum of all supported CLI commands
+// RunCommand — Dispatch trait implemented by Command next to the CLI schema
 // *Cmd structs — Clap argument schemas for supported commands
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
@@ -23,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.7.0 — Added .NET artifact RTK adapter schemas]
+// LAST_CHANGE: [v5.8.0 — Moved top-level command dispatch into CLI RunCommand]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
@@ -41,6 +42,7 @@ mod rtk_system_adapters;
 mod runtime_commands;
 mod setup_commands;
 
+use crate::config::Config;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
@@ -267,6 +269,286 @@ pub enum Command {
     Serve(ServeCmd),
 }
 // END_Command
+
+// START_CONTRACT_RunCommand
+// PURPOSE: Provide one CLI-owned dispatch entry point for executable command enums
+// INPUTS: { self: Command — parsed command variant }, { config: Config — resolved runtime configuration }
+// OUTPUTS: { anyhow::Result<()> — asynchronous command execution result }
+// SIDE_EFFECTS: executes the selected command implementation and any command-specific IO
+// START_RunCommand
+#[allow(async_fn_in_trait)]
+pub trait RunCommand {
+    async fn run(self, config: Config) -> anyhow::Result<()>;
+}
+// END_RunCommand
+
+// START_CONTRACT_Command_run
+// PURPOSE: Route every top-level CLI command variant to its owned command handler without exposing dispatch logic in main.rs
+// INPUTS: { self: Command — parsed top-level command }, { config: Config — resolved runtime configuration }
+// OUTPUTS: { anyhow::Result<()> — selected command result }
+// SIDE_EFFECTS: executes proxy commands, local RTK adapters, GRACE operations, MCP server, dashboard server, or CI grouped commands
+// START_Command_run
+impl RunCommand for Command {
+    async fn run(self, config: Config) -> anyhow::Result<()> {
+        match self {
+            Command::Init(cmd) => cmd.run(config).await,
+            Command::Index(cmd) => cmd.run(config).await,
+            Command::Search(cmd) => cmd.run(config).await,
+            Command::View(cmd) => cmd.run(config).await,
+            Command::Verify(cmd) => cmd.run(config).await,
+            Command::Review(cmd) => cmd.run(config).await,
+            Command::Status(cmd) => cmd.run(config).await,
+            Command::Read(cmd) => {
+                cmd.run_as(config, "cat", true, "Usage: syn read <file>...")
+                    .await
+            }
+            Command::Ls(cmd) => {
+                cmd.run_as(config, "ls", false, "Usage: syn ls [args...]")
+                    .await
+            }
+            Command::Tree(cmd) => {
+                cmd.run_as(config, "tree", false, "Usage: syn tree [args...]")
+                    .await
+            }
+            Command::Find(cmd) => {
+                cmd.run_as(config, "find", false, "Usage: syn find [args...]")
+                    .await
+            }
+            Command::Rg(cmd) => {
+                cmd.run_as(config, "rg", true, "Usage: syn rg <pattern> [path...]")
+                    .await
+            }
+            Command::Grep(cmd) => {
+                cmd.run_as(config, "grep", true, "Usage: syn grep <pattern> [path...]")
+                    .await
+            }
+            Command::Git(cmd) => {
+                cmd.run_as(config, "git", false, "Usage: syn git [args...]")
+                    .await
+            }
+            Command::Gt(cmd) => {
+                cmd.run_as(config, "gt", false, "Usage: syn gt [args...]")
+                    .await
+            }
+            Command::Cargo(cmd) => {
+                cmd.run_as(config, "cargo", false, "Usage: syn cargo [args...]")
+                    .await
+            }
+            Command::Npm(cmd) => {
+                cmd.run_as(config, "npm", false, "Usage: syn npm [args...]")
+                    .await
+            }
+            Command::Pnpm(cmd) => {
+                cmd.run_as(config, "pnpm", false, "Usage: syn pnpm [args...]")
+                    .await
+            }
+            Command::Npx(cmd) => {
+                cmd.run_as(config, "npx", false, "Usage: syn npx [args...]")
+                    .await
+            }
+            Command::Pytest(cmd) => {
+                cmd.run_as(config, "pytest", false, "Usage: syn pytest [args...]")
+                    .await
+            }
+            Command::Ruff(cmd) => {
+                cmd.run_as(config, "ruff", false, "Usage: syn ruff [args...]")
+                    .await
+            }
+            Command::Mypy(cmd) => {
+                cmd.run_as(config, "mypy", false, "Usage: syn mypy [args...]")
+                    .await
+            }
+            Command::Basedpyright(cmd) => {
+                cmd.run_as(
+                    config,
+                    "basedpyright",
+                    false,
+                    "Usage: syn basedpyright [args...]",
+                )
+                .await
+            }
+            Command::Pip(cmd) => {
+                cmd.run_as(config, "pip", false, "Usage: syn pip [args...]")
+                    .await
+            }
+            Command::Uv(cmd) => {
+                cmd.run_as(config, "uv", false, "Usage: syn uv [args...]")
+                    .await
+            }
+            Command::Next(cmd) => {
+                cmd.run_as(config, "next", false, "Usage: syn next [args...]")
+                    .await
+            }
+            Command::Playwright(cmd) => {
+                cmd.run_as(
+                    config,
+                    "playwright",
+                    false,
+                    "Usage: syn playwright [args...]",
+                )
+                .await
+            }
+            Command::Prettier(cmd) => {
+                cmd.run_as(config, "prettier", false, "Usage: syn prettier [args...]")
+                    .await
+            }
+            Command::Prisma(cmd) => {
+                cmd.run_as(config, "prisma", false, "Usage: syn prisma [args...]")
+                    .await
+            }
+            Command::Tsc(cmd) => {
+                cmd.run_as(config, "tsc", false, "Usage: syn tsc [args...]")
+                    .await
+            }
+            Command::Vitest(cmd) => {
+                cmd.run_as(config, "vitest", false, "Usage: syn vitest [args...]")
+                    .await
+            }
+            Command::Jest(cmd) => {
+                cmd.run_as(config, "jest", false, "Usage: syn jest [args...]")
+                    .await
+            }
+            Command::Lint(cmd) => {
+                cmd.run_as(config, "eslint", false, "Usage: syn lint [args...]")
+                    .await
+            }
+            Command::Format(cmd) => {
+                cmd.run_as(config, "prettier", false, "Usage: syn format [args...]")
+                    .await
+            }
+            Command::Gh(cmd) => {
+                cmd.run_as(config, "gh", false, "Usage: syn gh [args...]")
+                    .await
+            }
+            Command::Glab(cmd) => {
+                cmd.run_as(config, "glab", false, "Usage: syn glab [args...]")
+                    .await
+            }
+            Command::Aws(cmd) => {
+                cmd.run_as(config, "aws", false, "Usage: syn aws [args...]")
+                    .await
+            }
+            Command::Psql(cmd) => {
+                cmd.run_as(config, "psql", false, "Usage: syn psql [args...]")
+                    .await
+            }
+            Command::Curl(cmd) => {
+                cmd.run_as(config, "curl", true, "Usage: syn curl <url-or-args>...")
+                    .await
+            }
+            Command::Wget(cmd) => {
+                cmd.run_as(config, "wget", true, "Usage: syn wget <url-or-args>...")
+                    .await
+            }
+            Command::Jq(cmd) => {
+                cmd.run_as(config, "jq", false, "Usage: syn jq [args...]")
+                    .await
+            }
+            Command::Go(cmd) => {
+                cmd.run_as(config, "go", false, "Usage: syn go [args...]")
+                    .await
+            }
+            Command::Golangci(cmd) => {
+                cmd.run_as(
+                    config,
+                    "golangci-lint",
+                    false,
+                    "Usage: syn golangci [args...]",
+                )
+                .await
+            }
+            Command::Dotnet(cmd) => {
+                cmd.run_as(config, "dotnet", false, "Usage: syn dotnet [args...]")
+                    .await
+            }
+            Command::Rake(cmd) => {
+                cmd.run_as(config, "rake", false, "Usage: syn rake [args...]")
+                    .await
+            }
+            Command::Rspec(cmd) => {
+                cmd.run_as(config, "rspec", false, "Usage: syn rspec [args...]")
+                    .await
+            }
+            Command::Rubocop(cmd) => {
+                cmd.run_as(config, "rubocop", false, "Usage: syn rubocop [args...]")
+                    .await
+            }
+            Command::Gradle(cmd) => {
+                cmd.run_as(config, "gradle", false, "Usage: syn gradle [args...]")
+                    .await
+            }
+            Command::Gradlew(cmd) => {
+                cmd.run_as(config, "./gradlew", false, "Usage: syn gradlew [args...]")
+                    .await
+            }
+            Command::Make(cmd) => {
+                cmd.run_as(config, "make", false, "Usage: syn make [args...]")
+                    .await
+            }
+            Command::Just(cmd) => {
+                cmd.run_as(config, "just", false, "Usage: syn just [args...]")
+                    .await
+            }
+            Command::Helm(cmd) => {
+                cmd.run_as(config, "helm", false, "Usage: syn helm [args...]")
+                    .await
+            }
+            Command::Kubectl(cmd) => {
+                cmd.run_as(config, "kubectl", false, "Usage: syn kubectl [args...]")
+                    .await
+            }
+            Command::Docker(cmd) => {
+                cmd.run_as(config, "docker", false, "Usage: syn docker [args...]")
+                    .await
+            }
+            Command::Podman(cmd) => {
+                cmd.run_as(config, "podman", false, "Usage: syn podman [args...]")
+                    .await
+            }
+            Command::Json(cmd) => cmd.run(config).await,
+            Command::Deps(cmd) => cmd.run(config).await,
+            Command::Env(cmd) => cmd.run(config).await,
+            Command::Wc(cmd) => cmd.run(config).await,
+            Command::Err(cmd) => cmd.run(config).await,
+            Command::Test(cmd) => cmd.run(config).await,
+            Command::Diff(cmd) => cmd.run(config).await,
+            Command::Summary(cmd) => cmd.run(config).await,
+            Command::Pipe(cmd) => cmd.run(config).await,
+            Command::Log(cmd) => cmd.run(config).await,
+            Command::Smart(cmd) => cmd.run(config).await,
+            Command::Discover(cmd) => cmd.run(config).await,
+            Command::Learn(cmd) => cmd.run(config).await,
+            Command::Binlog(cmd) => cmd.run(config).await,
+            Command::DotnetFormatReport(cmd) => cmd.run(config).await,
+            Command::DotnetTrx(cmd) => cmd.run(config).await,
+            Command::Session(cmd) => cmd.run(config).await,
+            Command::CcEconomics(cmd) => cmd.run(config).await,
+            Command::RtkParity(cmd) => cmd.run(config).await,
+            Command::Rewrite(cmd) => cmd.run(config).await,
+            Command::Hook(cmd) => cmd.run(config).await,
+            Command::Run(cmd) => cmd.run(config).await,
+            Command::Proxy(cmd) => cmd.run(config).await,
+            Command::Filters(cmd) => cmd.run(config).await,
+            Command::Gain(cmd) => cmd.run(config).await,
+            Command::Compress(cmd) => cmd.run(config).await,
+            Command::Mcp(cmd) => cmd.run(config).await,
+            Command::Config(cmd) => cmd.run(config).await,
+            Command::GraphRag(cmd) => cmd.run(config).await,
+            Command::Hooks(cmd) => cmd.run(config).await,
+            Command::Doctor(cmd) => cmd.run(config).await,
+            Command::Refresh(cmd) => cmd.run(config).await,
+            Command::Ci(cmd) => match cmd.action {
+                CiAction::Verify(inner) => inner.run(config).await,
+                CiAction::Review(inner) => inner.run(config).await,
+                CiAction::Status(inner) => inner.run(config).await,
+            },
+            Command::Skills(cmd) => cmd.run(config).await,
+            Command::History(cmd) => cmd.run(config).await,
+            Command::Serve(cmd) => cmd.run(config).await,
+        }
+    }
+}
+// END_Command_run
 
 macro_rules! cmd_struct {
     ($name:ident, $about:expr) => {

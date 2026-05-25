@@ -19,14 +19,9 @@
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Tracing writes to stderr so MCP stdio stdout remains a clean JSON-RPC channel.</ASSERTION>
-    <ASSERTION>Main dispatch routes first-class RTK shortcuts, including expanded Phase-45 command families, to RtkProxyCmd without bypassing proxy filtering.</ASSERTION>
-    <ASSERTION>Main dispatch routes Phase-47 language ecosystem shortcuts to RtkProxyCmd without bypassing proxy filtering.</ASSERTION>
-    <ASSERTION>Main dispatch routes Phase-48 Docker and Podman shortcuts to RtkProxyCmd without bypassing proxy filtering.</ASSERTION>
-    <ASSERTION>Main dispatch routes local RTK adapters to direct compact renderers with token tracking.</ASSERTION>
-    <ASSERTION>Main dispatch routes pipe, log, and smart local system adapters to direct compact renderers with token tracking.</ASSERTION>
-    <ASSERTION>Main dispatch routes discover and learn diagnostics to bounded RTK advisory renderers.</ASSERTION>
-    <ASSERTION>Main dispatch routes RtkParityCmd to the machine-checkable parity inventory gate.</ASSERTION>
-    <ASSERTION>Main dispatch routes RewriteCmd to the hook-facing rewrite implementation.</ASSERTION>
+    <ASSERTION>Main delegates command execution to CLI RunCommand after parsing SynCli and loading Config.</ASSERTION>
+    <ASSERTION>Main keeps command ownership out of the binary entry point so RTK shortcut dispatch remains centralized in M-CLI.</ASSERTION>
+    <ASSERTION>Main remains a compact entry point focused on tracing, config loading, runtime creation, and dispatch delegation.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-49</PHASE_GATE>
+  <PHASE_GATE>Phase-63</PHASE_GATE>
 </VERIFICATION>

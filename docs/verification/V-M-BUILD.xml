@@ -4,12 +4,15 @@
     <COMMAND>cargo audit --deny warnings</COMMAND>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
+    <COMMAND>cargo build --release</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Cargo.toml uses notify 8.x so Cargo.lock no longer includes the unmaintained instant transitive dependency.</ASSERTION>
     <ASSERTION>build.rs tracks both Synapse legacy built-in filters and the RTK built-in filter pack for Cargo rebuilds.</ASSERTION>
     <ASSERTION>Cargo.toml and Cargo.lock advance to the next patch version after v2.6.0 so post-release commits do not reuse the published tag line.</ASSERTION>
+    <ASSERTION>Dockerfile builds the release binary with cargo build --release and does not use a no-op --no-default-features flag.</ASSERTION>
+    <ASSERTION>Dockerfile builder stage avoids unused protobuf/OpenSSL system packages after dependency-tree audit.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59</PHASE_GATE>
+  <PHASE_GATE>Phase-63</PHASE_GATE>
 </VERIFICATION>

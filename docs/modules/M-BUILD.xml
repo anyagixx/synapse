@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-BUILD" type="UTILITY" status="active">
   <NAME>M-BUILD</NAME>
-  <PURPOSE>Cargo build metadata — declares public package identity, binary/library names, dependency lock state, and rebuild triggers for embedded assets</PURPOSE>
-  <SCOPE>Cargo.toml package metadata and Cargo.lock dependency lock state for the publishable synapse-agent crate while preserving syn binary/library names, dependency policy, and build.rs rerun-if-changed directives for embedded Synapse/RTK proxy filters and OpenCode assets</SCOPE>
+  <PURPOSE>Build metadata and release container policy — declares public package identity, dependency lock state, rebuild triggers, and Docker release build semantics</PURPOSE>
+  <SCOPE>Cargo.toml package metadata, Cargo.lock dependency lock state, build.rs rerun-if-changed directives for embedded Synapse/RTK proxy filters and OpenCode assets, and Dockerfile release build stages with explicit cargo release semantics and audited system packages</SCOPE>
   <FILES>
     <FILE>Cargo.toml</FILE>
     <FILE>Cargo.lock</FILE>
     <FILE>build.rs</FILE>
+    <FILE>Dockerfile</FILE>
   </FILES>
   <DEPENDS>M-PROXY-FILTER,M-HOOKS</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-33.xml,docs/phases/Phase-59.xml</LINKS>
+  <LINKS>Cargo.toml,docs/phases/Phase-33.xml,docs/phases/Phase-59.xml,docs/phases/Phase-63.xml</LINKS>
   <VERIFICATION_REF>V-M-BUILD</VERIFICATION_REF>
 </MODULE>

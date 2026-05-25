@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-MAIN" type="ENTRY_POINT" status="active">
   <NAME>M-MAIN</NAME>
-  <PURPOSE>Binary entry point — parses CLI, resolves runtime config, initializes stderr tracing, dispatches commands via tokio runtime</PURPOSE>
-  <SCOPE>CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts and container shortcuts, local RTK adapters, local RTK system adapters, RTK discover/learn diagnostics, RTK parity inventory, and hook rewrites</SCOPE>
+  <PURPOSE>Binary entry point — parses CLI, resolves runtime config, initializes stderr tracing, and delegates command dispatch through the CLI module</PURPOSE>
+  <SCOPE>CLI argument parsing, stderr tracing init, config loading, tokio runtime creation, and CLI-owned command dispatch delegation</SCOPE>
   <FILES>
     <FILE>src/main.rs</FILE>
   </FILES>
   <DEPENDS>M-LIB,M-CLI,M-CONFIG</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml,docs/phases/Phase-48.xml,docs/phases/Phase-49.xml</LINKS>
+  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml,docs/phases/Phase-48.xml,docs/phases/Phase-49.xml,docs/phases/Phase-63.xml</LINKS>
   <VERIFICATION_REF>V-M-MAIN</VERIFICATION_REF>
 </MODULE>
