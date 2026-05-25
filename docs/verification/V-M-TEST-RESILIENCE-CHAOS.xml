@@ -11,6 +11,7 @@
     <TEST>Deleted index storage makes search suggest syn index instead of panicking.</TEST>
     <TEST>Missing docs directory can be recovered by syn init.</TEST>
     <TEST>Missing module shard is visible through syn status.</TEST>
+    <TEST>syn test resilience discovers and runs bad config, missing index, missing docs, empty graph, and missing module shard specs.</TEST>
   </INTEGRATION_TESTS>
   <REQUIRED_LOG_MARKERS>
     <LOG>resilience_corruption_applied</LOG>

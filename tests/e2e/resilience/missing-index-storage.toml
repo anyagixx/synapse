@@ -1,0 +1,9 @@
+name = "missing-index-storage"
+fixture = "minimal"
+
+[[cases]]
+name = "search-without-index-suggests-index-command"
+command = { args = ["search", "do_work", "--max-results", "3"], expect_exit = 0, stdout_contains = ["Run `syn index` first"] }
+
+[[cases.actions]]
+kind = "delete-index-storage"

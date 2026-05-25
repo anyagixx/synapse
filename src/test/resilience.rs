@@ -57,28 +57,16 @@ pub struct ResilienceSpec {
 // END_ResilienceSpec
 
 // START_FixtureTemplateName
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
 pub enum FixtureTemplateName {
     Empty,
+    #[default]
     Minimal,
     MultiModule,
     Broken,
 }
 // END_FixtureTemplateName
-
-impl Default for FixtureTemplateName {
-    // START_CONTRACT_FixtureTemplateName::default
-    // PURPOSE: Default resilience specs to a minimal valid MyGRACE fixture
-    // OUTPUTS: { FixtureTemplateName }
-    // LINKS:
-    //   -> NFR-002 (traces_to) - deterministic fresh fixture setup
-    // START_fixture_template_name_default
-    fn default() -> Self {
-        Self::Minimal
-    }
-    // END_fixture_template_name_default
-}
 
 impl FixtureTemplateName {
     // START_CONTRACT_FixtureTemplateName::to_fixture_template
@@ -120,6 +108,7 @@ pub enum CorruptionAction {
     RemoveDir { path: PathBuf },
     Rename { from: PathBuf, to: PathBuf },
     Lock { path: PathBuf },
+    WriteUserConfig { content: String },
     DeleteIndexStorage,
 }
 // END_CorruptionAction
@@ -434,6 +423,13 @@ fn apply_corruption_action(fixture: &TestFixture, action: &CorruptionAction) -> 
                 std::fs::create_dir_all(parent)?;
             }
             std::fs::write(target.with_extension("lock"), "locked")?;
+        }
+        CorruptionAction::WriteUserConfig { content } => {
+            let config_path = fixture.config_home().join("synapse").join("synapsec.toml");
+            if let Some(parent) = config_path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(config_path, content)?;
         }
         CorruptionAction::DeleteIndexStorage => {
             let index_path = fixture_index_storage_path(fixture);

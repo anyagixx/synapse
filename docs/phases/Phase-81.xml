@@ -15,7 +15,7 @@
     <step-1 module="M-TEST-RESILIENCE-CHAOS" status="done">Implement corruption actions and fixture-local safety checks.</step-1>
     <step-2 module="M-TEST-RESILIENCE-CHAOS" status="done">Implement recovery command runner, expected output checks, and verify command checks.</step-2>
     <step-3 module="M-CLI-TEST-COMMANDS" status="done">Wire syn test resilience with directory/file spec discovery and fail_fast.</step-3>
-    <step-4 module="M-TEST-RESILIENCE-CHAOS" status="pending">Add corruption specs for missing blocks.json, bad config, missing docs, empty graph, and missing module shard.</step-4>
+    <step-4 module="M-TEST-RESILIENCE-CHAOS" status="done">Add corruption specs for missing blocks.json, bad config, missing docs, empty graph, and missing module shard.</step-4>
   </STEPS>
   <VERIFICATION>
     <CHECK status="planned">cargo test --all-targets resilience</CHECK>

@@ -1,0 +1,18 @@
+name = "empty-graph"
+fixture = "minimal"
+
+[[cases]]
+name = "empty-graph-is-reported-by-verify"
+command = { args = ["verify", "--ci"], expect_exit = 1, stdout_contains = ["canonical-mygrace-drift"] }
+
+[[cases.actions]]
+kind = "write"
+path = "docs/graph-index.xml"
+content = """
+<?xml version="1.0" encoding="UTF-8"?>
+<GRAPH_INDEX>
+  <META><MODEL>mygrace-sharded</MODEL><PRIMARY>true</PRIMARY></META>
+  <MODULES></MODULES>
+  <RELATIONSHIPS></RELATIONSHIPS>
+</GRAPH_INDEX>
+"""

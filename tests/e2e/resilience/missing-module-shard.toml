@@ -1,0 +1,10 @@
+name = "missing-module-shard"
+fixture = "minimal"
+
+[[cases]]
+name = "refresh-reports-missing-module-shard"
+command = { args = ["refresh", "--json"], expect_exit = 0, stdout_contains = ["missing_module_shards", "M-CORE"] }
+
+[[cases.actions]]
+kind = "delete"
+path = "docs/modules/M-CORE.xml"
