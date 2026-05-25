@@ -13,7 +13,7 @@
     <FLOW id="DF-78-2">Broken fixture flows through verify_project tool and must return structured failure content.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-TEST-MCP-REGRESSION" status="pending">Implement McpTestServer helper with timeout, request, notify, and cleanup behavior.</step-1>
+    <step-1 module="M-TEST-MCP-REGRESSION" status="done">Implement McpTestServer helper with timeout, request, notify, and cleanup behavior.</step-1>
     <step-2 module="M-TEST-MCP-REGRESSION" status="pending">Add initialize, tools/list, semantic_search, verify_project, malformed JSON, and notification tests.</step-2>
     <step-3 module="M-CLI-TEST-COMMANDS" status="pending">Wire syn test mcp command to the MCP regression suite where practical.</step-3>
   </STEPS>

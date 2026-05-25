@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MODULE id="M-TEST-MCP-REGRESSION" type="INTEGRATION" status="pending">
+<MODULE id="M-TEST-MCP-REGRESSION" type="INTEGRATION" status="active">
   <NAME>M-TEST-MCP-REGRESSION</NAME>
   <PURPOSE>Exercise the real Synapse MCP stdio server through JSON-RPC regression tests on fixture projects.</PURPOSE>
   <SCOPE>Server spawn, initialize, notifications, tools/list, tools/call, malformed JSON, broken fixture verification, response ID checks, timeout, and process cleanup.</SCOPE>
   <FILES>
     <FILE>tests/e2e/mcp/mod.rs</FILE>
+    <FILE>tests/e2e_mcp.rs</FILE>
   </FILES>
   <DEPENDS>M-MCP-SERVER,M-MCP-SERVER-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-TEST-FIXTURE</DEPENDS>
   <LINKS>docs/phases/Phase-78.xml,docs/phases/Phase-82.xml</LINKS>

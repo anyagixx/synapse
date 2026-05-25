@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-TEST-MCP-REGRESSION" module="M-TEST-MCP-REGRESSION" priority="critical" status="pending">
+<VERIFICATION id="V-M-TEST-MCP-REGRESSION" module="M-TEST-MCP-REGRESSION" priority="critical" status="active">
   <UNIT_TESTS>
     <TEST>McpTestServer request helper preserves JSON-RPC request IDs and skips notifications.</TEST>
     <TEST>Drop kills and waits on the child process without leaking a server.</TEST>
+    <TEST>e2e_mcp integration target spawns syn mcp against a Minimal fixture.</TEST>
   </UNIT_TESTS>
   <INTEGRATION_TESTS>
     <TEST>Real stdio initialize succeeds on Minimal fixture.</TEST>
