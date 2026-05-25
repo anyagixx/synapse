@@ -18,7 +18,7 @@
     <FLOW id="DF-84-3">Trimming preserves backward compatibility because max_tokens=0 and style=full keep existing behavior.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-MCP-SERVER-RESPONSE" status="planned">Add a shared response trim model with estimated original tokens, shown tokens, was_trimmed, and saved tokens.</step-1>
+    <step-1 module="M-MCP-SERVER-RESPONSE" status="done">Add a shared response trim model with estimated original tokens, shown tokens, was_trimmed, and saved tokens.</step-1>
     <step-2 module="M-MCP-SERVER-TOOLS" status="planned">Expose max_tokens and style on high-output tool schemas.</step-2>
     <step-3 module="M-MCP-SERVER-CODE-TOOLS" status="planned">Apply terse and max_tokens to semantic_search, graphrag_query, view_signatures, lsp_hover, and lsp_references.</step-3>
     <step-4 module="M-MCP-SERVER-GRACE-TOOLS" status="planned">Apply terse and max_tokens to project_status, verify_project, review_code, analyze_logs, mental_test_run, traceability_report, token_savings, and refresh_project.</step-4>
