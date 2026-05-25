@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-87" status="planned">
+  <NAME>UPGRADE_4 Evidence And Budget Economy</NAME>
+  <GOAL>Implement T3 evidence compaction and T4 per-session token budget enforcement while preserving existing run persistence and unlimited default behavior.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/README.md</SOURCE_PLAN>
+  <TASK_REFS>
+    <TASK_REF id="T3" path="/home/truffle/Загрузки/synapse-main/UPGRADE_4/T3-evidence-compaction.md" />
+    <TASK_REF id="T4" path="/home/truffle/Загрузки/synapse-main/UPGRADE_4/T4-session-budget-enforcement.md" />
+  </TASK_REFS>
+  <MODULE_REFS>
+    <MODULE_REF id="M-RUNNER" />
+    <MODULE_REF id="M-RUNNER-SELF-HEAL" />
+    <MODULE_REF id="M-RUNNER-AGENT-CONTEXT" />
+    <MODULE_REF id="M-MCP-SERVER-RUN-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-TESTS-MCP-PROTOCOL" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-87-1">Run evidence refs are deduplicated, aliased, truncated above 20 refs, and reported with before/after savings.</FLOW>
+    <FLOW id="DF-87-2">save_with_compaction and compact_evidence tool update run records without changing plain save semantics.</FLOW>
+    <FLOW id="DF-87-3">Tracker calculates per-session input-token use from commands and budget config controls warning and blocked levels.</FLOW>
+    <FLOW id="DF-87-4">Expensive MCP tools are budget-gated; light tools such as project_status and verify_project remain available when exhausted.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-RUNNER" status="planned">Add evidence compaction report and run-manager compaction entry points.</step-1>
+    <step-2 module="M-RUNNER-SELF-HEAL" status="planned">Compact evidence periodically during long self-heal loops.</step-2>
+    <step-3 module="M-MCP-SERVER-RUN-TOOLS" status="planned">Expose compact_evidence MCP tool for persisted run records.</step-3>
+    <step-4 module="M-CONFIG" status="planned">Add backward-compatible budget config with session_token_limit=0 default.</step-4>
+    <step-5 module="M-TRACKING" status="planned">Add BudgetStatus, BudgetLevel, check_budget, and can_afford session queries.</step-5>
+    <step-6 module="M-MCP-SERVER" status="planned">Gate expensive tools and append warning metadata when session budget is near exhaustion.</step-6>
+    <step-7 module="M-MCP-SERVER-GRACE-TOOLS" status="planned">Expose check_budget MCP tool.</step-7>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test run::evidence_compaction::tests --lib</CHECK>
+    <CHECK status="planned">cargo test tracking::session_budget::tests --lib</CHECK>
+    <CHECK status="planned">compact_evidence removes duplicates and aliases action://, scenario://, docs/runs/, docs/verification/, docs/modules/, and docs/phases/.</CHECK>
+    <CHECK status="planned">compact_evidence truncates above 20 refs with a summary marker.</CHECK>
+    <CHECK status="planned">check_budget returns normal, warning, and blocked states.</CHECK>
+    <CHECK status="planned">budget limit 0 remains unlimited and backward-compatible.</CHECK>
+    <CHECK status="planned">blocked budget prevents expensive tools with budget_exhausted=true but allows project_status and verify_project.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-87-1">Non-ASCII aliases save tokens but can complicate shell or JSON consumers; keep aliases in JSON strings only and preserve plain save path.</RISK>
+    <RISK id="R-87-2">Budget should use input tokens as cost metric but still expose output tokens for diagnostics.</RISK>
+  </RISKS>
+</PHASE>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-84" status="planned">
+  <NAME>UPGRADE_4 MCP Response Economy</NAME>
+  <GOAL>Implement T2 response summarization with max_tokens and terse mode across high-output MCP handlers.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T2-response-summarization.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MCP-SERVER-RESPONSE" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-CASCADE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-RUN-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-TESTS-MCP-PROTOCOL" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-84-1">tools/call arguments carry max_tokens and style to handler-level formatting.</FLOW>
+    <FLOW id="DF-84-2">Handlers format full or terse payloads, then a shared response trimmer enforces max_tokens and returns token metadata.</FLOW>
+    <FLOW id="DF-84-3">Trimming preserves backward compatibility because max_tokens=0 and style=full keep existing behavior.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-MCP-SERVER-RESPONSE" status="planned">Add a shared response trim model with estimated original tokens, shown tokens, was_trimmed, and saved tokens.</step-1>
+    <step-2 module="M-MCP-SERVER-TOOLS" status="planned">Expose max_tokens and style on high-output tool schemas.</step-2>
+    <step-3 module="M-MCP-SERVER-CODE-TOOLS" status="planned">Apply terse and max_tokens to semantic_search, graphrag_query, view_signatures, lsp_hover, and lsp_references.</step-3>
+    <step-4 module="M-MCP-SERVER-GRACE-TOOLS" status="planned">Apply terse and max_tokens to project_status, verify_project, review_code, analyze_logs, mental_test_run, traceability_report, token_savings, and refresh_project.</step-4>
+    <step-5 module="M-MCP-SERVER-CASCADE-TOOLS" status="planned">Apply terse and max_tokens to cascade_impact and cascade_execute outputs.</step-5>
+    <step-6 module="M-TESTS-MCP-PROTOCOL" status="planned">Add regression tests proving at least 10 MCP tools support max_tokens and style.</step-6>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test mcp::server_response::tests --lib</CHECK>
+    <CHECK status="planned">cargo test mcp::server_code_tools::tests --lib</CHECK>
+    <CHECK status="planned">cargo test mcp::server_grace_tools::tests --lib</CHECK>
+    <CHECK status="planned">semantic_search max_tokens trims and sets was_trimmed=true.</CHECK>
+    <CHECK status="planned">project_status style=terse returns compact gate counts without verbose details.</CHECK>
+    <CHECK status="planned">traceability_report style=terse returns counts without full chains.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-84-1">Blind text truncation can cut JSON-like content mid-record; trim only final text content while keeping MCP envelope valid.</RISK>
+    <RISK id="R-84-2">Different handlers produce different response shapes; normalize summary metadata without forcing one payload schema everywhere.</RISK>
+  </RISKS>
+</PHASE>
