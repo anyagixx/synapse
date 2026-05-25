@@ -2,7 +2,7 @@
 <MODULE id="M-GRACE-INVENTORY-TYPES" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-INVENTORY-TYPES</NAME>
   <PURPOSE>Canonical MyGRACE inventory data types shared by drift, refresh, review, and status flows</PURPOSE>
-  <SCOPE>CodeModule, GraphEntry, VerificationEntry, ArtifactInventory, ArtifactDrift models</SCOPE>
+  <SCOPE>CodeModule with canonical source_paths, duplicate MODULE_ID coalescing helper, GraphEntry, VerificationEntry, ArtifactInventory, and ArtifactDrift models</SCOPE>
   <FILES>
     <FILE>src/grace/inventory_types.rs</FILE>
   </FILES>

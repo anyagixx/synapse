@@ -7,13 +7,16 @@
 
 // START_MODULE_MAP
 // CodeModule — Source module facts extracted from MODULE_CONTRACT
+// canonical_code_modules — Coalesces duplicate MODULE_ID contracts into one module fact
 // ArtifactInventory — Raw facts collected from source contracts and sharded artifacts
 // ArtifactDrift — Normalized drift report shared by refresh, verify, review, and status
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Extracted inventory data models from M-GRACE-INVENTORY]
+// LAST_CHANGE: [v2.8.0 — Added canonical source path aggregation for duplicate MODULE_ID contracts]
 // END_CHANGE_SUMMARY
+
+use std::collections::{BTreeMap, BTreeSet};
 
 // START_public_api
 
@@ -22,6 +25,7 @@
 pub struct CodeModule {
     pub id: String,
     pub source_path: String,
+    pub source_paths: Vec<String>,
     pub purpose: String,
     pub scope: String,
     pub depends: Vec<String>,
@@ -29,6 +33,30 @@ pub struct CodeModule {
     pub contract_errors: Vec<String>,
 }
 // END_CodeModule
+
+// START_CONTRACT_canonical_code_modules
+// PURPOSE: Return one deterministic CodeModule per MODULE_ID while preserving all source files and merged references
+// INPUTS: { modules: Vec<CodeModule> — raw contract-derived module facts }
+// OUTPUTS: { Vec<CodeModule> — sorted canonical module facts }
+// START_canonical_code_modules
+pub(crate) fn canonical_code_modules(modules: Vec<CodeModule>) -> Vec<CodeModule> {
+    let mut by_id: BTreeMap<String, CodeModule> = BTreeMap::new();
+    for mut module in modules {
+        module.source_paths = normalized_sources(&module);
+        module.source_path = module.source_paths.first().cloned().unwrap_or_default();
+        module.depends = unique_nonempty(module.depends);
+        module.links = unique_nonempty(module.links);
+        module.contract_errors = unique_nonempty(module.contract_errors);
+
+        if let Some(existing) = by_id.get_mut(&module.id) {
+            merge_code_module(existing, module);
+        } else {
+            by_id.insert(module.id.clone(), module);
+        }
+    }
+    by_id.into_values().collect()
+}
+// END_canonical_code_modules
 
 // START_GraphEntry
 #[derive(Debug, Clone, serde::Serialize)]
@@ -120,6 +148,66 @@ impl ArtifactDrift {
             + self.files_without_contract.len()
     }
     // END_artifact_drift_issue_count
+}
+
+fn merge_code_module(existing: &mut CodeModule, incoming: CodeModule) {
+    existing.source_paths = unique_nonempty(
+        existing
+            .source_paths
+            .iter()
+            .cloned()
+            .chain(incoming.source_paths)
+            .collect(),
+    );
+    existing.source_path = existing.source_paths.first().cloned().unwrap_or_default();
+
+    if incoming.purpose.len() > existing.purpose.len() {
+        existing.purpose = incoming.purpose;
+    }
+    if incoming.scope.len() > existing.scope.len() {
+        existing.scope = incoming.scope;
+    }
+
+    existing.depends = unique_nonempty(
+        existing
+            .depends
+            .iter()
+            .cloned()
+            .chain(incoming.depends)
+            .collect(),
+    );
+    existing.links = unique_nonempty(
+        existing
+            .links
+            .iter()
+            .cloned()
+            .chain(incoming.links)
+            .collect(),
+    );
+    existing.contract_errors = unique_nonempty(
+        existing
+            .contract_errors
+            .iter()
+            .cloned()
+            .chain(incoming.contract_errors)
+            .collect(),
+    );
+}
+
+fn normalized_sources(module: &CodeModule) -> Vec<String> {
+    let mut paths = module.source_paths.clone();
+    paths.push(module.source_path.clone());
+    unique_nonempty(paths)
+}
+
+fn unique_nonempty(values: Vec<String>) -> Vec<String> {
+    let mut seen = BTreeSet::new();
+    values
+        .into_iter()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty() && value != "N/A")
+        .filter(|value| seen.insert(value.clone()))
+        .collect()
 }
 
 // END_public_api

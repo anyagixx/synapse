@@ -2,7 +2,7 @@
 <MODULE id="M-GRACE-INVENTORY-ARTIFACTS" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-INVENTORY-ARTIFACTS</NAME>
   <PURPOSE>MyGRACE artifact IO — parses indexes, computes drift, and rewrites sharded XML artifacts</PURPOSE>
-  <SCOPE>graph/verification index parsing, shard listing, drift calculation, XML artifact synchronization</SCOPE>
+  <SCOPE>graph/verification index parsing, shard listing, drift calculation, duplicate-safe XML artifact synchronization, and preservation of existing multi-file module shards</SCOPE>
   <FILES>
     <FILE>src/grace/inventory_artifacts.rs</FILE>
   </FILES>

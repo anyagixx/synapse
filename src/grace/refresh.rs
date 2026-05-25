@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Added cascade drift to refresh report]
+// LAST_CHANGE: [v2.23.0 - Made refresh --fix idempotent for clean canonical artifacts]
 // END_CHANGE_SUMMARY
 
 use crate::grace::inventory::{ArtifactDrift, MyGraceInventory};
@@ -68,20 +68,32 @@ impl Refresher {
     // END_refresher_refresh
 
     // START_CONTRACT_Refresher::fix
-    // PURPOSE: Rewrite canonical MyGRACE artifacts and DevelopmentPlan from real source MODULE_ID contracts
+    // PURPOSE: Repair canonical MyGRACE artifacts and generate DevelopmentPlan only when drift or invalid plan state exists
     // INPUTS: { root: &Path — project root }
     // OUTPUTS: { anyhow::Result<RefreshReport> }
-    // SIDE_EFFECTS: writes docs/ indexes and shard files
+    // SIDE_EFFECTS: writes docs/ indexes, shard files, or development-plan.xml only when repair is needed
     // START_refresher_fix
     pub fn fix(root: &Path) -> anyhow::Result<RefreshReport> {
-        let drift = MyGraceInventory::sync(root)?;
-        crate::grace::development_plan::generate_development_plan_file(
-            root,
-            true,
-            "auto",
-            "topological",
-        )?;
-        report_from_drift(root, drift, true)
+        let initial_drift = MyGraceInventory::drift(root)?;
+        let plan_valid = crate::grace::development_plan::validate_development_plan(root)
+            .map(|report| report.valid)
+            .unwrap_or(false);
+        if initial_drift.is_clean() && plan_valid {
+            return report_from_drift(root, initial_drift, false);
+        }
+
+        if !initial_drift.is_clean() {
+            MyGraceInventory::sync(root)?;
+        }
+        if !plan_valid {
+            crate::grace::development_plan::generate_development_plan_file(
+                root,
+                true,
+                "auto",
+                "topological",
+            )?;
+        }
+        report_from_drift(root, MyGraceInventory::drift(root)?, true)
     }
     // END_refresher_fix
 }
@@ -119,4 +131,65 @@ fn report_from_drift(
         canonical_drift: drift,
         cascade_drift,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_test_refresher_fix_idempotent_with_duplicate_module_contracts
+    // PURPOSE: Verify refresh --fix coalesces duplicate MODULE_ID contracts and is a no-op on the second clean run
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: writes temporary project files
+    // START_test_refresher_fix_idempotent_with_duplicate_module_contracts
+    #[test]
+    fn test_refresher_fix_idempotent_with_duplicate_module_contracts() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        std::fs::create_dir_all(root.join("src")).unwrap();
+        std::fs::write(
+            root.join("src/a.rs"),
+            "// MODULE_CONTRACT\n// MODULE_ID: M-DUP\n// PURPOSE: Duplicate module part A\n// SCOPE: Part A source file\n// DEPENDS: M-A\n// LINKS: docs/modules/M-DUP.xml\n\n// START_MODULE_MAP\n// alpha - alpha work\n// END_MODULE_MAP\n\n// START_CHANGE_SUMMARY\n// LAST_CHANGE: [v1.0.0 - test]\n// END_CHANGE_SUMMARY\n\n// START_CONTRACT_alpha\n// PURPOSE: Alpha work\n// OUTPUTS: { () }\n// START_alpha\npub fn alpha() {}\n// END_alpha\n",
+        )
+        .unwrap();
+        std::fs::write(
+            root.join("src/b.rs"),
+            "// MODULE_CONTRACT\n// MODULE_ID: M-DUP\n// PURPOSE: Duplicate module part B with longer canonical text\n// SCOPE: Part B source file\n// DEPENDS: M-B\n// LINKS: docs/modules/M-DUP.xml\n\n// START_MODULE_MAP\n// beta - beta work\n// END_MODULE_MAP\n\n// START_CHANGE_SUMMARY\n// LAST_CHANGE: [v1.0.0 - test]\n// END_CHANGE_SUMMARY\n\n// START_CONTRACT_beta\n// PURPOSE: Beta work\n// OUTPUTS: { () }\n// START_beta\npub fn beta() {}\n// END_beta\n",
+        )
+        .unwrap();
+
+        let first = Refresher::fix(root).unwrap();
+        assert!(first.canonical_drift.duplicate_graph_ids.is_empty());
+        assert!(first.canonical_drift.duplicate_verification_ids.is_empty());
+
+        let graph_path = root.join("docs/graph-index.xml");
+        let verification_path = root.join("docs/verification-index.xml");
+        let shard_path = root.join("docs/modules/M-DUP.xml");
+        let plan_path = root.join("docs/development-plan.xml");
+        let graph = std::fs::read_to_string(&graph_path).unwrap();
+        let verification = std::fs::read_to_string(&verification_path).unwrap();
+        let shard = std::fs::read_to_string(&shard_path).unwrap();
+        let plan = std::fs::read_to_string(&plan_path).unwrap();
+
+        assert_eq!(graph.matches(r#"<MODULE id="M-DUP""#).count(), 1);
+        assert_eq!(
+            verification
+                .matches(r#"<VERIFICATION id="V-M-DUP" module="M-DUP""#)
+                .count(),
+            1
+        );
+        assert!(shard.contains("<FILE>src/a.rs</FILE>"));
+        assert!(shard.contains("<FILE>src/b.rs</FILE>"));
+
+        let second = Refresher::fix(root).unwrap();
+        assert!(!second.fixed);
+        assert_eq!(std::fs::read_to_string(graph_path).unwrap(), graph);
+        assert_eq!(
+            std::fs::read_to_string(verification_path).unwrap(),
+            verification
+        );
+        assert_eq!(std::fs::read_to_string(shard_path).unwrap(), shard);
+        assert_eq!(std::fs::read_to_string(plan_path).unwrap(), plan);
+    }
+    // END_test_refresher_fix_idempotent_with_duplicate_module_contracts
 }

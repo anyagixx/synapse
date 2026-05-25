@@ -2,7 +2,7 @@
 <MODULE id="M-GRACE-INVENTORY" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-INVENTORY</NAME>
   <PURPOSE>Canonical MyGRACE inventory facade — compares code contracts, shard indexes, and per-entity files</PURPOSE>
-  <SCOPE>MyGraceInventory collection, drift detection, and artifact sync orchestration</SCOPE>
+  <SCOPE>MyGraceInventory collection, duplicate MODULE_ID coalescing, drift detection, and artifact sync orchestration</SCOPE>
   <FILES>
     <FILE>src/grace/inventory.rs</FILE>
   </FILES>

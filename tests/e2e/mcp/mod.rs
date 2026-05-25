@@ -9,6 +9,7 @@
 //   <- V-M-TEST-MCP-REGRESSION (verified_by) - MCP JSON-RPC verification
 
 // START_MODULE_MAP
+// mcp_regression_timeouts - Timeout constants for MCP stdio regression helpers
 // McpTestServer - Running syn mcp child process with timeout-bounded JSON-RPC helpers
 // spawn_for_fixture - Spawn server with fixture root and isolated XDG homes
 // request - Send JSON-RPC request and wait for matching response ID
@@ -18,7 +19,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Added real MCP stdio regression cases for tools and protocol errors]
+// LAST_CHANGE: [v1.2.0 - Added strict MyGRACE contract anchor for MCP regression helper constants]
 // END_CHANGE_SUMMARY
 
 use serde_json::{json, Value};
@@ -30,8 +31,17 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 use syn::test::fixture::TestFixture;
 
+// START_CONTRACT_mcp_regression_timeouts
+// PURPOSE: Define bounded wait durations used by MCP regression process helpers
+// OUTPUTS: { Duration constants }
+// SIDE_EFFECTS: none
+// LINKS:
+//   -> M-MCP-SERVER (depends) - stdio server lifecycle timing
+//   -> NFR-002 (traces_to) - regression waits must remain bounded
+// START_mcp_regression_timeouts
 const MCP_RESPONSE_TIMEOUT: Duration = Duration::from_secs(10);
 const MCP_KILL_WAIT_TIMEOUT: Duration = Duration::from_secs(2);
+// END_mcp_regression_timeouts
 
 // START_public_api
 

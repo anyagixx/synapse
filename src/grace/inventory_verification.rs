@@ -227,6 +227,7 @@ mod tests {
         let module = CodeModule {
             id: "M-TEST".into(),
             source_path: "src/main.rs".into(),
+            source_paths: vec!["src/main.rs".into()],
             purpose: "Test module".into(),
             scope: "Refresh preservation".into(),
             depends: Vec::new(),

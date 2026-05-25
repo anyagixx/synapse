@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.7.0 — Split inventory types and artifact IO into dedicated modules]
+// LAST_CHANGE: [v2.8.0 — Coalesced duplicate MODULE_ID contracts before drift and sync]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, ModuleContract, TypedLink};
@@ -20,6 +20,7 @@ use crate::grace::inventory_artifacts::{
     drift_from_inventory, list_xml_stems, parse_graph_index, parse_verification_index,
     sync_inventory_artifacts,
 };
+use crate::grace::inventory_types::canonical_code_modules;
 use crate::grace::layout::DocsLayout;
 use std::path::{Path, PathBuf};
 
@@ -54,7 +55,8 @@ impl MyGraceInventory {
                 code_modules.push(code_module_from_contract(root, contract, id));
             }
         }
-        code_modules.sort_by(|a, b| a.id.cmp(&b.id));
+        code_modules.sort_by(|a, b| (&a.id, &a.source_path).cmp(&(&b.id, &b.source_path)));
+        let code_modules = canonical_code_modules(code_modules);
 
         let graph_entries = parse_graph_index(&layout.graph_index_path());
         let verification_entries = parse_verification_index(&layout.verification_index_path());
@@ -101,9 +103,11 @@ impl MyGraceInventory {
 // END_public_api
 
 fn code_module_from_contract(root: &Path, contract: &ModuleContract, id: &str) -> CodeModule {
+    let source_path = relative_to_root(root, &contract.file_path);
     CodeModule {
         id: id.to_string(),
-        source_path: relative_to_root(root, &contract.file_path),
+        source_path: source_path.clone(),
+        source_paths: vec![source_path],
         purpose: contract.purpose.clone().unwrap_or_default(),
         scope: contract.scope.clone().unwrap_or_default(),
         depends: clean_refs(&contract.depends),

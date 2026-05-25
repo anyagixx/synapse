@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-GRACE-REFRESH" module="M-GRACE-REFRESH" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test grace::refresh::tests::test_refresher_fix_idempotent_with_duplicate_module_contracts --lib</COMMAND>
     <COMMAND>cargo test --test integration_test test_ci_commands</COMMAND>
     <COMMAND>cargo test grace::inventory_verification::tests::test_sync_preserves_custom_verification_shard_body --lib</COMMAND>
   </UNIT_TESTS>
@@ -9,6 +10,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>refresh --fix no longer collapses custom verification shards back to generic Phase-1 content.</ASSERTION>
     <ASSERTION>refresh --fix regenerates docs/development-plan.xml from real source MODULE_ID and function contracts so ci verify passes in minimal projects.</ASSERTION>
+    <ASSERTION>refresh --fix is idempotent on a clean project and does not introduce duplicate graph or verification index entries.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-3</PHASE_GATE>
 </VERIFICATION>

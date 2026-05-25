@@ -206,6 +206,7 @@ mod tests {
             CodeModule {
                 id: "M-OLD".into(),
                 source_path: "src/old.rs".into(),
+                source_paths: vec!["src/old.rs".into()],
                 purpose: "Old module".into(),
                 scope: "Old scope".into(),
                 depends: Vec::new(),
@@ -215,6 +216,7 @@ mod tests {
             CodeModule {
                 id: "M-NEW".into(),
                 source_path: "src/new.rs".into(),
+                source_paths: vec!["src/new.rs".into()],
                 purpose: "New module".into(),
                 scope: "New scope".into(),
                 depends: Vec::new(),

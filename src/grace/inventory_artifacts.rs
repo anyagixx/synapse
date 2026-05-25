@@ -8,17 +8,18 @@
 // START_MODULE_MAP
 // parse_graph_index — Reads graph index entries
 // drift_from_inventory — Compares code contracts against sharded artifacts
-// sync_inventory_artifacts — Rewrites canonical MyGRACE indexes and shards
+// sync_inventory_artifacts — Rewrites canonical MyGRACE indexes and shards with duplicate MODULE_ID coalescing
 // sync_verification_artifacts — Delegates verification index and shard preservation
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Delegated verification artifact sync to preservation-aware writer]
+// LAST_CHANGE: [v2.9.0 — Made refresh sync duplicate-safe and preservation-aware for multi-file module shards]
 // END_CHANGE_SUMMARY
 
 use crate::grace::inventory_plan::{write_phase_index, write_phase_one};
 use crate::grace::inventory_types::{
-    ArtifactDrift, ArtifactInventory, CodeModule, GraphEntry, VerificationEntry,
+    canonical_code_modules, ArtifactDrift, ArtifactInventory, CodeModule, GraphEntry,
+    VerificationEntry,
 };
 use crate::grace::inventory_verification::sync_verification_artifacts;
 use crate::grace::layout::DocsLayout;
@@ -168,6 +169,7 @@ pub(crate) fn sync_inventory_artifacts(
     layout: &DocsLayout,
     modules: &[CodeModule],
 ) -> anyhow::Result<()> {
+    let modules = canonical_code_modules(modules.to_vec());
     std::fs::create_dir_all(layout.modules_dir())?;
     std::fs::create_dir_all(layout.phases_dir())?;
     std::fs::create_dir_all(layout.verification_dir())?;
@@ -183,12 +185,12 @@ pub(crate) fn sync_inventory_artifacts(
         "verification",
     )?;
 
-    write_graph_index(layout, modules)?;
-    sync_verification_artifacts(layout, modules)?;
+    write_graph_index(layout, &modules)?;
+    sync_verification_artifacts(layout, &modules)?;
     write_phase_index(layout)?;
-    write_phase_one(layout, modules)?;
+    write_phase_one(layout, &modules)?;
 
-    for module in modules {
+    for module in &modules {
         write_module_shard(layout, module)?;
     }
 
@@ -259,7 +261,9 @@ fn check_shard_content(
         match std::fs::read_to_string(&path) {
             Ok(content) => {
                 if !content.contains(&format!(r#"<MODULE id="{}""#, id))
-                    || !content.contains(&format!("<FILE>{}</FILE>", module.source_path))
+                    || !source_paths(module)
+                        .iter()
+                        .all(|path| content.contains(&format!("<FILE>{}</FILE>", path)))
                     || !content.contains(&format!("<VERIFICATION_REF>V-{}</VERIFICATION_REF>", id))
                 {
                     drift.module_shard_mismatches.push(format!(
@@ -357,11 +361,19 @@ fn write_graph_index(layout: &DocsLayout, modules: &[CodeModule]) -> anyhow::Res
         ));
     }
     xml.push_str("  </MODULES>\n  <RELATIONSHIPS>\n");
+    let mut relationships = BTreeSet::new();
     for module in modules {
         for dep in &module.depends {
+            if dep == &module.id {
+                continue;
+            }
+            if !relationships.insert((module.id.clone(), dep.clone())) {
+                continue;
+            }
             xml.push_str(&format!(
                 "    <REL source=\"{}\" target=\"{}\" type=\"DEPENDS\" />\n",
-                module.id, dep
+                xml_escape(&module.id),
+                xml_escape(dep)
             ));
         }
     }
@@ -371,6 +383,12 @@ fn write_graph_index(layout: &DocsLayout, modules: &[CodeModule]) -> anyhow::Res
 }
 
 fn write_module_shard(layout: &DocsLayout, module: &CodeModule) -> anyhow::Result<()> {
+    let path = layout.modules_dir().join(format!("{}.xml", module.id));
+    if let Some(existing) = preserve_existing_module_shard(&path, module) {
+        std::fs::write(path, existing)?;
+        return Ok(());
+    }
+
     let deps = if module.depends.is_empty() {
         String::new()
     } else {
@@ -381,20 +399,45 @@ fn write_module_shard(layout: &DocsLayout, module: &CodeModule) -> anyhow::Resul
     } else {
         module.links.join(",")
     };
+    let files = source_paths(module)
+        .iter()
+        .map(|path| format!("    <FILE>{}</FILE>", xml_escape(path)))
+        .collect::<Vec<_>>()
+        .join("\n");
     let xml = format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<MODULE id=\"{}\" type=\"{}\" status=\"active\">\n  <NAME>{}</NAME>\n  <PURPOSE>{}</PURPOSE>\n  <SCOPE>{}</SCOPE>\n  <FILES>\n    <FILE>{}</FILE>\n  </FILES>\n  <DEPENDS>{}</DEPENDS>\n  <LINKS>{}</LINKS>\n  <VERIFICATION_REF>V-{}</VERIFICATION_REF>\n</MODULE>\n",
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<MODULE id=\"{}\" type=\"{}\" status=\"active\">\n  <NAME>{}</NAME>\n  <PURPOSE>{}</PURPOSE>\n  <SCOPE>{}</SCOPE>\n  <FILES>\n{}\n  </FILES>\n  <DEPENDS>{}</DEPENDS>\n  <LINKS>{}</LINKS>\n  <VERIFICATION_REF>V-{}</VERIFICATION_REF>\n</MODULE>\n",
         module.id,
         module_type(module),
         xml_escape(&module.id),
         xml_escape(&module.purpose),
         xml_escape(&module.scope),
-        xml_escape(&module.source_path),
+        files,
         xml_escape(&deps),
         xml_escape(&links),
         module.id
     );
-    std::fs::write(layout.modules_dir().join(format!("{}.xml", module.id)), xml)?;
+    std::fs::write(path, xml)?;
     Ok(())
+}
+
+fn preserve_existing_module_shard(path: &Path, module: &CodeModule) -> Option<String> {
+    let content = std::fs::read_to_string(path).ok()?;
+    if !content.contains(&format!(r#"<MODULE id="{}""#, module.id)) {
+        return None;
+    }
+    if !content.contains(&format!(
+        "<VERIFICATION_REF>V-{}</VERIFICATION_REF>",
+        module.id
+    )) {
+        return None;
+    }
+    if !source_paths(module)
+        .iter()
+        .all(|source| content.contains(&format!("<FILE>{}</FILE>", source)))
+    {
+        return None;
+    }
+    Some(content)
 }
 
 fn archive_stale_shards(
@@ -442,10 +485,92 @@ fn module_type(module: &CodeModule) -> &'static str {
     }
 }
 
+fn source_paths(module: &CodeModule) -> Vec<String> {
+    let mut paths = module.source_paths.clone();
+    if paths.is_empty() {
+        paths.push(module.source_path.clone());
+    }
+    paths.sort();
+    paths.dedup();
+    paths
+        .into_iter()
+        .filter(|path| !path.trim().is_empty() && path != "N/A")
+        .collect()
+}
+
 fn xml_escape(value: &str) -> String {
     value
         .replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
         .replace('"', "&quot;")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_test_sync_inventory_artifacts_deduplicates_module_ids
+    // PURPOSE: Verify refresh --fix writes one graph/verification entry for duplicate MODULE_ID contracts
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: writes temporary MyGRACE docs
+    // START_test_sync_inventory_artifacts_deduplicates_module_ids
+    #[test]
+    fn test_sync_inventory_artifacts_deduplicates_module_ids() {
+        let dir = tempfile::tempdir().unwrap();
+        let layout = DocsLayout::new(dir.path());
+
+        let modules = vec![
+            CodeModule {
+                id: "M-DUP".into(),
+                source_path: "src/a.rs".into(),
+                source_paths: vec!["src/a.rs".into()],
+                purpose: "Short".into(),
+                scope: "Part A".into(),
+                depends: vec!["M-A".into()],
+                links: Vec::new(),
+                contract_errors: Vec::new(),
+            },
+            CodeModule {
+                id: "M-DUP".into(),
+                source_path: "src/b.rs".into(),
+                source_paths: vec!["src/b.rs".into()],
+                purpose: "Longer duplicate module purpose".into(),
+                scope: "Part B".into(),
+                depends: vec!["M-B".into(), "M-A".into()],
+                links: Vec::new(),
+                contract_errors: Vec::new(),
+            },
+        ];
+
+        sync_inventory_artifacts(dir.path(), &layout, &modules).unwrap();
+
+        let graph = std::fs::read_to_string(layout.graph_index_path()).unwrap();
+        assert_eq!(graph.matches(r#"<MODULE id="M-DUP""#).count(), 1);
+        assert_eq!(
+            graph
+                .matches(r#"<REL source="M-DUP" target="M-A" type="DEPENDS" />"#)
+                .count(),
+            1
+        );
+        assert_eq!(
+            graph
+                .matches(r#"<REL source="M-DUP" target="M-B" type="DEPENDS" />"#)
+                .count(),
+            1
+        );
+
+        let verification = std::fs::read_to_string(layout.verification_index_path()).unwrap();
+        assert_eq!(
+            verification
+                .matches(r#"<VERIFICATION id="V-M-DUP" module="M-DUP""#)
+                .count(),
+            1
+        );
+
+        let shard = std::fs::read_to_string(layout.modules_dir().join("M-DUP.xml")).unwrap();
+        assert!(shard.contains("<FILE>src/a.rs</FILE>"));
+        assert!(shard.contains("<FILE>src/b.rs</FILE>"));
+    }
+    // END_test_sync_inventory_artifacts_deduplicates_module_ids
 }
