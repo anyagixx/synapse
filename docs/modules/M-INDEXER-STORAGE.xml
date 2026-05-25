@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-INDEXER-STORAGE" type="DATA_LAYER" status="active">
   <NAME>M-INDEXER-STORAGE</NAME>
-  <PURPOSE>JSON block storage facade with load-health reporting, snapshot and delta persistence, filtered BM25, and vector search APIs</PURPOSE>
-  <SCOPE>Storage struct, StoredBlock and SearchFilters re-exports, deterministic db_path_for_root for GraphRAG cache signatures, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, filtered search API orchestration</SCOPE>
+  <PURPOSE>JSON block storage facade with load-health reporting, snapshot and delta persistence, filtered BM25, n-gram fallback, and dense embedding vector search APIs</PURPOSE>
+  <SCOPE>Storage struct, StoredBlock and SearchFilters re-exports, deterministic db_path_for_root for GraphRAG cache signatures, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, filtered lexical search, n-gram fallback, and compatible embedding vector search API orchestration</SCOPE>
   <FILES>
     <FILE>src/indexer/storage.rs</FILE>
   </FILES>
   <DEPENDS>M-INDEXER-STORAGE-SEARCH,M-INDEXER-STORAGE-TYPES</DEPENDS>
-  <LINKS>docs/phases/Phase-62.xml,docs/phases/Phase-64.xml,docs/phases/Phase-65.xml</LINKS>
+  <LINKS>docs/phases/Phase-62.xml,docs/phases/Phase-64.xml,docs/phases/Phase-65.xml,docs/phases/Phase-66.xml</LINKS>
   <VERIFICATION_REF>V-M-INDEXER-STORAGE</VERIFICATION_REF>
 </MODULE>

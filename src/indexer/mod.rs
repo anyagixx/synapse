@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
 // PURPOSE: Code indexer — walks, delegates pipeline block construction, stores full or delta snapshots, and searches code blocks with guarded storage health checks
-// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation, filtered search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
+// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, embedding attachment, stale-entry pruning, GraphBuilder cache invalidation, filtered search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-EMBEDDING, M-INDEXER-PIPELINE, M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS:
 //   → M-INDEXER-EMBEDDING (depends) — semantic embedding provider specification
@@ -17,6 +17,8 @@
 // Indexer::storage_count — Returns loaded storage count through guarded lock access
 // Indexer::index_directory_with_gitignore — Rebuilds index snapshot with configurable gitignore handling
 // Indexer::index_delta — Applies changed and deleted file updates without a full project rebuild
+// Indexer::embed_blocks_for_indexing — Best-effort embedding attachment before block persistence
+// Indexer::embed_query_for_search — Best-effort query embedding for semantic search
 // Indexer::search_with_filters — Searches indexed blocks with optional language/path filters
 // Indexer::search_in_root — Searches indexed blocks for an explicit project root
 // Indexer::hybrid_search_in_root — Runs graph-aware hybrid search for an explicit project root
@@ -24,7 +26,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.9.0 - Added embedding provider module boundary]
+// LAST_CHANGE: [v4.0.0 - Added best-effort embedding generation for indexing and search]
 // END_CHANGE_SUMMARY
 
 pub mod embedding;
@@ -142,13 +144,13 @@ impl Indexer {
 
         tracing::info!("Indexing {} files in {}", total, root.display());
 
+        let mut all_stored = pipeline::collect_index_blocks(root, &files);
+        self.embed_blocks_for_indexing(&mut all_stored, "full");
+
         let mut storage_guard = self.get_storage(root)?;
         let storage = storage_guard
             .as_mut()
             .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
-
-        let all_stored = pipeline::collect_index_blocks(root, &files);
-
         storage.replace_all_blocks(all_stored)?;
         GraphBuilder::invalidate_cache(root);
         tracing::info!(
@@ -174,20 +176,13 @@ impl Indexer {
     ) -> anyhow::Result<()> {
         let deleted_paths = normalize_delta_paths(root, deleted_files)?;
         let changed_paths = normalize_delta_paths(root, changed_files)?;
-        let mut storage_guard = self.get_storage(root)?;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
-
-        let deleted: Vec<String> = deleted_paths.iter().cloned().collect();
-        let removed_count = storage.remove_files_blocks(&deleted)?;
-        let mut changed_count = 0usize;
+        let mut changed_updates = Vec::new();
         for path in changed_paths
             .iter()
             .filter(|path| !deleted_paths.contains(*path))
         {
             let full_path = root.join(path);
-            let blocks = if let Some(language) = walker::detect_language(&full_path) {
+            let mut blocks = if let Some(language) = walker::detect_language(&full_path) {
                 let file = walker::IndexFile {
                     path: path.clone(),
                     language,
@@ -196,7 +191,20 @@ impl Indexer {
             } else {
                 Vec::new()
             };
-            storage.upsert_file_blocks(path, blocks)?;
+            self.embed_blocks_for_indexing(&mut blocks, "delta");
+            changed_updates.push((path.clone(), blocks));
+        }
+
+        let mut storage_guard = self.get_storage(root)?;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
+
+        let deleted: Vec<String> = deleted_paths.iter().cloned().collect();
+        let removed_count = storage.remove_files_blocks(&deleted)?;
+        let mut changed_count = 0usize;
+        for (path, blocks) in changed_updates {
+            storage.upsert_file_blocks(&path, blocks)?;
             changed_count += 1;
         }
 
@@ -212,6 +220,57 @@ impl Indexer {
         Ok(())
     }
     // END_indexer_index_delta
+
+    // START_CONTRACT_Indexer::embed_blocks_for_indexing
+    // PURPOSE: Attach configured embeddings to blocks before persistence without blocking lexical index storage
+    // INPUTS: { blocks: &mut [StoredBlock] }, { scope: &str }
+    // SIDE_EFFECTS: may download embedding model assets, mutates block metadata, logs fallback warnings
+    // START_indexer_embed_blocks_for_indexing
+    fn embed_blocks_for_indexing(&self, blocks: &mut [storage::StoredBlock], scope: &str) {
+        match embedding::embed_blocks_from_config(blocks, &self.config) {
+            Ok(summary) if summary.enabled => {
+                tracing::info!(
+                    "[Indexer][embed_blocks_for_indexing][EMBEDDING] scope={} embedded={} skipped={} model={}",
+                    scope,
+                    summary.embedded_blocks,
+                    summary.skipped_blocks,
+                    summary.model_id.as_deref().unwrap_or("unknown")
+                );
+            }
+            Ok(_) => {}
+            Err(error) => {
+                tracing::warn!(
+                    "[Indexer][embed_blocks_for_indexing][EMBEDDING_FALLBACK] scope={} error={}; continuing with lexical index",
+                    scope,
+                    error
+                );
+                for block in blocks {
+                    block.clear_embedding();
+                }
+            }
+        }
+    }
+    // END_indexer_embed_blocks_for_indexing
+
+    // START_CONTRACT_Indexer::embed_query_for_search
+    // PURPOSE: Best-effort query embedding for semantic vector search
+    // INPUTS: { query: &str }
+    // OUTPUTS: { Option<embedding::EmbeddedText> }
+    // SIDE_EFFECTS: may download embedding model assets and logs fallback warnings
+    // START_indexer_embed_query_for_search
+    fn embed_query_for_search(&self, query: &str) -> Option<embedding::EmbeddedText> {
+        match embedding::embed_query_from_config(query, &self.config) {
+            Ok(query_embedding) => query_embedding,
+            Err(error) => {
+                tracing::warn!(
+                    "[Indexer][embed_query_for_search][EMBEDDING_FALLBACK] error={}; using lexical search",
+                    error
+                );
+                None
+            }
+        }
+    }
+    // END_indexer_embed_query_for_search
 
     // START_CONTRACT_Indexer::search
     // PURPOSE: BM25 search across indexed code blocks
@@ -274,12 +333,38 @@ impl Indexer {
         max_results: usize,
         filters: &SearchFilters,
     ) -> anyhow::Result<Vec<SearchResult>> {
+        let query_embedding = self.embed_query_for_search(query);
         let storage_guard = self.get_storage(root)?;
         let storage = storage_guard
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
         ensure_storage_ready(storage)?;
-        let results = storage.search_with_scores_and_filters(query, max_results, filters);
+
+        let (results, explanation) = if let Some(query_embedding) = query_embedding {
+            let semantic = storage.embedding_vector_search_with_filters(
+                &query_embedding.vector,
+                &query_embedding.model_id,
+                query_embedding.dimensions,
+                max_results,
+                filters,
+            );
+            if semantic.is_empty() {
+                tracing::warn!(
+                    "[Indexer][search_in_root_with_filters][EMBEDDING_FALLBACK] no compatible block embeddings; using lexical search"
+                );
+                (
+                    storage.search_with_scores_and_filters(query, max_results, filters),
+                    "lexical fallback",
+                )
+            } else {
+                (semantic, "semantic embedding match")
+            }
+        } else {
+            (
+                storage.search_with_scores_and_filters(query, max_results, filters),
+                "lexical match",
+            )
+        };
         Ok(results
             .into_iter()
             .map(|(b, score)| SearchResult {
@@ -291,7 +376,7 @@ impl Indexer {
                 end_line: b.end_line as u32,
                 content: b.content,
                 score,
-                explanation: "lexical match".into(),
+                explanation: explanation.into(),
             })
             .collect())
     }
@@ -331,8 +416,25 @@ impl Indexer {
 
         // Get BM25 results
         let bm25 = storage.search_with_scores(query, max_results * 2);
-        // Get vector results
-        let vector = storage.vector_search(query, max_results * 2);
+        // Get semantic vectors when configured, otherwise deterministic n-gram fallback.
+        let vector = if let Some(query_embedding) = self.embed_query_for_search(query) {
+            let semantic = storage.embedding_vector_search(
+                &query_embedding.vector,
+                &query_embedding.model_id,
+                query_embedding.dimensions,
+                max_results * 2,
+            );
+            if semantic.is_empty() {
+                tracing::warn!(
+                    "[Indexer][hybrid_search_in_root][EMBEDDING_FALLBACK] no compatible block embeddings; using ngram vector fallback"
+                );
+                storage.vector_search(query, max_results * 2)
+            } else {
+                semantic
+            }
+        } else {
+            storage.vector_search(query, max_results * 2)
+        };
 
         // Combine and deduplicate
         let mut combined: std::collections::HashMap<

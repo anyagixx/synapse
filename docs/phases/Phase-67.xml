@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-67" status="planned">
+<PHASE id="Phase-67" status="active">
   <NAME>UPGRADE_1 MCP Runtime Observability</NAME>
   <GOAL>Implement pipelined MCP stdio execution and expose runtime health, readiness, and MCP metrics through tracking and dashboard observability surfaces.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_1/U4-mcp-pipelining.md,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U8-observability.md</SOURCE_PLAN>

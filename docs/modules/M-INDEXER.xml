@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-INDEXER" type="CORE_LOGIC" status="active">
   <NAME>M-INDEXER</NAME>
-  <PURPOSE>Code indexer — walks, delegates pipeline block construction, stores full or delta snapshots, and searches code blocks with guarded storage health checks</PURPOSE>
-  <SCOPE>Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, embedding provider boundary, pipeline-backed StoredBlock construction, stale-entry pruning, GraphBuilder cache invalidation after index rebuilds and deltas, filtered search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures</SCOPE>
+  <PURPOSE>Code indexer — walks, delegates pipeline block construction, attaches optional embeddings, stores full or delta snapshots, and searches code blocks with guarded storage health checks</PURPOSE>
+  <SCOPE>Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, best-effort embedding attachment, pipeline-backed StoredBlock construction, stale-entry pruning, GraphBuilder cache invalidation after index rebuilds and deltas, filtered lexical/semantic search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures</SCOPE>
   <FILES>
     <FILE>src/indexer/mod.rs</FILE>
   </FILES>

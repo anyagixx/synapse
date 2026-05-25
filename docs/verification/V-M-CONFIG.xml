@@ -5,6 +5,7 @@
     <COMMAND>cargo test config::tests::proxy_config_deserializes_runtime_defaults_for_existing_files --lib</COMMAND>
     <COMMAND>cargo test config::tests::default_proxy_runtime_limits_are_release_defaults --lib</COMMAND>
     <COMMAND>cargo test config::tests::config_key_helpers --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test config::tests::proxy_config_deserializes_runtime_defaults_for_existing_files --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests::test_detect_lsp_command_uses_config_override --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
@@ -12,6 +13,7 @@
     <ASSERTION>LSP server command overrides deserialize through Config and override built-in language-server defaults.</ASSERTION>
     <ASSERTION>Proxy capture_cap_bytes and command_timeout_secs deserialize with release-safe defaults for existing config files.</ASSERTION>
     <ASSERTION>Typed scalar config key helpers get, set, unset, reject invalid values, and persist TOML updates.</ASSERTION>
+    <ASSERTION>Embedding config deserializes with release-safe disabled defaults for existing files and exposes typed enablement/provider/model/cache_dir/batch_size keys.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-61,Phase-65</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-61,Phase-65,Phase-66</PHASE_GATE>
 </VERIFICATION>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-STORAGE-SEARCH
 // PURPOSE: Search scoring helpers for indexer block storage
-// SCOPE: BM25-style scoring, tokenization, n-gram vectorization, cosine similarity
+// SCOPE: BM25-style scoring, tokenization, n-gram vectorization, dense embedding cosine similarity
 // DEPENDS: M-INDEXER-STORAGE-TYPES
 // LINKS: docs/modules/M-INDEXER-STORAGE.xml, docs/modules/M-INDEXER-STORAGE-TYPES.xml
 
@@ -12,10 +12,11 @@
 // tokenize — Splits identifiers and paths into searchable tokens
 // ngram_vectorize — Builds normalized 3-gram vectors
 // cosine_similarity — Computes vector dot-product similarity
+// dense_cosine_similarity — Computes cosine similarity for dense embedding vectors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.7.0 - Added pre-ranking search filter matching]
+// LAST_CHANGE: [v3.8.0 - Added dense embedding cosine similarity]
 // END_CHANGE_SUMMARY
 
 use super::storage_types::{SearchFilters, StoredBlock};
@@ -243,6 +244,32 @@ pub(crate) fn cosine_similarity(a: &HashMap<u64, f64>, b: &HashMap<u64, f64>) ->
 }
 // END_cosine_similarity
 
+// START_CONTRACT_dense_cosine_similarity
+// PURPOSE: Compute cosine similarity for dense embedding vectors
+// INPUTS: { a: &[f32] }, { b: &[f32] }
+// OUTPUTS: { Option<f64> — similarity when dimensions are compatible and non-zero }
+// START_dense_cosine_similarity
+pub(crate) fn dense_cosine_similarity(a: &[f32], b: &[f32]) -> Option<f64> {
+    if a.is_empty() || a.len() != b.len() {
+        return None;
+    }
+    let mut dot = 0.0_f64;
+    let mut norm_a = 0.0_f64;
+    let mut norm_b = 0.0_f64;
+    for (left, right) in a.iter().zip(b) {
+        let left = f64::from(*left);
+        let right = f64::from(*right);
+        dot += left * right;
+        norm_a += left * left;
+        norm_b += right * right;
+    }
+    if norm_a <= f64::EPSILON || norm_b <= f64::EPSILON {
+        return None;
+    }
+    Some(dot / (norm_a.sqrt() * norm_b.sqrt()))
+}
+// END_dense_cosine_similarity
+
 // END_public_api
 
 #[cfg(test)]
@@ -277,5 +304,13 @@ mod tests {
         assert!(t.contains(&"snake".to_string()));
         assert!(t.contains(&"case".to_string()));
         assert!(t.contains(&"var".to_string()));
+    }
+
+    #[test]
+    fn test_dense_cosine_similarity() {
+        let similarity = dense_cosine_similarity(&[1.0, 0.0], &[1.0, 0.0]).expect("similarity");
+        assert!((similarity - 1.0).abs() < 0.0001);
+        assert!(dense_cosine_similarity(&[1.0], &[1.0, 0.0]).is_none());
+        assert!(dense_cosine_similarity(&[0.0, 0.0], &[1.0, 0.0]).is_none());
     }
 }

@@ -9,6 +9,8 @@
     <COMMAND>cargo test indexer::storage::tests::test_db_path_for_root_matches_storage_instance_path --lib</COMMAND>
     <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_language --lib</COMMAND>
     <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_path_prefix --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_semantic_vector_search_ranks_related_code --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_semantic_search_falls_back_without_embeddings --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
@@ -21,6 +23,8 @@
     <ASSERTION>Deleted-file removal removes only matching file paths and persists the delta.</ASSERTION>
     <ASSERTION>Storage::db_path_for_root returns the same deterministic persisted index path used by Storage::new for GraphRAG cache signatures.</ASSERTION>
     <ASSERTION>Filtered search applies language and path-prefix constraints before scoring/ranking.</ASSERTION>
+    <ASSERTION>Dense semantic vector search ranks compatible persisted embeddings and ignores incompatible model metadata.</ASSERTION>
+    <ASSERTION>N-gram vector fallback remains available when no compatible embeddings are present.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7,Phase-62,Phase-64,Phase-65</PHASE_GATE>
+  <PHASE_GATE>Phase-7,Phase-62,Phase-64,Phase-65,Phase-66</PHASE_GATE>
 </VERIFICATION>

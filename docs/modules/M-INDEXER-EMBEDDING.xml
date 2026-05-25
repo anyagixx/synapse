@@ -2,7 +2,7 @@
 <MODULE id="M-INDEXER-EMBEDDING" type="CORE_LOGIC" status="active">
   <NAME>M-INDEXER-EMBEDDING</NAME>
   <PURPOSE>Embedding provider specification and helpers for local semantic code search</PURPOSE>
-  <SCOPE>provider dependency selection, model identity, cache path, batch limits, fallback policy</SCOPE>
+  <SCOPE>provider dependency selection, model identity, cache path, batch limits, Config-derived runtime settings, block/query embedding helpers, fallback policy</SCOPE>
   <FILES>
     <FILE>src/indexer/embedding.rs</FILE>
   </FILES>

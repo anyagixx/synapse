@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-EMBEDDING
 // PURPOSE: Embedding provider specification and helpers for local semantic code search
-// SCOPE: provider dependency selection, model identity, cache path, batch limits, fallback policy
+// SCOPE: provider dependency selection, model identity, cache path, batch limits, block/query embedding, fallback policy
 // DEPENDS: M-CONFIG, M-INDEXER-STORAGE-TYPES
 // LINKS:
 //   → M-CONFIG (depends) - embedding enablement, provider, model, cache, and batch settings
@@ -11,15 +11,26 @@
 // START_MODULE_MAP
 // EmbeddingProviderSpec — Exact local embedding provider and model contract
 // EmbeddingFallbackPolicy — Runtime behavior when embeddings are disabled or unavailable
+// EmbeddingRuntimeConfig — Validated runtime embedding settings copied from Config
+// EmbeddedText — Query embedding result with model compatibility metadata
+// EmbeddingRunSummary — Summary of block embedding attachment work
+// EmbeddingProvider — Provider trait for fastembed runtime and deterministic unit fakes
+// FastembedEmbeddingProvider — fastembed-backed local ONNX text embedding provider
 // default_provider_spec — Returns the selected provider/model/version contract
 // default_model_cache_dir — Returns the XDG data cache directory for embedding assets
 // validate_embedding_batch_size — Validates configured embedding batch size bounds
+// embed_blocks_from_config — Best-effort runtime entry for indexing blocks
+// embed_query_from_config — Runtime entry for embedding a search query
+// attach_embeddings — Attaches provider vectors to StoredBlock values
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 — Selected fastembed all-MiniLM-L6-v2 ONNX provider contract]
+// LAST_CHANGE: [v1.1.0 — Added fastembed runtime wiring for block and query embeddings]
 // END_CHANGE_SUMMARY
 
+use super::storage_types::StoredBlock;
+use crate::config::Config;
+use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use std::path::PathBuf;
 
 pub const EMBEDDING_PROVIDER: &str = "fastembed";
@@ -58,6 +69,166 @@ pub enum EmbeddingFallbackPolicy {
     LexicalOnly,
 }
 // END_EmbeddingFallbackPolicy
+
+// START_EmbeddingRuntimeConfig
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EmbeddingRuntimeConfig {
+    pub enabled: bool,
+    pub provider: String,
+    pub model: String,
+    pub cache_dir: PathBuf,
+    pub batch_size: usize,
+}
+// END_EmbeddingRuntimeConfig
+
+// START_EmbeddedText
+#[derive(Clone, Debug, PartialEq)]
+pub struct EmbeddedText {
+    pub model_id: String,
+    pub dimensions: usize,
+    pub vector: Vec<f32>,
+}
+// END_EmbeddedText
+
+// START_EmbeddingRunSummary
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct EmbeddingRunSummary {
+    pub enabled: bool,
+    pub attempted_blocks: usize,
+    pub embedded_blocks: usize,
+    pub skipped_blocks: usize,
+    pub model_id: Option<String>,
+}
+// END_EmbeddingRunSummary
+
+// START_EmbeddingProvider
+pub trait EmbeddingProvider {
+    fn model_id(&self) -> &str;
+    fn dimensions(&self) -> usize;
+    fn embed_texts(&mut self, texts: &[String], batch_size: usize)
+        -> anyhow::Result<Vec<Vec<f32>>>;
+}
+// END_EmbeddingProvider
+
+// START_FastembedEmbeddingProvider
+pub struct FastembedEmbeddingProvider {
+    model_id: String,
+    dimensions: usize,
+    inner: TextEmbedding,
+}
+// END_FastembedEmbeddingProvider
+
+impl EmbeddingRuntimeConfig {
+    // START_CONTRACT_EmbeddingRuntimeConfig::from_config
+    // PURPOSE: Copy and validate embedding runtime settings from Config
+    // INPUTS: { config: &Config }
+    // OUTPUTS: { anyhow::Result<EmbeddingRuntimeConfig> }
+    // START_embedding_runtime_config_from_config
+    pub fn from_config(config: &Config) -> anyhow::Result<Self> {
+        let batch_size = validate_embedding_batch_size(config.embedding.batch_size)?;
+        let cache_dir = resolve_model_cache_dir(&config.embedding.cache_dir)?;
+        Ok(Self {
+            enabled: config.embedding.enabled,
+            provider: config.embedding.provider.trim().to_string(),
+            model: config.embedding.model.trim().to_string(),
+            cache_dir,
+            batch_size,
+        })
+    }
+    // END_embedding_runtime_config_from_config
+
+    // START_CONTRACT_EmbeddingRuntimeConfig::model_id
+    // PURPOSE: Return the persisted embedding model identifier used for compatibility checks
+    // OUTPUTS: { anyhow::Result<String> }
+    // START_embedding_runtime_config_model_id
+    pub fn model_id(&self) -> anyhow::Result<String> {
+        self.ensure_supported()?;
+        Ok(default_model_id())
+    }
+    // END_embedding_runtime_config_model_id
+
+    // START_CONTRACT_EmbeddingRuntimeConfig::ensure_supported
+    // PURPOSE: Verify this runtime config names the embedded fastembed model supported by Synapse
+    // OUTPUTS: { anyhow::Result<()> }
+    // START_embedding_runtime_config_ensure_supported
+    fn ensure_supported(&self) -> anyhow::Result<()> {
+        if !self.provider.eq_ignore_ascii_case(EMBEDDING_PROVIDER) {
+            anyhow::bail!(
+                "unsupported embedding provider `{}`; supported provider is `{}`",
+                self.provider,
+                EMBEDDING_PROVIDER
+            );
+        }
+        if parse_embedding_model(&self.model).is_none() {
+            anyhow::bail!(
+                "unsupported embedding model `{}`; supported model is `{}`",
+                self.model,
+                EMBEDDING_MODEL_NAME
+            );
+        }
+        Ok(())
+    }
+    // END_embedding_runtime_config_ensure_supported
+}
+
+impl FastembedEmbeddingProvider {
+    // START_CONTRACT_FastembedEmbeddingProvider::new
+    // PURPOSE: Initialize a fastembed text model from validated runtime config
+    // INPUTS: { runtime: &EmbeddingRuntimeConfig }
+    // OUTPUTS: { anyhow::Result<FastembedEmbeddingProvider> }
+    // SIDE_EFFECTS: creates model cache directory and may download model assets on first use
+    // START_fastembed_embedding_provider_new
+    pub fn new(runtime: &EmbeddingRuntimeConfig) -> anyhow::Result<Self> {
+        runtime.ensure_supported()?;
+        std::fs::create_dir_all(&runtime.cache_dir)?;
+        let model = parse_embedding_model(&runtime.model)
+            .ok_or_else(|| anyhow::anyhow!("unsupported embedding model `{}`", runtime.model))?;
+        let options = InitOptions::new(model)
+            .with_cache_dir(runtime.cache_dir.clone())
+            .with_show_download_progress(false);
+        let inner = TextEmbedding::try_new(options)?;
+        Ok(Self {
+            model_id: runtime.model_id()?,
+            dimensions: EMBEDDING_MODEL_DIMENSIONS,
+            inner,
+        })
+    }
+    // END_fastembed_embedding_provider_new
+}
+
+impl EmbeddingProvider for FastembedEmbeddingProvider {
+    // START_CONTRACT_FastembedEmbeddingProvider::model_id
+    // PURPOSE: Return the persisted model id for this fastembed provider
+    // OUTPUTS: { &str }
+    // START_fastembed_embedding_provider_model_id
+    fn model_id(&self) -> &str {
+        &self.model_id
+    }
+    // END_fastembed_embedding_provider_model_id
+
+    // START_CONTRACT_FastembedEmbeddingProvider::dimensions
+    // PURPOSE: Return expected vector dimensionality for this fastembed provider
+    // OUTPUTS: { usize }
+    // START_fastembed_embedding_provider_dimensions
+    fn dimensions(&self) -> usize {
+        self.dimensions
+    }
+    // END_fastembed_embedding_provider_dimensions
+
+    // START_CONTRACT_FastembedEmbeddingProvider::embed_texts
+    // PURPOSE: Generate dense embeddings for a batch of text inputs
+    // INPUTS: { texts: &[String] }, { batch_size: usize }
+    // OUTPUTS: { anyhow::Result<Vec<Vec<f32>>> }
+    // START_fastembed_embedding_provider_embed_texts
+    fn embed_texts(
+        &mut self,
+        texts: &[String],
+        batch_size: usize,
+    ) -> anyhow::Result<Vec<Vec<f32>>> {
+        self.inner.embed(texts, Some(batch_size))
+    }
+    // END_fastembed_embedding_provider_embed_texts
+}
 
 // START_CONTRACT_default_provider_spec
 // PURPOSE: Return the exact selected local embedding provider and model contract
@@ -114,11 +285,260 @@ pub fn validate_embedding_batch_size(batch_size: usize) -> anyhow::Result<usize>
 }
 // END_validate_embedding_batch_size
 
+// START_CONTRACT_embed_blocks_from_config
+// PURPOSE: Attach configured embeddings to indexed blocks when embedding is enabled
+// INPUTS: { blocks: &mut [StoredBlock] }, { config: &Config }
+// OUTPUTS: { anyhow::Result<EmbeddingRunSummary> }
+// SIDE_EFFECTS: may download local model assets and mutates StoredBlock embedding metadata
+// START_embed_blocks_from_config
+pub fn embed_blocks_from_config(
+    blocks: &mut [StoredBlock],
+    config: &Config,
+) -> anyhow::Result<EmbeddingRunSummary> {
+    let runtime = EmbeddingRuntimeConfig::from_config(config)?;
+    if !runtime.enabled {
+        return Ok(EmbeddingRunSummary {
+            enabled: false,
+            skipped_blocks: blocks.len(),
+            ..EmbeddingRunSummary::default()
+        });
+    }
+    let batch_size = runtime.batch_size;
+    let mut provider = FastembedEmbeddingProvider::new(&runtime)?;
+    attach_embeddings(blocks, &mut provider, batch_size)
+}
+// END_embed_blocks_from_config
+
+// START_CONTRACT_embed_query_from_config
+// PURPOSE: Generate a compatible embedding for a search query when embedding is enabled
+// INPUTS: { query: &str }, { config: &Config }
+// OUTPUTS: { anyhow::Result<Option<EmbeddedText>> }
+// SIDE_EFFECTS: may download local model assets
+// START_embed_query_from_config
+pub fn embed_query_from_config(
+    query: &str,
+    config: &Config,
+) -> anyhow::Result<Option<EmbeddedText>> {
+    if query.trim().is_empty() {
+        return Ok(None);
+    }
+    let runtime = EmbeddingRuntimeConfig::from_config(config)?;
+    if !runtime.enabled {
+        return Ok(None);
+    }
+    let batch_size = runtime.batch_size;
+    let mut provider = FastembedEmbeddingProvider::new(&runtime)?;
+    let texts = vec![query.to_string()];
+    let mut embeddings = provider.embed_texts(&texts, batch_size)?;
+    let vector = embeddings
+        .pop()
+        .ok_or_else(|| anyhow::anyhow!("embedding provider returned no query vector"))?;
+    validate_vector_dimensions(&vector, provider.dimensions())?;
+    Ok(Some(EmbeddedText {
+        model_id: provider.model_id().to_string(),
+        dimensions: provider.dimensions(),
+        vector,
+    }))
+}
+// END_embed_query_from_config
+
+// START_CONTRACT_attach_embeddings
+// PURPOSE: Attach provider vectors and metadata to blocks missing compatible embeddings
+// INPUTS: { blocks: &mut [StoredBlock] }, { provider: &mut impl EmbeddingProvider }, { batch_size: usize }
+// OUTPUTS: { anyhow::Result<EmbeddingRunSummary> }
+// SIDE_EFFECTS: mutates StoredBlock embedding metadata
+// START_attach_embeddings
+pub fn attach_embeddings<P: EmbeddingProvider>(
+    blocks: &mut [StoredBlock],
+    provider: &mut P,
+    batch_size: usize,
+) -> anyhow::Result<EmbeddingRunSummary> {
+    validate_embedding_batch_size(batch_size)?;
+    let model_id = provider.model_id().to_string();
+    let dimensions = provider.dimensions();
+    if dimensions == 0 {
+        anyhow::bail!("embedding provider dimensions must not be zero");
+    }
+
+    let mut pending_indices = Vec::new();
+    let mut texts = Vec::new();
+    for (idx, block) in blocks.iter().enumerate() {
+        if block.has_compatible_embedding(&model_id, dimensions) {
+            continue;
+        }
+        pending_indices.push(idx);
+        texts.push(block_embedding_text(block));
+    }
+
+    if texts.is_empty() {
+        return Ok(EmbeddingRunSummary {
+            enabled: true,
+            skipped_blocks: blocks.len(),
+            model_id: Some(model_id),
+            ..EmbeddingRunSummary::default()
+        });
+    }
+
+    let embeddings = provider.embed_texts(&texts, batch_size)?;
+    if embeddings.len() != pending_indices.len() {
+        anyhow::bail!(
+            "embedding provider returned {} vectors for {} blocks",
+            embeddings.len(),
+            pending_indices.len()
+        );
+    }
+
+    let attempted_blocks = pending_indices.len();
+    for (idx, vector) in pending_indices.into_iter().zip(embeddings) {
+        validate_vector_dimensions(&vector, dimensions)?;
+        blocks[idx].set_embedding(&model_id, vector)?;
+    }
+
+    Ok(EmbeddingRunSummary {
+        enabled: true,
+        attempted_blocks,
+        embedded_blocks: attempted_blocks,
+        skipped_blocks: blocks.len().saturating_sub(attempted_blocks),
+        model_id: Some(model_id),
+    })
+}
+// END_attach_embeddings
+
+// START_CONTRACT_default_model_id
+// PURPOSE: Return the persisted embedding model id for the selected provider/model/version
+// OUTPUTS: { String }
+// START_default_model_id
+pub fn default_model_id() -> String {
+    format!(
+        "{}:{}@{}",
+        EMBEDDING_PROVIDER, EMBEDDING_MODEL_NAME, EMBEDDING_PROVIDER_VERSION
+    )
+}
+// END_default_model_id
+
+// START_CONTRACT_resolve_model_cache_dir
+// PURPOSE: Resolve configured or default model cache directory
+// INPUTS: { configured: &str }
+// OUTPUTS: { anyhow::Result<PathBuf> }
+// START_resolve_model_cache_dir
+fn resolve_model_cache_dir(configured: &str) -> anyhow::Result<PathBuf> {
+    let trimmed = configured.trim();
+    if trimmed.is_empty() {
+        return default_model_cache_dir();
+    }
+    if let Some(rest) = trimmed.strip_prefix("~/") {
+        if let Some(home) = dirs::home_dir() {
+            return Ok(home.join(rest));
+        }
+    }
+    Ok(PathBuf::from(trimmed))
+}
+// END_resolve_model_cache_dir
+
+// START_CONTRACT_parse_embedding_model
+// PURPOSE: Map supported config model aliases to fastembed model enum values
+// INPUTS: { model: &str }
+// OUTPUTS: { Option<EmbeddingModel> }
+// START_parse_embedding_model
+fn parse_embedding_model(model: &str) -> Option<EmbeddingModel> {
+    match model.trim().to_ascii_lowercase().as_str() {
+        "allminilml6v2" | "all-minilm-l6-v2" | "sentence-transformers/all-minilm-l6-v2" => {
+            Some(EmbeddingModel::AllMiniLML6V2)
+        }
+        _ => None,
+    }
+}
+// END_parse_embedding_model
+
+// START_CONTRACT_block_embedding_text
+// PURPOSE: Build stable text input for a code block embedding
+// INPUTS: { block: &StoredBlock }
+// OUTPUTS: { String }
+// START_block_embedding_text
+fn block_embedding_text(block: &StoredBlock) -> String {
+    format!(
+        "path: {}\nlanguage: {}\nkind: {}\nname: {}\ncode:\n{}",
+        block.path, block.language, block.kind, block.name, block.content
+    )
+}
+// END_block_embedding_text
+
+// START_CONTRACT_validate_vector_dimensions
+// PURPOSE: Verify provider vectors match configured model dimensions
+// INPUTS: { vector: &[f32] }, { dimensions: usize }
+// OUTPUTS: { anyhow::Result<()> }
+// START_validate_vector_dimensions
+fn validate_vector_dimensions(vector: &[f32], dimensions: usize) -> anyhow::Result<()> {
+    if vector.len() != dimensions {
+        anyhow::bail!(
+            "embedding vector has {} dimensions, expected {}",
+            vector.len(),
+            dimensions
+        );
+    }
+    Ok(())
+}
+// END_validate_vector_dimensions
+
 // END_public_api
 
 #[cfg(test)]
 mod tests {
+    use super::super::storage_types::CURRENT_EMBEDDING_SCHEMA_VERSION;
     use super::*;
+
+    struct FakeEmbeddingProvider {
+        model_id: String,
+        dimensions: usize,
+    }
+
+    impl FakeEmbeddingProvider {
+        fn new(model_id: &str, dimensions: usize) -> Self {
+            Self {
+                model_id: model_id.to_string(),
+                dimensions,
+            }
+        }
+    }
+
+    impl EmbeddingProvider for FakeEmbeddingProvider {
+        fn model_id(&self) -> &str {
+            &self.model_id
+        }
+
+        fn dimensions(&self) -> usize {
+            self.dimensions
+        }
+
+        fn embed_texts(
+            &mut self,
+            texts: &[String],
+            _batch_size: usize,
+        ) -> anyhow::Result<Vec<Vec<f32>>> {
+            Ok(texts
+                .iter()
+                .enumerate()
+                .map(|(idx, text)| vec![text.len() as f32, idx as f32 + 1.0, 1.0])
+                .collect())
+        }
+    }
+
+    fn stored_block(id: &str, name: &str) -> StoredBlock {
+        StoredBlock {
+            id: id.to_string(),
+            path: "src/lib.rs".into(),
+            language: "rust".into(),
+            name: name.to_string(),
+            kind: "function".into(),
+            content: format!("fn {name}() {{}}"),
+            start_line: 1,
+            end_line: 1,
+            embedding: None,
+            embedding_model: None,
+            embedding_dimensions: None,
+            embedding_schema_version: None,
+        }
+    }
 
     // START_CONTRACT_test_default_provider_spec_documents_fastembed_model
     // PURPOSE: Verify Phase-66 provider selection remains explicit and dimension-compatible
@@ -148,4 +568,86 @@ mod tests {
         assert!(validate_embedding_batch_size(1025).is_err());
     }
     // END_test_validate_embedding_batch_size_bounds
+
+    // START_CONTRACT_test_runtime_config_uses_safe_disabled_default
+    // PURPOSE: Verify Config defaults do not trigger implicit model downloads
+    // START_test_runtime_config_uses_safe_disabled_default
+    #[test]
+    fn test_runtime_config_uses_safe_disabled_default() {
+        let runtime = EmbeddingRuntimeConfig::from_config(&Config::default()).expect("runtime");
+
+        assert!(!runtime.enabled);
+        assert_eq!(runtime.provider, EMBEDDING_PROVIDER);
+        assert_eq!(runtime.model, EMBEDDING_MODEL_NAME);
+        assert_eq!(runtime.batch_size, DEFAULT_EMBEDDING_BATCH_SIZE);
+    }
+    // END_test_runtime_config_uses_safe_disabled_default
+
+    // START_CONTRACT_test_runtime_config_rejects_unsupported_provider_or_model
+    // PURPOSE: Verify provider/model validation fails before indexing with incompatible embeddings
+    // START_test_runtime_config_rejects_unsupported_provider_or_model
+    #[test]
+    fn test_runtime_config_rejects_unsupported_provider_or_model() {
+        let mut config = Config::default();
+        config.embedding.enabled = true;
+        config.embedding.provider = "other".into();
+        let runtime = EmbeddingRuntimeConfig::from_config(&config).expect("runtime");
+        assert!(runtime.model_id().is_err());
+
+        config.embedding.provider = EMBEDDING_PROVIDER.into();
+        config.embedding.model = "unknown-model".into();
+        let runtime = EmbeddingRuntimeConfig::from_config(&config).expect("runtime");
+        assert!(runtime.model_id().is_err());
+    }
+    // END_test_runtime_config_rejects_unsupported_provider_or_model
+
+    // START_CONTRACT_test_attach_embeddings_sets_metadata
+    // PURPOSE: Verify embedding attachment stores vectors with compatibility metadata
+    // START_test_attach_embeddings_sets_metadata
+    #[test]
+    fn test_attach_embeddings_sets_metadata() {
+        let mut provider = FakeEmbeddingProvider::new("fake:test", 3);
+        let mut blocks = vec![
+            stored_block("src/lib.rs:1", "alpha"),
+            stored_block("src/lib.rs:2", "beta"),
+        ];
+
+        let summary = attach_embeddings(&mut blocks, &mut provider, 2).expect("attach");
+
+        assert!(summary.enabled);
+        assert_eq!(summary.attempted_blocks, 2);
+        assert_eq!(summary.embedded_blocks, 2);
+        assert_eq!(summary.model_id.as_deref(), Some("fake:test"));
+        assert!(blocks[0].has_compatible_embedding("fake:test", 3));
+        assert_eq!(blocks[0].embedding_dimensions, Some(3));
+        assert_eq!(
+            blocks[0].embedding_schema_version,
+            Some(CURRENT_EMBEDDING_SCHEMA_VERSION)
+        );
+    }
+    // END_test_attach_embeddings_sets_metadata
+
+    // START_CONTRACT_test_attach_embeddings_skips_compatible_blocks
+    // PURPOSE: Verify existing compatible embeddings are not regenerated
+    // START_test_attach_embeddings_skips_compatible_blocks
+    #[test]
+    fn test_attach_embeddings_skips_compatible_blocks() {
+        let mut provider = FakeEmbeddingProvider::new("fake:test", 3);
+        let mut blocks = vec![
+            stored_block("src/lib.rs:1", "alpha"),
+            stored_block("src/lib.rs:2", "beta"),
+        ];
+        blocks[0]
+            .set_embedding("fake:test", vec![1.0, 0.0, 0.0])
+            .expect("seed embedding");
+
+        let summary = attach_embeddings(&mut blocks, &mut provider, 2).expect("attach");
+
+        assert_eq!(summary.attempted_blocks, 1);
+        assert_eq!(summary.embedded_blocks, 1);
+        assert_eq!(summary.skipped_blocks, 1);
+        assert_eq!(blocks[0].embedding.as_deref(), Some(&[1.0, 0.0, 0.0][..]));
+        assert!(blocks[1].has_compatible_embedding("fake:test", 3));
+    }
+    // END_test_attach_embeddings_skips_compatible_blocks
 }

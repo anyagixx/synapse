@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Technology project="Synapse" version="1.0" updated="2026-05-20">
+<Technology project="Synapse" version="1.1" updated="2026-05-25">
   <Stack>
     <Language name="Rust" version="1.95.0">
       <Runtime name="native-binary" version="1.95.0" />
@@ -23,13 +23,17 @@
       <Dependency ecosystem="rust" name="axum" version="0.7.9" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="chrono" version="0.4.44" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="clap" version="4.6.1" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="fastembed" version="5.13.4" source="Cargo.toml/Cargo.lock" exact="true" features="ort-download-binaries-rustls-tls,hf-hub-rustls-tls" />
+      <Dependency ecosystem="rust" name="hf-hub" version="0.5.0" source="Cargo.lock transitive via fastembed" exact="true" />
       <Dependency ecosystem="rust" name="ignore" version="0.4.25" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="notify" version="8.2.0" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="ort" version="2.0.0-rc.12" source="Cargo.lock transitive via fastembed" exact="true" />
       <Dependency ecosystem="rust" name="regex" version="1.12.3" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="rusqlite" version="0.31.0" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="serde" version="1.0.228" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="serde_json" version="1.0.149" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="tokio" version="1.52.3" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="tokenizers" version="0.22.2" source="Cargo.lock transitive via fastembed" exact="true" />
       <Dependency ecosystem="rust" name="toml" version="0.8.23" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="tower-http" version="0.5.2" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="tracing" version="0.1.44" source="Cargo.toml/Cargo.lock" exact="true" />
@@ -58,13 +62,27 @@
       <ComponentB>Cargo.lock exact versions</ComponentB>
       <Status>compatible</Status>
       <Note>Cargo.lock pins exact versions for code generation despite broad manifest ranges.</Note>
-      <VerifiedAt>2026-05-20</VerifiedAt>
+      <VerifiedAt>2026-05-25</VerifiedAt>
+    </CompatibilityCheck>
+    <CompatibilityCheck id="CHECK-004">
+      <ComponentA>fastembed 5.13.4</ComponentA>
+      <ComponentB>ort 2.0.0-rc.12</ComponentB>
+      <Status>compatible</Status>
+      <Note>fastembed pins ort 2.0.0-rc.12 and Synapse enables rustls-backed ONNX Runtime binary download features.</Note>
+      <VerifiedAt>2026-05-25</VerifiedAt>
+    </CompatibilityCheck>
+    <CompatibilityCheck id="CHECK-005">
+      <ComponentA>fastembed AllMiniLML6V2</ComponentA>
+      <ComponentB>StoredBlock embedding schema v1</ComponentB>
+      <Status>compatible</Status>
+      <Note>AllMiniLML6V2 produces 384-dimensional ONNX embeddings stored with model id fastembed:AllMiniLML6V2@5.13.4.</Note>
+      <VerifiedAt>2026-05-25</VerifiedAt>
     </CompatibilityCheck>
   </DependencyMatrix>
   <KnownIssues>
-    <Issue id="KI-001" component="AllPinnedDependencies" version="1.0.0">
-      <Description>No unresolved known issues for the pinned versions in this Technology artifact.</Description>
-      <Workaround>When a dependency is changed, update this section with version-specific notes before code generation.</Workaround>
+    <Issue id="KI-001" component="fastembed/ort" version="5.13.4/2.0.0-rc.12">
+      <Description>First embedding use may download ONNX model assets and ONNX Runtime binaries into the configured cache directory.</Description>
+      <Workaround>Embeddings are disabled by default for release-safe installs; enable with syn config set embedding.enabled true when local model downloads are acceptable. Indexing and search fall back to lexical behavior on provider failure.</Workaround>
     </Issue>
   </KnownIssues>
   <DevOps>

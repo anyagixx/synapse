@@ -68,8 +68,8 @@
     <PHASE id="Phase-63" path="docs/phases/Phase-63.xml" status="done" />
     <PHASE id="Phase-64" path="docs/phases/Phase-64.xml" status="done" />
     <PHASE id="Phase-65" path="docs/phases/Phase-65.xml" status="done" />
-    <PHASE id="Phase-66" path="docs/phases/Phase-66.xml" status="active" />
-    <PHASE id="Phase-67" path="docs/phases/Phase-67.xml" status="planned" />
+    <PHASE id="Phase-66" path="docs/phases/Phase-66.xml" status="done" />
+    <PHASE id="Phase-67" path="docs/phases/Phase-67.xml" status="active" />
     <PHASE id="Phase-68" path="docs/phases/Phase-68.xml" status="planned" />
   </PHASES>
 </PLAN_INDEX>

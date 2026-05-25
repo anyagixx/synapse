@@ -2,11 +2,11 @@
 <MODULE id="M-INDEXER-STORAGE-SEARCH" type="DATA_LAYER" status="active">
   <NAME>M-INDEXER-STORAGE-SEARCH</NAME>
   <PURPOSE>Search filtering and scoring helpers for indexer block storage</PURPOSE>
-  <SCOPE>SearchFilters pre-ranking matching, BM25-style scoring, tokenization, n-gram vectorization, cosine similarity</SCOPE>
+  <SCOPE>SearchFilters pre-ranking matching, BM25-style scoring, tokenization, n-gram vectorization, sparse cosine similarity, dense embedding cosine similarity</SCOPE>
   <FILES>
     <FILE>src/indexer/storage_search.rs</FILE>
   </FILES>
   <DEPENDS>M-INDEXER-STORAGE-TYPES</DEPENDS>
-  <LINKS>docs/modules/M-INDEXER-STORAGE.xml,docs/modules/M-INDEXER-STORAGE-TYPES.xml,docs/phases/Phase-65.xml</LINKS>
+  <LINKS>docs/modules/M-INDEXER-STORAGE.xml,docs/modules/M-INDEXER-STORAGE-TYPES.xml,docs/phases/Phase-65.xml,docs/phases/Phase-66.xml</LINKS>
   <VERIFICATION_REF>V-M-INDEXER-STORAGE-SEARCH</VERIFICATION_REF>
 </MODULE>

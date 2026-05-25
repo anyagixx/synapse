@@ -1,14 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-STORAGE
 // PURPOSE: JSON block storage facade with load-health reporting, snapshot and delta persistence, filtered BM25, and vector search APIs
-// SCOPE: Storage struct, StoredBlock, SearchFilters, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, filtered search API orchestration
+// SCOPE: Storage struct, StoredBlock, SearchFilters, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, filtered search and embedding-vector API orchestration
 // DEPENDS: M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES
 // LINKS: N/A
 
 // START_MODULE_MAP
 // StoredBlock — Re-exported serializable code block for JSON storage
 // SearchFilters — Re-exported search filter metadata for storage callers
-// Storage — JSON-backed block store with load-health, filtered BM25, and vector search
+// Storage — JSON-backed block store with load-health, filtered BM25, n-gram fallback, and embedding vector search
 // replace_all_blocks — Replaces the full index snapshot and removes stale file entries
 // upsert_file_blocks — Replaces one file's indexed blocks without a full snapshot rewrite
 // remove_file_blocks — Removes one deleted file's indexed blocks without a full snapshot rewrite
@@ -16,11 +16,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.9.0 — Preserves embedding metadata in stored block test fixtures]
+// LAST_CHANGE: [v4.0.0 — Added dense embedding vector search over persisted block metadata]
 // END_CHANGE_SUMMARY
 
 use super::storage_search::{
-    block_matches_filters, cosine_similarity, expand_query_terms, ngram_vectorize, score_block,
+    block_matches_filters, cosine_similarity, dense_cosine_similarity, expand_query_terms,
+    ngram_vectorize, score_block,
 };
 use std::path::{Path, PathBuf};
 
@@ -377,6 +378,68 @@ impl Storage {
         scored.into_iter().map(|(s, b)| (b, s)).collect()
     }
     // END_storage_vector_search_with_filters
+
+    // START_CONTRACT_Storage::embedding_vector_search
+    // PURPOSE: Dense embedding vector search over compatible stored block vectors
+    // INPUTS: { query_embedding: &[f32] }, { model_id: &str }, { dimensions: usize }, { max_results: usize }
+    // OUTPUTS: { Vec<(StoredBlock, f64)> }
+    // START_storage_embedding_vector_search
+    pub fn embedding_vector_search(
+        &self,
+        query_embedding: &[f32],
+        model_id: &str,
+        dimensions: usize,
+        max_results: usize,
+    ) -> Vec<(StoredBlock, f64)> {
+        let filters = SearchFilters::default();
+        self.embedding_vector_search_with_filters(
+            query_embedding,
+            model_id,
+            dimensions,
+            max_results,
+            &filters,
+        )
+    }
+    // END_storage_embedding_vector_search
+
+    // START_CONTRACT_Storage::embedding_vector_search_with_filters
+    // PURPOSE: Dense embedding vector search over compatible stored block vectors after metadata filters
+    // INPUTS: { query_embedding: &[f32] }, { model_id: &str }, { dimensions: usize }, { max_results: usize }, { filters: &SearchFilters }
+    // OUTPUTS: { Vec<(StoredBlock, f64)> }
+    // START_storage_embedding_vector_search_with_filters
+    pub fn embedding_vector_search_with_filters(
+        &self,
+        query_embedding: &[f32],
+        model_id: &str,
+        dimensions: usize,
+        max_results: usize,
+        filters: &SearchFilters,
+    ) -> Vec<(StoredBlock, f64)> {
+        if query_embedding.len() != dimensions || dimensions == 0 {
+            return Vec::new();
+        }
+
+        let mut scored: Vec<(f64, StoredBlock)> = self
+            .blocks
+            .iter()
+            .filter(|block| block_matches_filters(block, filters))
+            .filter(|block| block.has_compatible_embedding(model_id, dimensions))
+            .filter_map(|block| {
+                let embedding = block.embedding.as_deref()?;
+                let score = dense_cosine_similarity(query_embedding, embedding)?;
+                if score > 0.0 {
+                    Some((score, block.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+        scored.truncate(max_results);
+        scored.into_iter().map(|(s, b)| (b, s)).collect()
+    }
+    // END_storage_embedding_vector_search_with_filters
 }
 
 // START_CONTRACT_load_blocks
@@ -741,6 +804,70 @@ mod tests {
 
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].0.path, "src/indexer/storage.rs");
+    }
+
+    #[test]
+    fn test_semantic_vector_search_ranks_related_code() {
+        let mut s = tmp_storage();
+        let mut auth = make_block(
+            "a:1",
+            "src/auth.rs",
+            "validate_token",
+            "fn",
+            "fn validate_token() {}",
+        );
+        auth.set_embedding("fake:model", vec![1.0, 0.0, 0.0])
+            .expect("auth embedding");
+        let mut billing = make_block(
+            "b:1",
+            "src/billing.rs",
+            "charge_card",
+            "fn",
+            "fn charge_card() {}",
+        );
+        billing
+            .set_embedding("fake:model", vec![0.0, 1.0, 0.0])
+            .expect("billing embedding");
+        let mut incompatible = make_block(
+            "c:1",
+            "src/legacy.rs",
+            "legacy_auth",
+            "fn",
+            "fn legacy_auth() {}",
+        );
+        incompatible
+            .set_embedding("other:model", vec![1.0, 0.0, 0.0])
+            .expect("legacy embedding");
+        s.store_blocks(vec![billing, incompatible, auth]).unwrap();
+
+        let results = s.embedding_vector_search(&[0.95, 0.05, 0.0], "fake:model", 3, 10);
+
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].0.name, "validate_token");
+        assert!(results[0].1 > results[1].1);
+        assert!(results
+            .iter()
+            .all(|(block, _)| block.path != "src/legacy.rs"));
+    }
+
+    #[test]
+    fn test_semantic_search_falls_back_without_embeddings() {
+        let mut s = tmp_storage();
+        s.store_blocks(vec![make_block(
+            "a:1",
+            "src/auth.rs",
+            "validate_token",
+            "fn",
+            "fn validate_token() {}",
+        )])
+        .unwrap();
+
+        let semantic = s.embedding_vector_search(&[1.0, 0.0, 0.0], "fake:model", 3, 10);
+        let fallback = s.vector_search("validate token", 10);
+
+        assert!(semantic.is_empty());
+        assert_eq!(fallback.len(), 1);
+        assert_eq!(fallback[0].0.name, "validate_token");
     }
 
     #[test]

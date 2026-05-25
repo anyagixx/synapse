@@ -27,6 +27,8 @@
     <ASSERTION>Full index rebuilds delegate StoredBlock construction to the pipeline module while preserving deterministic search data.</ASSERTION>
     <ASSERTION>Incremental indexing upserts changed-file blocks and removes deleted-file blocks without a full project rebuild.</ASSERTION>
     <ASSERTION>Indexer declares the embedding provider boundary before semantic vector storage and search integration.</ASSERTION>
+    <ASSERTION>Full and incremental indexing attempt configured embeddings before persistence, then continue with lexical blocks when embedding assets are disabled or fail.</ASSERTION>
+    <ASSERTION>Filtered search and hybrid search prefer compatible semantic vectors when available and fall back to lexical or n-gram ranking otherwise.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-58,Phase-62,Phase-64,Phase-65,Phase-66</PHASE_GATE>
 </VERIFICATION>

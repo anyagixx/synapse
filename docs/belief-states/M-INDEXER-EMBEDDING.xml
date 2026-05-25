@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-INDEXER-EMBEDDING" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Embedding provider specification and helpers for local semantic code search
+    Module responsibility: Embedding provider specification and runtime helpers for local semantic code search
     Key data flows:
       - INPUT: Configured embedding enablement, provider/model settings, cache path, and batch size.
-      - PROCESSING: Validate provider/model compatibility, resolve cache location, enforce batch limits, and report fallback policy.
-      - OUTPUT: Provider contract consumed by indexing and search modules.
+      - PROCESSING: Validate provider/model compatibility, resolve cache location, enforce batch limits, initialize fastembed when enabled, attach block vectors, embed query text, and report fallback policy.
+      - OUTPUT: Provider contract, block embedding metadata, and query vectors consumed by indexing and search modules.
     Critical invariants:
       - Provider version, model identity, model dimension, and fallback policy remain explicit.
       - Embedding failures must degrade to lexical search rather than crashing indexing or MCP search.
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized.
   IMPLEMENTATION_STRATEGY:
-    Approach: Establish the provider contract before storage schema and runtime inference wiring.
+    Approach: Keep fastembed initialization behind explicit Config enablement and expose fake-provider unit tests for deterministic verification.
     Complexity_areas: native ONNX dependency footprint, first-use model download, offline fallback, vector dimension compatibility.
     Patterns_applied: explicit dependency contract, bounded config validation, deterministic fallback.
   VERIFICATION_INTENT:

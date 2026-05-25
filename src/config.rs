@@ -1,12 +1,12 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CONFIG
 // PURPOSE: Config model and explicit load/default/init semantics for synapsec.toml
-// SCOPE: Config struct definitions including LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
+// SCOPE: Config struct definitions including embedding provider settings, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
 // DEPENDS: N/A
 // LINKS: synapsec.toml
 
 // START_MODULE_MAP
-// Config — Top-level config struct (project, index, search, proxy, compress, tracking, graphrag, lsp)
+// Config — Top-level config struct (project, index, search, proxy, compress, tracking, graphrag, embedding, lsp)
 // ProjectConfig — Project metadata (name, version, strictness)
 // IndexConfig — Indexer settings (chunk_size, chunk_overlap, require_git)
 // SearchConfig — Search settings (max_results, similarity_threshold, hybrid_enabled)
@@ -14,13 +14,14 @@
 // CompressConfig — Compress settings (output_level, input_enabled)
 // TrackingConfig — Tracking settings (enabled, history_days)
 // GraphRagConfig — GraphRAG settings (enabled, use_llm)
+// EmbeddingConfig — Local semantic embedding settings (enabled, provider, model, cache_dir, batch_size)
 // LspConfig — Language server command overrides
 // ConfigKeySpec — Supported scalar config key metadata
 // ConfigEntry — Resolved scalar config key/value pair
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.8.0 — Added typed scalar config key helpers]
+// LAST_CHANGE: [v3.9.0 — Added typed local embedding provider settings]
 // END_CHANGE_SUMMARY
 
 use std::collections::HashMap;
@@ -38,6 +39,8 @@ pub struct Config {
     pub compress: CompressConfig,
     pub tracking: TrackingConfig,
     pub graphrag: GraphRagConfig,
+    #[serde(default)]
+    pub embedding: EmbeddingConfig,
     #[serde(default)]
     pub lsp: LspConfig,
 }
@@ -120,6 +123,60 @@ fn default_proxy_command_timeout_secs() -> u64 {
 pub struct GraphRagConfig {
     pub enabled: bool,
     pub use_llm: bool,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
+pub struct EmbeddingConfig {
+    #[serde(default = "default_embedding_enabled")]
+    pub enabled: bool,
+    #[serde(default = "default_embedding_provider")]
+    pub provider: String,
+    #[serde(default = "default_embedding_model")]
+    pub model: String,
+    #[serde(default)]
+    pub cache_dir: String,
+    #[serde(default = "default_embedding_batch_size")]
+    pub batch_size: usize,
+}
+
+impl Default for EmbeddingConfig {
+    fn default() -> Self {
+        Self {
+            enabled: default_embedding_enabled(),
+            provider: default_embedding_provider(),
+            model: default_embedding_model(),
+            cache_dir: String::new(),
+            batch_size: default_embedding_batch_size(),
+        }
+    }
+}
+
+// START_CONTRACT_default_embedding_enabled
+// PURPOSE: Provide serde/default embedding enablement
+// OUTPUTS: { bool — false so model downloads are explicit opt-in }
+fn default_embedding_enabled() -> bool {
+    false
+}
+
+// START_CONTRACT_default_embedding_provider
+// PURPOSE: Provide serde/default embedding provider name
+// OUTPUTS: { String }
+fn default_embedding_provider() -> String {
+    "fastembed".into()
+}
+
+// START_CONTRACT_default_embedding_model
+// PURPOSE: Provide serde/default embedding model name
+// OUTPUTS: { String }
+fn default_embedding_model() -> String {
+    "AllMiniLML6V2".into()
+}
+
+// START_CONTRACT_default_embedding_batch_size
+// PURPOSE: Provide serde/default embedding batch size
+// OUTPUTS: { usize }
+fn default_embedding_batch_size() -> usize {
+    256
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default)]
@@ -221,6 +278,26 @@ const CONFIG_KEY_SPECS: &[ConfigKeySpec] = &[
     ConfigKeySpec {
         key: "graphrag.use_llm",
         value_type: "bool",
+    },
+    ConfigKeySpec {
+        key: "embedding.enabled",
+        value_type: "bool",
+    },
+    ConfigKeySpec {
+        key: "embedding.provider",
+        value_type: "string",
+    },
+    ConfigKeySpec {
+        key: "embedding.model",
+        value_type: "string",
+    },
+    ConfigKeySpec {
+        key: "embedding.cache_dir",
+        value_type: "string",
+    },
+    ConfigKeySpec {
+        key: "embedding.batch_size",
+        value_type: "usize",
     },
 ];
 
@@ -326,6 +403,11 @@ impl Config {
             "tracking.history_days" => self.tracking.history_days.to_string(),
             "graphrag.enabled" => self.graphrag.enabled.to_string(),
             "graphrag.use_llm" => self.graphrag.use_llm.to_string(),
+            "embedding.enabled" => self.embedding.enabled.to_string(),
+            "embedding.provider" => self.embedding.provider.clone(),
+            "embedding.model" => self.embedding.model.clone(),
+            "embedding.cache_dir" => self.embedding.cache_dir.clone(),
+            "embedding.batch_size" => self.embedding.batch_size.to_string(),
             _ => unreachable!("canonical config key must be supported"),
         };
         let spec = config_key_spec(&canonical)
@@ -378,6 +460,17 @@ impl Config {
             "tracking.history_days" => self.tracking.history_days = parse_u32(&canonical, value)?,
             "graphrag.enabled" => self.graphrag.enabled = parse_bool(&canonical, value)?,
             "graphrag.use_llm" => self.graphrag.use_llm = parse_bool(&canonical, value)?,
+            "embedding.enabled" => self.embedding.enabled = parse_bool(&canonical, value)?,
+            "embedding.provider" => {
+                self.embedding.provider = parse_non_empty_string(&canonical, value)?
+            }
+            "embedding.model" => self.embedding.model = parse_non_empty_string(&canonical, value)?,
+            "embedding.cache_dir" => {
+                self.embedding.cache_dir = parse_non_empty_string(&canonical, value)?
+            }
+            "embedding.batch_size" => {
+                self.embedding.batch_size = parse_embedding_batch_size(&canonical, value)?
+            }
             _ => unreachable!("canonical config key must be supported"),
         }
         self.get_config_key(&canonical)
@@ -423,6 +516,11 @@ impl Config {
             "tracking.history_days" => self.tracking.history_days = defaults.tracking.history_days,
             "graphrag.enabled" => self.graphrag.enabled = defaults.graphrag.enabled,
             "graphrag.use_llm" => self.graphrag.use_llm = defaults.graphrag.use_llm,
+            "embedding.enabled" => self.embedding.enabled = defaults.embedding.enabled,
+            "embedding.provider" => self.embedding.provider = defaults.embedding.provider,
+            "embedding.model" => self.embedding.model = defaults.embedding.model,
+            "embedding.cache_dir" => self.embedding.cache_dir = defaults.embedding.cache_dir,
+            "embedding.batch_size" => self.embedding.batch_size = defaults.embedding.batch_size,
             _ => unreachable!("canonical config key must be supported"),
         }
         self.get_config_key(&canonical)
@@ -482,6 +580,7 @@ impl Default for Config {
                 enabled: false,
                 use_llm: false,
             },
+            embedding: EmbeddingConfig::default(),
             lsp: LspConfig::default(),
         }
     }
@@ -598,6 +697,20 @@ fn parse_usize(key: &str, value: &str) -> anyhow::Result<usize> {
 }
 // END_parse_usize
 
+// START_CONTRACT_parse_embedding_batch_size
+// PURPOSE: Parse a bounded embedding batch size config value
+// INPUTS: { key: &str }, { value: &str }
+// OUTPUTS: { anyhow::Result<usize> }
+// START_parse_embedding_batch_size
+fn parse_embedding_batch_size(key: &str, value: &str) -> anyhow::Result<usize> {
+    let parsed = parse_usize(key, value)?;
+    if !(1..=1024).contains(&parsed) {
+        anyhow::bail!("{} must be between 1 and 1024", key);
+    }
+    Ok(parsed)
+}
+// END_parse_embedding_batch_size
+
 // START_CONTRACT_parse_f64
 // PURPOSE: Parse a finite floating-point config value
 // INPUTS: { key: &str }, { value: &str }
@@ -677,6 +790,10 @@ use_llm = false
 
         assert_eq!(config.proxy.capture_cap_bytes, 10_485_760);
         assert_eq!(config.proxy.command_timeout_secs, 300);
+        assert!(!config.embedding.enabled);
+        assert_eq!(config.embedding.provider, "fastembed");
+        assert_eq!(config.embedding.model, "AllMiniLML6V2");
+        assert_eq!(config.embedding.batch_size, 256);
     }
 
     #[test]
@@ -705,6 +822,19 @@ use_llm = false
         assert!(!config.tracking.enabled);
 
         let entry = config
+            .set_config_key("embedding.enabled", "true")
+            .expect("set embedding enabled");
+        assert_eq!(entry.value, "true");
+        assert!(config.embedding.enabled);
+
+        let entry = config
+            .set_config_key("embedding.batch-size", "128")
+            .expect("set embedding batch size");
+        assert_eq!(entry.key, "embedding.batch_size");
+        assert_eq!(entry.value, "128");
+        assert_eq!(config.embedding.batch_size, 128);
+
+        let entry = config
             .unset_config_key("search.max_results")
             .expect("unset key");
         assert_eq!(
@@ -726,6 +856,10 @@ use_llm = false
         assert!(config.set_config_key("project.name", " ").is_err());
         assert!(config
             .set_config_key("search.similarity_threshold", "NaN")
+            .is_err());
+        assert!(config.set_config_key("embedding.batch_size", "0").is_err());
+        assert!(config
+            .set_config_key("embedding.batch_size", "1025")
             .is_err());
     }
 

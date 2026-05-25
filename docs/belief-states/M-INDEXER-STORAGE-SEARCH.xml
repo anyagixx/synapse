@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-INDEXER-STORAGE-SEARCH" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Search filtering and scoring helpers for indexer block storage
+    Module responsibility: Search filtering and scoring helpers for indexer block storage, including dense embedding similarity
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-INDEXER-STORAGE-TYPES
-      - OUTPUT: Filter pre-checks and ranking helpers that verify against MyGRACE gates
+      - OUTPUT: Filter pre-checks, lexical ranking helpers, sparse n-gram similarity, and dense embedding similarity that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: SearchFilters matching, BM25-style scoring, tokenization, n-gram vectorization, cosine similarity
+      - Scope remains bounded to: SearchFilters matching, BM25-style scoring, tokenization, n-gram vectorization, sparse cosine similarity, and dense embedding cosine similarity
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

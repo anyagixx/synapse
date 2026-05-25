@@ -4,11 +4,13 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_language --lib</COMMAND>
     <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_path_prefix --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage_search::tests::test_dense_cosine_similarity --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>Language filters exclude out-of-scope blocks before lexical scoring.</ASSERTION>
     <ASSERTION>Path prefix filters exclude out-of-scope blocks before lexical scoring.</ASSERTION>
+    <ASSERTION>Dense cosine similarity rejects dimension mismatches and zero vectors, and returns 1.0 for identical vectors.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1,Phase-65</PHASE_GATE>
+  <PHASE_GATE>Phase-1,Phase-65,Phase-66</PHASE_GATE>
 </VERIFICATION>
