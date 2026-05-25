@@ -55,6 +55,7 @@
     <VERIFICATION id="V-M-GRACE-VERIFY-TYPES" module="M-GRACE-VERIFY-TYPES" path="docs/verification/V-M-GRACE-VERIFY-TYPES.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRAPHRAG" module="M-GRAPHRAG" path="docs/verification/V-M-GRAPHRAG.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRAPHRAG-BUILDER" module="M-GRAPHRAG-BUILDER" path="docs/verification/V-M-GRAPHRAG-BUILDER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-GRAPHRAG-IMPACT" module="M-GRAPHRAG-IMPACT" path="docs/verification/V-M-GRAPHRAG-IMPACT.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRAPHRAG-MERMAID" module="M-GRAPHRAG-MERMAID" path="docs/verification/V-M-GRAPHRAG-MERMAID.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-GRAPHRAG-TYPES" module="M-GRAPHRAG-TYPES" path="docs/verification/V-M-GRAPHRAG-TYPES.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-HOOK-CLAUDE" module="M-HOOK-CLAUDE" path="docs/verification/V-M-HOOK-CLAUDE.xml" priority="normal" status="active" />

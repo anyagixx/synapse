@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRAPHRAG-IMPACT" type="CORE_LOGIC" status="active">
+  <NAME>M-GRAPHRAG-IMPACT</NAME>
+  <PURPOSE>GraphRAG impact analysis for bounded dependency blast-radius estimation.</PURPOSE>
+  <SCOPE>ImpactTarget, ImpactRisk, ImpactAnalysis, bounded reverse dependency traversal, affected verification/use-case extraction, advisory risk scoring, and suggested actions.</SCOPE>
+  <FILES>
+    <FILE>src/graphrag/impact.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRAPHRAG-TYPES</DEPENDS>
+  <LINKS>docs/phases/Phase-72.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_2/A6-impact-analysis.md</LINKS>
+  <VERIFICATION_REF>V-M-GRAPHRAG-IMPACT</VERIFICATION_REF>
+</MODULE>

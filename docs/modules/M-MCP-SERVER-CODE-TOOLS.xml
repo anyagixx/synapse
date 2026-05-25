@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-MCP-SERVER-CODE-TOOLS" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER-CODE-TOOLS</NAME>
-  <PURPOSE>MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups</PURPOSE>
-  <SCOPE>semantic_search with Unicode-safe previews and optional language/path filters, graphrag_query with root/index-keyed cache validation, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover and lsp_references handlers with optional content override</SCOPE>
+  <PURPOSE>MCP handlers for code search, GraphRAG typed queries, impact analysis, signature views, and guarded LSP lookups</PURPOSE>
+  <SCOPE>semantic_search with Unicode-safe previews and optional language/path filters, graphrag_query with root/index-keyed cache validation, impact analysis, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover and lsp_references handlers with optional content override</SCOPE>
   <FILES>
     <FILE>src/mcp/server_code_tools.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG,M-GRACE-CONTRACT,M-INDEXER,M-GRAPHRAG,M-GRAPHRAG-MERMAID,M-MCP-LSP,M-MCP-SERVER-RESPONSE,M-UTILS</DEPENDS>
-  <LINKS>docs/modules/M-MCP-SERVER.xml,docs/phases/Phase-59.xml,docs/phases/Phase-62.xml,docs/phases/Phase-65.xml,docs/phases/Phase-68.xml</LINKS>
+  <DEPENDS>M-CONFIG,M-GRACE-CONTRACT,M-INDEXER,M-GRAPHRAG,M-GRAPHRAG-IMPACT,M-GRAPHRAG-MERMAID,M-MCP-LSP,M-MCP-SERVER-RESPONSE,M-UTILS</DEPENDS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml,docs/phases/Phase-59.xml,docs/phases/Phase-62.xml,docs/phases/Phase-65.xml,docs/phases/Phase-68.xml,docs/phases/Phase-72.xml</LINKS>
   <VERIFICATION_REF>V-M-MCP-SERVER-CODE-TOOLS</VERIFICATION_REF>
 </MODULE>

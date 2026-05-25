@@ -1,20 +1,22 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRAPHRAG
-// PURPOSE: GraphRAG facade — knowledge graph navigation with search, typed relationships, path finding, and Mermaid rendering exports
-// SCOPE: GraphRag struct, build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview, Mermaid render module export
-// DEPENDS: M-GRACE-CONTRACT, M-GRAPHRAG-TYPES, M-GRAPHRAG-BUILDER, M-GRAPHRAG-MERMAID
+// PURPOSE: GraphRAG facade — knowledge graph navigation with search, typed relationships, path finding, Mermaid rendering, and impact analysis exports
+// SCOPE: GraphRag struct, build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview, Mermaid render module export, impact analysis facade
+// DEPENDS: M-GRACE-CONTRACT, M-GRAPHRAG-TYPES, M-GRAPHRAG-BUILDER, M-GRAPHRAG-MERMAID, M-GRAPHRAG-IMPACT
 // LINKS: N/A
 
 // START_MODULE_MAP
 // GraphRag — Knowledge graph facade wrapping CodeGraph
+// impact — Bounded impact analysis helpers
 // mermaid — Deterministic Mermaid rendering helpers
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.12.0 — Exported deterministic Mermaid rendering helpers]
+// LAST_CHANGE: [v2.13.0 — Exported bounded GraphRAG impact analysis]
 // END_CHANGE_SUMMARY
 
 pub mod builder;
+pub mod impact;
 pub mod mermaid;
 pub mod types;
 
@@ -22,6 +24,7 @@ use crate::grace::contract::LinkType;
 use builder::GraphBuilder;
 use std::path::Path;
 
+pub use impact::*;
 pub use mermaid::*;
 pub use types::*;
 
@@ -186,5 +189,25 @@ impl GraphRag {
         self.graph.as_ref().map(|g| g.overview())
     }
     // END_graphrag_overview
+
+    // START_CONTRACT_GraphRag::impact_analysis
+    // PURPOSE: Return bounded dependency impact analysis for a graph node
+    // INPUTS: { node_id: &str }, { depth: usize }, { include_tests: bool }
+    // OUTPUTS: { Option<ImpactAnalysis> }
+    // LINKS:
+    //   -> M-GRAPHRAG-IMPACT (depends) - delegates bounded impact traversal
+    //   -> UC-001 (implements) - agents inspect blast radius before edits
+    // START_graphrag_impact_analysis
+    pub fn impact_analysis(
+        &self,
+        node_id: &str,
+        depth: usize,
+        include_tests: bool,
+    ) -> Option<ImpactAnalysis> {
+        self.graph
+            .as_ref()
+            .and_then(|g| analyze_impact(g, node_id, depth, include_tests))
+    }
+    // END_graphrag_impact_analysis
 }
 // END_public_api

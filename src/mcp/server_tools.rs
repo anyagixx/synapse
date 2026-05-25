@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG Mermaid options, LSP content override options, GRACE profiles, self_heal, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, GRACE profiles, self_heal, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.2.0 - Added diagnose_failure and repair_contract tool schemas]
+// LAST_CHANGE: [v4.3.0 - Added graphrag_query impact schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -54,17 +54,19 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
         }),
         serde_json::json!({
             "name": "graphrag_query",
-            "description": "Query the code knowledge graph. Supports: search, get-node, get-relationships, find-path, dependents, tracedown, overview, mermaid",
+            "description": "Query the code knowledge graph. Supports: search, get-node, get-relationships, find-path, dependents, tracedown, impact, overview, mermaid",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "operation": { "type": "string", "description": "Operation: search | get-node | get-relationships | find-path | dependents | tracedown | overview | mermaid" },
+                    "operation": { "type": "string", "description": "Operation: search | get-node | get-relationships | find-path | dependents | tracedown | impact | overview | mermaid" },
                     "query": { "type": "string", "description": "Search query" },
                     "node_id": { "type": "string", "description": "Node ID" },
                     "from": { "type": "string", "description": "Source node ID" },
                     "to": { "type": "string", "description": "Target node ID" },
                     "target": { "type": "string", "description": "Target artifact for dependents/tracedown" },
                     "link_type": { "type": "string", "description": "Typed LINKS filter: implements | depends | refines | traces_to | verified_by | manages | uses" },
+                    "depth": { "type": "number", "description": "Impact traversal depth for operation=impact", "default": 2 },
+                    "include_tests": { "type": "boolean", "description": "Include verification/test targets for operation=impact", "default": true },
                     "subset": { "type": "string", "description": "Mermaid subset for operation=mermaid: modules | symbols | relations", "default": "relations" },
                     "focus": { "type": "string", "description": "Optional Mermaid focus node id" },
                     "focus_ids": { "type": "array", "items": { "type": "string" }, "description": "Optional Mermaid focus node ids" },
@@ -415,6 +417,33 @@ mod tests {
         assert!(properties.contains_key("max_nodes"));
     }
     // END_test_graphrag_schema_exposes_mermaid_options
+
+    // START_CONTRACT_test_graphrag_schema_exposes_impact_options
+    // PURPOSE: Verify tools/list declares GraphRAG impact operation options for MCP clients
+    // START_test_graphrag_schema_exposes_impact_options
+    #[test]
+    fn test_graphrag_schema_exposes_impact_options() {
+        let tools = tool_definitions();
+        let graphrag = tools
+            .iter()
+            .find(|tool| tool["name"] == "graphrag_query")
+            .expect("graphrag_query tool");
+        let properties = graphrag["inputSchema"]["properties"]
+            .as_object()
+            .expect("properties");
+
+        assert!(graphrag["description"]
+            .as_str()
+            .is_some_and(|description| description.contains("impact")));
+        assert!(
+            graphrag["inputSchema"]["properties"]["operation"]["description"]
+                .as_str()
+                .is_some_and(|description| description.contains("impact"))
+        );
+        assert!(properties.contains_key("depth"));
+        assert!(properties.contains_key("include_tests"));
+    }
+    // END_test_graphrag_schema_exposes_impact_options
 
     // START_CONTRACT_test_lsp_schema_exposes_content_override
     // PURPOSE: Verify tools/list declares optional content override for LSP hover and references

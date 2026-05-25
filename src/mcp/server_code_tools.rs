@@ -1,15 +1,16 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
-// PURPOSE: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
-// SCOPE: semantic_search with optional language/path filters, graphrag_query with indexed GraphRAG cache key validation, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover/lsp_references handlers with optional content override
-// DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-GRAPHRAG-MERMAID, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
+// PURPOSE: MCP handlers for code search, GraphRAG typed queries, impact analysis, signature views, and guarded LSP lookups
+// SCOPE: semantic_search with optional language/path filters, graphrag_query with indexed GraphRAG cache key validation, impact analysis, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover/lsp_references handlers with optional content override
+// DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-GRAPHRAG-IMPACT, M-GRAPHRAG-MERMAID, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
 // handle_search — Runs indexed semantic search with optional filters and formats MCP text content
 // search_filters_from_args — Builds validated SearchFilters from MCP arguments
-// handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship/Mermaid operations
+// handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship/impact/Mermaid operations
 // parse_mermaid_options_arg — Builds Mermaid render options from GraphRAG MCP arguments
+// parse_impact_depth_arg — Builds bounded GraphRAG impact depth from MCP arguments
 // ensure_graphrag — Builds or reuses GraphRAG state based on root/index cache key
 // read_graphrag — Reads GraphRAG state without panicking on poisoned locks
 // handle_view_signatures — Returns indexed signatures for a file
@@ -18,7 +19,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 — Added optional LSP content override handling]
+// LAST_CHANGE: [v4.1.0 — Added GraphRAG impact analysis MCP operation]
 // END_CHANGE_SUMMARY
 
 use super::server::GraphCacheKey;
@@ -115,7 +116,7 @@ fn optional_string_arg(args: &serde_json::Value, key: &str) -> Result<Option<Str
 // END_optional_string_arg
 
 // START_CONTRACT_handle_graphrag
-// PURPOSE: Execute GraphRAG overview, search, node lookup, relationship lookup, path, dependents, tracedown, or Mermaid query
+// PURPOSE: Execute GraphRAG overview, search, node lookup, relationship lookup, path, dependents, tracedown, impact, or Mermaid query
 // INPUTS: { graphrag: &RwLock<Option<GraphRag>> }, { graph_cache_key: &RwLock<Option<GraphCacheKey>> }, { id: Option<serde_json::Value> }, { args: &serde_json::Value }
 // OUTPUTS: { serde_json::Value }
 // START_handle_graphrag
@@ -374,6 +375,46 @@ pub(crate) fn handle_graphrag(
                 }),
             )
         }
+        "impact" => {
+            let node_id = args["node_id"]
+                .as_str()
+                .or_else(|| args["target"].as_str())
+                .unwrap_or("");
+            if node_id.is_empty() {
+                return error(id, -32602, "Missing 'node_id' or 'target' parameter");
+            }
+            let depth = match parse_impact_depth_arg(args) {
+                Ok(depth) => depth,
+                Err(message) => return error(id, -32602, message),
+            };
+            let include_tests = match parse_include_tests_arg(args) {
+                Ok(include_tests) => include_tests,
+                Err(message) => return error(id, -32602, message),
+            };
+            match graphrag.impact_analysis(node_id, depth, include_tests) {
+                Some(analysis) => {
+                    let text = serde_json::to_string_pretty(&analysis)
+                        .unwrap_or_else(|_| format!("Impact analysis for {}", node_id));
+                    result(
+                        id,
+                        serde_json::json!({
+                            "content": [{"type": "text", "text": text}],
+                            "format": "impact",
+                            "impact": analysis,
+                            "isError": false
+                        }),
+                    )
+                }
+                None => result(
+                    id,
+                    serde_json::json!({
+                        "content": [{"type": "text", "text": format!("Node '{}' not found", node_id)}],
+                        "format": "impact",
+                        "isError": false
+                    }),
+                ),
+            }
+        }
         "mermaid" => {
             let options = match parse_mermaid_options_arg(args) {
                 Ok(options) => options,
@@ -472,6 +513,42 @@ fn parse_link_type_arg(args: &serde_json::Value) -> Result<Option<LinkType>, Str
         .map(Some)
         .ok_or_else(|| format!("Invalid link_type '{}'", raw))
 }
+
+// START_CONTRACT_parse_impact_depth_arg
+// PURPOSE: Parse bounded impact traversal depth from GraphRAG MCP arguments
+// INPUTS: { args: &serde_json::Value }
+// OUTPUTS: { Result<usize, String> }
+// LINKS:
+//   -> M-GRAPHRAG-IMPACT (depends) - bounds impact traversal
+//   -> NFR-002 (traces_to) - rejects incompatible MCP argument types
+// START_parse_impact_depth_arg
+fn parse_impact_depth_arg(args: &serde_json::Value) -> Result<usize, String> {
+    match args.get("depth") {
+        None | Some(serde_json::Value::Null) => Ok(2),
+        Some(serde_json::Value::Number(value)) => value
+            .as_u64()
+            .map(|depth| (depth as usize).clamp(1, 8))
+            .ok_or_else(|| "impact `depth` must be a positive integer".to_string()),
+        Some(_) => Err("impact `depth` must be a positive integer".to_string()),
+    }
+}
+// END_parse_impact_depth_arg
+
+// START_CONTRACT_parse_include_tests_arg
+// PURPOSE: Parse include_tests flag for GraphRAG impact analysis
+// INPUTS: { args: &serde_json::Value }
+// OUTPUTS: { Result<bool, String> }
+// LINKS:
+//   -> M-GRAPHRAG-IMPACT (depends) - controls verification/test target inclusion
+// START_parse_include_tests_arg
+fn parse_include_tests_arg(args: &serde_json::Value) -> Result<bool, String> {
+    match args.get("include_tests") {
+        None | Some(serde_json::Value::Null) => Ok(true),
+        Some(serde_json::Value::Bool(value)) => Ok(*value),
+        Some(_) => Err("impact `include_tests` must be a boolean".to_string()),
+    }
+}
+// END_parse_include_tests_arg
 
 // START_CONTRACT_parse_mermaid_options_arg
 // PURPOSE: Build Mermaid render options from GraphRAG MCP arguments
@@ -771,6 +848,137 @@ mod tests {
         );
     }
     // END_test_handle_graphrag_reports_poisoned_lock
+
+    // START_CONTRACT_write_graphrag_fixture
+    // PURPOSE: Write a minimal GRACE-contracted source fixture for GraphRAG MCP tests.
+    // START_write_graphrag_fixture
+    fn write_graphrag_fixture(
+        src: &std::path::Path,
+        file: &str,
+        module_id: &str,
+        purpose: &str,
+        depends: &str,
+        links: &[&str],
+    ) {
+        let link_lines = links
+            .iter()
+            .map(|link| format!("//   {}\n", link))
+            .collect::<String>();
+        let function_name = module_id
+            .trim_start_matches("V-")
+            .trim_start_matches("M-")
+            .to_ascii_lowercase()
+            .replace('-', "_");
+        let content = format!(
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: {module_id}\n",
+                "// PURPOSE: {purpose}\n",
+                "// SCOPE: GraphRAG MCP fixture\n",
+                "// DEPENDS: {depends}\n",
+                "// LINKS:\n",
+                "{link_lines}",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// build_{function_name} - Fixture function\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 - Test fixture]\n",
+                "// END_CHANGE_SUMMARY\n"
+            ),
+            module_id = module_id,
+            purpose = purpose,
+            depends = depends,
+            link_lines = link_lines,
+            function_name = function_name
+        );
+        std::fs::write(src.join(file), content).expect("write GraphRAG fixture");
+    }
+    // END_write_graphrag_fixture
+
+    // START_CONTRACT_test_graphrag_query_impact
+    // PURPOSE: Verify graphrag_query operation=impact returns bounded dependent and traceability targets.
+    // START_test_graphrag_query_impact
+    #[tokio::test]
+    async fn test_graphrag_query_impact() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let previous = std::env::current_dir().expect("cwd");
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("src dir");
+        write_graphrag_fixture(
+            &src,
+            "core.rs",
+            "M-CORE",
+            "Core module",
+            "N/A",
+            &["-> UC-002 (implements) - fixture use case"],
+        );
+        write_graphrag_fixture(
+            &src,
+            "api.rs",
+            "M-API",
+            "API module",
+            "M-CORE",
+            &["-> M-CORE (depends) - fixture dependency"],
+        );
+        write_graphrag_fixture(
+            &src,
+            "ui.rs",
+            "M-UI",
+            "UI module",
+            "M-API",
+            &["-> M-API (depends) - fixture dependency"],
+        );
+        write_graphrag_fixture(
+            &src,
+            "verify_core.rs",
+            "V-M-CORE",
+            "Core verification",
+            "M-CORE",
+            &["-> M-CORE (verified_by) - fixture verification"],
+        );
+        std::env::set_current_dir(dir.path()).expect("set cwd");
+
+        let response = handle_graphrag(
+            &RwLock::new(None),
+            &RwLock::new(None),
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "operation": "impact",
+                "node_id": "M-CORE",
+                "depth": 3,
+                "include_tests": true
+            }),
+        );
+        std::env::set_current_dir(previous).expect("restore cwd");
+
+        assert_eq!(response["result"]["format"], "impact");
+        let impact = &response["result"]["impact"];
+        assert!(impact["direct_dependents"]
+            .as_array()
+            .expect("direct dependents")
+            .iter()
+            .any(|target| target["node_id"] == "M-API"));
+        assert!(impact["transitive_dependents"]
+            .as_array()
+            .expect("transitive dependents")
+            .iter()
+            .any(|target| target["node_id"] == "M-UI"));
+        assert!(impact["affected_verification"]
+            .as_array()
+            .expect("verification")
+            .iter()
+            .any(|target| target["node_id"] == "V-M-CORE"));
+        assert!(impact["affected_use_cases"]
+            .as_array()
+            .expect("use cases")
+            .iter()
+            .any(|target| target["node_id"] == "UC-002"));
+        assert!(!response["result"]["isError"].as_bool().unwrap_or(true));
+    }
+    // END_test_graphrag_query_impact
 
     // START_CONTRACT_test_graphrag_query_mermaid_output
     // PURPOSE: Verify graphrag_query can return Mermaid output without changing MCP content shape
