@@ -1,14 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-STORAGE
-// PURPOSE: JSON block storage facade with load-health reporting, snapshot and delta persistence, BM25, and vector search APIs
-// SCOPE: Storage struct, StoredBlock, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, search API orchestration
+// PURPOSE: JSON block storage facade with load-health reporting, snapshot and delta persistence, filtered BM25, and vector search APIs
+// SCOPE: Storage struct, StoredBlock, SearchFilters, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, filtered search API orchestration
 // DEPENDS: M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES
 // LINKS: N/A
 
 // START_MODULE_MAP
 // StoredBlock — Re-exported serializable code block for JSON storage
 // SearchFilters — Re-exported search filter metadata for storage callers
-// Storage — JSON-backed block store with load-health, BM25, and vector search
+// Storage — JSON-backed block store with load-health, filtered BM25, and vector search
 // replace_all_blocks — Replaces the full index snapshot and removes stale file entries
 // upsert_file_blocks — Replaces one file's indexed blocks without a full snapshot rewrite
 // remove_file_blocks — Removes one deleted file's indexed blocks without a full snapshot rewrite
@@ -16,10 +16,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.7.0 — Re-exported search filter metadata]
+// LAST_CHANGE: [v3.8.0 — Added filtered search and vector search APIs]
 // END_CHANGE_SUMMARY
 
-use super::storage_search::{cosine_similarity, expand_query_terms, ngram_vectorize, score_block};
+use super::storage_search::{
+    block_matches_filters, cosine_similarity, expand_query_terms, ngram_vectorize, score_block,
+};
 use std::path::{Path, PathBuf};
 
 // START_public_api
@@ -245,15 +247,31 @@ impl Storage {
     // OUTPUTS: { Vec<StoredBlock> }
     // START_storage_search
     pub fn search(&self, query: &str, max_results: usize) -> Vec<StoredBlock> {
+        let filters = SearchFilters::default();
+        self.search_with_filters(query, max_results, &filters)
+    }
+    // END_storage_search
+
+    // START_CONTRACT_Storage::search_with_filters
+    // PURPOSE: BM25 text search over stored blocks after applying metadata filters
+    // INPUTS: { query: &str }, { max_results: usize }, { filters: &SearchFilters }
+    // OUTPUTS: { Vec<StoredBlock> }
+    // START_storage_search_with_filters
+    pub fn search_with_filters(
+        &self,
+        query: &str,
+        max_results: usize,
+        filters: &SearchFilters,
+    ) -> Vec<StoredBlock> {
         if query.trim().is_empty() {
             return Vec::new();
         }
-        self.search_with_scores(query, max_results)
+        self.search_with_scores_and_filters(query, max_results, filters)
             .into_iter()
             .map(|(b, _)| b)
             .collect()
     }
-    // END_storage_search
+    // END_storage_search_with_filters
 
     // START_CONTRACT_Storage::search_with_scores
     // PURPOSE: BM25 search returning scored results
@@ -261,6 +279,22 @@ impl Storage {
     // OUTPUTS: { Vec<(StoredBlock, f64)> }
     // START_storage_search_with_scores
     pub fn search_with_scores(&self, query: &str, max_results: usize) -> Vec<(StoredBlock, f64)> {
+        let filters = SearchFilters::default();
+        self.search_with_scores_and_filters(query, max_results, &filters)
+    }
+    // END_storage_search_with_scores
+
+    // START_CONTRACT_Storage::search_with_scores_and_filters
+    // PURPOSE: BM25 search returning scored results after applying metadata filters before ranking
+    // INPUTS: { query: &str }, { max_results: usize }, { filters: &SearchFilters }
+    // OUTPUTS: { Vec<(StoredBlock, f64)> }
+    // START_storage_search_with_scores_and_filters
+    pub fn search_with_scores_and_filters(
+        &self,
+        query: &str,
+        max_results: usize,
+        filters: &SearchFilters,
+    ) -> Vec<(StoredBlock, f64)> {
         let query_lower = query.to_lowercase();
         if query_lower.trim().is_empty() {
             return Vec::new();
@@ -271,6 +305,7 @@ impl Storage {
         let mut scored: Vec<(f64, StoredBlock)> = self
             .blocks
             .iter()
+            .filter(|b| block_matches_filters(b, filters))
             .filter_map(|b| {
                 let score = score_block(b, &query_lower, &query_words);
                 if score > 0.0 {
@@ -285,7 +320,7 @@ impl Storage {
         scored.truncate(max_results);
         scored.into_iter().map(|(s, b)| (b, s)).collect()
     }
-    // END_storage_search_with_scores
+    // END_storage_search_with_scores_and_filters
 
     // START_CONTRACT_Storage::vector_search
     // PURPOSE: N-gram vector search with cosine similarity
@@ -293,6 +328,22 @@ impl Storage {
     // OUTPUTS: { Vec<(StoredBlock, f64)> }
     // START_storage_vector_search
     pub fn vector_search(&self, query: &str, max_results: usize) -> Vec<(StoredBlock, f64)> {
+        let filters = SearchFilters::default();
+        self.vector_search_with_filters(query, max_results, &filters)
+    }
+    // END_storage_vector_search
+
+    // START_CONTRACT_Storage::vector_search_with_filters
+    // PURPOSE: N-gram vector search with cosine similarity after applying metadata filters before ranking
+    // INPUTS: { query: &str }, { max_results: usize }, { filters: &SearchFilters }
+    // OUTPUTS: { Vec<(StoredBlock, f64)> }
+    // START_storage_vector_search_with_filters
+    pub fn vector_search_with_filters(
+        &self,
+        query: &str,
+        max_results: usize,
+        filters: &SearchFilters,
+    ) -> Vec<(StoredBlock, f64)> {
         let expanded_terms = expand_query_terms(query);
         let query_text = expanded_terms.join(" ");
         let query_vec = ngram_vectorize(&query_text);
@@ -303,6 +354,7 @@ impl Storage {
         let mut scored: Vec<(f64, StoredBlock)> = self
             .blocks
             .iter()
+            .filter(|b| block_matches_filters(b, filters))
             .filter_map(|b| {
                 let content_vec = ngram_vectorize(&b.content);
                 let name_vec = ngram_vectorize(&b.name);
@@ -324,7 +376,7 @@ impl Storage {
         scored.truncate(max_results);
         scored.into_iter().map(|(s, b)| (b, s)).collect()
     }
-    // END_storage_vector_search
+    // END_storage_vector_search_with_filters
 }
 
 // START_CONTRACT_load_blocks
@@ -378,10 +430,21 @@ mod tests {
     use super::*;
 
     fn make_block(id: &str, path: &str, name: &str, kind: &str, content: &str) -> StoredBlock {
+        make_block_with_language(id, path, "rust", name, kind, content)
+    }
+
+    fn make_block_with_language(
+        id: &str,
+        path: &str,
+        language: &str,
+        name: &str,
+        kind: &str,
+        content: &str,
+    ) -> StoredBlock {
         StoredBlock {
             id: id.to_string(),
             path: path.to_string(),
-            language: "rust".to_string(),
+            language: language.to_string(),
             name: name.to_string(),
             kind: kind.to_string(),
             content: content.to_string(),
@@ -623,6 +686,57 @@ mod tests {
             .collect();
         s.store_blocks(blocks).unwrap();
         assert_eq!(s.search("test", 3).len(), 3);
+    }
+
+    #[test]
+    fn test_search_filters_by_language() {
+        let mut s = tmp_storage();
+        s.store_blocks(vec![
+            make_block_with_language("a:1", "src/lib.rs", "rust", "login", "fn", "fn login() {}"),
+            make_block_with_language(
+                "b:1",
+                "src/login.py",
+                "python",
+                "login",
+                "function",
+                "def login(): pass",
+            ),
+        ])
+        .unwrap();
+
+        let filters = SearchFilters::new(Some("rust".into()), None, None);
+        let results = s.search_with_scores_and_filters("login", 10, &filters);
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].0.path, "src/lib.rs");
+    }
+
+    #[test]
+    fn test_search_filters_by_path_prefix() {
+        let mut s = tmp_storage();
+        s.store_blocks(vec![
+            make_block(
+                "a:1",
+                "src/indexer/storage.rs",
+                "search_storage",
+                "fn",
+                "fn search_storage() {}",
+            ),
+            make_block(
+                "b:1",
+                "src/mcp/server.rs",
+                "search_server",
+                "fn",
+                "fn search_server() {}",
+            ),
+        ])
+        .unwrap();
+
+        let filters = SearchFilters::new(None, Some("src/indexer".into()), None);
+        let results = s.search_with_scores_and_filters("search", 10, &filters);
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].0.path, "src/indexer/storage.rs");
     }
 
     #[test]

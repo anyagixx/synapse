@@ -7,6 +7,8 @@
     <COMMAND>cargo test indexer::storage::tests::test_upsert_file_blocks_replaces_empty_file --lib</COMMAND>
     <COMMAND>cargo test indexer::storage::tests::test_remove_file_blocks_removes_deleted_file_only --lib</COMMAND>
     <COMMAND>cargo test indexer::storage::tests::test_db_path_for_root_matches_storage_instance_path --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_language --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_path_prefix --lib</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
@@ -18,6 +20,7 @@
     <ASSERTION>Per-file upsert can replace a file with zero blocks while preserving unrelated files.</ASSERTION>
     <ASSERTION>Deleted-file removal removes only matching file paths and persists the delta.</ASSERTION>
     <ASSERTION>Storage::db_path_for_root returns the same deterministic persisted index path used by Storage::new for GraphRAG cache signatures.</ASSERTION>
+    <ASSERTION>Filtered search applies language and path-prefix constraints before scoring/ranking.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7,Phase-62,Phase-64</PHASE_GATE>
+  <PHASE_GATE>Phase-7,Phase-62,Phase-64,Phase-65</PHASE_GATE>
 </VERIFICATION>

@@ -6,6 +6,7 @@
 // LINKS: docs/modules/M-INDEXER-STORAGE.xml, docs/modules/M-INDEXER-STORAGE-TYPES.xml
 
 // START_MODULE_MAP
+// block_matches_filters — Checks optional search filters before scoring
 // score_block — Computes text relevance score for a stored block
 // expand_query_terms — Builds expanded query vocabulary from identifiers and module/file hints
 // tokenize — Splits identifiers and paths into searchable tokens
@@ -14,10 +15,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.2.0 - Named scoring thresholds and n-gram dimensions]
+// LAST_CHANGE: [v3.7.0 - Added pre-ranking search filter matching]
 // END_CHANGE_SUMMARY
 
-use super::storage_types::StoredBlock;
+use super::storage_types::{SearchFilters, StoredBlock};
 use std::collections::HashMap;
 
 const MIN_QUERY_WORD_CHARS: usize = 2;
@@ -26,6 +27,16 @@ const SHORT_BLOCK_TOKEN_BONUS_LIMIT: f64 = 500.0;
 const SHORT_BLOCK_TOKEN_BONUS_DIVISOR: f64 = 1000.0;
 
 // START_public_api
+
+// START_CONTRACT_block_matches_filters
+// PURPOSE: Check whether a stored block is in scope for optional search filters before scoring
+// INPUTS: { block: &StoredBlock }, { filters: &SearchFilters }
+// OUTPUTS: { bool }
+// START_block_matches_filters
+pub(crate) fn block_matches_filters(block: &StoredBlock, filters: &SearchFilters) -> bool {
+    filters.is_empty() || filters.matches(block)
+}
+// END_block_matches_filters
 
 // START_CONTRACT_score_block
 // PURPOSE: Score a stored block against a normalized query using name, path, and content signals

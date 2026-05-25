@@ -2,8 +2,13 @@
 <VERIFICATION id="V-M-INDEXER-STORAGE-SEARCH" module="M-INDEXER-STORAGE-SEARCH" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_language --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_path_prefix --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Language filters exclude out-of-scope blocks before lexical scoring.</ASSERTION>
+    <ASSERTION>Path prefix filters exclude out-of-scope blocks before lexical scoring.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-1,Phase-65</PHASE_GATE>
 </VERIFICATION>
