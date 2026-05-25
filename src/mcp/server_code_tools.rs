@@ -1,12 +1,13 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
 // PURPOSE: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
-// SCOPE: semantic_search, graphrag_query with indexed GraphRAG cache key validation and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover, lsp_references handlers
+// SCOPE: semantic_search with optional language/path filters, graphrag_query with indexed GraphRAG cache key validation and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover, lsp_references handlers
 // DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
-// handle_search — Runs indexed semantic search and formats MCP text content
+// handle_search — Runs indexed semantic search with optional filters and formats MCP text content
+// search_filters_from_args — Builds validated SearchFilters from MCP arguments
 // handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship operations
 // ensure_graphrag — Builds or reuses GraphRAG state based on root/index cache key
 // read_graphrag — Reads GraphRAG state without panicking on poisoned locks
@@ -16,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.4.0 — Added root/index-keyed GraphRAG cache validation]
+// LAST_CHANGE: [v3.8.0 — Added semantic_search language and path filters]
 // END_CHANGE_SUMMARY
 
 use super::server::GraphCacheKey;
@@ -24,6 +25,7 @@ use super::server_response::{error, result};
 use crate::config::Config;
 use crate::grace::contract::LinkType;
 use crate::graphrag::GraphRag;
+use crate::indexer::storage::SearchFilters;
 use crate::indexer::Indexer;
 use std::sync::{RwLock, RwLockReadGuard};
 
@@ -41,8 +43,12 @@ pub(crate) async fn handle_search(
 ) -> serde_json::Value {
     let query = args["query"].as_str().unwrap_or("");
     let max = args["max_results"].as_u64().unwrap_or(10) as usize;
+    let filters = match search_filters_from_args(args) {
+        Ok(filters) => filters,
+        Err(message) => return error(id, -32602, message),
+    };
 
-    match indexer.search(query, max).await {
+    match indexer.search_with_filters(query, max, &filters).await {
         Ok(results) => {
             let text = if results.is_empty() {
                 "No results found. Try running `syn index` first.".to_string()
@@ -78,6 +84,34 @@ pub(crate) async fn handle_search(
     }
 }
 // END_handle_search
+
+// START_CONTRACT_search_filters_from_args
+// PURPOSE: Validate optional semantic_search language and path filter arguments
+// INPUTS: { args: &serde_json::Value }
+// OUTPUTS: { Result<SearchFilters, String> }
+// START_search_filters_from_args
+fn search_filters_from_args(args: &serde_json::Value) -> Result<SearchFilters, String> {
+    Ok(SearchFilters::new(
+        optional_string_arg(args, "language")?,
+        optional_string_arg(args, "path")?,
+        optional_string_arg(args, "path_contains")?,
+    ))
+}
+// END_search_filters_from_args
+
+// START_CONTRACT_optional_string_arg
+// PURPOSE: Read an optional MCP string argument while rejecting incompatible JSON types
+// INPUTS: { args: &serde_json::Value }, { key: &str }
+// OUTPUTS: { Result<Option<String>, String> }
+// START_optional_string_arg
+fn optional_string_arg(args: &serde_json::Value, key: &str) -> Result<Option<String>, String> {
+    match args.get(key) {
+        None | Some(serde_json::Value::Null) => Ok(None),
+        Some(serde_json::Value::String(value)) => Ok(Some(value.clone())),
+        Some(_) => Err(format!("semantic_search `{}` filter must be a string", key)),
+    }
+}
+// END_optional_string_arg
 
 // START_CONTRACT_handle_graphrag
 // PURPOSE: Execute GraphRAG overview, search, node lookup, relationship lookup, path, dependents, or tracedown query
@@ -534,6 +568,67 @@ pub(crate) async fn handle_lsp_references(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // START_CONTRACT_test_semantic_search_accepts_filters
+    // PURPOSE: Verify semantic_search accepts language/path filters and returns only in-scope indexed blocks
+    // START_test_semantic_search_accepts_filters
+    #[tokio::test]
+    async fn test_semantic_search_accepts_filters() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        let tests = dir.path().join("tests");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::create_dir_all(&tests).expect("create tests");
+        std::fs::write(src.join("workflow.rs"), "pub fn shared_login() {}\n").expect("write src");
+        std::fs::write(
+            tests.join("workflow_test.rs"),
+            "pub fn shared_login_test() {}\n",
+        )
+        .expect("write tests");
+
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        let response = handle_search(
+            &indexer,
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "query": "shared_login",
+                "max_results": 10,
+                "path": "src"
+            }),
+        )
+        .await;
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("response text");
+
+        assert!(text.contains("src/workflow.rs"), "unexpected text: {text}");
+        assert!(
+            !text.contains("tests/workflow_test.rs"),
+            "unexpected text: {text}"
+        );
+    }
+    // END_test_semantic_search_accepts_filters
+
+    // START_CONTRACT_test_semantic_search_rejects_invalid_filter_type
+    // PURPOSE: Verify semantic_search reports invalid params for non-string filter values
+    // START_test_semantic_search_rejects_invalid_filter_type
+    #[tokio::test]
+    async fn test_semantic_search_rejects_invalid_filter_type() {
+        let indexer = Indexer::new(&Config::default());
+        let response = handle_search(
+            &indexer,
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "query": "shared_login",
+                "language": ["rust"]
+            }),
+        )
+        .await;
+
+        assert_eq!(response["error"]["code"], -32602);
+    }
+    // END_test_semantic_search_rejects_invalid_filter_type
 
     // START_CONTRACT_test_handle_graphrag_reports_poisoned_lock
     // PURPOSE: Verify poisoned GraphRAG locks are returned as MCP JSON-RPC errors instead of panics

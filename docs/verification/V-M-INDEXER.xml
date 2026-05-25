@@ -4,6 +4,7 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test indexer::tests::test_search_reports_poisoned_storage_lock --lib</COMMAND>
     <COMMAND>cargo test indexer::tests::test_search_expands_module_identifier_terms --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_search_in_root_with_filters_applies_metadata --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test indexer::tests::test_hybrid_search_uses_graph_call_edges_for_related_results --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test indexer::tests::test_hybrid_search_uses_multi_hop_graph_proximity --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test indexer::tests::test_index_delta_upserts_changed_files --lib -- --test-threads=8</COMMAND>
@@ -20,9 +21,10 @@
     <ASSERTION>Full re-indexing removes stale search entries for files deleted from disk.</ASSERTION>
     <ASSERTION>syn index --no-git disables .gitignore filtering for source discovery in git projects.</ASSERTION>
     <ASSERTION>Explicit-root search helpers let graph-aware indexer tests run in parallel without mutating process cwd.</ASSERTION>
+    <ASSERTION>Filtered search entrypoints apply SearchFilters before mapping stored blocks into SearchResult payloads.</ASSERTION>
     <ASSERTION>Full index rebuilds invalidate GraphBuilder cache entries for the indexed root so hybrid search and MCP GraphRAG do not serve stale graph data.</ASSERTION>
     <ASSERTION>Full index rebuilds delegate StoredBlock construction to the pipeline module while preserving deterministic search data.</ASSERTION>
     <ASSERTION>Incremental indexing upserts changed-file blocks and removes deleted-file blocks without a full project rebuild.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58,Phase-62,Phase-64</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-62,Phase-64,Phase-65</PHASE_GATE>
 </VERIFICATION>

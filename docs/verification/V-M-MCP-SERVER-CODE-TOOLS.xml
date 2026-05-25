@@ -2,6 +2,8 @@
 <VERIFICATION id="V-M-MCP-SERVER-CODE-TOOLS" module="M-MCP-SERVER-CODE-TOOLS" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test mcp::server_code_tools::tests::test_semantic_search_accepts_filters --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_code_tools::tests::test_semantic_search_rejects_invalid_filter_type --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
   </UNIT_TESTS>
@@ -10,7 +12,8 @@
     <ASSERTION>GraphRAG MCP calls return JSON-RPC error responses when the shared graph lock is poisoned.</ASSERTION>
     <ASSERTION>GraphRAG MCP calls reuse cached graph state only when the current root/index cache key still matches.</ASSERTION>
     <ASSERTION>graphrag_query accepts link_type filters and supports dependents/tracedown typed LINKS operations.</ASSERTION>
+    <ASSERTION>semantic_search accepts language/path filters and rejects incompatible filter argument types.</ASSERTION>
     <ASSERTION>lsp_hover and lsp_references handlers construct LspClient with the active runtime Config.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-62</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-62,Phase-65</PHASE_GATE>
 </VERIFICATION>

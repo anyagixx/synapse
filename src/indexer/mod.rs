@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
 // PURPOSE: Code indexer — walks, delegates pipeline block construction, stores full or delta snapshots, and searches code blocks with guarded storage health checks
-// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
+// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation, filtered search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-PIPELINE, M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS:
 //   → M-INDEXER-PIPELINE (depends) — deterministic full-index block construction
@@ -16,13 +16,14 @@
 // Indexer::storage_count — Returns loaded storage count through guarded lock access
 // Indexer::index_directory_with_gitignore — Rebuilds index snapshot with configurable gitignore handling
 // Indexer::index_delta — Applies changed and deleted file updates without a full project rebuild
+// Indexer::search_with_filters — Searches indexed blocks with optional language/path filters
 // Indexer::search_in_root — Searches indexed blocks for an explicit project root
 // Indexer::hybrid_search_in_root — Runs graph-aware hybrid search for an explicit project root
 // ensure_storage_ready — Converts storage load-health errors into actionable search errors
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.6.0 - Added incremental index_delta entrypoint]
+// LAST_CHANGE: [v3.8.0 - Added filtered search entrypoints]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
@@ -37,7 +38,7 @@ use crate::graphrag::builder::GraphBuilder;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
-use storage::Storage;
+use storage::{SearchFilters, Storage};
 
 const SIGNATURE_CONTENT_PREVIEW_LIMIT: usize = 200;
 
@@ -225,6 +226,23 @@ impl Indexer {
     }
     // END_indexer_search
 
+    // START_CONTRACT_Indexer::search_with_filters
+    // PURPOSE: BM25 search across indexed code blocks using optional metadata filters
+    // INPUTS: { query: &str }, { max_results: usize }, { filters: &SearchFilters }
+    // OUTPUTS: { anyhow::Result<Vec<SearchResult>> }
+    // START_indexer_search_with_filters
+    pub async fn search_with_filters(
+        &self,
+        query: &str,
+        max_results: usize,
+        filters: &SearchFilters,
+    ) -> anyhow::Result<Vec<SearchResult>> {
+        let root = std::env::current_dir()?;
+        self.search_in_root_with_filters(&root, query, max_results, filters)
+            .await
+    }
+    // END_indexer_search_with_filters
+
     // START_CONTRACT_Indexer::search_in_root
     // PURPOSE: BM25 search across indexed code blocks for an explicit project root
     // INPUTS: { root: &Path }, { query: &str }, { max_results: usize }
@@ -236,12 +254,30 @@ impl Indexer {
         query: &str,
         max_results: usize,
     ) -> anyhow::Result<Vec<SearchResult>> {
+        let filters = SearchFilters::default();
+        self.search_in_root_with_filters(root, query, max_results, &filters)
+            .await
+    }
+    // END_indexer_search_in_root
+
+    // START_CONTRACT_Indexer::search_in_root_with_filters
+    // PURPOSE: BM25 search across indexed code blocks for an explicit project root using optional metadata filters
+    // INPUTS: { root: &Path }, { query: &str }, { max_results: usize }, { filters: &SearchFilters }
+    // OUTPUTS: { anyhow::Result<Vec<SearchResult>> }
+    // START_indexer_search_in_root_with_filters
+    pub async fn search_in_root_with_filters(
+        &self,
+        root: &Path,
+        query: &str,
+        max_results: usize,
+        filters: &SearchFilters,
+    ) -> anyhow::Result<Vec<SearchResult>> {
         let storage_guard = self.get_storage(root)?;
         let storage = storage_guard
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
         ensure_storage_ready(storage)?;
-        let results = storage.search_with_scores(query, max_results);
+        let results = storage.search_with_scores_and_filters(query, max_results, filters);
         Ok(results
             .into_iter()
             .map(|(b, score)| SearchResult {
@@ -257,7 +293,7 @@ impl Indexer {
             })
             .collect())
     }
-    // END_indexer_search_in_root
+    // END_indexer_search_in_root_with_filters
 
     // START_CONTRACT_Indexer::hybrid_search
     // PURPOSE: Combined BM25 + vector search with deduplication
@@ -655,6 +691,36 @@ mod tests {
             .iter()
             .any(|result| result.name.contains("first_step")));
     }
+
+    // START_CONTRACT_test_search_in_root_with_filters_applies_metadata
+    // PURPOSE: Verify explicit-root index searches apply SearchFilters before returning results
+    // START_test_search_in_root_with_filters_applies_metadata
+    #[tokio::test]
+    async fn test_search_in_root_with_filters_applies_metadata() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        let tests = dir.path().join("tests");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::create_dir_all(&tests).expect("create tests");
+        std::fs::write(src.join("workflow.rs"), "pub fn shared_login() {}\n").expect("write src");
+        std::fs::write(
+            tests.join("workflow_test.rs"),
+            "pub fn shared_login_test() {}\n",
+        )
+        .expect("write tests");
+
+        let indexer = Indexer::new(&Config::default());
+        indexer.index_directory(dir.path()).await.expect("index");
+        let filters = SearchFilters::new(None, Some("src".into()), None);
+        let results = indexer
+            .search_in_root_with_filters(dir.path(), "shared_login", 10, &filters)
+            .await
+            .expect("search");
+
+        assert!(!results.is_empty());
+        assert!(results.iter().all(|result| result.path.starts_with("src/")));
+    }
+    // END_test_search_in_root_with_filters_applies_metadata
 
     // START_CONTRACT_test_index_delta_upserts_changed_files
     // PURPOSE: Verify incremental indexing replaces changed-file blocks without a full rebuild

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Added cascade MCP tool schemas]
+// LAST_CHANGE: [v3.8.0 - Added semantic_search filter schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -30,7 +30,10 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                 "type": "object",
                 "properties": {
                     "query": { "type": "string", "description": "Search query" },
-                    "max_results": { "type": "number", "default": 10 }
+                    "max_results": { "type": "number", "default": 10 },
+                    "language": { "type": "string", "description": "Optional language filter such as rust, python, typescript, or javascript" },
+                    "path": { "type": "string", "description": "Optional project-relative path prefix filter" },
+                    "path_contains": { "type": "string", "description": "Optional project-relative path substring filter" }
                 },
                 "required": ["query"]
             }
@@ -310,5 +313,30 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
     tools
 }
 // END_tool_definitions
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_test_semantic_search_schema_exposes_filters
+    // PURPOSE: Verify tools/list declares semantic_search language and path filters for MCP clients
+    // START_test_semantic_search_schema_exposes_filters
+    #[test]
+    fn test_semantic_search_schema_exposes_filters() {
+        let tools = tool_definitions();
+        let semantic_search = tools
+            .iter()
+            .find(|tool| tool["name"] == "semantic_search")
+            .expect("semantic_search tool");
+        let properties = semantic_search["inputSchema"]["properties"]
+            .as_object()
+            .expect("properties");
+
+        assert!(properties.contains_key("language"));
+        assert!(properties.contains_key("path"));
+        assert!(properties.contains_key("path_contains"));
+    }
+    // END_test_semantic_search_schema_exposes_filters
+}
 
 // END_public_api

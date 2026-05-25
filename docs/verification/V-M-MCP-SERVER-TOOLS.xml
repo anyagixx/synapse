@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-MCP-SERVER-TOOLS" module="M-MCP-SERVER-TOOLS" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test mcp::server_tools::tests::test_semantic_search_schema_exposes_filters --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -14,6 +15,7 @@
     <ASSERTION>tools/list exposes traceability_report with scope, target, and direction schema.</ASSERTION>
     <ASSERTION>tools/list exposes cascade_impact and cascade_execute schemas with cascade id and auto-apply controls.</ASSERTION>
     <ASSERTION>tools/list exposes run_test_guide and submit_test_report schemas for tester-agent workflows.</ASSERTION>
+    <ASSERTION>tools/list exposes semantic_search language, path, and path_contains filter schema fields.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13</PHASE_GATE>
+  <PHASE_GATE>Phase-13,Phase-65</PHASE_GATE>
 </VERIFICATION>

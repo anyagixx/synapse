@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-MCP-SERVER-CODE-TOOLS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
+    Module responsibility: MCP handlers for filtered code search, GraphRAG typed queries, signature views, and guarded LSP lookups
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
-      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+      - OUTPUT: Filter-aware MCP search responses and updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: semantic_search with Unicode-safe previews, graphrag_query with type filters, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
+      - Scope remains bounded to: semantic_search with Unicode-safe previews and optional filters, graphrag_query with type filters, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

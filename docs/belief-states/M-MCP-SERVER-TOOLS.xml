@@ -5,9 +5,9 @@
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-SKILLS-REGISTRY
-      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+      - OUTPUT: MCP tools/list schemas, including semantic_search filters, that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Static JSON schema definitions for tools/list including GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+      - Scope remains bounded to: Static JSON schema definitions for tools/list including semantic_search filters, GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

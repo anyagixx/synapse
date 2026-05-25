@@ -20,7 +20,7 @@
   <STEPS>
     <step-1 module="M-INDEXER-STORAGE-TYPES" status="done">Define filterable metadata fields for language, file path, and relative path matching in StoredBlock or search request types.</step-1>
     <step-2 module="M-INDEXER-STORAGE-SEARCH" status="done">Apply language and path filters before ranking so filtered semantic or lexical searches do not include out-of-scope blocks.</step-2>
-    <step-3 module="M-MCP-SERVER-TOOLS" status="planned">Extend semantic_search tool schema and validation with optional language and path filters.</step-3>
+    <step-3 module="M-MCP-SERVER-TOOLS" status="done">Extend semantic_search tool schema and validation with optional language and path filters.</step-3>
     <step-4 module="M-CLI-CONFIG-COMMANDS" status="planned">Replace trailing free-form config handling with explicit get, set, list, and unset subcommands backed by M-CONFIG persistence.</step-4>
     <step-5 module="M-CONFIG" status="planned">Expose safe typed config key lookup and update helpers for CLI use without changing runtime defaults unexpectedly.</step-5>
   </STEPS>
@@ -28,7 +28,9 @@
     <CHECK status="passed">cargo test indexer::storage_types::tests::test_search_filters --lib -- --test-threads=8</CHECK>
     <CHECK status="passed">cargo test indexer::storage::tests::test_search_filters_by_language --lib</CHECK>
     <CHECK status="passed">cargo test indexer::storage::tests::test_search_filters_by_path_prefix --lib</CHECK>
-    <CHECK status="planned">cargo test mcp::server::tests::test_semantic_search_accepts_filters --lib</CHECK>
+    <CHECK status="passed">cargo test indexer::tests::test_search_in_root_with_filters_applies_metadata --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test mcp::server_code_tools::tests::test_semantic_search --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test mcp::server_tools::tests::test_semantic_search_schema_exposes_filters --lib -- --test-threads=8</CHECK>
     <CHECK status="planned">cargo test cli::config_commands --lib</CHECK>
     <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
   </VERIFICATION>
