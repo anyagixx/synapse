@@ -4,7 +4,7 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>python3 scripts/ci_runtime_guard.py --self-test</COMMAND>
     <COMMAND>python3 scripts/ci_runtime_guard.py</COMMAND>
-    <COMMAND>cargo audit --deny warnings</COMMAND>
+    <COMMAND>cargo audit --deny warnings --ignore RUSTSEC-2024-0436</COMMAND>
     <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>SYN_RC_SKIP_SMOKE=1 SYN_RC_SKIP_FULL_RTK=1 SYN_RC_SKIP_FRESHNESS=1 bash scripts/release_candidate_dry_run.sh</COMMAND>
     <COMMAND>cargo test --test release_candidate</COMMAND>
@@ -32,7 +32,7 @@
     <ASSERTION>Release workflow rejects tag/version mismatches and publishes generated release notes.</ASSERTION>
     <ASSERTION>Release-candidate workflow checks out the requested candidate ref, validates tag/version policy, generated release notes, checksum aggregation, installer dry-run mapping, fresh Linux/macOS installer smoke, and Linux/macOS release smoke without write permissions or release publishing actions.</ASSERTION>
     <ASSERTION>Release-candidate dry-run writes GitHub Step Summary evidence for tag, commit, Cargo version, checksum policy, installer matrix, smoke status, and non-publishing status.</ASSERTION>
-    <ASSERTION>Hosted security CI runs cargo audit --deny warnings; notify 8.2.0 removes the previous transitive instant warning.</ASSERTION>
+    <ASSERTION>Hosted security CI runs cargo audit --deny warnings with a documented RUSTSEC-2024-0436 waiver for the transitive fastembed/tokenizers paste warning; notify 8.2.0 removes the previous transitive instant warning.</ASSERTION>
     <ASSERTION>Hosted platform-test gate is limited to Linux/macOS for Phase-5 while Windows packaging remains deferred.</ASSERTION>
     <ASSERTION>CI and release workflows pin Node 24-ready action majors for checkout, artifact upload, and GitHub release publishing; release artifact download uses GitHub CLI to avoid Node runtime deprecation noise.</ASSERTION>
     <ASSERTION>CI and release workflows install Rust through retrying rustup shell steps to avoid third-party Node runtime deprecation noise and absorb transient network lookup failures; hosted main CI run 26120689647 completed successfully without Node/deprecation log markers.</ASSERTION>

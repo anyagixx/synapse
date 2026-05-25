@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Applied observability toggles and retention cleanup]
+// LAST_CHANGE: [v1.2.0 - Simplified MCP metric integer conversions for release clippy gate]
 // END_CHANGE_SUMMARY
 
 // START_public_api
@@ -443,10 +443,7 @@ fn truncate_error_message(error_message: &str) -> String {
 //   -> NFR-002 (traces_to) - explicit conversion avoids integer overflow
 // START_u64_to_i64_saturating
 fn u64_to_i64_saturating(value: u64) -> i64 {
-    match i64::try_from(value) {
-        Ok(converted) => converted,
-        Err(_) => i64::MAX,
-    }
+    i64::try_from(value).unwrap_or(i64::MAX)
 }
 // END_u64_to_i64_saturating
 
@@ -458,10 +455,7 @@ fn u64_to_i64_saturating(value: u64) -> i64 {
 //   -> NFR-002 (traces_to) - explicit conversion avoids negative counters in JSON payloads
 // START_i64_to_u64
 fn i64_to_u64(value: i64) -> u64 {
-    match u64::try_from(value) {
-        Ok(converted) => converted,
-        Err(_) => 0,
-    }
+    u64::try_from(value).unwrap_or_default()
 }
 // END_i64_to_u64
 

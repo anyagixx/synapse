@@ -15,7 +15,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.18.0 - Applied observability config bounds to MCP pipeline]
+// LAST_CHANGE: [v3.19.0 - Simplified MCP elapsed millis conversion for release clippy gate]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -454,10 +454,7 @@ fn classify_mcp_response(response: &serde_json::Value) -> (McpCallStatus, String
 //   -> NFR-003 (traces_to) - MCP latency metrics use explicit bounded integer conversion
 // START_elapsed_millis_u64
 fn elapsed_millis_u64(started: Instant) -> u64 {
-    match u64::try_from(started.elapsed().as_millis()) {
-        Ok(value) => value,
-        Err(_) => u64::MAX,
-    }
+    u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
 // END_elapsed_millis_u64
 

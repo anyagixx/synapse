@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 — Initializes empty embedding metadata for new stored blocks]
+// LAST_CHANGE: [v1.3.0 — Uses is_multiple_of for release clippy gate]
 // END_CHANGE_SUMMARY
 
 use super::parser::{CodeBlock, ParserEngine};
@@ -49,7 +49,7 @@ pub fn collect_index_blocks(root: &Path, files: &[IndexFile]) -> Vec<StoredBlock
         .filter_map(|file| {
             let stored = process_index_file(root, file);
             let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
-            if done % 50 == 0 || done == total {
+            if done.is_multiple_of(50) || done == total {
                 tracing::info!(
                     "[IndexerPipeline][collect_index_blocks][PROGRESS] indexed {}/{} files",
                     done,

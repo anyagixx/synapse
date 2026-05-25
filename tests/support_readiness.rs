@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 - Guard diagnostic docs to the latest published release installer]
+// LAST_CHANGE: [v1.3.0 - Advanced diagnostic docs to v2.6.2 installer]
 // END_CHANGE_SUMMARY
 
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
@@ -134,7 +134,7 @@ fn test_support_docs_document_diagnostics() {
             "{name} must document installer diagnose mode"
         );
         assert!(
-            doc.contains("https://raw.githubusercontent.com/anyagixx/synapse/v2.5.2/install.sh"),
+            doc.contains("https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh"),
             "{name} must use the supported installer URL"
         );
     }

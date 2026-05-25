@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.24.0 - Added pipelined stdio response ID coverage]
+// LAST_CHANGE: [v2.25.0 - Removed unused mut bindings for release clippy gate]
 // END_CHANGE_SUMMARY
 
 use std::io::Write;
@@ -25,7 +25,7 @@ use syn::mcp::server::SynapseHandler;
 // PURPOSE: Verify MCP initialize followed by tools/list returns the full tool registry
 // SIDE_EFFECTS: creates in-process MCP handler
 async fn test_initialize_then_list_tools() {
-    let mut handler = SynapseHandler::new();
+    let handler = SynapseHandler::new();
     let init = handler
         .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#)
         .await
@@ -45,7 +45,7 @@ async fn test_initialize_then_list_tools() {
 // PURPOSE: Verify a representative grace tool call returns a text content envelope
 // SIDE_EFFECTS: creates in-process MCP handler
 async fn test_tools_call_grace_status_returns_text() {
-    let mut handler = SynapseHandler::new();
+    let handler = SynapseHandler::new();
     let _ = handler
         .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#)
         .await;
@@ -62,7 +62,7 @@ async fn test_tools_call_grace_status_returns_text() {
 // PURPOSE: Verify JSON-RPC notifications are consumed without emitting responses
 // SIDE_EFFECTS: creates in-process MCP handler
 async fn test_notifications_return_no_response() {
-    let mut handler = SynapseHandler::new();
+    let handler = SynapseHandler::new();
     let notification = handler
         .handle_message(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#)
         .await;

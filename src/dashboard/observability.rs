@@ -21,7 +21,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Applied observability config toggles and limits]
+// LAST_CHANGE: [v1.2.0 - Initialized disabled observability config without field reassignment]
 // END_CHANGE_SUMMARY
 
 use crate::config::ObservabilityConfig;
@@ -331,8 +331,10 @@ mod tests {
         let data_home = tempfile::tempdir().expect("data home");
         let project_home = tempfile::tempdir().expect("project home");
         let tracker = tracker_for_test(data_home.path(), project_home.path());
-        let mut observability = ObservabilityConfig::default();
-        observability.mcp_metrics_enabled = false;
+        let observability = ObservabilityConfig {
+            mcp_metrics_enabled: false,
+            ..ObservabilityConfig::default()
+        };
 
         let payload = mcp_stats_payload_with_config(&tracker, &observability).await;
 

@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added deterministic Mermaid graph rendering]
+// LAST_CHANGE: [v1.1.0 - Derived Mermaid subset default for release clippy gate]
 // END_CHANGE_SUMMARY
 
 use super::types::{CodeGraph, CodeNode, CodeRelationship};
@@ -28,26 +28,14 @@ const MAX_SYMBOLS_PER_NODE: usize = 12;
 // START_public_api
 
 // START_MermaidGraphSubset
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum MermaidGraphSubset {
     Modules,
     Symbols,
+    #[default]
     Relations,
 }
 // END_MermaidGraphSubset
-
-impl Default for MermaidGraphSubset {
-    // START_CONTRACT_MermaidGraphSubset::default
-    // PURPOSE: Return the default Mermaid graph subset
-    // OUTPUTS: { MermaidGraphSubset }
-    // LINKS:
-    //   -> UC-001 (implements) - relation graph is the default agent inspection surface
-    // START_mermaid_graph_subset_default
-    fn default() -> Self {
-        Self::Relations
-    }
-    // END_mermaid_graph_subset_default
-}
 
 // START_MermaidRenderOptions
 #[derive(Clone, Debug, PartialEq, Eq)]

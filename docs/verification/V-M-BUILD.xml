@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VERIFICATION id="V-M-BUILD" module="M-BUILD" priority="normal" status="active">
   <UNIT_TESTS>
-    <COMMAND>cargo audit --deny warnings</COMMAND>
+    <COMMAND>cargo audit --deny warnings --ignore RUSTSEC-2024-0436</COMMAND>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>cargo build --release</COMMAND>
@@ -10,7 +10,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>Cargo.toml uses notify 8.x so Cargo.lock no longer includes the unmaintained instant transitive dependency.</ASSERTION>
     <ASSERTION>build.rs tracks both Synapse legacy built-in filters and the RTK built-in filter pack for Cargo rebuilds.</ASSERTION>
-    <ASSERTION>Cargo.toml and Cargo.lock advance to the next patch version after v2.6.0 so post-release commits do not reuse the published tag line.</ASSERTION>
+    <ASSERTION>Cargo.toml and Cargo.lock advance to a fresh patch version when the current package version already has a published tag that does not point at HEAD.</ASSERTION>
     <ASSERTION>Dockerfile builds the release binary with cargo build --release --locked and does not use a no-op --no-default-features flag.</ASSERTION>
     <ASSERTION>Dockerfile builder image is aligned with the documented Rust 1.95.0 toolchain so Cargo.lock dependencies requiring edition 2024 metadata can build.</ASSERTION>
     <ASSERTION>Dockerfile copies the embedded OpenCode rules and plugin assets required by include_str! during release compilation.</ASSERTION>

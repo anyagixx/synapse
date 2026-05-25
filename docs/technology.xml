@@ -84,6 +84,10 @@
       <Description>First embedding use may download ONNX model assets and ONNX Runtime binaries into the configured cache directory.</Description>
       <Workaround>Embeddings are disabled by default for release-safe installs; enable with syn config set embedding.enabled true when local model downloads are acceptable. Indexing and search fall back to lexical behavior on provider failure.</Workaround>
     </Issue>
+    <Issue id="KI-002" component="fastembed/tokenizers/paste" version="5.13.4/0.22.2/1.0.15">
+      <Description>cargo audit reports RUSTSEC-2024-0436 because tokenizers depends on the unmaintained paste crate through fastembed 5.13.4. fastembed is currently the latest available release and the advisory is a maintenance warning, not a vulnerability.</Description>
+      <Workaround>CI runs cargo audit --deny warnings with an explicit RUSTSEC-2024-0436 waiver until fastembed releases a tokenizers line that removes paste or Synapse replaces the embedding provider.</Workaround>
+    </Issue>
   </KnownIssues>
   <DevOps>
     <CI name="GitHub Actions">

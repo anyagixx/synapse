@@ -47,7 +47,7 @@ bench:
 	cargo bench
 
 audit:
-	cargo audit
+	cargo audit --deny warnings --ignore RUSTSEC-2024-0436
 
 outdated:
 	cargo outdated

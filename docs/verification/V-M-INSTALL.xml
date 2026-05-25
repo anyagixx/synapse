@@ -19,7 +19,7 @@
     <ASSERTION>Release-candidate dry-run revalidates Linux/macOS installer mappings before any release publishing path and keeps Windows packaging deferred until artifacts and installer mapping exist.</ASSERTION>
     <ASSERTION>Installer diagnose mode reports Linux/macOS artifact mapping, independent OS and architecture support status, install directory status, required tool availability, checksum verifier status, Windows packaging deferral, and SYN_INSTALL_DIR guidance without writing files.</ASSERTION>
     <ASSERTION>Release-candidate workflow captures public installer fresh smoke evidence on Linux/macOS with a temporary SYN_INSTALL_DIR.</ASSERTION>
-    <ASSERTION>Installer default version follows the post-v2.6.0 fix line so source fallback and artifact lookup do not target stale release tags.</ASSERTION>
+    <ASSERTION>Installer default version follows the current fresh release line so source fallback and artifact lookup do not target stale release tags.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-59</PHASE_GATE>
 </VERIFICATION>

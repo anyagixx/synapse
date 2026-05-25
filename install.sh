@@ -25,12 +25,12 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.25.0 - Advanced default version to v2.6.1 post-release fix line]
+# LAST_CHANGE: [v2.26.0 - Advanced default version to v2.6.2 release line]
 # END_CHANGE_SUMMARY
 
 set -eu
 
-DEFAULT_VERSION="v2.6.1"
+DEFAULT_VERSION="v2.6.2"
 VERSION="$DEFAULT_VERSION"
 VERSION_EXPLICIT="0"
 MODE="install"
