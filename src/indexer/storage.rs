@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER-STORAGE
-// PURPOSE: JSON block storage facade with load-health reporting, snapshot persistence, BM25, and vector search APIs
-// SCOPE: Storage struct, StoredBlock, JSON persistence, full snapshot replacement, load-health reporting, search API orchestration
+// PURPOSE: JSON block storage facade with load-health reporting, snapshot and delta persistence, BM25, and vector search APIs
+// SCOPE: Storage struct, StoredBlock, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, search API orchestration
 // DEPENDS: M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES
 // LINKS: N/A
 
@@ -9,11 +9,13 @@
 // StoredBlock — Re-exported serializable code block for JSON storage
 // Storage — JSON-backed block store with load-health, BM25, and vector search
 // replace_all_blocks — Replaces the full index snapshot and removes stale file entries
+// upsert_file_blocks — Replaces one file's indexed blocks without a full snapshot rewrite
+// remove_file_blocks — Removes one deleted file's indexed blocks without a full snapshot rewrite
 // load_blocks — Reads and validates stored JSON blocks
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.1.0 — Exposed deterministic storage path for GraphRAG cache signatures]
+// LAST_CHANGE: [v3.2.0 — Added per-file delta upsert and removal operations]
 // END_CHANGE_SUMMARY
 
 use super::storage_search::{cosine_similarity, expand_query_terms, ngram_vectorize, score_block};
@@ -150,6 +152,64 @@ impl Storage {
         self.flush()
     }
     // END_storage_store_blocks
+
+    // START_CONTRACT_Storage::upsert_file_blocks
+    // PURPOSE: Replace all blocks for one file path and persist without rewriting unrelated files
+    // INPUTS: { path: &str — project-relative source path }, { new_blocks: Vec<StoredBlock> — replacement blocks for path }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: flushes to blocks.json
+    // START_storage_upsert_file_blocks
+    pub fn upsert_file_blocks(
+        &mut self,
+        path: &str,
+        new_blocks: Vec<StoredBlock>,
+    ) -> anyhow::Result<()> {
+        if let Some(mismatched) = new_blocks.iter().find(|block| block.path != path) {
+            anyhow::bail!(
+                "cannot upsert blocks for {}: block {} belongs to {}",
+                path,
+                mismatched.id,
+                mismatched.path
+            );
+        }
+        self.blocks.retain(|block| block.path != path);
+        self.blocks.extend(new_blocks);
+        self.flush()
+    }
+    // END_storage_upsert_file_blocks
+
+    // START_CONTRACT_Storage::remove_file_blocks
+    // PURPOSE: Remove all stored blocks for one deleted file path and persist
+    // INPUTS: { path: &str — project-relative source path }
+    // OUTPUTS: { anyhow::Result<usize> — number of removed blocks }
+    // SIDE_EFFECTS: flushes to blocks.json
+    // START_storage_remove_file_blocks
+    pub fn remove_file_blocks(&mut self, path: &str) -> anyhow::Result<usize> {
+        let before = self.blocks.len();
+        self.blocks.retain(|block| block.path != path);
+        let removed = before.saturating_sub(self.blocks.len());
+        self.flush()?;
+        Ok(removed)
+    }
+    // END_storage_remove_file_blocks
+
+    // START_CONTRACT_Storage::remove_files_blocks
+    // PURPOSE: Remove stored blocks for multiple deleted file paths and persist once
+    // INPUTS: { paths: &[String] — project-relative source paths }
+    // OUTPUTS: { anyhow::Result<usize> — number of removed blocks }
+    // SIDE_EFFECTS: flushes to blocks.json
+    // START_storage_remove_files_blocks
+    pub fn remove_files_blocks(&mut self, paths: &[String]) -> anyhow::Result<usize> {
+        let removed_paths: std::collections::HashSet<&str> =
+            paths.iter().map(String::as_str).collect();
+        let before = self.blocks.len();
+        self.blocks
+            .retain(|block| !removed_paths.contains(block.path.as_str()));
+        let removed = before.saturating_sub(self.blocks.len());
+        self.flush()?;
+        Ok(removed)
+    }
+    // END_storage_remove_files_blocks
 
     // START_CONTRACT_Storage::replace_all_blocks
     // PURPOSE: Replace the complete stored block snapshot after a full project index
@@ -393,6 +453,77 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(s.count(), 2);
+    }
+
+    #[test]
+    fn test_upsert_file_blocks_replaces_empty_file() {
+        let mut s = tmp_storage();
+        s.store_blocks(vec![
+            make_block("a:1", "src/lib.rs", "old", "fn", "fn old() {}"),
+            make_block("b:1", "src/other.rs", "keep", "fn", "fn keep() {}"),
+        ])
+        .unwrap();
+
+        s.upsert_file_blocks("src/lib.rs", Vec::new()).unwrap();
+
+        assert_eq!(s.count(), 1);
+        assert!(s.search("old", 10).is_empty());
+        assert_eq!(s.search("keep", 10).len(), 1);
+    }
+
+    #[test]
+    fn test_upsert_file_blocks_rejects_mismatched_paths() {
+        let mut s = tmp_storage();
+        let err = s
+            .upsert_file_blocks(
+                "src/lib.rs",
+                vec![make_block(
+                    "a:1",
+                    "src/other.rs",
+                    "other",
+                    "fn",
+                    "fn other() {}",
+                )],
+            )
+            .expect_err("mismatched path should fail");
+
+        assert!(err.to_string().contains("belongs to src/other.rs"));
+    }
+
+    #[test]
+    fn test_remove_file_blocks_removes_deleted_file_only() {
+        let mut s = tmp_storage();
+        s.store_blocks(vec![
+            make_block("a:1", "src/deleted.rs", "deleted", "fn", "fn deleted() {}"),
+            make_block("b:1", "src/keep.rs", "keep", "fn", "fn keep() {}"),
+        ])
+        .unwrap();
+
+        let removed = s.remove_file_blocks("src/deleted.rs").unwrap();
+
+        assert_eq!(removed, 1);
+        assert_eq!(s.count(), 1);
+        assert!(s.search("deleted", 10).is_empty());
+        assert_eq!(s.search("keep", 10).len(), 1);
+    }
+
+    #[test]
+    fn test_remove_files_blocks_flushes_once_for_deleted_paths() {
+        let mut s = tmp_storage();
+        s.store_blocks(vec![
+            make_block("a:1", "src/a.rs", "alpha", "fn", "fn alpha() {}"),
+            make_block("b:1", "src/b.rs", "beta", "fn", "fn beta() {}"),
+            make_block("c:1", "src/c.rs", "gamma", "fn", "fn gamma() {}"),
+        ])
+        .unwrap();
+
+        let removed = s
+            .remove_files_blocks(&["src/a.rs".to_string(), "src/b.rs".to_string()])
+            .unwrap();
+
+        assert_eq!(removed, 2);
+        assert_eq!(s.count(), 1);
+        assert_eq!(s.search("gamma", 10).len(), 1);
     }
 
     #[test]
