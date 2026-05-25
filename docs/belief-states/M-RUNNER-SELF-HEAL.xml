@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-RUNNER-SELF-HEAL" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, and escalates when retry budget is exhausted
+    Key data flows:
+      - INPUT: persisted RunRecord id, GRACE verification profile, retry budget, and current project root
+      - PROCESSING: run profile-aware verification, collect failing groups, convert failures into debugger diagnoses, persist SelfHealPlan JSON in run metadata, and update run status
+      - OUTPUT: SelfHealResult, updated docs/runs run JSON, provenance event, blocked diagnosis state, or escalation state
+    Critical invariants:
+      - self-heal iterations are capped by RunGatePolicy retry_budget or the safe default
+      - verification and diagnosis run from sync actions without nesting a Tokio runtime
+      - diagnosis metadata is durable and can be reloaded across MCP/action calls
+      - exhausted retry budget escalates instead of looping indefinitely
+  IMPLEMENTATION_STRATEGY:
+    Approach: keep self-heal as a focused runtime submodule, store plans in RunRecord metadata, and use explicit action/MCP entry points for one bounded iteration at a time
+    Complexity_areas: async verification from sync action queues, metadata compatibility, retry exhaustion, avoiding useless loops when no fix was applied
+    Patterns_applied: explicit flow, typed links, bounded blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - SelfHealPlan round-trips through run metadata
+    - one failed verification pass stores diagnoses and blocks for an explicit fix
+    - a second pass after budget exhaustion escalates the run
+    - MCP self_heal validates run_id and returns a structured result
+  RISKS_ACKNOWLEDGED:
+    - Phase-70 diagnoses and persists context but does not yet apply source-code patches automatically
+    - later phases must separate proposed fixes from applied fixes before enabling deeper autonomous repair
+</BELIEF_STATE>

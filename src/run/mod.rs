@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
-// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, action queues, scenarios, and outcomes for controlled execution
-// SCOPE: Run state model, task model, step model, gate model, review model, replay model, action queue executor, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
-// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-TRACKING
+// PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, action queues, self-heal plans, scenarios, and outcomes for controlled execution
+// SCOPE: Run state model, task model, step model, gate model, review model, replay model, action queue executor, self-heal metadata, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
+// DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-RUNNER-SELF-HEAL, M-TRACKING
 // LINKS:
 //   → M-SKILLS (depends) - future execution bridge
 //   → UC-002 (implements) - verify and review bounded autonomous changes
@@ -17,18 +17,19 @@
 // RunGate — Persisted gate requirement
 // RunReviewDecision — Persisted human review decision for blocked runs
 // RunReplay — Replayable run timeline assembled from persisted state
-// RunActionPlan / RunScenarioResult — End-to-end bounded action and scenario results
+// RunActionPlan / SelfHealPlan / RunScenarioResult — End-to-end bounded action, self-heal, and scenario results
 // RunOutcome — Persisted run outcome
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.4.0 — Added durable action queue executor module]
+// LAST_CHANGE: [v0.5.0 - Added bounded self-heal module hook and retry budget foundation]
 // END_CHANGE_SUMMARY
 
 pub mod actions;
 mod replay;
 mod review;
 pub mod scenario;
+pub mod self_heal;
 
 pub use replay::{RunReplay, RunReplayEvent};
 pub use review::{RunReviewDecision, RunReviewStatus};
@@ -497,7 +498,7 @@ impl RunManager {
             module_id: module_id.to_string(),
             required_gates: gates,
             stop_on_block: true,
-            retry_budget: 1,
+            retry_budget: 3,
             escalation_target: "human-review".into(),
         }
     }

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
-// PURPOSE: Run action queue - plans and executes bounded run control actions with replayable evidence
-// SCOPE: Action model, durable action plan persistence, next-action execution, bounded loops, retry handoff, and replay action results
-// DEPENDS: M-RUNNER, M-TRACKING
+// PURPOSE: Run action queue - plans and executes bounded run control actions with replayable evidence and self-heal handoff
+// SCOPE: Action model, durable action plan persistence, next-action execution, bounded loops, self-heal handoff, retry handoff, and replay action results
+// DEPENDS: M-RUNNER, M-RUNNER-SELF-HEAL, M-TRACKING
 // LINKS:
 //   -> V-M-RUNNER (verified_by) - action queue and executor tests
 //   -> UC-002 (implements) - bounded run control from objective to action/replay loop
@@ -16,11 +16,12 @@
 // RunActionLoopResult - Result of bounded action loop execution
 // plan_run_actions - Build and persist next actions for a run
 // execute_next_action - Apply exactly one safe next action
+// self_heal action - Diagnose verification failures through bounded self-heal runtime
 // run_action_loop - Apply safe actions until terminal, blocked, or budget exhausted
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added durable run action queue executor]
+// LAST_CHANGE: [v1.1.0 - Added bounded SelfHeal action planning and execution]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -40,6 +41,7 @@ pub enum RunActionKind {
     CompleteStep,
     AwaitReview,
     Resume,
+    SelfHeal,
     RetryRecovery,
     Replay,
 }
@@ -211,6 +213,17 @@ impl RunManager {
                 self.complete_current_step(run_id, action.evidence_ref.as_deref())?
             }
             RunActionKind::Resume => self.resume_run(run_id)?,
+            RunActionKind::SelfHeal => {
+                let record = self.load(run_id)?;
+                let profile = record
+                    .metadata
+                    .get("verify_profile")
+                    .map(String::as_str)
+                    .unwrap_or("strict")
+                    .to_string();
+                self.execute_self_heal(run_id, &profile)?;
+                self.load(run_id)?
+            }
             RunActionKind::RetryRecovery => {
                 self.attempt_recovery(run_id)?;
                 self.load(run_id)?
@@ -295,6 +308,16 @@ fn plan_actions_for_record(record: &RunRecord, now: &str) -> Vec<RunAction> {
             now,
         ),
         RunStatus::Running => {
+            if should_self_heal(record) {
+                return vec![RunAction::pending(
+                    "self-heal",
+                    RunActionKind::SelfHeal,
+                    "Run bounded self-heal for failing verification context",
+                    Some("action://self-heal".into()),
+                    record.blocked_reason.clone(),
+                    now,
+                )];
+            }
             let step = record.steps.get(record.current_step);
             let name = step
                 .map(|step| step.name.as_str())
@@ -309,7 +332,16 @@ fn plan_actions_for_record(record: &RunRecord, now: &str) -> Vec<RunAction> {
             )
         }
         RunStatus::Blocked => {
-            if matches!(
+            if should_self_heal(record) {
+                RunAction::pending(
+                    "self-heal",
+                    RunActionKind::SelfHeal,
+                    "Run bounded self-heal for blocked verification failure",
+                    Some("action://self-heal".into()),
+                    record.blocked_reason.clone(),
+                    now,
+                )
+            } else if matches!(
                 record.latest_review_status(),
                 Some(RunReviewStatus::Approved)
             ) {
@@ -332,14 +364,27 @@ fn plan_actions_for_record(record: &RunRecord, now: &str) -> Vec<RunAction> {
                 )
             }
         }
-        RunStatus::Failed => RunAction::pending(
-            "retry-recovery",
-            RunActionKind::RetryRecovery,
-            "Attempt bounded recovery if retry budget remains",
-            Some("action://retry-recovery".into()),
-            record.blocked_reason.clone(),
-            now,
-        ),
+        RunStatus::Failed => {
+            if should_self_heal(record) {
+                RunAction::pending(
+                    "self-heal",
+                    RunActionKind::SelfHeal,
+                    "Run bounded self-heal for failed verification run",
+                    Some("action://self-heal".into()),
+                    record.blocked_reason.clone(),
+                    now,
+                )
+            } else {
+                RunAction::pending(
+                    "retry-recovery",
+                    RunActionKind::RetryRecovery,
+                    "Attempt bounded recovery if retry budget remains",
+                    Some("action://retry-recovery".into()),
+                    record.blocked_reason.clone(),
+                    now,
+                )
+            }
+        }
         RunStatus::Completed | RunStatus::Escalated => RunAction::pending(
             "replay-run",
             RunActionKind::Replay,
@@ -351,6 +396,43 @@ fn plan_actions_for_record(record: &RunRecord, now: &str) -> Vec<RunAction> {
     };
     vec![action]
 }
+
+// START_CONTRACT_should_self_heal
+// PURPOSE: Decide whether the next safe run action should enter bounded self-heal
+// INPUTS: { record: &RunRecord }
+// OUTPUTS: { bool }
+// START_should_self_heal
+fn should_self_heal(record: &RunRecord) -> bool {
+    if record
+        .metadata
+        .get("self_heal_diagnosis_ready")
+        .is_some_and(|value| value == "true")
+    {
+        return false;
+    }
+    if record
+        .metadata
+        .get("self_heal_requested")
+        .is_some_and(|value| value == "true")
+        || record
+            .metadata
+            .get("suggested_action")
+            .is_some_and(|value| value == "self_heal")
+    {
+        return true;
+    }
+    record
+        .blocked_reason
+        .as_ref()
+        .or_else(|| {
+            record
+                .outcome
+                .as_ref()
+                .and_then(|outcome| outcome.blocked_reason.as_ref())
+        })
+        .is_some_and(|reason| reason.to_ascii_lowercase().contains("verification"))
+}
+// END_should_self_heal
 
 impl RunAction {
     fn pending(
@@ -468,4 +550,22 @@ mod tests {
             .iter()
             .any(|execution| execution.action.kind == RunActionKind::Resume));
     }
+
+    #[test]
+    // START_CONTRACT_verification_blocked_run_plans_self_heal_action
+    // PURPOSE: Verify blocked verification runs enter SelfHeal before human-review waiting
+    // START_verification_blocked_run_plans_self_heal_action
+    fn verification_blocked_run_plans_self_heal_action() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = RunManager::new(root.path());
+        let mut record = ready_run();
+        record.status = RunStatus::Blocked;
+        record.blocked_reason = Some("verification gate blocked".into());
+        manager.save(&record).unwrap();
+
+        let plan = manager.plan_run_actions(&record.run_id).unwrap();
+
+        assert_eq!(plan.actions[0].kind, RunActionKind::SelfHeal);
+    }
+    // END_verification_blocked_run_plans_self_heal_action
 }

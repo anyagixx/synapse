@@ -1,16 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG Mermaid options, LSP content override options, GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG Mermaid options, LSP content override options, GRACE profiles, self_heal, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
-// LINKS: docs/modules/M-MCP-SERVER.xml
+// LINKS:
+//   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
+//   -> UC-002 (implements) - exposes verified AI engineering workflows to MCP clients
+//   -> NFR-003 (traces_to) - schema discovery reduces repeated context reconstruction
 
 // START_MODULE_MAP
 // tool_definitions — Builds the tools/list payload
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 - Added LSP content override schema options]
+// LAST_CHANGE: [v4.1.0 - Added self_heal tool schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -239,6 +242,19 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
             }
         }),
         serde_json::json!({
+            "name": "self_heal",
+            "description": "Run one bounded self-heal iteration for a persisted autonomous run. Verifies the project, stores diagnoses in run metadata, and escalates when retry budget is exhausted.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "run_id": { "type": "string", "description": "Persisted run id from docs/runs/<run_id>.json" },
+                    "profile": { "type": "string", "description": "GRACE profile: lite | balanced | strict", "default": "strict" },
+                    "project_root": { "type": "string", "description": "Optional project root; defaults to current working directory" }
+                },
+                "required": ["run_id"]
+            }
+        }),
+        serde_json::json!({
             "name": "token_savings",
             "description": "View token savings analytics — total commands, tokens saved, average savings %, estimated cost saved.",
             "inputSchema": { "type": "object", "properties": {} }
@@ -389,6 +405,26 @@ mod tests {
         }
     }
     // END_test_lsp_schema_exposes_content_override
+
+    // START_CONTRACT_test_self_heal_schema_exposes_run_id_and_profile
+    // PURPOSE: Verify tools/list declares self_heal run_id and profile arguments
+    // START_test_self_heal_schema_exposes_run_id_and_profile
+    #[test]
+    fn test_self_heal_schema_exposes_run_id_and_profile() {
+        let tools = tool_definitions();
+        let self_heal = tools
+            .iter()
+            .find(|tool| tool["name"] == "self_heal")
+            .expect("self_heal tool");
+        let properties = self_heal["inputSchema"]["properties"]
+            .as_object()
+            .expect("properties");
+
+        assert!(properties.contains_key("run_id"));
+        assert!(properties.contains_key("profile"));
+        assert_eq!(self_heal["inputSchema"]["required"][0], "run_id");
+    }
+    // END_test_self_heal_schema_exposes_run_id_and_profile
 }
 
 // END_public_api

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-RUNNER-SELF-HEAL" module="M-RUNNER-SELF-HEAL" priority="critical" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test run::self_heal --lib -- --test-threads=8</COMMAND>
+    <TEST>self-heal plan round-trips through run metadata</TEST>
+    <TEST>self-heal executes one diagnosis iteration and escalates after retry budget exhaustion</TEST>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>SelfHealPlan is persisted inside the durable RunRecord metadata under a stable key.</ASSERTION>
+    <ASSERTION>Self-heal verification runs with explicit GRACE profile selection.</ASSERTION>
+    <ASSERTION>Failing verification groups produce SelfHealDiagnosis entries without losing failed check details.</ASSERTION>
+    <ASSERTION>Self-heal stops and escalates when retry budget is exhausted.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-70</PHASE_GATE>
+</VERIFICATION>

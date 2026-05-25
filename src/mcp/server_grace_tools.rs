@@ -1,9 +1,12 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
-// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, log analysis, belief extraction, compression, tracking, and skills
-// SCOPE: profile-aware verify_project/review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, submit_test_report, token_savings with adapter/session stats, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
-// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
-// LINKS: docs/modules/M-MCP-SERVER.xml
+// PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, self-heal, log analysis, belief extraction, compression, tracking, and skills
+// SCOPE: profile-aware verify_project/review_code, project_status, self_heal, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, run_test_guide, submit_test_report, token_savings with adapter/session stats, compress_text, refresh_project, language-aware suggest_contract, grace_* handlers
+// DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-RUNNER-SELF-HEAL, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
+// LINKS:
+//   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
+//   -> UC-002 (implements) - exposes verified AI engineering workflows to MCP clients
+//   -> NFR-002 (traces_to) - MCP handlers return explicit structured failures
 
 // START_MODULE_MAP
 // handle_verify — Runs profile-aware MyGRACE verification and formats failure packets
@@ -18,6 +21,7 @@
 // handle_traceability_report — Builds end-to-end traceability matrix and updates docs/traceability-index.xml
 // handle_run_test_guide — Runs a natural-language tester-agent guide and persists report artifacts
 // handle_submit_test_report — Delivers a tester-agent failure report summary to a developer-agent recipient
+// handle_self_heal — Runs one bounded self-heal iteration for a persisted run
 // handle_gain — Returns token savings stats
 // handle_compress — Compresses input text
 // handle_refresh — Reports or fixes MyGRACE drift
@@ -25,7 +29,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 - Added adapter and session details to token_savings output]
+// LAST_CHANGE: [v2.24.0 - Added self_heal MCP handler]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result, suggest_fix, FailurePacket};
@@ -654,6 +658,55 @@ pub(crate) async fn handle_submit_test_report(
 }
 // END_handle_submit_test_report
 
+// START_CONTRACT_handle_self_heal
+// PURPOSE: Execute one bounded self-heal iteration for a persisted autonomous run
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: updates docs/runs/<run_id>.json metadata and may escalate exhausted runs
+// START_handle_self_heal
+pub(crate) async fn handle_self_heal(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let run_id = match args["run_id"].as_str() {
+        Some(value) if !value.trim().is_empty() => value.trim(),
+        _ => return error(id, -32602, "Missing 'run_id' parameter"),
+    };
+    let profile = args["profile"].as_str().unwrap_or("strict").trim();
+    if GraceProfile::from_name(profile).is_none() {
+        return error(
+            id,
+            -32602,
+            format!(
+                "Unsupported GRACE profile '{}'. Use one of: lite, balanced, strict.",
+                profile
+            ),
+        );
+    }
+    let root = match args["project_root"].as_str() {
+        Some(path) if !path.trim().is_empty() => PathBuf::from(path.trim()),
+        _ => match std::env::current_dir() {
+            Ok(root) => root,
+            Err(e) => return error(id, -32603, format!("cwd error: {}", e)),
+        },
+    };
+    let manager = crate::run::RunManager::new(root);
+    match manager.execute_self_heal(run_id, profile) {
+        Ok(result_report) => {
+            let text = serde_json::to_string_pretty(&result_report).unwrap_or_default();
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": text}],
+                    "isError": false
+                }),
+            )
+        }
+        Err(e) => error(id, -32603, format!("Self-heal error: {}", e)),
+    }
+}
+// END_handle_self_heal
+
 // START_CONTRACT_handle_gain
 // PURPOSE: Execute token_savings and return tracking statistics
 // INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
@@ -1191,6 +1244,21 @@ mod tests {
         assert!(text.contains("sample-001"));
     }
     // END_test_handle_submit_test_report_highlights_log_refs
+
+    #[tokio::test(flavor = "current_thread")]
+    // START_CONTRACT_test_handle_self_heal
+    // PURPOSE: Verify self_heal validates required run_id before touching project state
+    // START_test_handle_self_heal
+    async fn test_handle_self_heal() {
+        let response = handle_self_heal(Some(serde_json::json!(1)), &serde_json::json!({})).await;
+
+        assert_eq!(response["error"]["code"], -32602);
+        assert!(response["error"]["message"]
+            .as_str()
+            .expect("message")
+            .contains("run_id"));
+    }
+    // END_test_handle_self_heal
 }
 
 // END_public_api

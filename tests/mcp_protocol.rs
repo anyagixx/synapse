@@ -2,10 +2,10 @@
 // MODULE_ID: M-TESTS-MCP-PROTOCOL
 // PURPOSE: MCP protocol tests — verify initialize, tools/list shape, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
 // SCOPE: Direct handler tests and binary stdio protocol behavior
-// DEPENDS: M-MCP-SERVER, M-SKILLS, M-CAPABILITIES
+// DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
-// test_initialize_then_list_tools — MCP handler lists all 39 tools after initialize
+// test_initialize_then_list_tools — MCP handler lists all 40 tools after initialize
 // test_tools_list_contains_grace_and_core_tools — Tool list contains representative core and grace tools
 // test_tools_call_grace_status_returns_text — Representative grace tool call returns MCP content envelope
 // test_concurrent_requests_keep_response_ids — Pipelined stdio requests preserve JSON-RPC response IDs
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.25.0 - Removed unused mut bindings for release clippy gate]
+// LAST_CHANGE: [v2.26.0 - Updated MCP protocol registry count for self_heal]
 // END_CHANGE_SUMMARY
 
 use std::io::Write;
@@ -37,7 +37,7 @@ async fn test_initialize_then_list_tools() {
         .await
         .expect("tools/list request should produce a response");
     let tools = list["result"]["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 39);
+    assert_eq!(tools.len(), 40);
 }
 
 #[tokio::test]

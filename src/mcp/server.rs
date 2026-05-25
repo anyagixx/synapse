@@ -311,6 +311,7 @@ impl SynapseHandler {
                     "submit_test_report" => {
                         server_grace_tools::handle_submit_test_report(id, args).await
                     }
+                    "self_heal" => server_grace_tools::handle_self_heal(id, args).await,
                     "token_savings" => server_grace_tools::handle_gain(id, args).await,
                     "compress_text" => server_grace_tools::handle_compress(id, args).await,
                     "refresh_project" => server_grace_tools::handle_refresh(id, args).await,

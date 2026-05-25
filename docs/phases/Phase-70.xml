@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-70" status="active">
+<PHASE id="Phase-70" status="done">
   <NAME>UPGRADE_2 A1 Self-Heal Foundation</NAME>
   <GOAL>Implement bounded self-heal as the core autonomous verify, diagnose, fix, and re-verify loop.</GOAL>
   <SOURCE_PLAN>UPGRADE_2/A1-self-heal-loop.md</SOURCE_PLAN>
@@ -14,14 +14,16 @@
     <FLOW id="DF-70-2">MCP self_heal exposes the same bounded loop to agents without losing failure context between tool calls.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-RUNNER-SELF-HEAL" status="planned">Create SelfHealPlan, SelfHealDiagnosis, SelfHealResult, and plan metadata persistence helpers.</step-1>
-    <step-2 module="M-RUNNER" status="planned">Add RunActionKind::SelfHeal and async-safe execution path for self-heal iterations.</step-2>
-    <step-3 module="M-MCP-SERVER-GRACE-TOOLS" status="planned">Add self_heal handler and wire it through MCP request routing.</step-3>
-    <step-4 module="M-MCP-SERVER-TOOLS" status="planned">Expose self_heal tool schema with run_id and profile arguments.</step-4>
+    <step-1 module="M-RUNNER-SELF-HEAL" status="done">Created SelfHealPlan, SelfHealDiagnosis, SelfHealResult, and run metadata persistence helpers.</step-1>
+    <step-2 module="M-RUNNER" status="done">Added RunActionKind::SelfHeal and async-safe execution path for self-heal iterations.</step-2>
+    <step-3 module="M-MCP-SERVER-GRACE-TOOLS" status="done">Added self_heal handler and wired it through MCP request routing.</step-3>
+    <step-4 module="M-MCP-SERVER-TOOLS" status="done">Exposed self_heal tool schema with run_id and profile arguments.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test run::self_heal --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test mcp::server_grace_tools::tests::test_handle_self_heal --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test run::self_heal --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test run::actions::tests --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test mcp::server_grace_tools::tests::test_handle_self_heal --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test mcp::server_tools::tests::test_self_heal_schema_exposes_run_id_and_profile --lib -- --test-threads=8</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-70-1">Self-heal must be capped by retry budget to avoid infinite repair loops.</RISK>

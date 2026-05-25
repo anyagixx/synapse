@@ -87,6 +87,7 @@
     <VERIFICATION id="V-M-PROXY-ROUTER" module="M-PROXY-ROUTER" path="docs/verification/V-M-PROXY-ROUTER.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-PROXY-RUNNER" module="M-PROXY-RUNNER" path="docs/verification/V-M-PROXY-RUNNER.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-RUNNER" module="M-RUNNER" path="docs/verification/V-M-RUNNER.xml" priority="critical" status="active" />
+    <VERIFICATION id="V-M-RUNNER-SELF-HEAL" module="M-RUNNER-SELF-HEAL" path="docs/verification/V-M-RUNNER-SELF-HEAL.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-RTK-FULL-PARITY" module="M-RTK-FULL-PARITY" path="docs/verification/V-M-RTK-FULL-PARITY.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-SKILLS" module="M-SKILLS" path="docs/verification/V-M-SKILLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-SKILLS-ENGINE" module="M-SKILLS-ENGINE" path="docs/verification/V-M-SKILLS-ENGINE.xml" priority="normal" status="active" />
