@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.3.0 - Advanced diagnostic docs to v2.6.2 installer]
+// LAST_CHANGE: [v1.4.0 - Added macOS Intel deferred-packaging diagnostics]
 // END_CHANGE_SUMMARY
 
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
@@ -55,6 +55,7 @@ fn test_installer_diagnose_reports_supported_matrix() {
             "tool.curl=".to_string(),
             "tool.tar=".to_string(),
             "tool.sha256=".to_string(),
+            "macos_intel_packaging=deferred".to_string(),
             "windows_packaging=deferred".to_string(),
             "support_hint=Use SYN_INSTALL_DIR".to_string(),
         ];
@@ -92,6 +93,32 @@ fn test_installer_diagnose_reports_os_and_arch_failures() {
             "diagnose output missing {marker}: {stdout}"
         );
     }
+
+    let macos_intel = std::process::Command::new("sh")
+        .arg("install.sh")
+        .arg("--diagnose")
+        .env("SYN_INSTALL_UNAME_S", "Darwin")
+        .env("SYN_INSTALL_UNAME_M", "x86_64")
+        .output()
+        .expect("install.sh diagnose should execute");
+
+    assert!(
+        macos_intel.status.success(),
+        "diagnose mode must not fail for macOS Intel"
+    );
+    let stdout = String::from_utf8_lossy(&macos_intel.stdout);
+    for marker in [
+        "os_status=ok",
+        "arch_status=ok",
+        "platform_status=unsupported-platform",
+        "artifact=none",
+        "macos_intel_packaging=deferred",
+    ] {
+        assert!(
+            stdout.contains(marker),
+            "macOS Intel diagnose output missing {marker}: {stdout}"
+        );
+    }
 }
 
 #[test]
@@ -113,8 +140,8 @@ fn test_installer_unsupported_platform_guidance_is_actionable() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(
-        combined.contains("Linux and macOS are supported")
-            && combined.contains("Windows packaging is planned later")
+        combined.contains("Supported prebuilt hosts: Linux x86_64/aarch64 and macOS arm64")
+            && combined.contains("macOS Intel and Windows packaging are deferred")
             && combined.contains("Run: sh install.sh --diagnose"),
         "unsupported platform guidance is not actionable: {combined}"
     );
@@ -162,7 +189,7 @@ fn test_support_docs_do_not_add_windows_install_claims() {
         );
     }
     assert!(
-        SUPPORT_DOC.contains("Windows packaging is planned later"),
-        "support docs must state Windows packaging is deferred"
+        SUPPORT_DOC.contains("macOS Intel and Windows packaging are deferred"),
+        "support docs must state macOS Intel and Windows packaging are deferred"
     );
 }

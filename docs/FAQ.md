@@ -26,11 +26,10 @@ curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh 
 Prebuilt release artifacts:
 - Linux x86_64
 - Linux aarch64
-- macOS x86_64
 - macOS arm64
 
-Source fallback via Cargo remains available on Linux/macOS when a matching prebuilt artifact cannot be downloaded. Before a newly bumped default tag is published, the default installer can build the repository `main` branch instead of failing on the pending tag.
-Windows packaging is planned later and is not part of the current Linux/macOS release matrix.
+Source fallback via Cargo remains available on supported Linux/macOS hosts when a matching prebuilt artifact cannot be downloaded. Before a newly bumped default tag is published, the default installer can build the repository `main` branch instead of failing on the pending tag.
+macOS Intel and Windows packaging are deferred and are not part of the current release matrix.
 
 **How do I diagnose install failures?**
 ```bash

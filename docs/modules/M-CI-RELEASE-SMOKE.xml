@@ -2,7 +2,7 @@
 <MODULE id="M-CI-RELEASE-SMOKE" type="UTILITY" status="active">
   <NAME>M-CI-RELEASE-SMOKE</NAME>
   <PURPOSE>Release/install smoke gate — validates release tag freshness, packaged Synapse checksum, full RTK parity readiness, layout, and executable behavior</PURPOSE>
-  <SCOPE>Linux/macOS target-aware release build, release tag versus Cargo.toml guard, stale-tag freshness guard, tarball packaging, SHA256 checksum verification, extraction, executable check, Cargo.toml version smoke, lightweight RTK release gate coverage, and full RTK release gate coverage for local or pinned public source-derived parity, all-agent hooks, route previews, discover/learn, economics, clippy, verify, and review</SCOPE>
+  <SCOPE>Supported Linux x86_64/aarch64 and macOS arm64 target-aware release build, release tag versus Cargo.toml guard, stale-tag freshness guard, tarball packaging, SHA256 checksum verification, extraction, executable check, Cargo.toml version smoke, lightweight RTK release gate coverage, and full RTK release gate coverage for local or pinned public source-derived parity, all-agent hooks, route previews, discover/learn, economics, clippy, verify, and review</SCOPE>
   <FILES>
     <FILE>scripts/release_install_smoke.sh</FILE>
     <FILE>scripts/release_version_guard.sh</FILE>

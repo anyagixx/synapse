@@ -2,7 +2,7 @@
 <MODULE id="M-INSTALL" type="CORE_LOGIC" status="active">
   <NAME>M-INSTALL</NAME>
   <PURPOSE>Installer script — installs Synapse from GitHub release artifacts or locked cargo source fallback</PURPOSE>
-  <SCOPE>Linux/macOS platform detection, dry-run artifact mapping, precise OS/architecture support diagnostics, actionable failure guidance, safe release tarball download, SHA256 verification, local binary install, locked cargo fallback from CI source ref, selected release tag, or default main branch during a pre-tag release-candidate window, and post-install smoke check</SCOPE>
+  <SCOPE>Supported Linux x86_64/aarch64 and macOS arm64 platform detection, dry-run artifact mapping, precise OS/architecture support diagnostics including deferred macOS Intel and Windows packaging, actionable failure guidance, safe release tarball download, SHA256 verification, local binary install, locked cargo fallback from CI source ref, selected release tag, or default main branch during a pre-tag release-candidate window, and post-install smoke check</SCOPE>
   <FILES>
     <FILE>install.sh</FILE>
   </FILES>

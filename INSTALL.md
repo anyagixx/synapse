@@ -1,6 +1,6 @@
 # Installation
 
-Synapse currently ships prebuilt release archives for Linux and macOS. Windows packaging is deferred.
+Synapse currently ships prebuilt release archives for Linux x86_64/aarch64 and macOS arm64. macOS Intel and Windows packaging are deferred.
 
 ## Quick Install
 
@@ -25,7 +25,7 @@ curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh 
 sh /tmp/synapse-install.sh --diagnose
 ```
 
-The report shows OS and architecture support status, the detected Linux/macOS artifact, install directory status, required tools, checksum verifier availability, and the source fallback prerequisites. Use `SYN_INSTALL_DIR="$HOME/.local/bin"` when the default install path is not writable.
+The report shows OS and architecture support status, the detected supported Linux/macOS artifact, install directory status, required tools, checksum verifier availability, and the source fallback prerequisites. Use `SYN_INSTALL_DIR="$HOME/.local/bin"` when the default install path is not writable.
 
 ## Supported Prebuilt Archives
 
@@ -33,8 +33,9 @@ The report shows OS and architecture support status, the detected Linux/macOS ar
 |----------|-----------------|
 | Linux x86_64 | `syn-x86_64-unknown-linux-gnu.tar.gz` |
 | Linux aarch64 | `syn-aarch64-unknown-linux-gnu.tar.gz` |
-| macOS x86_64 | `syn-x86_64-apple-darwin.tar.gz` |
 | macOS arm64 | `syn-aarch64-apple-darwin.tar.gz` |
+
+macOS Intel packaging is deferred until the transitive ONNX Runtime dependency used by local embeddings has a compatible hosted release path.
 
 ## Source Install
 

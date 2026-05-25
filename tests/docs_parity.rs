@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit/cc-economics flags, public docs, install docs, Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit/cc-economics flags, public docs, install docs, supported Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-CLI, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
 // LINKS: docs/phases/Phase-27.xml
 
@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.4.0 - Advanced public install URL expectation to v2.6.2]
+// LAST_CHANGE: [v5.5.0 - Aligned release parity checks with supported v2.6.2 artifact matrix]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -50,10 +50,9 @@ const WORKFLOW_DOC: &str = include_str!("../docs/WORKFLOW.md");
 const SUPPORT_DOC: &str = include_str!("../docs/SUPPORT.md");
 const INSTALL_COMMAND: &str =
     "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.2/install.sh | sh";
-const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
+const EXPECTED_PREBUILT_ARTIFACTS: [&str; 3] = [
     "syn-x86_64-unknown-linux-gnu.tar.gz",
     "syn-aarch64-unknown-linux-gnu.tar.gz",
-    "syn-x86_64-apple-darwin.tar.gz",
     "syn-aarch64-apple-darwin.tar.gz",
 ];
 // START_CONTRACT_public_docs
@@ -488,12 +487,7 @@ fn test_platform_claims_match_release_truth() {
         FAQ.contains("Prebuilt release artifacts:"),
         "FAQ must introduce the Linux/macOS prebuilt matrix"
     );
-    for platform in [
-        "Linux x86_64",
-        "Linux aarch64",
-        "macOS x86_64",
-        "macOS arm64",
-    ] {
+    for platform in ["Linux x86_64", "Linux aarch64", "macOS arm64"] {
         assert!(
             FAQ.contains(platform),
             "FAQ must state {} support",
@@ -501,8 +495,8 @@ fn test_platform_claims_match_release_truth() {
         );
     }
     assert!(
-        FAQ.contains("Windows packaging is planned later and is not part of the current Linux/macOS release matrix."),
-        "FAQ must state Windows is intentionally deferred"
+        FAQ.contains("macOS Intel and Windows packaging are deferred and are not part of the current release matrix."),
+        "FAQ must state macOS Intel and Windows are intentionally deferred"
     );
 }
 
@@ -629,7 +623,6 @@ fn test_release_matrix_declares_linux_macos_targets() {
     for target in [
         "x86_64-unknown-linux-gnu",
         "aarch64-unknown-linux-gnu",
-        "x86_64-apple-darwin",
         "aarch64-apple-darwin",
     ] {
         assert!(
@@ -638,12 +631,7 @@ fn test_release_matrix_declares_linux_macos_targets() {
             target
         );
     }
-    for runner in [
-        "ubuntu-latest",
-        "ubuntu-24.04-arm",
-        "macos-15-intel",
-        "macos-latest",
-    ] {
+    for runner in ["ubuntu-latest", "ubuntu-24.04-arm", "macos-latest"] {
         assert!(
             RELEASE_WORKFLOW.contains(runner) && CI_WORKFLOW.contains(runner),
             "release and CI workflows must include runner {}",
@@ -703,7 +691,6 @@ fn test_installer_dry_run_maps_linux_macos_artifacts() {
     let cases = [
         ("Linux", "x86_64", "syn-x86_64-unknown-linux-gnu.tar.gz"),
         ("Linux", "aarch64", "syn-aarch64-unknown-linux-gnu.tar.gz"),
-        ("Darwin", "x86_64", "syn-x86_64-apple-darwin.tar.gz"),
         ("Darwin", "arm64", "syn-aarch64-apple-darwin.tar.gz"),
     ];
     for (system, machine, artifact) in cases {
@@ -728,4 +715,25 @@ fn test_installer_dry_run_maps_linux_macos_artifacts() {
             stdout
         );
     }
+
+    let unsupported_output = std::process::Command::new("sh")
+        .arg("install.sh")
+        .arg("--dry-run")
+        .env("SYN_INSTALL_UNAME_S", "Darwin")
+        .env("SYN_INSTALL_UNAME_M", "x86_64")
+        .output()
+        .expect("install.sh dry-run should execute for unsupported macOS Intel");
+    assert!(
+        !unsupported_output.status.success(),
+        "macOS Intel dry-run must fail until a supported release artifact exists"
+    );
+    let unsupported = format!(
+        "{}{}",
+        String::from_utf8_lossy(&unsupported_output.stdout),
+        String::from_utf8_lossy(&unsupported_output.stderr)
+    );
+    assert!(
+        unsupported.contains("macOS Intel packaging is deferred"),
+        "macOS Intel dry-run must explain the deferred packaging status: {unsupported}"
+    );
 }

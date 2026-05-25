@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.14.0 — Isolated cache-sensitive GraphRAG tests from parallel runner eviction]
+// LAST_CHANGE: [v2.15.0 — Stabilized cache keys after SQLite metadata changes during graph builds]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile, TypedLink};
@@ -82,9 +82,13 @@ impl GraphBuilder {
         }
 
         let graph = Self::build_uncached(root)?;
+        let cache_key = GraphBuildCacheKey::for_root(root).unwrap_or(cache_key);
         let mut guard = cache
             .write()
             .map_err(|_| anyhow::anyhow!("GraphBuilder cache lock poisoned"))?;
+        if let Some(graph) = guard.get(&cache_key) {
+            return Ok(graph.clone());
+        }
         if guard.len() >= GRAPH_BUILD_CACHE_MAX_ENTRIES {
             if let Some(first_key) = guard.keys().next().cloned() {
                 guard.remove(&first_key);

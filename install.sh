@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-INSTALL
 # PURPOSE: Installer script — installs Synapse from GitHub release artifacts or cargo source fallback
-# SCOPE: Linux/macOS platform detection, safe release tarball download, SHA256 verification, local binary install, cargo tag/source-ref/main fallback, dry-run mapping, precise support diagnostics, and post-install smoke check
+# SCOPE: Supported Linux x86_64/aarch64 and macOS arm64 platform detection, safe release tarball download, SHA256 verification, local binary install, cargo tag/source-ref/main fallback, dry-run mapping, precise support diagnostics, and post-install smoke check
 # DEPENDS: M-BUILD
 # LINKS: install.sh, .github/workflows/release.yml
 
@@ -25,7 +25,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v2.26.0 - Advanced default version to v2.6.2 release line]
+# LAST_CHANGE: [v2.27.0 - Marked Intel macOS prebuilt installation as deferred for v2.6.2]
 # END_CHANGE_SUMMARY
 
 set -eu
@@ -70,7 +70,6 @@ Environment:
 Supported prebuilt artifacts:
   syn-x86_64-unknown-linux-gnu.tar.gz
   syn-aarch64-unknown-linux-gnu.tar.gz
-  syn-x86_64-apple-darwin.tar.gz
   syn-aarch64-apple-darwin.tar.gz
 
 Diagnostics:
@@ -118,7 +117,7 @@ parse_args() {
 # END_parse_args
 
 # START_CONTRACT_detect_platform
-# PURPOSE: Map Linux/macOS uname output to release artifact naming fields
+# PURPOSE: Map supported Linux/macOS uname output to release artifact naming fields
 # OUTPUTS: { ARCH and OS variables for release artifact selection }
 # SIDE_EFFECTS: exits on unsupported operating systems or architectures
 # START_detect_platform
@@ -130,7 +129,7 @@ detect_platform() {
         Linux)  OS="unknown-linux-gnu" ;;
         Darwin) OS="apple-darwin" ;;
         *)
-            echo "Unsupported OS '${uname_s}'. Linux and macOS are supported; Windows packaging is planned later."
+            echo "Unsupported OS '${uname_s}'. Supported prebuilt hosts: Linux x86_64/aarch64 and macOS arm64. macOS Intel and Windows packaging are deferred."
             echo "Run: sh install.sh --diagnose"
             exit 1
             ;;
@@ -140,11 +139,17 @@ detect_platform() {
         x86_64|amd64) ARCH="x86_64" ;;
         aarch64|arm64) ARCH="aarch64" ;;
         *)
-            echo "Unsupported architecture '${uname_m}'. Supported: x86_64, aarch64/arm64."
+            echo "Unsupported architecture '${uname_m}'. Supported prebuilt hosts: Linux x86_64/aarch64 and macOS arm64."
             echo "Run: sh install.sh --diagnose"
             exit 1
             ;;
     esac
+
+    if [ "$uname_s" = "Darwin" ] && [ "$ARCH" = "x86_64" ]; then
+        echo "Unsupported platform '${uname_s}/${uname_m}'. Supported prebuilt hosts: Linux x86_64/aarch64 and macOS arm64; macOS Intel packaging is deferred until ONNX Runtime artifacts are available."
+        echo "Run: sh install.sh --diagnose"
+        exit 1
+    fi
 }
 # END_detect_platform
 
@@ -181,7 +186,7 @@ print_command_status() {
 # END_print_command_status
 
 # START_CONTRACT_print_diagnostics
-# PURPOSE: Print a no-write Linux/macOS support report for install troubleshooting.
+# PURPOSE: Print a no-write supported Linux/macOS support report for install troubleshooting.
 # OUTPUTS: { stdout key-value diagnostic report }
 # SIDE_EFFECTS: reads uname, PATH, and local tool availability
 # START_print_diagnostics
@@ -215,6 +220,10 @@ print_diagnostics() {
             fi
             ;;
     esac
+
+    if [ "$platform_status" = "ok" ] && [ "$uname_s" = "Darwin" ] && [ "$diag_arch" = "x86_64" ]; then
+        platform_status="unsupported-platform"
+    fi
 
     install_dir="$(resolve_install_dir)"
     install_parent="$(dirname "$install_dir")"
@@ -253,6 +262,7 @@ print_diagnostics() {
     else
         echo "tool.sha256=missing"
     fi
+    echo "macos_intel_packaging=deferred"
     echo "windows_packaging=deferred"
     echo "support_hint=Use SYN_INSTALL_DIR for a writable install path, install curl/tar for release downloads, or install Rust and git for source fallback."
 }

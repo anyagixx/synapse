@@ -35,7 +35,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>Release version guard rejects tags that differ from v&lt;Cargo.toml package.version&gt; before release packaging.</ASSERTION>
     <ASSERTION>Release freshness guard rejects stale already-published tags and requires exact tag checkout in release context.</ASSERTION>
-    <ASSERTION>Release smoke builds with locked dependencies, packages installer-facing Linux/macOS target tarballs, verifies checksum sidecars, extracts artifacts, and asserts packaged syn --version equals Cargo.toml package.version on runnable host targets.</ASSERTION>
+    <ASSERTION>Release smoke builds with locked dependencies, packages installer-facing supported Linux/macOS target tarballs, verifies checksum sidecars, extracts artifacts, and asserts packaged syn --version equals Cargo.toml package.version on runnable host targets.</ASSERTION>
     <ASSERTION>RTK release gate checks parity inventory, representative filters, rewrite outputs, isolated hook install/audit, discover/learn diagnostics, gain economics, verify, and full review.</ASSERTION>
     <ASSERTION>Full RTK release gate requires source-derived full standalone parity from a local or pinned public RTK source, missing-total 0, all-agent hook install/audit trust, streaming route previews, ecosystem route previews, measured discover/learn/session/economics analytics, clippy, verify, and full review.</ASSERTION>
     <ASSERTION>Phase-63 release gate runs after CLI dispatch cleanup and Dockerfile release-build cleanup complete.</ASSERTION>

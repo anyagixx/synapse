@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.34.0 - Added tracking-backed RTK adoption analytics surfaces]
+// LAST_CHANGE: [v2.35.0 - Aligned supported release platforms with v2.6.2 hosted matrix]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -464,7 +464,6 @@ pub const REVIEW_MODES: &[&str] = &["scoped", "wave-audit", "full"];
 pub const PLATFORMS: &[&str] = &[
     "x86_64-unknown-linux-gnu",
     "aarch64-unknown-linux-gnu",
-    "x86_64-apple-darwin",
     "aarch64-apple-darwin",
 ];
 

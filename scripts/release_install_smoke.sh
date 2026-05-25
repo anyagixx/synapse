@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI-RELEASE-SMOKE
 # PURPOSE: Release/install smoke gate validates the packaged syn binary before release.
-# SCOPE: Linux/macOS release build, tarball packaging, SHA256 checksum verification, extraction, executable check, and Cargo.toml version smoke.
+# SCOPE: Supported Linux/macOS release build, tarball packaging, SHA256 checksum verification, extraction, executable check, and Cargo.toml version smoke.
 # DEPENDS: M-BUILD, M-INSTALL
 # LINKS: .github/workflows/ci.yml, .github/workflows/release.yml, install.sh
 
@@ -13,7 +13,7 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.4.0 - Migrated semantic LINKS to typed format]
+# LAST_CHANGE: [v1.5.0 - Removed unsupported Intel macOS release-smoke default target]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_release_install_smoke
@@ -33,7 +33,6 @@ host_arch="$(uname -m)"
 case "${host_os}:${host_arch}" in
     Linux:x86_64|Linux:amd64) default_target="x86_64-unknown-linux-gnu" ;;
     Linux:aarch64|Linux:arm64) default_target="aarch64-unknown-linux-gnu" ;;
-    Darwin:x86_64) default_target="x86_64-apple-darwin" ;;
     Darwin:arm64|Darwin:aarch64) default_target="aarch64-apple-darwin" ;;
     *) echo "[CI][release_install_smoke][SKIP] Unsupported release smoke host ${host_os}/${host_arch}"; exit 0 ;;
 esac

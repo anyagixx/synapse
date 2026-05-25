@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.5.0 - Accounted for local freshness skip in non-release RC tests]
+// LAST_CHANGE: [v1.6.0 - Aligned release-candidate artifact assertions with supported macOS arm64 matrix]
 // END_CHANGE_SUMMARY
 
 const RELEASE_CANDIDATE_WORKFLOW: &str = include_str!("../.github/workflows/release-candidate.yml");
@@ -116,7 +116,6 @@ fn test_release_candidate_script_checks_release_truth() {
     for artifact in [
         "syn-x86_64-unknown-linux-gnu.tar.gz",
         "syn-aarch64-unknown-linux-gnu.tar.gz",
-        "syn-x86_64-apple-darwin.tar.gz",
         "syn-aarch64-apple-darwin.tar.gz",
     ] {
         assert!(
@@ -249,7 +248,7 @@ fn test_release_candidate_step_summary_is_written() {
         "Commit",
         "Cargo version",
         "SHA256SUMS aggregation and verification checked",
-        "Installer matrix: Linux x86_64, Linux aarch64, macOS x86_64, macOS arm64",
+        "Installer matrix: Linux x86_64, Linux aarch64, macOS arm64",
         "Full RTK gate: skipped by SYN_RC_SKIP_FULL_RTK",
         "Publishing: not performed by this dry-run",
     ] {

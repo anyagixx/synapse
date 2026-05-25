@@ -11,8 +11,8 @@
   </MODULE_REFS>
   <ACCEPTANCE>
     <CHECK>Phase-4 and Phase-5 marked done in plan-index</CHECK>
-    <CHECK>Release workflow publishes syn-x86_64-unknown-linux-gnu.tar.gz, syn-aarch64-unknown-linux-gnu.tar.gz, syn-x86_64-apple-darwin.tar.gz, and syn-aarch64-apple-darwin.tar.gz with SHA256SUMS</CHECK>
-    <CHECK>Installer dry-run maps Linux/macOS x86_64 and arm64 hosts to platform-specific artifacts and verifies checksums before extraction</CHECK>
+    <CHECK>Release workflow publishes syn-x86_64-unknown-linux-gnu.tar.gz, syn-aarch64-unknown-linux-gnu.tar.gz, and syn-aarch64-apple-darwin.tar.gz with SHA256SUMS</CHECK>
+    <CHECK>Installer dry-run maps supported Linux x86_64/aarch64 and macOS arm64 hosts to platform-specific artifacts and verifies checksums before extraction</CHECK>
     <CHECK>Docs platform claims match the release matrix and source fallback reality</CHECK>
     <CHECK>Local and hosted smoke gates validate artifact layout for each practical CI target</CHECK>
     <CHECK>Full local CI gate passes</CHECK>

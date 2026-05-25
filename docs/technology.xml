@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Technology project="Synapse" version="1.1" updated="2026-05-25">
+<Technology project="Synapse" version="1.2" updated="2026-05-25">
   <Stack>
     <Language name="Rust" version="1.95.0">
       <Runtime name="native-binary" version="1.95.0" />
@@ -87,6 +87,10 @@
     <Issue id="KI-002" component="fastembed/tokenizers/paste" version="5.13.4/0.22.2/1.0.15">
       <Description>cargo audit reports RUSTSEC-2024-0436 because tokenizers depends on the unmaintained paste crate through fastembed 5.13.4. fastembed is currently the latest available release and the advisory is a maintenance warning, not a vulnerability.</Description>
       <Workaround>CI runs cargo audit --deny warnings with an explicit RUSTSEC-2024-0436 waiver until fastembed releases a tokenizers line that removes paste or Synapse replaces the embedding provider.</Workaround>
+    </Issue>
+    <Issue id="KI-003" component="ort/x86_64-apple-darwin" version="2.0.0-rc.12">
+      <Description>ort does not publish a prebuilt ONNX Runtime binary for the hosted x86_64-apple-darwin target used by the v2.6.2 release workflow.</Description>
+      <Workaround>v2.6.2 publishes prebuilt artifacts for Linux x86_64, Linux aarch64, and macOS arm64 only. macOS Intel packaging remains deferred until the ONNX Runtime dependency has a compatible hosted release path or Synapse ships a separate build strategy.</Workaround>
     </Issue>
   </KnownIssues>
   <DevOps>
