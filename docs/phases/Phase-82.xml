@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-82" status="active">
+<PHASE id="Phase-82" status="done">
   <NAME>UPGRADE_3 Integration Gate</NAME>
   <GOAL>Run the full UPGRADE_3 gate, sync MyGRACE indexes, and prove the new test infrastructure is release-safe.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/README.md</SOURCE_PLAN>
@@ -20,23 +20,23 @@
     <FLOW id="DF-82-2">MyGRACE indexes, module shards, verification shards, and source contracts remain synchronized after implementation.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-TEST-HARNESS" status="pending">Run full Rust verification gates.</step-1>
-    <step-2 module="M-CLI-TEST-COMMANDS" status="pending">Run each syn test subcommand and verify output contracts.</step-2>
-    <step-3 module="M-TEST-HARNESS" status="pending">Run syn refresh, syn verify --ci, syn review --mode scoped --ci, and syn status.</step-3>
-    <step-4 module="M-TEST-HARNESS" status="pending">Mark UPGRADE_3 phases complete only after all planned gates pass.</step-4>
+    <step-1 module="M-TEST-HARNESS" status="done">Run full Rust verification gates.</step-1>
+    <step-2 module="M-CLI-TEST-COMMANDS" status="done">Run each syn test subcommand and verify output contracts.</step-2>
+    <step-3 module="M-TEST-HARNESS" status="done">Run syn refresh, syn verify --ci, syn review --mode scoped --ci, and syn status.</step-3>
+    <step-4 module="M-TEST-HARNESS" status="done">Mark UPGRADE_3 phases complete only after all planned gates pass.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo fmt --all -- --check</CHECK>
-    <CHECK status="planned">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
-    <CHECK status="planned">cargo test --all-targets -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test e2e --scenario tests/e2e/scenarios/full-cycle.toml</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test mcp</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test coverage --json</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test contract tests/e2e/contract-tests/module-change.toml</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test resilience</CHECK>
-    <CHECK status="planned">cargo run --quiet -- verify --ci</CHECK>
-    <CHECK status="planned">cargo run --quiet -- refresh</CHECK>
-    <CHECK status="planned">cargo run --quiet -- status</CHECK>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo test --all-targets -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test e2e --scenario tests/e2e/scenarios/full-cycle.toml</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test mcp</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test coverage --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test contract tests/e2e/contract-tests/module-change.toml</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test resilience</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh</CHECK>
+    <CHECK status="passed">cargo run --quiet -- status</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-82-1">Full gate can become too slow for every local iteration; keep a CI-safe subset and a full release gate separated.</RISK>
