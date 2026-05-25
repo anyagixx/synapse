@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-RESPONSE
-// PURPOSE: MCP JSON-RPC response helpers, token-budget trimming, and verification failure suggestions
-// SCOPE: JSON-RPC result/error/text envelopes, response trim options/metadata, text token-budget trimming, generic terse text previews, FailurePacket, suggest_fix
+// PURPOSE: MCP JSON-RPC response helpers, token-budget trimming, cache metadata, and verification failure suggestions
+// SCOPE: JSON-RPC result/error/text envelopes, cache metadata/ETags, response trim options/metadata, text token-budget trimming, generic terse text previews, FailurePacket, suggest_fix
 // DEPENDS: M-UTILS
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server response envelopes
@@ -11,6 +11,15 @@
 // result — Wrap a successful MCP tool payload in JSON-RPC format
 // error — Wrap an MCP error in JSON-RPC format
 // text_result — Wrap MCP text content with response economy metadata
+// CacheMetadata — Observable MCP cache hint metadata
+// CacheMetadata::to_json — Serializes cache metadata
+// cache_ttl_for_tool — Returns short-lived cache TTLs for cache-hinted tools
+// is_tool_cacheable — Checks whether a tool can satisfy _if_none_match
+// cache_key_for_tool_call — Builds deterministic cache keys from normalized tool arguments
+// compute_etag — Builds stable weak ETags from normalized request/response JSON
+// result_with_cache — Wrap a result and attach _meta.cache metadata
+// with_cache_metadata — Attach _meta.cache metadata to an existing JSON-RPC result
+// not_modified_result — Build a minimal _not_modified JSON-RPC result
 // ResponseStyle — Handler output verbosity style
 // ResponseStyle::parse — Parses style arguments
 // ResponseTrimOptions — max_tokens and style options shared by MCP handlers
@@ -25,10 +34,11 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.5.0 - Added shared text_result response economy envelope]
+// LAST_CHANGE: [v2.6.0 - Added MCP cache metadata and stable ETag helpers]
 // END_CHANGE_SUMMARY
 
 use crate::utils::{estimate_tokens, truncate_chars};
+use serde_json::{Map, Value};
 use std::fmt::Display;
 
 // START_public_api
@@ -105,6 +115,268 @@ pub(crate) fn text_result(
     )
 }
 // END_text_result
+
+// START_CacheMetadata
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct CacheMetadata {
+    pub(crate) etag: String,
+    pub(crate) ttl_secs: u64,
+}
+// END_CacheMetadata
+
+impl CacheMetadata {
+    // START_CONTRACT_CacheMetadata::new
+    // PURPOSE: Build cache metadata from a stable ETag and short-lived TTL
+    // INPUTS: { etag: String }, { ttl_secs: u64 }
+    // OUTPUTS: { CacheMetadata }
+    // START_cache_metadata_new
+    pub(crate) fn new(etag: String, ttl_secs: u64) -> Self {
+        Self { etag, ttl_secs }
+    }
+    // END_cache_metadata_new
+
+    // START_CONTRACT_CacheMetadata::to_json
+    // PURPOSE: Serialize cache metadata into the MCP _meta.cache response shape
+    // OUTPUTS: { serde_json::Value }
+    // START_cache_metadata_to_json
+    pub(crate) fn to_json(&self) -> Value {
+        serde_json::json!({
+            "etag": self.etag,
+            "ttl_secs": self.ttl_secs
+        })
+    }
+    // END_cache_metadata_to_json
+}
+
+// START_CONTRACT_cache_ttl_for_tool
+// PURPOSE: Return bounded TTLs for tools whose repeated responses can safely use MCP cache hints
+// INPUTS: { tool_name: &str }
+// OUTPUTS: { u64 }
+// START_cache_ttl_for_tool
+pub(crate) fn cache_ttl_for_tool(tool_name: &str) -> u64 {
+    match tool_name {
+        "project_status" => 15,
+        "graphrag_query" => 120,
+        "traceability_report" => 30,
+        "view_signatures" => 120,
+        "lsp_hover" | "lsp_references" => 60,
+        _ => 0,
+    }
+}
+// END_cache_ttl_for_tool
+
+// START_CONTRACT_is_tool_cacheable
+// PURPOSE: Check whether a tool may satisfy _if_none_match from the in-memory ETag cache
+// INPUTS: { tool_name: &str }
+// OUTPUTS: { bool }
+// START_is_tool_cacheable
+pub(crate) fn is_tool_cacheable(tool_name: &str) -> bool {
+    cache_ttl_for_tool(tool_name) > 0
+}
+// END_is_tool_cacheable
+
+// START_CONTRACT_cache_key_for_tool_call
+// PURPOSE: Build a deterministic cache key from tool name and normalized arguments
+// INPUTS: { tool_name: &str }, { args: &serde_json::Value }
+// OUTPUTS: { String }
+// START_cache_key_for_tool_call
+pub(crate) fn cache_key_for_tool_call(tool_name: &str, args: &Value) -> String {
+    format!(
+        "{tool_name}:{}",
+        canonical_json(&normalized_cache_args(args))
+    )
+}
+// END_cache_key_for_tool_call
+
+// START_CONTRACT_compute_etag
+// PURPOSE: Build a stable weak ETag from normalized tool arguments and result payload
+// INPUTS: { tool_name: &str }, { args: &serde_json::Value }, { result_payload: &serde_json::Value }
+// OUTPUTS: { String }
+// START_compute_etag
+pub(crate) fn compute_etag(tool_name: &str, args: &Value, result_payload: &Value) -> String {
+    let mut hash = FNV_OFFSET_BASIS;
+    update_hash(&mut hash, tool_name.as_bytes());
+    update_hash(&mut hash, b"\0");
+    update_hash(
+        &mut hash,
+        canonical_json(&normalized_cache_args(args)).as_bytes(),
+    );
+    update_hash(&mut hash, b"\0");
+    update_hash(
+        &mut hash,
+        canonical_json(&normalized_cache_result(result_payload)).as_bytes(),
+    );
+    format!("W/\"syn-{hash:016x}\"")
+}
+// END_compute_etag
+
+// START_CONTRACT_result_with_cache
+// PURPOSE: Build a JSON-RPC result response and attach _meta.cache metadata
+// INPUTS: { id: Option<serde_json::Value> }, { result_payload: serde_json::Value }, { tool_name: &str }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_result_with_cache
+pub(crate) fn result_with_cache(
+    id: Option<Value>,
+    result_payload: Value,
+    tool_name: &str,
+    args: &Value,
+) -> Value {
+    let mut response = result(id, result_payload);
+    with_cache_metadata(&mut response, tool_name, args);
+    response
+}
+// END_result_with_cache
+
+// START_CONTRACT_with_cache_metadata
+// PURPOSE: Attach _meta.cache metadata to an existing JSON-RPC result response
+// INPUTS: { response: &mut serde_json::Value }, { tool_name: &str }, { args: &serde_json::Value }
+// OUTPUTS: { Option<CacheMetadata> }
+// START_with_cache_metadata
+pub(crate) fn with_cache_metadata(
+    response: &mut Value,
+    tool_name: &str,
+    args: &Value,
+) -> Option<CacheMetadata> {
+    let result_payload = response.get("result")?.clone();
+    let metadata = CacheMetadata::new(
+        compute_etag(tool_name, args, &result_payload),
+        cache_ttl_for_tool(tool_name),
+    );
+    attach_cache_metadata(response, &metadata)?;
+    Some(metadata)
+}
+// END_with_cache_metadata
+
+// START_CONTRACT_not_modified_result
+// PURPOSE: Build a minimal JSON-RPC result for a matching _if_none_match request
+// INPUTS: { id: Option<serde_json::Value> }, { metadata: &CacheMetadata }
+// OUTPUTS: { serde_json::Value }
+// START_not_modified_result
+pub(crate) fn not_modified_result(id: Option<Value>, metadata: &CacheMetadata) -> Value {
+    result(
+        id,
+        serde_json::json!({
+            "_not_modified": true,
+            "_meta": {
+                "cache": metadata.to_json()
+            }
+        }),
+    )
+}
+// END_not_modified_result
+
+// START_CONTRACT_attach_cache_metadata
+// PURPOSE: Insert _meta.cache into a JSON-RPC result object while preserving existing _meta fields
+// INPUTS: { response: &mut serde_json::Value }, { metadata: &CacheMetadata }
+// OUTPUTS: { Option<()> }
+// START_attach_cache_metadata
+fn attach_cache_metadata(response: &mut Value, metadata: &CacheMetadata) -> Option<()> {
+    let result_object = response.get_mut("result")?.as_object_mut()?;
+    let meta = result_object
+        .entry("_meta")
+        .or_insert_with(|| Value::Object(Map::new()));
+    if !meta.is_object() {
+        *meta = Value::Object(Map::new());
+    }
+    meta.as_object_mut()?
+        .insert("cache".to_string(), metadata.to_json());
+    Some(())
+}
+// END_attach_cache_metadata
+
+// START_CONTRACT_normalized_cache_args
+// PURPOSE: Remove transport-only cache hints before computing cache keys or ETags
+// INPUTS: { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_normalized_cache_args
+fn normalized_cache_args(args: &Value) -> Value {
+    let mut normalized = args.clone();
+    if let Some(object) = normalized.as_object_mut() {
+        object.remove("_if_none_match");
+    }
+    normalized
+}
+// END_normalized_cache_args
+
+// START_CONTRACT_normalized_cache_result
+// PURPOSE: Remove previous cache metadata before hashing a result payload
+// INPUTS: { result_payload: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_normalized_cache_result
+fn normalized_cache_result(result_payload: &Value) -> Value {
+    let mut normalized = result_payload.clone();
+    if let Some(object) = normalized.as_object_mut() {
+        if let Some(meta) = object.get_mut("_meta").and_then(Value::as_object_mut) {
+            meta.remove("cache");
+        }
+        if object
+            .get("_meta")
+            .and_then(Value::as_object)
+            .is_some_and(Map::is_empty)
+        {
+            object.remove("_meta");
+        }
+    }
+    normalized
+}
+// END_normalized_cache_result
+
+// START_CONTRACT_canonical_json
+// PURPOSE: Serialize JSON deterministically by sorting object keys recursively
+// INPUTS: { value: &serde_json::Value }
+// OUTPUTS: { String }
+// START_canonical_json
+fn canonical_json(value: &Value) -> String {
+    match value {
+        Value::Object(object) => {
+            let mut keys = object.keys().collect::<Vec<_>>();
+            keys.sort();
+            let body = keys
+                .into_iter()
+                .map(|key| format!("{}:{}", json_string(key), canonical_json(&object[key])))
+                .collect::<Vec<_>>()
+                .join(",");
+            format!("{{{body}}}")
+        }
+        Value::Array(items) => {
+            let body = items
+                .iter()
+                .map(canonical_json)
+                .collect::<Vec<_>>()
+                .join(",");
+            format!("[{body}]")
+        }
+        Value::String(text) => json_string(text),
+        _ => value.to_string(),
+    }
+}
+// END_canonical_json
+
+// START_CONTRACT_json_string
+// PURPOSE: Serialize a string using JSON escaping for deterministic canonical output
+// INPUTS: { text: &str }
+// OUTPUTS: { String }
+// START_json_string
+fn json_string(text: &str) -> String {
+    serde_json::to_string(text).unwrap_or_else(|_| "\"\"".to_string())
+}
+// END_json_string
+
+const FNV_OFFSET_BASIS: u64 = 0xcbf29ce484222325;
+const FNV_PRIME: u64 = 0x00000100000001b3;
+
+// START_CONTRACT_update_hash
+// PURPOSE: Apply FNV-1a bytes to the running stable cache hash
+// INPUTS: { hash: &mut u64 }, { bytes: &[u8] }
+// OUTPUTS: { () }
+// START_update_hash
+fn update_hash(hash: &mut u64, bytes: &[u8]) {
+    for byte in bytes {
+        *hash ^= u64::from(*byte);
+        *hash = hash.wrapping_mul(FNV_PRIME);
+    }
+}
+// END_update_hash
 
 // START_ResponseStyle
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -504,6 +776,98 @@ mod tests {
             .is_some_and(|text| text.contains("[terse:")));
     }
     // END_test_text_result_applies_terse_and_tokens
+
+    // START_CONTRACT_test_cache_metadata_helpers_attach_cache_shape
+    // PURPOSE: Verify result_with_cache attaches ETag and TTL metadata while normalizing transport hints
+    // START_test_cache_metadata_helpers_attach_cache_shape
+    #[test]
+    fn test_cache_metadata_helpers_attach_cache_shape() {
+        let args = serde_json::json!({
+            "b": 2,
+            "a": 1,
+            "_if_none_match": "W/\"stale\""
+        });
+
+        let response = result_with_cache(
+            Some(serde_json::json!(7)),
+            serde_json::json!({"content": [{"type": "text", "text": "ok"}]}),
+            "project_status",
+            &args,
+        );
+
+        assert_eq!(response["id"], 7);
+        assert_eq!(
+            response["result"]["_meta"]["cache"]["ttl_secs"],
+            cache_ttl_for_tool("project_status")
+        );
+        assert!(response["result"]["_meta"]["cache"]["etag"]
+            .as_str()
+            .is_some_and(|etag| etag.starts_with("W/\"syn-")));
+        assert!(is_tool_cacheable("project_status"));
+        assert!(!is_tool_cacheable("semantic_search"));
+    }
+    // END_test_cache_metadata_helpers_attach_cache_shape
+
+    // START_CONTRACT_test_cache_keys_and_etags_are_stable
+    // PURPOSE: Verify cache keys and ETags are stable across object key order and ignored cache hints
+    // START_test_cache_keys_and_etags_are_stable
+    #[test]
+    fn test_cache_keys_and_etags_are_stable() {
+        let args_a = serde_json::json!({"b": 2, "a": 1});
+        let args_b = serde_json::json!({"_if_none_match": "old", "a": 1, "b": 2});
+        let result_a = serde_json::json!({"z": false, "a": [1, 2]});
+        let result_b = serde_json::json!({
+            "a": [1, 2],
+            "z": false,
+            "_meta": {"cache": {"etag": "old", "ttl_secs": 99}}
+        });
+
+        assert_eq!(
+            cache_key_for_tool_call("graphrag_query", &args_a),
+            cache_key_for_tool_call("graphrag_query", &args_b)
+        );
+        assert_eq!(
+            compute_etag("graphrag_query", &args_a, &result_a),
+            compute_etag("graphrag_query", &args_b, &result_b)
+        );
+    }
+    // END_test_cache_keys_and_etags_are_stable
+
+    // START_CONTRACT_test_volatile_tools_report_zero_ttl
+    // PURPOSE: Verify volatile tools can expose cache metadata without enabling not-modified cache hits
+    // START_test_volatile_tools_report_zero_ttl
+    #[test]
+    fn test_volatile_tools_report_zero_ttl() {
+        let response = result_with_cache(
+            None,
+            serde_json::json!({"content": [{"type": "text", "text": "results"}]}),
+            "semantic_search",
+            &serde_json::json!({"query": "needle"}),
+        );
+
+        assert_eq!(response["result"]["_meta"]["cache"]["ttl_secs"], 0);
+        assert!(!is_tool_cacheable("semantic_search"));
+    }
+    // END_test_volatile_tools_report_zero_ttl
+
+    // START_CONTRACT_test_not_modified_result_is_minimal
+    // PURPOSE: Verify matching cache validators can return a compact not-modified MCP payload
+    // START_test_not_modified_result_is_minimal
+    #[test]
+    fn test_not_modified_result_is_minimal() {
+        let metadata = CacheMetadata::new("W/\"syn-abc\"".to_string(), 15);
+
+        let response = not_modified_result(Some(serde_json::json!("req-1")), &metadata);
+
+        assert_eq!(response["id"], "req-1");
+        assert_eq!(response["result"]["_not_modified"], true);
+        assert_eq!(
+            response["result"]["_meta"]["cache"]["etag"],
+            "W/\"syn-abc\""
+        );
+        assert_eq!(response["result"]["_meta"]["cache"]["ttl_secs"], 15);
+    }
+    // END_test_not_modified_result_is_minimal
 }
 
 // END_public_api

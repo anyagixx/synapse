@@ -17,7 +17,7 @@
     <FLOW id="DF-85-3">A later request with matching _if_none_match returns _not_modified without replaying the full response body.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-MCP-SERVER-RESPONSE" status="planned">Add CacheMetadata, cache_ttl_for_tool, compute_etag, and result_with_cache helpers.</step-1>
+    <step-1 module="M-MCP-SERVER-RESPONSE" status="done">Add CacheMetadata, cache_ttl_for_tool, compute_etag, and result_with_cache helpers.</step-1>
     <step-2 module="M-MCP-SERVER" status="planned">Add an in-memory ETag cache with deterministic keys and clear-on-over-100 eviction.</step-2>
     <step-3 module="M-MCP-SERVER" status="planned">Honor _if_none_match before expensive cacheable handlers when a cached ETag is available.</step-3>
     <step-4 module="M-MCP-SERVER-TOOLS" status="planned">Expose _if_none_match in cacheable tool schemas without making it required.</step-4>
