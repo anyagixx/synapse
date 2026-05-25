@@ -10,6 +10,7 @@
     <ASSERTION>MCP cascade_impact returns a preview content envelope and cascade id.</ASSERTION>
     <ASSERTION>MCP cascade_execute uses cached previews and writes cascade changelogs.</ASSERTION>
     <ASSERTION>MCP cascade tests call explicit-root handlers instead of mutating process cwd.</ASSERTION>
+    <ASSERTION>MCP cascade_impact and cascade_execute return shared response economy style and token metadata.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-84</PHASE_GATE>
 </VERIFICATION>

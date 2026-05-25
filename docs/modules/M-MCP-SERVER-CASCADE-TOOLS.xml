@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-MCP-SERVER-CASCADE-TOOLS" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER-CASCADE-TOOLS</NAME>
-  <PURPOSE>MCP handlers for GRACE cascade impact preview and execution tools</PURPOSE>
-  <SCOPE>cascade_impact and cascade_execute JSON-RPC tool handlers with argument parsing, explicit-root test handlers, and text envelope formatting</SCOPE>
+  <PURPOSE>MCP handlers for GRACE cascade impact preview and execution tools with response economy metadata</PURPOSE>
+  <SCOPE>cascade_impact and cascade_execute JSON-RPC tool handlers with argument parsing, explicit-root test handlers, max_tokens/style response economy, and text envelope formatting</SCOPE>
   <FILES>
     <FILE>src/mcp/server_cascade_tools.rs</FILE>
   </FILES>
   <DEPENDS>M-GRACE-CASCADE,M-MCP-SERVER-RESPONSE</DEPENDS>
-  <LINKS>docs/modules/M-MCP-SERVER.xml,docs/phases/Phase-58.xml</LINKS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml,docs/phases/Phase-58.xml,docs/phases/Phase-84.xml</LINKS>
   <VERIFICATION_REF>V-M-MCP-SERVER-CASCADE-TOOLS</VERIFICATION_REF>
 </MODULE>

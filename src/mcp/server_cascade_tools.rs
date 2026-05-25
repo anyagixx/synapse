@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CASCADE-TOOLS
 // PURPOSE: MCP handlers for GRACE cascade impact preview and execution tools
-// SCOPE: cascade_impact and cascade_execute JSON-RPC tool handlers with argument parsing and text envelope formatting
+// SCOPE: cascade_impact and cascade_execute JSON-RPC tool handlers with argument parsing, response economy, and text envelope formatting
 // DEPENDS: M-GRACE-CASCADE, M-MCP-SERVER-RESPONSE
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -14,10 +14,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Added explicit-root cascade handlers for parallel test isolation]
+// LAST_CHANGE: [v1.2.0 - Added response economy metadata to cascade tools]
 // END_CHANGE_SUMMARY
 
-use super::server_response::{error, result};
+use super::server_response::{error, text_result};
 use crate::grace::cascade::{CascadeExecuteOptions, CascadeReport};
 use std::path::Path;
 
@@ -80,16 +80,11 @@ async fn handle_cascade_impact_at(
                     }
                 }
             }
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false,
-                    "cascade_id": analysis.cascade_id,
-                    "analysis": analysis,
-                    "execution": execution
-                }),
-            )
+            let mut response = text_result(id, text, args);
+            response["result"]["cascade_id"] = serde_json::json!(analysis.cascade_id.clone());
+            response["result"]["analysis"] = serde_json::json!(analysis);
+            response["result"]["execution"] = serde_json::json!(execution);
+            response
         }
         Err(error_value) => error(id, -32603, format!("Cascade impact error: {}", error_value)),
     }
@@ -130,14 +125,9 @@ async fn handle_cascade_execute_at(
     match crate::grace::GraceEngine::cascade_execute(root, options) {
         Ok(report) => {
             let text = serde_json::to_string_pretty(&report).unwrap_or_default();
-            result(
-                id,
-                serde_json::json!({
-                    "content": [{"type": "text", "text": text}],
-                    "isError": false,
-                    "report": report
-                }),
-            )
+            let mut response = text_result(id, text, args);
+            response["result"]["report"] = serde_json::json!(report);
+            response
         }
         Err(error_value) => error(
             id,
@@ -202,6 +192,8 @@ mod tests {
             assert!(response["result"]["cascade_id"]
                 .as_str()
                 .is_some_and(|value| value.starts_with("CSC-")));
+            assert_eq!(response["result"]["style"], "full");
+            assert!(response["result"]["tokens"]["shown"].as_u64().unwrap_or(0) > 0);
         }
     }
     // END_test_handle_cascade_impact_returns_preview
@@ -246,6 +238,8 @@ mod tests {
         if !text.is_empty() {
             assert!(text.contains("changelog_path"));
             assert!(dir.path().join("docs/cascade/changelogs").exists());
+            assert_eq!(response["result"]["style"], "full");
+            assert!(response["result"]["tokens"]["shown"].as_u64().unwrap_or(0) > 0);
         }
     }
     // END_test_handle_cascade_execute_writes_report
