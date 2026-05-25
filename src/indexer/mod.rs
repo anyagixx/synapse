@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
 // PURPOSE: Code indexer — walks, parses, stores full snapshots, and searches code blocks with guarded storage health checks
-// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
+// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS: N/A
 
@@ -16,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.3.0 - Added explicit-root search helpers for parallel test isolation]
+// LAST_CHANGE: [v3.4.0 - Invalidate GraphBuilder cache after full index rebuilds]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
@@ -175,6 +175,7 @@ impl Indexer {
         }
 
         storage.replace_all_blocks(all_stored)?;
+        GraphBuilder::invalidate_cache(root);
         tracing::info!(
             "Index complete: {} blocks from {} files",
             storage.count(),
@@ -396,12 +397,12 @@ fn graph_proximity_boost(
     query_words: &[String],
 ) -> Option<(f64, String)> {
     let node = graph
-        .nodes
+        .nodes()
         .iter()
         .find(|node| node.id == block.id || node.name == block.name)?;
     let mut best_boost = 0.0_f64;
     let mut reason = String::new();
-    for relationship in &graph.relationships {
+    for relationship in graph.relationships() {
         if relationship.source_id != node.id && relationship.target_id != node.id {
             continue;
         }
@@ -411,7 +412,7 @@ fn graph_proximity_boost(
             &relationship.source_id
         };
         let Some(other_node) = graph
-            .nodes
+            .nodes()
             .iter()
             .find(|candidate| candidate.id == *other_id)
         else {
@@ -425,7 +426,7 @@ fn graph_proximity_boost(
                 reason = format!("graph proximity via {}", relationship.relation_type.label());
             }
         }
-        for second_hop in &graph.relationships {
+        for second_hop in graph.relationships() {
             if second_hop.source_id != *other_id && second_hop.target_id != *other_id {
                 continue;
             }
@@ -435,7 +436,7 @@ fn graph_proximity_boost(
                 &second_hop.source_id
             };
             let Some(second_node) = graph
-                .nodes
+                .nodes()
                 .iter()
                 .find(|candidate| candidate.id == *second_id)
             else {

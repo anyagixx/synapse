@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-63" status="planned">
+<PHASE id="Phase-63" status="active">
   <NAME>CLI Build Cleanup And Release Gate</NAME>
   <GOAL>Resolve FIX/L2 and FIX/L6, then run the full release-quality regression gate for the issue-resolution line.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/LOW/L2-main-match-arm.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L6-dockerfile-features.md</SOURCE_PLAN>

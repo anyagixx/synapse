@@ -4,6 +4,8 @@
     <COMMAND>cargo test --all-targets</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>GraphRag builds through the cached GraphBuilder path while preserving graph navigation APIs.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-1,Phase-62</PHASE_GATE>
 </VERIFICATION>

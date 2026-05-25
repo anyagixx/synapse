@@ -326,6 +326,7 @@
     <REL source="M-INDEXER" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-STORAGE-SEARCH" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-STORAGE-TYPES" type="DEPENDS" />
+    <REL source="M-INDEXER" target="M-GRAPHRAG-BUILDER" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-INDEXER-PARSER" target="N/A (tree-sitter grammars loaded at runtime)" type="DEPENDS" />
     <REL source="M-INDEXER-STORAGE" target="M-INDEXER-STORAGE-SEARCH" type="DEPENDS" />

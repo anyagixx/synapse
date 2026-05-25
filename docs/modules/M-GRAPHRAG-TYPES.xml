@@ -2,11 +2,11 @@
 <MODULE id="M-GRAPHRAG-TYPES" type="CORE_LOGIC" status="active">
   <NAME>M-GRAPHRAG-TYPES</NAME>
   <PURPOSE>Graph data types — CodeNode, CodeRelationship, TypedCodeRelationship, CodeGraph, RelationType, GraphOverview</PURPOSE>
-  <SCOPE>Graph type definitions, typed relationship storage, node search, type-filtered path finding, graph overview</SCOPE>
+  <SCOPE>Graph type definitions, Arc-backed CodeGraph inner storage for cheap cache clones, typed relationship storage, node search, type-filtered path finding, graph overview</SCOPE>
   <FILES>
     <FILE>src/graphrag/types.rs</FILE>
   </FILES>
   <DEPENDS>M-GRACE-CONTRACT</DEPENDS>
-  <LINKS></LINKS>
+  <LINKS>docs/phases/Phase-62.xml</LINKS>
   <VERIFICATION_REF>V-M-GRAPHRAG-TYPES</VERIFICATION_REF>
 </MODULE>

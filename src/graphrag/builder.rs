@@ -1,29 +1,47 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRAPHRAG-BUILDER
 // PURPOSE: Graph builder — constructs CodeGraph from indexed storage, imports, hierarchy, and typed GRACE LINKS
-// SCOPE: GraphBuilder struct, build from storage blocks/files/contracts, typed LINKS extraction, extract_imports for multi-language
+// SCOPE: GraphBuilder struct, root/index-keyed cached build from storage blocks/files/contracts, typed LINKS extraction, extract_imports for multi-language
 // DEPENDS: M-GRAPHRAG-TYPES, M-GRACE-CONTRACT, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS: N/A
 
 // START_MODULE_MAP
 // GraphBuilder — Builds a CodeGraph from indexed code blocks, file list, and typed LINKS
+// GraphBuildCacheKey — Conservative root/index metadata key for cached graph builds
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Added typed LINKS extraction into GraphRAG relationships]
+// LAST_CHANGE: [v2.12.0 — Added root/index-keyed CodeGraph build cache]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile, TypedLink};
 use crate::graphrag::types::*;
 use crate::indexer::storage::Storage;
 use crate::indexer::walker::Walker;
-use std::path::Path;
+use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
+use std::sync::{OnceLock, RwLock};
+use std::time::UNIX_EPOCH;
+
+const GRAPH_BUILD_CACHE_MAX_ENTRIES: usize = 8;
+
+static GRAPH_BUILD_CACHE: OnceLock<RwLock<BTreeMap<GraphBuildCacheKey, CodeGraph>>> =
+    OnceLock::new();
 
 // START_public_api
 
 // START_GraphBuilder
 pub struct GraphBuilder;
 // END_GraphBuilder
+
+// START_GraphBuildCacheKey
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct GraphBuildCacheKey {
+    root: PathBuf,
+    index_modified_nanos: u128,
+    index_len: u64,
+}
+// END_GraphBuildCacheKey
 
 impl Default for GraphBuilder {
     fn default() -> Self {
@@ -42,11 +60,59 @@ impl GraphBuilder {
     // END_gb_new
 
     // START_CONTRACT_GraphBuilder::build
-    // PURPOSE: Build a code graph from indexed storage — nodes from files, relationships from imports and hierarchy
+    // PURPOSE: Build or reuse a cached code graph from indexed storage
     // INPUTS: { root: &Path — project root }
     // OUTPUTS: { anyhow::Result<CodeGraph> }
     // START_gb_build
     pub fn build(root: &Path) -> anyhow::Result<CodeGraph> {
+        let Some(cache_key) = GraphBuildCacheKey::for_root(root) else {
+            return Self::build_uncached(root);
+        };
+        let cache = GRAPH_BUILD_CACHE.get_or_init(|| RwLock::new(BTreeMap::new()));
+        if let Some(graph) = cache
+            .read()
+            .map_err(|_| anyhow::anyhow!("GraphBuilder cache lock poisoned"))?
+            .get(&cache_key)
+        {
+            return Ok(graph.clone());
+        }
+
+        let graph = Self::build_uncached(root)?;
+        let mut guard = cache
+            .write()
+            .map_err(|_| anyhow::anyhow!("GraphBuilder cache lock poisoned"))?;
+        if guard.len() >= GRAPH_BUILD_CACHE_MAX_ENTRIES {
+            if let Some(first_key) = guard.keys().next().cloned() {
+                guard.remove(&first_key);
+            }
+        }
+        guard.insert(cache_key, graph.clone());
+        Ok(graph)
+    }
+    // END_gb_build
+
+    // START_CONTRACT_GraphBuilder::invalidate_cache
+    // PURPOSE: Invalidate cached graph builds for one project root after index rebuild
+    // INPUTS: { root: &Path }
+    // SIDE_EFFECTS: removes matching cache entries when cache is initialized
+    // START_gb_invalidate_cache
+    pub fn invalidate_cache(root: &Path) {
+        let Some(cache) = GRAPH_BUILD_CACHE.get() else {
+            return;
+        };
+        let canonical_root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+        if let Ok(mut guard) = cache.write() {
+            guard.retain(|key, _| key.root != canonical_root);
+        }
+    }
+    // END_gb_invalidate_cache
+
+    // START_CONTRACT_GraphBuilder::build_uncached
+    // PURPOSE: Build a code graph from indexed storage — nodes from files, relationships from imports and hierarchy
+    // INPUTS: { root: &Path — project root }
+    // OUTPUTS: { anyhow::Result<CodeGraph> }
+    // START_gb_build_uncached
+    fn build_uncached(root: &Path) -> anyhow::Result<CodeGraph> {
         let mut graph = CodeGraph::new();
 
         // Load indexed blocks from storage
@@ -152,11 +218,11 @@ impl GraphBuilder {
 
         // 2. Create relationships from imports
         let node_imports: Vec<(String, Vec<String>)> = graph
-            .nodes
+            .nodes()
             .iter()
             .map(|n| (n.id.clone(), n.imports.clone()))
             .collect();
-        let node_ids: Vec<String> = graph.nodes.iter().map(|n| n.id.clone()).collect();
+        let node_ids: Vec<String> = graph.nodes().iter().map(|n| n.id.clone()).collect();
 
         for (node_id, imports) in &node_imports {
             for import in imports {
@@ -276,7 +342,32 @@ impl GraphBuilder {
 
         Ok(graph)
     }
-    // END_gb_build
+    // END_gb_build_uncached
+}
+
+impl GraphBuildCacheKey {
+    // START_CONTRACT_GraphBuildCacheKey::for_root
+    // PURPOSE: Build a cache key from canonical project root and persisted index metadata
+    // INPUTS: { root: &Path }
+    // OUTPUTS: { Option<GraphBuildCacheKey> }
+    // START_graph_build_cache_key_for_root
+    fn for_root(root: &Path) -> Option<Self> {
+        let canonical_root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+        let index_path = Storage::db_path_for_root(&canonical_root);
+        let metadata = std::fs::metadata(index_path).ok()?;
+        let index_modified_nanos = metadata
+            .modified()
+            .ok()?
+            .duration_since(UNIX_EPOCH)
+            .ok()?
+            .as_nanos();
+        Some(Self {
+            root: canonical_root,
+            index_modified_nanos,
+            index_len: metadata.len(),
+        })
+    }
+    // END_graph_build_cache_key_for_root
 }
 
 fn ensure_artifact_node(graph: &mut CodeGraph, target: &str) {
@@ -428,6 +519,7 @@ fn symbol_mentioned(content: &str, symbol: &str) -> bool {
 mod tests {
     use super::*;
     use crate::grace::contract::LinkType;
+    use crate::indexer::storage::Storage;
 
     #[test]
     fn test_build_extracts_call_edges_from_function_mentions() {
@@ -536,6 +628,64 @@ mod tests {
                 .len(),
             1
         );
+    }
+
+    #[test]
+    fn test_build_returns_cached_clone_for_unchanged_index() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(
+            src.join("cached.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-CACHED\n",
+                "// PURPOSE: Cached graph module\n",
+                "// SCOPE: Test cache\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// cached — cached\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 — Initial]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_cached\n",
+                "// PURPOSE: Cached function\n",
+                "// START_cached\n",
+                "pub fn cached() {}\n",
+                "// END_cached\n",
+            ),
+        )
+        .expect("write source");
+        Storage::new(dir.path())
+            .replace_all_blocks(Vec::new())
+            .expect("write index marker");
+
+        let first = GraphBuilder::build(dir.path()).expect("first build");
+        let second = GraphBuilder::build(dir.path()).expect("cached build");
+
+        assert!(first.shares_storage_with(&second));
+    }
+
+    #[test]
+    fn test_invalidate_cache_forces_rebuild() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(src.join("cached.rs"), "pub fn cached() {}\n").expect("write source");
+        Storage::new(dir.path())
+            .replace_all_blocks(Vec::new())
+            .expect("write index marker");
+
+        let first = GraphBuilder::build(dir.path()).expect("first build");
+        GraphBuilder::invalidate_cache(dir.path());
+        let second = GraphBuilder::build(dir.path()).expect("rebuilt graph");
+
+        assert!(!first.shares_storage_with(&second));
     }
 }
 // END_public_api

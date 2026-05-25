@@ -17,6 +17,7 @@
     <ASSERTION>Full re-indexing removes stale search entries for files deleted from disk.</ASSERTION>
     <ASSERTION>syn index --no-git disables .gitignore filtering for source discovery in git projects.</ASSERTION>
     <ASSERTION>Explicit-root search helpers let graph-aware indexer tests run in parallel without mutating process cwd.</ASSERTION>
+    <ASSERTION>Full index rebuilds invalidate GraphBuilder cache entries for the indexed root so hybrid search and MCP GraphRAG do not serve stale graph data.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-62</PHASE_GATE>
 </VERIFICATION>

@@ -2,11 +2,11 @@
 <MODULE id="M-INDEXER-STORAGE" type="DATA_LAYER" status="active">
   <NAME>M-INDEXER-STORAGE</NAME>
   <PURPOSE>JSON block storage facade with load-health reporting, snapshot persistence, BM25, and vector search APIs</PURPOSE>
-  <SCOPE>Storage struct, StoredBlock, JSON persistence, full snapshot replacement, load-health reporting, search API orchestration</SCOPE>
+  <SCOPE>Storage struct, StoredBlock, deterministic db_path_for_root for GraphRAG cache signatures, JSON persistence, full snapshot replacement, load-health reporting, search API orchestration</SCOPE>
   <FILES>
     <FILE>src/indexer/storage.rs</FILE>
   </FILES>
   <DEPENDS>M-INDEXER-STORAGE-SEARCH,M-INDEXER-STORAGE-TYPES</DEPENDS>
-  <LINKS></LINKS>
+  <LINKS>docs/phases/Phase-62.xml</LINKS>
   <VERIFICATION_REF>V-M-INDEXER-STORAGE</VERIFICATION_REF>
 </MODULE>

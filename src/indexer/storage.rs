@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Added full snapshot replacement to purge deleted files from the index]
+// LAST_CHANGE: [v3.1.0 — Exposed deterministic storage path for GraphRAG cache signatures]
 // END_CHANGE_SUMMARY
 
 use super::storage_search::{cosine_similarity, expand_query_terms, ngram_vectorize, score_block};
@@ -40,13 +40,14 @@ impl Storage {
     // SIDE_EFFECTS: reads/writes blocks.json
     // START_storage_new
     pub fn new(project_root: &Path) -> Self {
-        let hash = simple_hash(project_root);
-        let db_dir = dirs::data_dir()
-            .unwrap_or_else(|| PathBuf::from("/tmp"))
-            .join("synapse")
-            .join("index")
-            .join(hash);
-        let db_path = db_dir.join("blocks.json");
+        let db_path = Self::db_path_for_root(project_root);
+        let Some(db_dir) = db_path.parent().map(Path::to_path_buf) else {
+            return Self {
+                db_path,
+                blocks: Vec::new(),
+                load_error: Some("index path has no parent directory".into()),
+            };
+        };
 
         let mut load_error = None;
         if let Err(e) = std::fs::create_dir_all(&db_dir) {
@@ -71,6 +72,31 @@ impl Storage {
         }
     }
     // END_storage_new
+
+    // START_CONTRACT_Storage::db_path_for_root
+    // PURPOSE: Return the deterministic JSON storage path for a project root
+    // INPUTS: { project_root: &Path }
+    // OUTPUTS: { PathBuf }
+    // START_storage_db_path_for_root
+    pub fn db_path_for_root(project_root: &Path) -> PathBuf {
+        let hash = simple_hash(project_root);
+        dirs::data_dir()
+            .unwrap_or_else(|| PathBuf::from("/tmp"))
+            .join("synapse")
+            .join("index")
+            .join(hash)
+            .join("blocks.json")
+    }
+    // END_storage_db_path_for_root
+
+    // START_CONTRACT_Storage::db_path
+    // PURPOSE: Return this storage instance's JSON database path
+    // OUTPUTS: { &Path }
+    // START_storage_db_path
+    pub fn db_path(&self) -> &Path {
+        &self.db_path
+    }
+    // END_storage_db_path
 
     // START_CONTRACT_Storage::load_error
     // PURPOSE: Return the storage load error when persisted JSON could not be read or parsed
@@ -465,6 +491,14 @@ mod tests {
             .collect();
         s.store_blocks(blocks).unwrap();
         assert_eq!(s.search("test", 3).len(), 3);
+    }
+
+    #[test]
+    fn test_db_path_for_root_matches_storage_instance_path() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = Storage::new(dir.path());
+
+        assert_eq!(storage.db_path(), Storage::db_path_for_root(dir.path()));
     }
 }
 // END_public_api

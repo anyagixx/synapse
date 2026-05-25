@@ -1,14 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
 // PURPOSE: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
-// SCOPE: semantic_search, graphrag_query with lazy GraphRAG build and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover, lsp_references handlers
+// SCOPE: semantic_search, graphrag_query with indexed GraphRAG cache key validation and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover, lsp_references handlers
 // DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
 // handle_search — Runs indexed semantic search and formats MCP text content
 // handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship operations
-// ensure_graphrag — Lazily builds GraphRAG state on first graph query
+// ensure_graphrag — Builds or reuses GraphRAG state based on root/index cache key
 // read_graphrag — Reads GraphRAG state without panicking on poisoned locks
 // handle_view_signatures — Returns indexed signatures for a file
 // handle_lsp_hover — Returns LSP hover contents using configured language servers
@@ -16,9 +16,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.3.0 — Threaded config into LSP MCP handlers]
+// LAST_CHANGE: [v3.4.0 — Added root/index-keyed GraphRAG cache validation]
 // END_CHANGE_SUMMARY
 
+use super::server::GraphCacheKey;
 use super::server_response::{error, result};
 use crate::config::Config;
 use crate::grace::contract::LinkType;
@@ -80,16 +81,17 @@ pub(crate) async fn handle_search(
 
 // START_CONTRACT_handle_graphrag
 // PURPOSE: Execute GraphRAG overview, search, node lookup, relationship lookup, path, dependents, or tracedown query
-// INPUTS: { graphrag: &RwLock<Option<GraphRag>> }, { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// INPUTS: { graphrag: &RwLock<Option<GraphRag>> }, { graph_cache_key: &RwLock<Option<GraphCacheKey>> }, { id: Option<serde_json::Value> }, { args: &serde_json::Value }
 // OUTPUTS: { serde_json::Value }
 // START_handle_graphrag
 pub(crate) fn handle_graphrag(
     graphrag: &RwLock<Option<GraphRag>>,
+    graph_cache_key: &RwLock<Option<GraphCacheKey>>,
     id: Option<serde_json::Value>,
     args: &serde_json::Value,
 ) -> serde_json::Value {
     let operation = args["operation"].as_str().unwrap_or("search");
-    if let Err(message) = ensure_graphrag(graphrag) {
+    if let Err(message) = ensure_graphrag(graphrag, graph_cache_key) {
         return error(id, -32603, message);
     }
     let guard = match read_graphrag(graphrag) {
@@ -347,22 +349,31 @@ pub(crate) fn handle_graphrag(
 // END_handle_graphrag
 
 // START_CONTRACT_ensure_graphrag
-// PURPOSE: Build GraphRAG state on first graph query while keeping initialize/tools-list fast
-// INPUTS: { graphrag: &RwLock<Option<GraphRag>> }
+// PURPOSE: Build or reuse GraphRAG state using a root/index cache key
+// INPUTS: { graphrag: &RwLock<Option<GraphRag>> }, { graph_cache_key: &RwLock<Option<GraphCacheKey>> }
 // OUTPUTS: { Result<(), String> }
 // SIDE_EFFECTS: reads current project source and populates GraphRAG state
 // START_ensure_graphrag
-fn ensure_graphrag(graphrag: &RwLock<Option<GraphRag>>) -> Result<(), String> {
-    if graphrag
-        .read()
-        .map_err(|_| "GraphRAG lock unavailable; restart MCP server".to_string())?
-        .is_some()
-    {
+fn ensure_graphrag(
+    graphrag: &RwLock<Option<GraphRag>>,
+    graph_cache_key: &RwLock<Option<GraphCacheKey>>,
+) -> Result<(), String> {
+    let root = std::env::current_dir()
+        .map_err(|e| format!("GraphRAG cannot resolve current directory: {}", e))?;
+    let current_key = GraphCacheKey::for_root(&root);
+    let cached = {
+        let graph_guard = graphrag
+            .read()
+            .map_err(|_| "GraphRAG lock unavailable; restart MCP server".to_string())?;
+        let key_guard = graph_cache_key
+            .read()
+            .map_err(|_| "GraphRAG cache key lock unavailable; restart MCP server".to_string())?;
+        graph_guard.is_some() && key_guard.as_ref() == Some(&current_key)
+    };
+    if cached {
         return Ok(());
     }
 
-    let root = std::env::current_dir()
-        .map_err(|e| format!("GraphRAG cannot resolve current directory: {}", e))?;
     let mut built = GraphRag::new();
     built
         .build(&root)
@@ -371,9 +382,11 @@ fn ensure_graphrag(graphrag: &RwLock<Option<GraphRag>>) -> Result<(), String> {
     let mut guard = graphrag
         .write()
         .map_err(|_| "GraphRAG lock unavailable; restart MCP server".to_string())?;
-    if guard.is_none() {
-        *guard = Some(built);
-    }
+    let mut key_guard = graph_cache_key
+        .write()
+        .map_err(|_| "GraphRAG cache key lock unavailable; restart MCP server".to_string())?;
+    *guard = Some(built);
+    *key_guard = Some(current_key);
     Ok(())
 }
 // END_ensure_graphrag
@@ -540,6 +553,7 @@ mod tests {
 
         let resp = handle_graphrag(
             &graphrag,
+            &RwLock::new(None),
             Some(serde_json::json!(1)),
             &serde_json::json!({"operation": "overview"}),
         );

@@ -3,6 +3,9 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test --test mcp_protocol</COMMAND>
+    <COMMAND>cargo test mcp::server::tests::test_read_bounded_json_rpc_line_accepts_normal_message --lib</COMMAND>
+    <COMMAND>cargo test mcp::server::tests::test_read_bounded_json_rpc_line_rejects_oversized_message --lib</COMMAND>
+    <COMMAND>cargo test mcp::server::tests::test_invalidate_graph_cache_clears_graph_and_key --lib</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
   </UNIT_TESTS>
@@ -14,6 +17,8 @@
     <ASSERTION>MCP runtime preload converts lock and GraphRAG build failures into warnings instead of panics.</ASSERTION>
     <ASSERTION>syn mcp stdout contains only JSON-RPC responses while tracing logs are emitted on stderr.</ASSERTION>
     <ASSERTION>syn mcp public help remains stdio-only and does not expose HTTP or LSP flags before those transports are implemented.</ASSERTION>
+    <ASSERTION>MCP stdio reads JSON-RPC messages with a bounded line reader and returns a JSON-RPC error for oversized messages.</ASSERTION>
+    <ASSERTION>SynapseHandler stores and can invalidate GraphRAG cache keys for root/index-aware graph rebuilds.</ASSERTION>
     <ASSERTION>JSON-RPC notifications do not produce response objects.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes analyze_logs to the GRACE structured LOG analyzer.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes extract_belief_state to the GRACE belief-state artifact writer.</ASSERTION>
@@ -26,5 +31,5 @@
     <ASSERTION>JSON-RPC tool dispatch routes run_test_guide and submit_test_report to the GRACE agent-based testing workflow.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes lsp_hover and lsp_references through runtime Config so configured LSP server commands are honored.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-62</PHASE_GATE>
 </VERIFICATION>

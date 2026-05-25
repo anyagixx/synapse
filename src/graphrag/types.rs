@@ -15,11 +15,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.11.0 — Added typed LINKS relationships and type-filtered graph queries]
+// LAST_CHANGE: [v2.12.0 — Made CodeGraph clone cheap with Arc-backed inner storage]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{LinkDirection, LinkType};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 // START_public_api
 
@@ -184,13 +185,40 @@ pub struct TypedCodeRelationship {
 // END_TypedCodeRelationship
 
 // START_CodeGraph
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct CodeGraph {
-    pub nodes: Vec<CodeNode>,
-    pub relationships: Vec<CodeRelationship>,
-    pub typed_relationships: Vec<TypedCodeRelationship>,
+    inner: Arc<CodeGraphInner>,
 }
 // END_CodeGraph
+
+// START_CodeGraphInner
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+struct CodeGraphInner {
+    nodes: Vec<CodeNode>,
+    relationships: Vec<CodeRelationship>,
+    typed_relationships: Vec<TypedCodeRelationship>,
+}
+// END_CodeGraphInner
+
+impl Serialize for CodeGraph {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.inner.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for CodeGraph {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        CodeGraphInner::deserialize(deserializer).map(|inner| Self {
+            inner: Arc::new(inner),
+        })
+    }
+}
 
 impl Default for CodeGraph {
     // START_CONTRACT_CodeGraph::default
@@ -207,19 +235,55 @@ impl CodeGraph {
     // OUTPUTS: { CodeGraph }
     pub fn new() -> Self {
         Self {
-            nodes: Vec::new(),
-            relationships: Vec::new(),
-            typed_relationships: Vec::new(),
+            inner: Arc::new(CodeGraphInner::default()),
         }
     }
+
+    // START_CONTRACT_CodeGraph::nodes
+    // PURPOSE: Return immutable graph nodes without cloning the backing vector
+    // OUTPUTS: { &[CodeNode] }
+    // START_codegraph_nodes
+    pub fn nodes(&self) -> &[CodeNode] {
+        &self.inner.nodes
+    }
+    // END_codegraph_nodes
+
+    // START_CONTRACT_CodeGraph::relationships
+    // PURPOSE: Return immutable graph relationships without cloning the backing vector
+    // OUTPUTS: { &[CodeRelationship] }
+    // START_codegraph_relationships
+    pub fn relationships(&self) -> &[CodeRelationship] {
+        &self.inner.relationships
+    }
+    // END_codegraph_relationships
+
+    // START_CONTRACT_CodeGraph::typed_relationships
+    // PURPOSE: Return immutable typed relationships without cloning the backing vector
+    // OUTPUTS: { &[TypedCodeRelationship] }
+    // START_codegraph_typed_relationships
+    pub fn typed_relationships(&self) -> &[TypedCodeRelationship] {
+        &self.inner.typed_relationships
+    }
+    // END_codegraph_typed_relationships
+
+    // START_CONTRACT_CodeGraph::shares_storage_with
+    // PURPOSE: Report whether two CodeGraph handles share the same Arc-backed storage
+    // INPUTS: { other: &CodeGraph }
+    // OUTPUTS: { bool }
+    // START_codegraph_shares_storage_with
+    pub fn shares_storage_with(&self, other: &CodeGraph) -> bool {
+        Arc::ptr_eq(&self.inner, &other.inner)
+    }
+    // END_codegraph_shares_storage_with
 
     // START_CONTRACT_CodeGraph::add_node
     // PURPOSE: Add a node if another node with the same id does not already exist
     // INPUTS: { node: CodeNode — node to insert }
     // SIDE_EFFECTS: mutates graph nodes
     pub fn add_node(&mut self, node: CodeNode) {
-        if !self.nodes.iter().any(|n| n.id == node.id) {
-            self.nodes.push(node);
+        let inner = Arc::make_mut(&mut self.inner);
+        if !inner.nodes.iter().any(|n| n.id == node.id) {
+            inner.nodes.push(node);
         }
     }
 
@@ -228,7 +292,7 @@ impl CodeGraph {
     // INPUTS: { rel: CodeRelationship — edge to insert }
     // SIDE_EFFECTS: mutates graph relationships
     pub fn add_relationship(&mut self, rel: CodeRelationship) {
-        self.relationships.push(rel);
+        Arc::make_mut(&mut self.inner).relationships.push(rel);
     }
 
     // START_CONTRACT_CodeGraph::add_typed_relationship
@@ -237,14 +301,15 @@ impl CodeGraph {
     // SIDE_EFFECTS: mutates graph typed_relationships and relationships
     pub fn add_typed_relationship(&mut self, rel: TypedCodeRelationship) {
         let relation_type = RelationType::from_link_type(&rel.link_type);
-        self.relationships.push(CodeRelationship {
+        let inner = Arc::make_mut(&mut self.inner);
+        inner.relationships.push(CodeRelationship {
             source_id: rel.source_id.clone(),
             target_id: rel.target_id.clone(),
             relation_type,
             weight: rel.weight,
             description: rel.description.clone(),
         });
-        self.typed_relationships.push(rel);
+        inner.typed_relationships.push(rel);
     }
 
     // START_CONTRACT_CodeGraph::get_node
@@ -252,7 +317,7 @@ impl CodeGraph {
     // INPUTS: { id: &str — node id }
     // OUTPUTS: { Option<&CodeNode> }
     pub fn get_node(&self, id: &str) -> Option<&CodeNode> {
-        self.nodes.iter().find(|n| n.id == id)
+        self.inner.nodes.iter().find(|n| n.id == id)
     }
 
     // START_CONTRACT_CodeGraph::get_relationships
@@ -260,7 +325,8 @@ impl CodeGraph {
     // INPUTS: { node_id: &str — node id }
     // OUTPUTS: { Vec<&CodeRelationship> }
     pub fn get_relationships(&self, node_id: &str) -> Vec<&CodeRelationship> {
-        self.relationships
+        self.inner
+            .relationships
             .iter()
             .filter(|r| r.source_id == node_id || r.target_id == node_id)
             .collect()
@@ -275,7 +341,8 @@ impl CodeGraph {
         node_id: &str,
         link_type: Option<LinkType>,
     ) -> Vec<&TypedCodeRelationship> {
-        self.typed_relationships
+        self.inner
+            .typed_relationships
             .iter()
             .filter(|rel| rel.source_id == node_id || rel.target_id == node_id)
             .filter(|rel| {
@@ -295,7 +362,8 @@ impl CodeGraph {
         target_id: &str,
         link_type: Option<LinkType>,
     ) -> Vec<&TypedCodeRelationship> {
-        self.typed_relationships
+        self.inner
+            .typed_relationships
             .iter()
             .filter(|rel| rel.target_id == target_id)
             .filter(|rel| {
@@ -353,7 +421,7 @@ impl CodeGraph {
             return false;
         }
         path.push(current.to_string());
-        for rel in &self.relationships {
+        for rel in &self.inner.relationships {
             let next = if rel.source_id == current {
                 Some(&rel.target_id)
             } else if rel.target_id == current {
@@ -387,7 +455,7 @@ impl CodeGraph {
             return false;
         }
         path.push(current.to_string());
-        for rel in &self.typed_relationships {
+        for rel in &self.inner.typed_relationships {
             if link_type.is_some_and(|filter| rel.link_type != *filter) {
                 continue;
             }
@@ -416,6 +484,7 @@ impl CodeGraph {
     pub fn search_nodes(&self, query: &str) -> Vec<&CodeNode> {
         let q = query.to_lowercase();
         let mut results: Vec<(f64, &CodeNode)> = self
+            .inner
             .nodes
             .iter()
             .map(|n| {
@@ -443,16 +512,16 @@ impl CodeGraph {
     // PURPOSE: Produce graph summary counts by node kind
     // OUTPUTS: { GraphOverview }
     pub fn overview(&self) -> GraphOverview {
-        let node_types: Vec<&str> = self.nodes.iter().map(|n| n.kind.as_str()).collect();
+        let node_types: Vec<&str> = self.inner.nodes.iter().map(|n| n.kind.as_str()).collect();
         let mut type_counts: std::collections::HashMap<&str, usize> =
             std::collections::HashMap::new();
         for t in node_types {
             *type_counts.entry(t).or_insert(0) += 1;
         }
         GraphOverview {
-            total_nodes: self.nodes.len(),
-            total_relationships: self.relationships.len(),
-            typed_relationships: self.typed_relationships.len(),
+            total_nodes: self.inner.nodes.len(),
+            total_relationships: self.inner.relationships.len(),
+            typed_relationships: self.inner.typed_relationships.len(),
             node_types: type_counts
                 .iter()
                 .map(|(k, v)| format!("{}: {}", k, v))
@@ -528,6 +597,42 @@ mod tests {
         assert!(graph
             .find_path_by_link_type("M-STORAGE", "UC-001", Some(LinkType::Depends))
             .is_empty());
+    }
+
+    #[test]
+    fn test_code_graph_clone_shares_arc_storage_until_mutated() {
+        let mut graph = CodeGraph::new();
+        graph.add_node(CodeNode {
+            id: "M-A".into(),
+            name: "M-A".into(),
+            kind: "module".into(),
+            path: "M-A".into(),
+            language: "artifact".into(),
+            description: None,
+            symbols: Vec::new(),
+            size_lines: 0,
+            imports: Vec::new(),
+            exports: Vec::new(),
+        });
+
+        let mut cloned = graph.clone();
+        assert!(graph.shares_storage_with(&cloned));
+        cloned.add_node(CodeNode {
+            id: "M-B".into(),
+            name: "M-B".into(),
+            kind: "module".into(),
+            path: "M-B".into(),
+            language: "artifact".into(),
+            description: None,
+            symbols: Vec::new(),
+            size_lines: 0,
+            imports: Vec::new(),
+            exports: Vec::new(),
+        });
+
+        assert!(!graph.shares_storage_with(&cloned));
+        assert_eq!(graph.nodes().len(), 1);
+        assert_eq!(cloned.nodes().len(), 2);
     }
 }
 // END_public_api

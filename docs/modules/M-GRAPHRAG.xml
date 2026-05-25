@@ -2,11 +2,11 @@
 <MODULE id="M-GRAPHRAG" type="CORE_LOGIC" status="active">
   <NAME>M-GRAPHRAG</NAME>
   <PURPOSE>GraphRAG facade — knowledge graph navigation with search, typed relationships, and path finding</PURPOSE>
-  <SCOPE>GraphRag struct, build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview</SCOPE>
+  <SCOPE>GraphRag struct, cached build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview</SCOPE>
   <FILES>
     <FILE>src/graphrag/mod.rs</FILE>
   </FILES>
   <DEPENDS>M-GRACE-CONTRACT,M-GRAPHRAG-TYPES,M-GRAPHRAG-BUILDER</DEPENDS>
-  <LINKS></LINKS>
+  <LINKS>docs/phases/Phase-62.xml</LINKS>
   <VERIFICATION_REF>V-M-GRAPHRAG</VERIFICATION_REF>
 </MODULE>

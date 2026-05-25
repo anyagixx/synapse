@@ -53,8 +53,8 @@ impl GraphRag {
     // START_graphrag_build
     pub fn build(&mut self, root: &Path) -> anyhow::Result<()> {
         let graph = GraphBuilder::build(root)?;
-        let nodes = graph.nodes.len();
-        let rels = graph.relationships.len();
+        let nodes = graph.nodes().len();
+        let rels = graph.relationships().len();
         tracing::info!(
             "GraphRAG: built graph with {} nodes and {} relationships",
             nodes,

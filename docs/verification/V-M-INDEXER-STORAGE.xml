@@ -4,6 +4,7 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test indexer::storage::tests::test_corrupted_index_reports_load_error --lib</COMMAND>
     <COMMAND>cargo test indexer::storage::tests::test_replace_all_blocks_removes_stale_files --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_db_path_for_root_matches_storage_instance_path --lib</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
@@ -12,6 +13,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>Corrupted blocks.json is reported through Storage::load_error instead of being silently treated as an empty index.</ASSERTION>
     <ASSERTION>Full snapshot replacement removes stale file blocks and preserves searchable current blocks.</ASSERTION>
+    <ASSERTION>Storage::db_path_for_root returns the same deterministic persisted index path used by Storage::new for GraphRAG cache signatures.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-7</PHASE_GATE>
+  <PHASE_GATE>Phase-7,Phase-62</PHASE_GATE>
 </VERIFICATION>

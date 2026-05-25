@@ -2,11 +2,11 @@
 <MODULE id="M-GRAPHRAG-BUILDER" type="CORE_LOGIC" status="active">
   <NAME>M-GRAPHRAG-BUILDER</NAME>
   <PURPOSE>Graph builder — constructs CodeGraph from indexed storage, imports, hierarchy, and typed GRACE LINKS</PURPOSE>
-  <SCOPE>GraphBuilder struct, build from storage blocks/files/contracts, typed LINKS extraction, extract_imports for multi-language</SCOPE>
+  <SCOPE>GraphBuilder struct, root/index-keyed cached build from storage blocks/files/contracts, cache invalidation after index rebuilds, typed LINKS extraction, extract_imports for multi-language</SCOPE>
   <FILES>
     <FILE>src/graphrag/builder.rs</FILE>
   </FILES>
   <DEPENDS>M-GRAPHRAG-TYPES,M-GRACE-CONTRACT,M-INDEXER-STORAGE,M-INDEXER-WALKER</DEPENDS>
-  <LINKS></LINKS>
+  <LINKS>docs/phases/Phase-62.xml</LINKS>
   <VERIFICATION_REF>V-M-GRAPHRAG-BUILDER</VERIFICATION_REF>
 </MODULE>
