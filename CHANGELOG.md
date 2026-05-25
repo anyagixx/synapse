@@ -1,6 +1,18 @@
 # Changelog
 
-## 2.5.1 (unreleased)
+## 2.6.1 (2026-05-25)
+
+- Hardened the post-v2.6.0 release line with Phase 58-63 fixes for isolated test state, persistent configurable LSP runtime, filter semantics, token economics runtime, GraphRAG MCP robustness, and release cleanup gates
+- Fixed the Docker release image by aligning the builder to Rust 1.95.0, enforcing `cargo build --release --locked`, embedding OpenCode assets, and using a GLIBC-compatible Debian trixie runtime
+- Revalidated release readiness through MyGRACE verify/review/refresh, Docker image smoke, and release gate evidence
+
+## 2.6.0 (2026-05-25)
+
+- Integrated full RTK parity into Synapse with source-derived command coverage, hook processors, hook install targets, command modules, and filters
+- Added RTK command routing, route previews, ecosystem adapters, multi-agent hook targets, and measured adoption/token economics analytics
+- Added release-blocking full RTK and release candidate gates for parity, installer truth, freshness, checksums, and GitHub release metadata
+
+## 2.5.1 (2026-05-25)
 
 - Removed superseded planning artifacts after the v2.5.0 public release: `PLAN.md` and the completed remediation plan shards
 - Updated product readiness evidence from pre-release pending state to post-release v2.5.0 evidence
