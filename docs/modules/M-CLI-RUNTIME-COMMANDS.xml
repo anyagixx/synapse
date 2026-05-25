@@ -2,7 +2,7 @@
 <MODULE id="M-CLI-RUNTIME-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-RUNTIME-COMMANDS</NAME>
   <PURPOSE>CLI runtime, integration, and diagnostic command handlers with storage health, dependency, and clean-bootstrap reporting</PURPOSE>
-  <SCOPE>RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output and RTK coverage counts, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verification/trust handlers including RTK built-in pack inline tests, CompressCmd, stdio-only McpCmd, ConfigCmd, HooksCmd multi-agent install/status/audit dispatch, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd</SCOPE>
+  <SCOPE>RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output and RTK coverage counts, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verification/trust handlers including RTK built-in pack inline tests, CompressCmd, stdio-only McpCmd, HooksCmd multi-agent install/status/audit dispatch, DoctorCmd, Python dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd</SCOPE>
   <FILES>
     <FILE>src/cli/runtime_commands.rs</FILE>
   </FILES>

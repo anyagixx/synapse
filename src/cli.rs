@@ -13,6 +13,7 @@
 // RtkProxyCmd — Shared schema for first-class RTK-style proxy shortcuts
 // JsonCmd/DepsCmd/EnvCmd/WcCmd — Local RTK-style token-saving adapters
 // PipeCmd/LogCmd/SmartCmd — Local RTK-style system adapters
+// ConfigAction — Explicit config get, set, list, unset, path, and edit operations
 // BinlogCmd/DotnetFormatReportCmd/DotnetTrxCmd — Local .NET artifact summarizers
 // ErrCmd/TestCmd/DiffCmd/SummaryCmd — Core RTK-style adapters
 // SessionCmd/CcEconomicsCmd — Local RTK session and economics analytics
@@ -24,10 +25,11 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.8.0 — Moved top-level command dispatch into CLI RunCommand]
+// LAST_CHANGE: [v5.9.0 — Added explicit config subcommands]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
+mod config_commands;
 mod grace_commands;
 mod rtk_adapters;
 mod rtk_commands;
@@ -1031,10 +1033,28 @@ pub struct McpCmd {}
 #[derive(clap::Args)]
 #[command(about = "Manage configuration")]
 pub struct ConfigCmd {
-    #[arg(trailing_var_arg = true)]
-    pub args: Vec<String>,
+    #[command(subcommand)]
+    pub action: Option<ConfigAction>,
 }
 // END_ConfigCmd
+
+// START_ConfigAction
+#[derive(Subcommand)]
+pub enum ConfigAction {
+    #[command(about = "Print the config file path")]
+    Path,
+    #[command(about = "Open the config file in $EDITOR or $VISUAL")]
+    Edit,
+    #[command(about = "List supported scalar config keys and current values")]
+    List,
+    #[command(about = "Get one supported scalar config value")]
+    Get { key: String },
+    #[command(about = "Set and persist one supported scalar config value")]
+    Set { key: String, value: String },
+    #[command(about = "Reset and persist one supported scalar config value to its default")]
+    Unset { key: String },
+}
+// END_ConfigAction
 
 // START_DoctorCmd
 #[derive(clap::Args)]

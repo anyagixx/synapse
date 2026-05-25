@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
 // PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, filter lifecycle, and clean-bootstrap reporting
-// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, ConfigCmd, HooksCmd multi-agent install/status/audit, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, HooksCmd multi-agent install/status/audit, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
 // DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-PROXY-FILTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - route preview for proxied commands
@@ -25,7 +25,6 @@
 // FiltersCmd::run — Verifies, trusts, untrusts, and reports proxy filter status
 // CompressCmd::run — Compresses or restores files
 // McpCmd::run — Starts MCP server
-// ConfigCmd::run — Prints or opens config
 // HooksCmd::run — Manages hook installation
 // DoctorCmd::run — Runs setup and dependency diagnostics
 // check_project_dependencies — Checks Python dependency readiness when manifests are present
@@ -33,12 +32,12 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.3.0 — Routed hooks status to multi-agent targets]
+// LAST_CHANGE: [v5.4.0 — Moved config command handling into M-CLI-CONFIG-COMMANDS]
 // END_CHANGE_SUMMARY
 
 use super::{
-    CompressCmd, ConfigCmd, DoctorCmd, FiltersAction, FiltersCmd, GainCmd, HooksCmd, McpCmd,
-    ProxyCmd, RunCmd, ServeCmd,
+    CompressCmd, DoctorCmd, FiltersAction, FiltersCmd, GainCmd, HooksCmd, McpCmd, ProxyCmd, RunCmd,
+    ServeCmd,
 };
 use crate::config::Config;
 use crate::run::scenario::{RunScenarioMode, RunScenarioRequest, RunScenarioResult};
@@ -46,9 +45,6 @@ use crate::run::RunManager;
 use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
-
-const CONFIG_SINGLE_ARG_COUNT: usize = 1;
-const CONFIG_SET_ARG_COUNT: usize = 3;
 
 // START_public_api
 
@@ -577,36 +573,6 @@ impl McpCmd {
         server.start_stdio().await
     }
     // END_mcp_run
-}
-
-impl ConfigCmd {
-    // START_CONTRACT_ConfigCmd::run
-    // PURPOSE: Print config, print path, open editor, or acknowledge set command
-    // INPUTS: { config: Config }
-    // OUTPUTS: { anyhow::Result<()> }
-    // SIDE_EFFECTS: may spawn configured editor
-    // START_config_run
-    pub async fn run(&self, config: Config) -> anyhow::Result<()> {
-        if self.args.is_empty() {
-            println!("{}", toml::to_string_pretty(&config)?);
-        } else if self.args.len() == CONFIG_SINGLE_ARG_COUNT && self.args[0] == "path" {
-            println!("{}", Config::path()?.display());
-        } else if self.args.len() == CONFIG_SINGLE_ARG_COUNT && self.args[0] == "edit" {
-            let path = Config::path()?;
-            let editor = std::env::var("EDITOR")
-                .or_else(|_| std::env::var("VISUAL"))
-                .unwrap_or_else(|_| "vim".into());
-            std::process::Command::new(editor).arg(&path).status()?;
-        } else if self.args.len() == CONFIG_SET_ARG_COUNT && self.args[0] == "set" {
-            let key = &self.args[1];
-            let value = &self.args[2];
-            println!("Set {} = {} (not yet persisted)", key, value);
-        } else {
-            anyhow::bail!("Usage: syn config [path|edit|set <key> <value>]")
-        }
-        Ok(())
-    }
-    // END_config_run
 }
 
 impl HooksCmd {

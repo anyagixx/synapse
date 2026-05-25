@@ -31,6 +31,7 @@
     <ASSERTION>RunCmd creates a bounded scenario run from project gates and emits replay-capable JSON.</ASSERTION>
     <ASSERTION>RunCmd action mode plans, steps, loops, retries, and replays persisted run queues.</ASSERTION>
     <ASSERTION>McpCmd starts the stdio MCP server only; HTTP/LSP options are not public flags until implemented.</ASSERTION>
+    <ASSERTION>ConfigCmd handling is delegated to M-CLI-CONFIG-COMMANDS and no longer uses runtime trailing-arg parsing.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-50</PHASE_GATE>
+  <PHASE_GATE>Phase-50,Phase-65</PHASE_GATE>
 </VERIFICATION>

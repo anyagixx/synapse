@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-CONFIG" version="1.0">
   UNDERSTANDING:
-    Module responsibility: Config model and explicit load/default/init semantics for synapsec.toml
+    Module responsibility: Config model and explicit load/default/init semantics for synapsec.toml, including typed scalar key helpers
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: No declared dependencies
-      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+      - OUTPUT: Config defaults, loaded config, typed config key entries, and persisted TOML updates that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Config struct definitions, read-only TOML load, default fallback, explicit default config generation, path resolution
+      - Scope remains bounded to: Config struct definitions, read-only TOML load, default fallback, explicit default config generation, typed scalar key lookup/update, path resolution, and persistence
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
