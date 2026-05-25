@@ -1,9 +1,14 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
-// PURPOSE: Code indexer — walks, parses, stores full snapshots, and searches code blocks with guarded storage health checks
+// PURPOSE: Code indexer — walks, delegates pipeline block construction, stores full snapshots, and searches code blocks with guarded storage health checks
 // SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
-// DEPENDS: M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
-// LINKS: N/A
+// DEPENDS: M-INDEXER-PIPELINE, M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
+// LINKS:
+//   → M-INDEXER-PIPELINE (depends) — deterministic full-index block construction
+//   → M-INDEXER-WALKER (depends) — source discovery
+//   → M-INDEXER-PARSER (depends) — signature parsing
+//   → M-INDEXER-STORAGE (depends) — index persistence and search
+//   → M-CONFIG (depends) — runtime configuration
 
 // START_MODULE_MAP
 // SearchResult — Search result with path, language, name, kind, lines, content, score
@@ -16,10 +21,11 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.4.0 - Invalidate GraphBuilder cache after full index rebuilds]
+// LAST_CHANGE: [v3.5.0 - Delegated full-index StoredBlock construction to M-INDEXER-PIPELINE]
 // END_CHANGE_SUMMARY
 
 pub mod parser;
+pub mod pipeline;
 pub mod storage;
 mod storage_search;
 mod storage_types;
@@ -31,7 +37,6 @@ use std::path::Path;
 use std::sync::RwLock;
 use storage::Storage;
 
-const MAX_INDEXABLE_FILE_BYTES: usize = 100_000;
 const SIGNATURE_CONTENT_PREVIEW_LIMIT: usize = 200;
 
 // START_public_api
@@ -129,7 +134,6 @@ impl Indexer {
         let walker = walker::Walker::new_with_gitignore(root, respect_gitignore);
         let files = walker.walk();
         let total = files.len();
-        let parser = parser::ParserEngine::new();
 
         tracing::info!("Indexing {} files in {}", total, root.display());
 
@@ -138,41 +142,7 @@ impl Indexer {
             .as_mut()
             .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
 
-        let mut all_stored: Vec<storage::StoredBlock> = Vec::new();
-        for (i, file) in files.iter().enumerate() {
-            let full_path = root.join(&file.path);
-            let code = match std::fs::read_to_string(&full_path) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
-
-            if code.len() > MAX_INDEXABLE_FILE_BYTES {
-                tracing::debug!("Skipping large file: {} ({} bytes)", file.path, code.len());
-                continue;
-            }
-
-            let blocks = parser.parse(&code, &file.language);
-
-            let stored: Vec<storage::StoredBlock> = blocks
-                .iter()
-                .map(|b| storage::StoredBlock {
-                    id: format!("{}:{}", file.path, b.start_line),
-                    path: file.path.clone(),
-                    language: file.language.clone(),
-                    name: b.name.clone(),
-                    kind: b.kind.clone(),
-                    content: b.content.clone(),
-                    start_line: b.start_line,
-                    end_line: b.end_line,
-                })
-                .collect();
-
-            all_stored.extend(stored);
-
-            if (i + 1) % 50 == 0 || i == total - 1 {
-                tracing::info!("  indexed {}/{} files", i + 1, total);
-            }
-        }
+        let all_stored = pipeline::collect_index_blocks(root, &files);
 
         storage.replace_all_blocks(all_stored)?;
         GraphBuilder::invalidate_cache(root);

@@ -58,6 +58,7 @@
     <VERIFICATION id="V-M-INDEXER" module="M-INDEXER" path="docs/verification/V-M-INDEXER.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-INDEXER-LANGS" module="M-INDEXER-LANGS" path="docs/verification/V-M-INDEXER-LANGS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-INDEXER-PARSER" module="M-INDEXER-PARSER" path="docs/verification/V-M-INDEXER-PARSER.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-INDEXER-PIPELINE" module="M-INDEXER-PIPELINE" path="docs/verification/V-M-INDEXER-PIPELINE.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-INDEXER-STORAGE" module="M-INDEXER-STORAGE" path="docs/verification/V-M-INDEXER-STORAGE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-INDEXER-STORAGE-SEARCH" module="M-INDEXER-STORAGE-SEARCH" path="docs/verification/V-M-INDEXER-STORAGE-SEARCH.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-INDEXER-STORAGE-TYPES" module="M-INDEXER-STORAGE-TYPES" path="docs/verification/V-M-INDEXER-STORAGE-TYPES.xml" priority="normal" status="active" />

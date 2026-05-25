@@ -6,6 +6,7 @@
     <COMMAND>cargo test indexer::tests::test_search_expands_module_identifier_terms --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test indexer::tests::test_hybrid_search_uses_graph_call_edges_for_related_results --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test indexer::tests::test_hybrid_search_uses_multi_hop_graph_proximity --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::pipeline --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
     <COMMAND>cargo test --test reliability_test test_index_rebuild_removes_deleted_files</COMMAND>
     <COMMAND>cargo test --test reliability_test test_index_no_git_indexes_gitignored_files</COMMAND>
@@ -18,6 +19,7 @@
     <ASSERTION>syn index --no-git disables .gitignore filtering for source discovery in git projects.</ASSERTION>
     <ASSERTION>Explicit-root search helpers let graph-aware indexer tests run in parallel without mutating process cwd.</ASSERTION>
     <ASSERTION>Full index rebuilds invalidate GraphBuilder cache entries for the indexed root so hybrid search and MCP GraphRAG do not serve stale graph data.</ASSERTION>
+    <ASSERTION>Full index rebuilds delegate StoredBlock construction to the pipeline module while preserving deterministic search data.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58,Phase-62</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-62,Phase-64</PHASE_GATE>
 </VERIFICATION>

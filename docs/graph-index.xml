@@ -58,6 +58,7 @@
     <MODULE id="M-INDEXER" path="docs/modules/M-INDEXER.xml" status="active" />
     <MODULE id="M-INDEXER-LANGS" path="docs/modules/M-INDEXER-LANGS.xml" status="active" />
     <MODULE id="M-INDEXER-PARSER" path="docs/modules/M-INDEXER-PARSER.xml" status="active" />
+    <MODULE id="M-INDEXER-PIPELINE" path="docs/modules/M-INDEXER-PIPELINE.xml" status="active" />
     <MODULE id="M-INDEXER-STORAGE" path="docs/modules/M-INDEXER-STORAGE.xml" status="active" />
     <MODULE id="M-INDEXER-STORAGE-SEARCH" path="docs/modules/M-INDEXER-STORAGE-SEARCH.xml" status="active" />
     <MODULE id="M-INDEXER-STORAGE-TYPES" path="docs/modules/M-INDEXER-STORAGE-TYPES.xml" status="active" />
@@ -322,6 +323,7 @@
     <REL source="M-HOOK-OPENCODE-REWRITE" target="M-PROXY" type="DEPENDS" />
     <REL source="M-HOOKS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-INDEXER" target="M-INDEXER-PIPELINE" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-PARSER" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-INDEXER-STORAGE-SEARCH" type="DEPENDS" />
@@ -329,6 +331,9 @@
     <REL source="M-INDEXER" target="M-GRAPHRAG-BUILDER" type="DEPENDS" />
     <REL source="M-INDEXER" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-INDEXER-PARSER" target="N/A (tree-sitter grammars loaded at runtime)" type="DEPENDS" />
+    <REL source="M-INDEXER-PIPELINE" target="M-INDEXER-WALKER" type="DEPENDS" />
+    <REL source="M-INDEXER-PIPELINE" target="M-INDEXER-PARSER" type="DEPENDS" />
+    <REL source="M-INDEXER-PIPELINE" target="M-INDEXER-STORAGE-TYPES" type="DEPENDS" />
     <REL source="M-INDEXER-STORAGE" target="M-INDEXER-STORAGE-SEARCH" type="DEPENDS" />
     <REL source="M-INDEXER-STORAGE" target="M-INDEXER-STORAGE-TYPES" type="DEPENDS" />
     <REL source="M-INDEXER-STORAGE-SEARCH" target="M-INDEXER-STORAGE-TYPES" type="DEPENDS" />

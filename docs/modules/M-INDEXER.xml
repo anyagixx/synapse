@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-INDEXER" type="CORE_LOGIC" status="active">
   <NAME>M-INDEXER</NAME>
-  <PURPOSE>Code indexer — walks, parses, stores full snapshots, and searches code blocks with guarded storage health checks</PURPOSE>
-  <SCOPE>Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, stale-entry pruning, GraphBuilder cache invalidation after index rebuilds, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures</SCOPE>
+  <PURPOSE>Code indexer — walks, delegates pipeline block construction, stores full snapshots, and searches code blocks with guarded storage health checks</PURPOSE>
+  <SCOPE>Indexer struct, SearchResult, guarded storage locks, index_directory, gitignore-aware indexing, pipeline-backed StoredBlock construction, stale-entry pruning, GraphBuilder cache invalidation after index rebuilds, search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures</SCOPE>
   <FILES>
     <FILE>src/indexer/mod.rs</FILE>
   </FILES>
-  <DEPENDS>M-INDEXER-WALKER,M-INDEXER-PARSER,M-INDEXER-STORAGE,M-INDEXER-STORAGE-SEARCH,M-INDEXER-STORAGE-TYPES,M-CONFIG,M-GRAPHRAG-BUILDER</DEPENDS>
-  <LINKS>docs/phases/Phase-58.xml,docs/phases/Phase-62.xml</LINKS>
+  <DEPENDS>M-INDEXER-PIPELINE,M-INDEXER-WALKER,M-INDEXER-PARSER,M-INDEXER-STORAGE,M-INDEXER-STORAGE-SEARCH,M-INDEXER-STORAGE-TYPES,M-CONFIG,M-GRAPHRAG-BUILDER</DEPENDS>
+  <LINKS>docs/phases/Phase-58.xml,docs/phases/Phase-62.xml,docs/phases/Phase-64.xml</LINKS>
   <VERIFICATION_REF>V-M-INDEXER</VERIFICATION_REF>
 </MODULE>

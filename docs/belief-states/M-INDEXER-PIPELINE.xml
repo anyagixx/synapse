@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-INDEXER-PIPELINE" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Convert discovered source files into deterministic StoredBlock records for full and later incremental indexing.
+    Key data flows:
+      - INPUT: Walker IndexFile records, project root, parser CodeBlocks, and source file contents.
+      - PROCESSING: Read bounded source files, parse code blocks, build StoredBlock values, and normalize ordering.
+      - OUTPUT: Stable StoredBlock vectors consumed by M-INDEXER and M-INDEXER-STORAGE.
+    Critical invariants:
+      - StoredBlock IDs stay path:start_line compatible with existing search and GraphRAG logic.
+      - Oversized or unreadable files are skipped without aborting the full index.
+      - Ordering is deterministic before persistence.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Extract pure StoredBlock construction from M-INDEXER first, then layer parallel and delta behavior in later Phase-64 steps.
+    Complexity_areas: preserving existing indexing semantics, deterministic ordering, bounded file reads.
+    Patterns_applied: source-backed module contract, explicit pipeline functions, local unit tests.
+  VERIFICATION_INTENT:
+    I expect the following to be true after implementation:
+    - Pipeline unit tests cover metadata preservation, deterministic ordering, and large-file skipping.
+    - M-INDEXER search behavior remains compatible through the existing public index_directory API.
+  RISKS_ACKNOWLEDGED:
+    - Ordering changes can affect persisted snapshots if not normalized consistently.
+    - Future parallelism must reuse the same deterministic output boundary.
+</BELIEF_STATE>
