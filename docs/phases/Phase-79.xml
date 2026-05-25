@@ -13,7 +13,7 @@
     <FLOW id="DF-79-2">Contract test spec triggers cascade_impact and compares actual affected modules with expected modules.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-TEST-COVERAGE-MATRIX" status="pending">Implement index-first module discovery and evidence scoring.</step-1>
+    <step-1 module="M-TEST-COVERAGE-MATRIX" status="done">Implement index-first module discovery and evidence scoring.</step-1>
     <step-2 module="M-TEST-CONTRACT-DIFFERENTIAL" status="pending">Implement TOML spec wrapper, cascade assertion logic, and filtered execution.</step-2>
     <step-3 module="M-CLI-TEST-COMMANDS" status="pending">Wire syn test coverage and syn test contract CLI handlers.</step-3>
   </STEPS>

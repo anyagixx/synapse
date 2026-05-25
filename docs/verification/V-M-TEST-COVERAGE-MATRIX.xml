@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-TEST-COVERAGE-MATRIX" module="M-TEST-COVERAGE-MATRIX" priority="normal" status="pending">
+<VERIFICATION id="V-M-TEST-COVERAGE-MATRIX" module="M-TEST-COVERAGE-MATRIX" priority="normal" status="active">
   <UNIT_TESTS>
     <TEST>Module discovery reads docs/graph-index.xml before per-module shards.</TEST>
     <TEST>Coverage status is covered when at least three evidence types are present.</TEST>
     <TEST>JSON output includes summary and per-module evidence counts.</TEST>
+    <TEST>Table output includes compact evidence columns.</TEST>
+    <TEST>Structured LOG markers count as module evidence.</TEST>
   </UNIT_TESTS>
   <INTEGRATION_TESTS>
     <TEST>syn test coverage renders a table on MultiModule fixture.</TEST>

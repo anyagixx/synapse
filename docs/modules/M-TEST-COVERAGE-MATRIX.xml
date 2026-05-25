@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<MODULE id="M-TEST-COVERAGE-MATRIX" type="UTILITY" status="pending">
+<MODULE id="M-TEST-COVERAGE-MATRIX" type="UTILITY" status="active">
   <NAME>M-TEST-COVERAGE-MATRIX</NAME>
   <PURPOSE>Build a module by evidence-type coverage matrix for contracts, verification, mental tests, guides, LOG markers, and verify status.</PURPOSE>
   <SCOPE>Index-based module discovery, evidence counting, table rendering, JSON rendering, uncovered module reporting, and CI-friendly exit behavior.</SCOPE>
