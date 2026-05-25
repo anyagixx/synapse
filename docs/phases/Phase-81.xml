@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-81" status="active">
+<PHASE id="Phase-81" status="done">
   <NAME>UPGRADE_3 Resilience Chaos</NAME>
   <GOAL>Prove Synapse handles corrupted project state with graceful errors and recoverable workflows.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/E8-resilience-chaos.md</SOURCE_PLAN>
@@ -18,8 +18,8 @@
     <step-4 module="M-TEST-RESILIENCE-CHAOS" status="done">Add corruption specs for missing blocks.json, bad config, missing docs, empty graph, and missing module shard.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test --all-targets resilience</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test resilience</CHECK>
+    <CHECK status="passed">cargo test --all-targets resilience</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test resilience</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-81-1">Chaos commands must be constrained to fixture roots and isolated XDG paths.</RISK>
