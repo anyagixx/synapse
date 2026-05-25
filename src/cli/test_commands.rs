@@ -1,18 +1,20 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-TEST-COMMANDS
-// PURPOSE: Structured Synapse test command dispatcher with E2E/MCP/coverage/perf/contract/snapshot handlers and RTK legacy fallback.
-// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, MCP cargo target execution, coverage matrix rendering, perf baseline/check execution, contract differential spec execution, snapshot listing, and legacy RTK fallback dispatch.
-// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-MCP-REGRESSION, M-TEST-COVERAGE-MATRIX, M-TEST-PERF-REGRESSION, M-TEST-CONTRACT-DIFFERENTIAL, M-TEST-SNAPSHOT
+// PURPOSE: Structured Synapse test command dispatcher with E2E/MCP/coverage/perf/contract/resilience/snapshot handlers and RTK legacy fallback.
+// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, MCP cargo target execution, coverage matrix rendering, perf baseline/check execution, contract differential spec execution, resilience spec discovery/execution, snapshot listing, and legacy RTK fallback dispatch.
+// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-MCP-REGRESSION, M-TEST-COVERAGE-MATRIX, M-TEST-PERF-REGRESSION, M-TEST-CONTRACT-DIFFERENTIAL, M-TEST-RESILIENCE-CHAOS, M-TEST-SNAPSHOT
 // LINKS:
 //   -> Phase-76 (implements) - UPGRADE_3 test command foundation
 //   -> Phase-78 (implements) - MCP regression command wiring
 //   -> Phase-79 (implements) - coverage and contract command wiring
 //   -> Phase-80 (implements) - perf regression command wiring
+//   -> Phase-81 (implements) - resilience chaos command wiring
 //   -> M-CLI-RTK-COMMANDS (depends) - legacy compact test adapter
 //   -> M-TEST-MCP-REGRESSION (depends) - real MCP stdio regression suite
 //   -> M-TEST-COVERAGE-MATRIX (depends) - coverage matrix command surface
 //   -> M-TEST-PERF-REGRESSION (depends) - performance regression command surface
 //   -> M-TEST-CONTRACT-DIFFERENTIAL (depends) - contract differential command surface
+//   -> M-TEST-RESILIENCE-CHAOS (depends) - resilience chaos command surface
 //   <- V-M-CLI-TEST-COMMANDS (verified_by) - command parsing and compatibility verification
 
 // START_MODULE_MAP
@@ -24,13 +26,14 @@
 // run_coverage_action - Builds and renders the module evidence coverage matrix
 // run_perf_action - Runs performance baselines or threshold checks
 // run_contract_action - Runs one or more contract differential TOML specs
+// run_resilience_action - Runs resilience chaos TOML specs
 // run_snapshot_action - Lists or acknowledges snapshot check/update mode
 // render_structured_action - Emits compact text or machine-readable JSON planning output
 // normalize_legacy_command - Converts clap external subcommand args into executable command argv
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.4.0 - Wired syn test perf baseline and check handlers]
+// LAST_CHANGE: [v1.5.0 - Wired syn test resilience handler]
 // END_CHANGE_SUMMARY
 
 use super::TestCmd;
@@ -41,6 +44,7 @@ use crate::test::contract_test::{
 use crate::test::coverage::{build_coverage_matrix, render_coverage_json, render_coverage_table};
 use crate::test::e2e::{run_e2e_scenario, E2EResult};
 use crate::test::perf::{render_perf_report, run_perf_suite, PerfMode, PerfTestOptions};
+use crate::test::resilience::{render_resilience_report, run_resilience_specs, ResilienceOptions};
 use serde::Serialize;
 use serde_json::json;
 use std::ffi::OsString;
@@ -49,6 +53,7 @@ use std::process::Command as ProcessCommand;
 
 const MCP_OUTPUT_TAIL_LINES: usize = 40;
 const MCP_OUTPUT_CHAR_LIMIT: usize = 6000;
+const DEFAULT_RESILIENCE_SPEC_DIR: &str = "tests/e2e/resilience";
 
 // START_public_api
 
@@ -92,6 +97,8 @@ pub struct StructuredTestArgs {
     #[arg(long)]
     pub filter: Option<String>,
     #[arg(long)]
+    pub fail_fast: bool,
+    #[arg(long)]
     pub baseline: bool,
     #[arg(long)]
     pub check: bool,
@@ -122,11 +129,13 @@ impl TestCmd {
     //   -> M-TEST-COVERAGE-MATRIX (depends) - coverage matrix command surface
     //   -> M-TEST-PERF-REGRESSION (depends) - performance regression command surface
     //   -> M-TEST-CONTRACT-DIFFERENTIAL (depends) - contract differential command surface
+    //   -> M-TEST-RESILIENCE-CHAOS (depends) - resilience chaos command surface
     //   -> M-TEST-SNAPSHOT (depends) - snapshot command surface
     //   -> Phase-77 (implements) - E2E and snapshot handler wiring
     //   -> Phase-78 (implements) - MCP regression handler wiring
     //   -> Phase-79 (implements) - coverage and contract handler wiring
     //   -> Phase-80 (implements) - perf regression handler wiring
+    //   -> Phase-81 (implements) - resilience chaos handler wiring
     //   -> NFR-002 (traces_to) - release verification commands must route deterministically
     //   <- V-M-CLI-TEST-COMMANDS (verified_by) - parse and dispatch tests
     // <LOG id="test_command_dispatch" level="INFO" ref="test-command-dispatch" module="M-CLI-TEST-COMMANDS" contract="TestCmd::run">
@@ -156,6 +165,7 @@ impl TestCmd {
             TestAction::Coverage(args) => run_coverage_action(args),
             TestAction::Perf(args) => run_perf_action(args),
             TestAction::Contract(args) => run_contract_action(args),
+            TestAction::Resilience(args) => run_resilience_action(args),
             _ => {
                 println!("{}", render_structured_action(action)?);
                 Ok(())
@@ -234,7 +244,7 @@ impl TestActionKind {
             Self::Mcp => "Phase-78",
             Self::Coverage | Self::Contract => "Phase-79",
             Self::Perf => "Phase-80",
-            Self::Resilience => "Phase-82",
+            Self::Resilience => "Phase-81",
         }
     }
     // END_test_action_kind_phase_id
@@ -547,6 +557,44 @@ fn run_contract_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
 }
 // END_run_contract_action
 
+// START_CONTRACT_run_resilience_action
+// PURPOSE: Run resilience chaos specs from explicit paths or the default resilience spec directory
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: executes Synapse commands inside isolated fixtures, writes stdout
+// LINKS:
+//   -> M-TEST-RESILIENCE-CHAOS (depends) - resilience chaos runner
+//   -> M-CLI-TEST-COMMANDS (depends) - CLI handler wiring
+//   -> Phase-81 (implements) - syn test resilience handler
+//   -> NFR-002 (traces_to) - resilience specs must be invokable from CLI
+//   -> NFR-003 (traces_to) - resilience reports are bounded and JSON-capable
+// START_run_resilience_action
+fn run_resilience_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
+    let specs = resolve_resilience_specs(args)?;
+    if specs.is_empty() {
+        println!(
+            "{}",
+            render_structured_action(&TestAction::Resilience(args.clone()))?
+        );
+        return Ok(());
+    }
+    let options = ResilienceOptions {
+        binary_path: None,
+        fail_fast: args.fail_fast,
+    };
+    let report = run_resilience_specs(&specs, &options)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+    } else {
+        println!("{}", render_resilience_report(&report));
+    }
+    if !report.passed {
+        anyhow::bail!("one or more resilience specs failed");
+    }
+    Ok(())
+}
+// END_run_resilience_action
+
 // START_CONTRACT_run_snapshot_action
 // PURPOSE: Run structured syn test snapshot listing/check/update command surface
 // INPUTS: { args: &StructuredTestArgs }
@@ -757,6 +805,39 @@ fn collect_snapshot_files(
 }
 // END_collect_snapshot_files
 
+// START_CONTRACT_resolve_resilience_specs
+// PURPOSE: Resolve explicit resilience spec paths or discover default .toml specs in sorted order
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { anyhow::Result<Vec<PathBuf>> }
+// LINKS:
+//   -> M-TEST-RESILIENCE-CHAOS (depends) - resilience spec directory convention
+//   -> NFR-002 (traces_to) - spec discovery must be deterministic
+// START_resolve_resilience_specs
+fn resolve_resilience_specs(args: &StructuredTestArgs) -> anyhow::Result<Vec<PathBuf>> {
+    if !args.specs.is_empty() {
+        return Ok(args
+            .specs
+            .iter()
+            .map(|spec| resolve_project_path(&args.project, spec))
+            .collect());
+    }
+    let spec_dir = resolve_project_path(&args.project, Path::new(DEFAULT_RESILIENCE_SPEC_DIR));
+    if !spec_dir.exists() {
+        return Ok(Vec::new());
+    }
+    let mut specs = Vec::new();
+    for entry in std::fs::read_dir(spec_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|value| value.to_str()) == Some("toml") {
+            specs.push(path);
+        }
+    }
+    specs.sort();
+    Ok(specs)
+}
+// END_resolve_resilience_specs
+
 // START_CONTRACT_compact_command_output
 // PURPOSE: Return a bounded UTF-8 tail from command output bytes
 // INPUTS: { bytes: &[u8] }
@@ -824,6 +905,7 @@ fn render_structured_action(action: &TestAction) -> anyhow::Result<String> {
                 "scenarios": args.scenarios,
                 "update": args.update,
                 "filter": args.filter,
+                "fail_fast": args.fail_fast,
                 "baseline": args.baseline,
                 "check": args.check,
                 "threshold": args.threshold,
@@ -854,6 +936,9 @@ fn render_structured_action(action: &TestAction) -> anyhow::Result<String> {
     }
     if let Some(filter) = &args.filter {
         lines.push(format!("filter: {filter}"));
+    }
+    if args.fail_fast {
+        lines.push("fail_fast: true".to_string());
     }
     if args.baseline {
         lines.push("baseline: true".to_string());
@@ -1062,6 +1147,71 @@ mod tests {
             value["matrix"][0]["baseline_path"],
             "tests/baselines/perf.json"
         );
+    }
+
+    #[test]
+    fn cli_test_resilience_options_are_parsed() {
+        let action = parse_test_action(&[
+            "syn",
+            "test",
+            "resilience",
+            "--fail-fast",
+            "tests/e2e/resilience/missing-docs.toml",
+        ]);
+        let TestAction::Resilience(args) = action else {
+            panic!("expected resilience action");
+        };
+
+        assert!(args.fail_fast);
+        assert_eq!(
+            args.specs,
+            [PathBuf::from("tests/e2e/resilience/missing-docs.toml")]
+        );
+    }
+
+    #[test]
+    fn cli_test_resilience_action_points_to_phase_81() {
+        let action = parse_test_action(&["syn", "test", "resilience", "--json"]);
+        let rendered = render_structured_action(&action).expect("resilience JSON should render");
+        let value: serde_json::Value =
+            serde_json::from_str(&rendered).expect("resilience output should be JSON");
+
+        assert_eq!(value["matrix"][0]["action"], "resilience");
+        assert_eq!(value["matrix"][0]["module"], "M-TEST-RESILIENCE-CHAOS");
+        assert_eq!(value["matrix"][0]["phase"], "Phase-81");
+    }
+
+    #[test]
+    fn cli_test_resilience_specs_are_discovered_sorted() {
+        let dir = TempDir::new().unwrap();
+        let spec_dir = dir.path().join(DEFAULT_RESILIENCE_SPEC_DIR);
+        std::fs::create_dir_all(&spec_dir).unwrap();
+        std::fs::write(spec_dir.join("b.toml"), "name = \"b\"\n").unwrap();
+        std::fs::write(spec_dir.join("a.toml"), "name = \"a\"\n").unwrap();
+        std::fs::write(spec_dir.join("ignore.txt"), "x").unwrap();
+        let args = StructuredTestArgs {
+            project: dir.path().to_path_buf(),
+            fixture: None,
+            scenarios: Vec::new(),
+            json: false,
+            list: false,
+            update: false,
+            filter: None,
+            fail_fast: false,
+            baseline: false,
+            check: false,
+            threshold: 20.0,
+            baseline_path: PathBuf::from("tests/baselines/perf.json"),
+            snapshot_dir: PathBuf::from("tests/snapshots"),
+            specs: Vec::new(),
+            passthrough: Vec::new(),
+        };
+
+        let specs = resolve_resilience_specs(&args).expect("spec discovery");
+
+        assert_eq!(specs.len(), 2);
+        assert_eq!(specs[0].file_name().unwrap(), "a.toml");
+        assert_eq!(specs[1].file_name().unwrap(), "b.toml");
     }
 
     #[test]
