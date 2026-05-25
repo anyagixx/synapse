@@ -7,6 +7,7 @@
 
 // START_MODULE_MAP
 // StoredBlock — Re-exported serializable code block for JSON storage
+// SearchFilters — Re-exported search filter metadata for storage callers
 // Storage — JSON-backed block store with load-health, BM25, and vector search
 // replace_all_blocks — Replaces the full index snapshot and removes stale file entries
 // upsert_file_blocks — Replaces one file's indexed blocks without a full snapshot rewrite
@@ -15,7 +16,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Added per-file delta upsert and removal operations]
+// LAST_CHANGE: [v3.7.0 — Re-exported search filter metadata]
 // END_CHANGE_SUMMARY
 
 use super::storage_search::{cosine_similarity, expand_query_terms, ngram_vectorize, score_block};
@@ -24,7 +25,7 @@ use std::path::{Path, PathBuf};
 // START_public_api
 
 // START_StoredBlock
-pub use super::storage_types::StoredBlock;
+pub use super::storage_types::{SearchFilters, StoredBlock};
 // END_StoredBlock
 
 // START_Storage

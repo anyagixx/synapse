@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-INDEXER-STORAGE-TYPES" module="M-INDEXER-STORAGE-TYPES" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test indexer::storage_types::tests::test_search_filters_match_language_case_insensitive --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage_types::tests::test_search_filters_match_relative_path_prefix --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage_types::tests::test_search_filters_match_path_contains --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <PHASE_GATE>Phase-1,Phase-65</PHASE_GATE>
 </VERIFICATION>

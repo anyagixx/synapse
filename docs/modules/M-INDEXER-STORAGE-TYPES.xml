@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-INDEXER-STORAGE-TYPES" type="DATA_LAYER" status="active">
   <NAME>M-INDEXER-STORAGE-TYPES</NAME>
-  <PURPOSE>Shared storage data types for indexed code blocks</PURPOSE>
-  <SCOPE>StoredBlock serialization shape</SCOPE>
+  <PURPOSE>Shared storage data types for indexed code blocks and search filters</PURPOSE>
+  <SCOPE>StoredBlock serialization shape, SearchFilters metadata for language and relative path filtering</SCOPE>
   <FILES>
     <FILE>src/indexer/storage_types.rs</FILE>
   </FILES>
   <DEPENDS></DEPENDS>
-  <LINKS>docs/modules/M-INDEXER-STORAGE.xml</LINKS>
+  <LINKS>docs/modules/M-INDEXER-STORAGE.xml,docs/phases/Phase-65.xml</LINKS>
   <VERIFICATION_REF>V-M-INDEXER-STORAGE-TYPES</VERIFICATION_REF>
 </MODULE>

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-INDEXER-STORAGE" version="1.0">
   UNDERSTANDING:
-    Module responsibility: JSON block storage facade with load-health reporting, snapshot and delta persistence, BM25, and vector search APIs
+    Module responsibility: JSON block storage facade with load-health reporting, snapshot and delta persistence, filter metadata, BM25, and vector search APIs
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES
-      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+      - OUTPUT: Updated storage APIs, including StoredBlock and SearchFilters re-exports, that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: Storage struct, StoredBlock, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, search API orchestration
+      - Scope remains bounded to: Storage struct, StoredBlock/SearchFilters re-exports, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, search API orchestration
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
