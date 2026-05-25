@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
 // PURPOSE: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
-// SCOPE: semantic_search, graphrag_query with lazy GraphRAG build and type filters, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
-// DEPENDS: M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
+// SCOPE: semantic_search, graphrag_query with lazy GraphRAG build and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover, lsp_references handlers
+// DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
@@ -11,15 +11,16 @@
 // ensure_graphrag — Lazily builds GraphRAG state on first graph query
 // read_graphrag — Reads GraphRAG state without panicking on poisoned locks
 // handle_view_signatures — Returns indexed signatures for a file
-// handle_lsp_hover — Returns LSP hover contents
-// handle_lsp_references — Returns LSP reference locations summary
+// handle_lsp_hover — Returns LSP hover contents using configured language servers
+// handle_lsp_references — Returns LSP reference locations summary using configured language servers
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.2.0 — Added lazy GraphRAG build for protocol responsiveness]
+// LAST_CHANGE: [v3.3.0 — Threaded config into LSP MCP handlers]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result};
+use crate::config::Config;
 use crate::grace::contract::LinkType;
 use crate::graphrag::GraphRag;
 use crate::indexer::Indexer;
@@ -461,13 +462,14 @@ pub(crate) async fn handle_view_signatures(
 // OUTPUTS: { serde_json::Value }
 // START_handle_lsp_hover
 pub(crate) async fn handle_lsp_hover(
+    config: &Config,
     id: Option<serde_json::Value>,
     args: &serde_json::Value,
 ) -> serde_json::Value {
     let file = args["file"].as_str().unwrap_or("");
     let line = args["line"].as_u64().unwrap_or(0) as u32;
     let col = args["column"].as_u64().unwrap_or(0) as u32;
-    match crate::mcp::lsp::LspClient::new().hover(file, line, col) {
+    match crate::mcp::lsp::LspClient::new(config).hover(file, line, col) {
         Ok(h) => result(
             id,
             serde_json::json!({
@@ -486,13 +488,14 @@ pub(crate) async fn handle_lsp_hover(
 // OUTPUTS: { serde_json::Value }
 // START_handle_lsp_references
 pub(crate) async fn handle_lsp_references(
+    config: &Config,
     id: Option<serde_json::Value>,
     args: &serde_json::Value,
 ) -> serde_json::Value {
     let file = args["file"].as_str().unwrap_or("");
     let line = args["line"].as_u64().unwrap_or(0) as u32;
     let col = args["column"].as_u64().unwrap_or(0) as u32;
-    match crate::mcp::lsp::LspClient::new().references(file, line, col) {
+    match crate::mcp::lsp::LspClient::new(config).references(file, line, col) {
         Ok(refs) => {
             let text = if refs.is_empty() {
                 "No references found".into()

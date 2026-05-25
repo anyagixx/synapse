@@ -30,3 +30,10 @@ history_days = 90
 [graphrag]
 enabled = false
 use_llm = false
+
+# [lsp.servers]
+# rs = ["rust-analyzer"]
+# py = ["pylsp"]
+# ts = ["typescript-language-server", "--stdio"]
+# js = ["typescript-language-server", "--stdio"]
+# go = ["gopls"]

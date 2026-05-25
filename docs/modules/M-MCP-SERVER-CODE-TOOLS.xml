@@ -2,11 +2,11 @@
 <MODULE id="M-MCP-SERVER-CODE-TOOLS" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER-CODE-TOOLS</NAME>
   <PURPOSE>MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups</PURPOSE>
-  <SCOPE>semantic_search with Unicode-safe previews, graphrag_query with type filters, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers</SCOPE>
+  <SCOPE>semantic_search with Unicode-safe previews, graphrag_query with type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover and lsp_references handlers</SCOPE>
   <FILES>
     <FILE>src/mcp/server_code_tools.rs</FILE>
   </FILES>
-  <DEPENDS>M-GRACE-CONTRACT,M-INDEXER,M-GRAPHRAG,M-MCP-LSP,M-MCP-SERVER-RESPONSE,M-UTILS</DEPENDS>
-  <LINKS>docs/modules/M-MCP-SERVER.xml</LINKS>
+  <DEPENDS>M-CONFIG,M-GRACE-CONTRACT,M-INDEXER,M-GRAPHRAG,M-MCP-LSP,M-MCP-SERVER-RESPONSE,M-UTILS</DEPENDS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml,docs/phases/Phase-59.xml</LINKS>
   <VERIFICATION_REF>V-M-MCP-SERVER-CODE-TOOLS</VERIFICATION_REF>
 </MODULE>

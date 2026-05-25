@@ -1,19 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, and suggest_contract, guarded index preload and lazy GraphRAG state
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, stdio loop, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, suggest_contract, and config-aware LSP tools, guarded index preload and lazy GraphRAG state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-UTILS
 // LINKS: N/A
 
 // START_MODULE_MAP
 // McpServer — MCP stdio server entry point
 // discover_project_count — Counts probable child projects for multi-root mode
-// SynapseHandler — MCP message router and initialization state
+// SynapseHandler — MCP message router, runtime config, and initialization state
 // preload_index_storage — Loads index storage without panicking on poisoned locks
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.13.0 - Made GraphRAG preload lazy for protocol responsiveness]
+// LAST_CHANGE: [v3.14.0 - Retained runtime config for LSP MCP tools]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -136,6 +136,7 @@ fn discover_project_count(root: &Path) -> usize {
 
 // START_SynapseHandler
 pub struct SynapseHandler {
+    config: Config,
     indexer: Indexer,
     graphrag: RwLock<Option<GraphRag>>,
     skill_engine: SkillEngine,
@@ -165,6 +166,7 @@ impl SynapseHandler {
             }
         }
         Self {
+            config,
             indexer,
             graphrag: RwLock::new(None),
             skill_engine,
@@ -274,8 +276,12 @@ impl SynapseHandler {
                     "suggest_contract" => {
                         server_contract_tools::handle_suggest_contract(id, args).await
                     }
-                    "lsp_hover" => server_code_tools::handle_lsp_hover(id, args).await,
-                    "lsp_references" => server_code_tools::handle_lsp_references(id, args).await,
+                    "lsp_hover" => {
+                        server_code_tools::handle_lsp_hover(&self.config, id, args).await
+                    }
+                    "lsp_references" => {
+                        server_code_tools::handle_lsp_references(&self.config, id, args).await
+                    }
                     name if name.starts_with("grace_") => {
                         server_grace_tools::handle_grace_skill(
                             &self.skill_engine,

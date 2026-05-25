@@ -11,6 +11,6 @@
     <FILE>scripts/rtk_full_release_gate.sh</FILE>
   </FILES>
   <DEPENDS>M-BUILD,M-INSTALL,M-RTK-FULL-PARITY,M-CLI-RTK-COMMANDS,M-HOOKS,M-PROXY-RUNNER,M-TRACKING,M-GRACE-VERIFY,M-GRACE-REVIEW</DEPENDS>
-  <LINKS>.github/workflows/ci.yml,.github/workflows/release.yml,install.sh,docs/phases/Phase-50.xml,docs/phases/Phase-57.xml</LINKS>
+  <LINKS>.github/workflows/ci.yml,.github/workflows/release.yml,install.sh,docs/phases/Phase-50.xml,docs/phases/Phase-57.xml,docs/phases/Phase-59.xml</LINKS>
   <VERIFICATION_REF>V-M-CI-RELEASE-SMOKE</VERIFICATION_REF>
 </MODULE>

@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-MCP" module="M-MCP" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test mcp::lsp_manager::tests --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>MCP module exports the persistent LSP manager beside the LSP client and server facade.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-59</PHASE_GATE>
 </VERIFICATION>

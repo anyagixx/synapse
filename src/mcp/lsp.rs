@@ -1,23 +1,29 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-LSP
-// PURPOSE: LSP client bridge — sends guarded textDocument/hover, go-to-definition, references to language servers
-// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, Unicode-safe error previews, LSP protocol via stdio
-// DEPENDS: M-UTILS
-// LINKS: N/A
+// PURPOSE: LSP client bridge — sends guarded hover, go-to-definition, and references requests through persistent configurable language-server connections
+// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, configurable LSP command detection, didOpen preparation, persistent LSP manager integration
+// DEPENDS: M-CONFIG, M-UTILS
+// LINKS:
+//   -> M-MCP-LSP (depends) - persistent LSP manager
+//   -> Phase-59 (implements) - persistent configurable LSP runtime
 
 // START_MODULE_MAP
 // LspHoverResult — Hover information from LSP
 // LspDefinitionResult — Go-to-definition result
 // LspReferenceResult — References result
 // LspClient — LSP protocol client bridge
+// detect_lsp_command_for — Resolve configured or built-in language-server command
 // protocol_position — Converts user-facing positions to LSP positions without underflow
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.0.0 — Use Unicode-safe LSP error previews]
+// LAST_CHANGE: [v4.0.0 — Replaced per-request LSP spawning with persistent configurable manager]
 // END_CHANGE_SUMMARY
 
-use std::process::{Command, Stdio};
+use crate::config::Config;
+use std::collections::BTreeMap;
+use std::path::Path;
+use std::sync::Arc;
 
 // START_public_api
 
@@ -43,16 +49,27 @@ pub struct LspReferenceResult {
 // END_LspReferenceResult
 
 // START_LspClient
-pub struct LspClient;
+pub struct LspClient {
+    config: Config,
+}
 // END_LspClient
+
+struct PreparedLspRequest {
+    connection: Arc<crate::mcp::lsp_manager::LspConnection>,
+    uri: String,
+    line: u32,
+    character: u32,
+}
 
 impl LspClient {
     // START_CONTRACT_LspClient::new
     // PURPOSE: Create a new LspClient
     // OUTPUTS: { Self }
     // START_lsp_client_new
-    pub fn new() -> Self {
-        Self
+    pub fn new(config: &Config) -> Self {
+        Self {
+            config: config.clone(),
+        }
     }
     // END_lsp_client_new
 
@@ -62,21 +79,15 @@ impl LspClient {
     // OUTPUTS: { anyhow::Result<LspHoverResult> }
     // START_lsp_client_hover
     pub fn hover(&self, file: &str, line: u32, column: u32) -> anyhow::Result<LspHoverResult> {
-        let cmd = Self::detect_lsp_command(file)?;
-        let uri = format!("file://{}", std::fs::canonicalize(file)?.display());
-        let (line, character) = Self::protocol_position(line, column);
-        let request = serde_json::json!({
-            "jsonrpc": "2.0", "id": 1, "method": "textDocument/hover",
-            "params": {
-                "textDocument": { "uri": uri },
-                "position": { "line": line, "character": character }
-            }
-        });
-        let response = Self::send_lsp_request(&cmd, &request)?;
-        let contents = response["result"]["contents"]["value"]
-            .as_str()
-            .unwrap_or(&response["result"]["contents"].to_string())
-            .to_string();
+        let prepared = self.prepare_request(file, line, column)?;
+        let response = prepared.connection.request(
+            "textDocument/hover",
+            &serde_json::json!({
+                "textDocument": { "uri": prepared.uri },
+                "position": { "line": prepared.line, "character": prepared.character }
+            }),
+        )?;
+        let contents = hover_contents(&response["result"]["contents"]);
         Ok(LspHoverResult {
             contents: contents.chars().take(500).collect(),
             range: None,
@@ -95,30 +106,21 @@ impl LspClient {
         line: u32,
         column: u32,
     ) -> anyhow::Result<Vec<LspDefinitionResult>> {
-        let cmd = Self::detect_lsp_command(file)?;
-        let uri = format!("file://{}", std::fs::canonicalize(file)?.display());
-        let (line, character) = Self::protocol_position(line, column);
-        let request = serde_json::json!({
-            "jsonrpc": "2.0", "id": 2, "method": "textDocument/definition",
-            "params": {
-                "textDocument": { "uri": uri },
-                "position": { "line": line, "character": character }
-            }
-        });
-        let response = Self::send_lsp_request(&cmd, &request)?;
+        let prepared = self.prepare_request(file, line, column)?;
+        let response = prepared.connection.request(
+            "textDocument/definition",
+            &serde_json::json!({
+                "textDocument": { "uri": prepared.uri },
+                "position": { "line": prepared.line, "character": prepared.character }
+            }),
+        )?;
         let mut results = Vec::new();
         if let Some(arr) = response["result"].as_array() {
             for entry in arr {
-                results.push(LspDefinitionResult {
-                    uri: entry["uri"].as_str().unwrap_or("").to_string(),
-                    range: (
-                        entry["range"]["start"]["line"].as_u64().unwrap_or(0) as usize + 1,
-                        entry["range"]["start"]["character"].as_u64().unwrap_or(0) as usize,
-                        entry["range"]["end"]["line"].as_u64().unwrap_or(0) as usize + 1,
-                        entry["range"]["end"]["character"].as_u64().unwrap_or(0) as usize,
-                    ),
-                });
+                push_definition_result(&mut results, entry);
             }
+        } else if response["result"].is_object() {
+            push_definition_result(&mut results, &response["result"]);
         }
         Ok(results)
     }
@@ -135,41 +137,87 @@ impl LspClient {
         line: u32,
         column: u32,
     ) -> anyhow::Result<Vec<LspReferenceResult>> {
-        let cmd = Self::detect_lsp_command(file)?;
-        let uri = format!("file://{}", std::fs::canonicalize(file)?.display());
-        let (line, character) = Self::protocol_position(line, column);
-        let request = serde_json::json!({
-            "jsonrpc": "2.0", "id": 3, "method": "textDocument/references",
-            "params": {
-                "textDocument": { "uri": uri },
-                "position": { "line": line, "character": character },
+        let prepared = self.prepare_request(file, line, column)?;
+        let response = prepared.connection.request(
+            "textDocument/references",
+            &serde_json::json!({
+                "textDocument": { "uri": prepared.uri },
+                "position": { "line": prepared.line, "character": prepared.character },
                 "context": { "includeDeclaration": false }
-            }
-        });
-        let response = Self::send_lsp_request(&cmd, &request)?;
-        let mut ranges = Vec::new();
+            }),
+        )?;
+        let mut ranges_by_uri: BTreeMap<String, Vec<(usize, usize, usize, usize)>> =
+            BTreeMap::new();
         if let Some(arr) = response["result"].as_array() {
             for entry in arr {
-                ranges.push((
-                    entry["range"]["start"]["line"].as_u64().unwrap_or(0) as usize + 1,
-                    entry["range"]["start"]["character"].as_u64().unwrap_or(0) as usize,
-                    entry["range"]["end"]["line"].as_u64().unwrap_or(0) as usize + 1,
-                    entry["range"]["end"]["character"].as_u64().unwrap_or(0) as usize,
-                ));
+                let uri = entry["uri"].as_str().unwrap_or("").to_string();
+                ranges_by_uri.entry(uri).or_default().push(lsp_range(entry));
             }
         }
-        Ok(vec![LspReferenceResult {
-            uri: uri.clone(),
-            ranges,
-        }])
+        Ok(ranges_by_uri
+            .into_iter()
+            .map(|(uri, ranges)| LspReferenceResult { uri, ranges })
+            .collect())
     }
     // END_lsp_client_references
 
-    fn detect_lsp_command(file: &str) -> anyhow::Result<Vec<String>> {
-        let ext = std::path::Path::new(file)
+    fn prepare_request(
+        &self,
+        file: &str,
+        line: u32,
+        column: u32,
+    ) -> anyhow::Result<PreparedLspRequest> {
+        let file_path = std::fs::canonicalize(file)?;
+        let uri = format!("file://{}", file_path.display());
+        let (language, ext) = Self::detect_language(file)?;
+        let cmd = Self::detect_lsp_command_for(&language, &ext, &self.config)?;
+        let root_path = std::env::current_dir()?;
+        let root_path = root_path.canonicalize().unwrap_or(root_path);
+        let root = root_path.to_string_lossy().to_string();
+        let connection =
+            crate::mcp::lsp_manager::global_lsp_manager().get_or_spawn(&root, &language, cmd)?;
+        let text = std::fs::read_to_string(&file_path)?;
+        connection.ensure_opened(&uri, &text)?;
+        let (line, character) = Self::protocol_position(line, column);
+        Ok(PreparedLspRequest {
+            connection,
+            uri,
+            line,
+            character,
+        })
+    }
+
+    fn detect_language(file: &str) -> anyhow::Result<(String, String)> {
+        let ext = Path::new(file)
             .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("");
+        match ext {
+            "rs" => Ok(("rust".into(), ext.into())),
+            "py" => Ok(("python".into(), ext.into())),
+            "ts" | "tsx" => Ok(("typescript".into(), ext.into())),
+            "js" | "jsx" => Ok(("javascript".into(), ext.into())),
+            "go" => Ok(("go".into(), ext.into())),
+            _ => anyhow::bail!("No LSP server configured for .{} files", ext),
+        }
+    }
+
+    fn detect_lsp_command_for(
+        language: &str,
+        ext: &str,
+        config: &Config,
+    ) -> anyhow::Result<Vec<String>> {
+        if let Some(cmd) = config
+            .lsp
+            .servers
+            .get(ext)
+            .or_else(|| config.lsp.servers.get(language))
+        {
+            if cmd.is_empty() {
+                anyhow::bail!("configured LSP command for {} is empty", ext);
+            }
+            return Ok(cmd.clone());
+        }
         match ext {
             "rs" => Ok(vec!["rust-analyzer".into()]),
             "py" => Ok(vec!["pylsp".into()]),
@@ -190,76 +238,36 @@ impl LspClient {
         (line.saturating_sub(1), column)
     }
     // END_lsp_client_protocol_position
+}
 
-    fn send_lsp_request(
-        cmd: &[String],
-        request: &serde_json::Value,
-    ) -> anyhow::Result<serde_json::Value> {
-        let (program, args) = cmd
-            .split_first()
-            .ok_or_else(|| anyhow::anyhow!("empty LSP command"))?;
-        let args: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+fn hover_contents(contents: &serde_json::Value) -> String {
+    contents["value"]
+        .as_str()
+        .or_else(|| contents.as_str())
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| contents.to_string())
+}
 
-        // Initialize LSP
-        let init = serde_json::json!({
-            "jsonrpc": "2.0", "id": 0, "method": "initialize",
-            "params": {
-                "processId": std::process::id(),
-                "capabilities": {},
-                "rootUri": format!("file://{}", std::env::current_dir()?.display())
-            }
-        });
+fn push_definition_result(results: &mut Vec<LspDefinitionResult>, entry: &serde_json::Value) {
+    results.push(LspDefinitionResult {
+        uri: entry["uri"].as_str().unwrap_or("").to_string(),
+        range: lsp_range(entry),
+    });
+}
 
-        let mut child = Command::new(program)
-            .args(&args)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()?;
-
-        use std::io::Write;
-        let stdin = child
-            .stdin
-            .as_mut()
-            .ok_or_else(|| anyhow::anyhow!("LSP stdin pipe unavailable for {}", program))?;
-        let init_str = format!("Content-Length: {}\r\n\r\n{}", init.to_string().len(), init);
-        stdin.write_all(init_str.as_bytes())?;
-
-        let req_str = format!(
-            "Content-Length: {}\r\n\r\n{}",
-            request.to_string().len(),
-            request
-        );
-        stdin.write_all(req_str.as_bytes())?;
-        stdin.flush()?;
-
-        let output = child.wait_with_output()?;
-        let stdout = String::from_utf8_lossy(&output.stdout);
-
-        // Parse LSP header + body
-        if let Some(body_start) = stdout.find("\r\n\r\n") {
-            let body = &stdout[body_start + 4..];
-            // Skip Content-Length header of the response
-            if let Some(inner_start) = body.find("\r\n\r\n") {
-                let json = &body[inner_start + 4..];
-                if let Ok(val) = serde_json::from_str(json) {
-                    return Ok(val);
-                }
-            }
-            if let Ok(val) = serde_json::from_str(body) {
-                return Ok(val);
-            }
-        }
-        anyhow::bail!(
-            "Failed to parse LSP response: {}",
-            crate::utils::truncate_chars(&stdout, 200)
-        )
-    }
+fn lsp_range(entry: &serde_json::Value) -> (usize, usize, usize, usize) {
+    (
+        entry["range"]["start"]["line"].as_u64().unwrap_or(0) as usize + 1,
+        entry["range"]["start"]["character"].as_u64().unwrap_or(0) as usize,
+        entry["range"]["end"]["line"].as_u64().unwrap_or(0) as usize + 1,
+        entry["range"]["end"]["character"].as_u64().unwrap_or(0) as usize,
+    )
 }
 
 #[cfg(test)]
 mod tests {
     use super::LspClient;
+    use crate::config::Config;
 
     // START_CONTRACT_test_protocol_position_zero_line_is_safe
     // PURPOSE: Verify line zero cannot underflow before an LSP request is sent
@@ -271,5 +279,26 @@ mod tests {
         assert_eq!(LspClient::protocol_position(9, 7), (8, 7));
     }
     // END_test_protocol_position_zero_line_is_safe
+
+    #[test]
+    fn test_detect_lsp_command_uses_config_override() {
+        let mut config = Config::default();
+        config.lsp.servers.insert(
+            "py".into(),
+            vec!["pyright-langserver".into(), "--stdio".into()],
+        );
+        let command = LspClient::detect_lsp_command_for("python", "py", &config).unwrap();
+        assert_eq!(
+            command,
+            vec!["pyright-langserver".to_string(), "--stdio".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_detect_lsp_command_falls_back_to_builtin() {
+        let config = Config::default();
+        let command = LspClient::detect_lsp_command_for("rust", "rs", &config).unwrap();
+        assert_eq!(command, vec!["rust-analyzer".to_string()]);
+    }
 }
 // END_public_api

@@ -6,6 +6,7 @@
     <COMMAND>cargo test --test release_candidate test_release_candidate_fresh_install_evidence</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
     <MARKER>[CI][release_install_smoke][CHECKSUM]</MARKER>
@@ -18,6 +19,7 @@
     <ASSERTION>Release-candidate dry-run revalidates Linux/macOS installer mappings before any release publishing path and keeps Windows packaging deferred until artifacts and installer mapping exist.</ASSERTION>
     <ASSERTION>Installer diagnose mode reports Linux/macOS artifact mapping, independent OS and architecture support status, install directory status, required tool availability, checksum verifier status, Windows packaging deferral, and SYN_INSTALL_DIR guidance without writing files.</ASSERTION>
     <ASSERTION>Release-candidate workflow captures public installer fresh smoke evidence on Linux/macOS with a temporary SYN_INSTALL_DIR.</ASSERTION>
+    <ASSERTION>Installer default version follows the post-v2.6.0 fix line so source fallback and artifact lookup do not target stale release tags.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-12</PHASE_GATE>
+  <PHASE_GATE>Phase-59</PHASE_GATE>
 </VERIFICATION>

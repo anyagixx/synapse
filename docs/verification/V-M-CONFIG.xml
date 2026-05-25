@@ -2,8 +2,11 @@
 <VERIFICATION id="V-M-CONFIG" module="M-CONFIG" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test mcp::lsp::tests::test_detect_lsp_command_uses_config_override --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
-  <TRACE_ASSERTIONS></TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-1</PHASE_GATE>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>LSP server command overrides deserialize through Config and override built-in language-server defaults.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-59</PHASE_GATE>
 </VERIFICATION>

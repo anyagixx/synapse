@@ -3,6 +3,7 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test --test mcp_protocol</COMMAND>
+    <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
@@ -23,6 +24,7 @@
     <ASSERTION>JSON-RPC tool dispatch routes traceability_report to the GRACE Traceability reporter.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes cascade_impact and cascade_execute to the GRACE cascade update engine.</ASSERTION>
     <ASSERTION>JSON-RPC tool dispatch routes run_test_guide and submit_test_report to the GRACE agent-based testing workflow.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes lsp_hover and lsp_references through runtime Config so configured LSP server commands are honored.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13</PHASE_GATE>
+  <PHASE_GATE>Phase-59</PHASE_GATE>
 </VERIFICATION>

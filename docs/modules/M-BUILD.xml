@@ -9,6 +9,6 @@
     <FILE>build.rs</FILE>
   </FILES>
   <DEPENDS>M-PROXY-FILTER,M-HOOKS</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-33.xml</LINKS>
+  <LINKS>Cargo.toml,docs/phases/Phase-33.xml,docs/phases/Phase-59.xml</LINKS>
   <VERIFICATION_REF>V-M-BUILD</VERIFICATION_REF>
 </MODULE>

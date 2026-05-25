@@ -7,6 +7,6 @@
     <FILE>install.sh</FILE>
   </FILES>
   <DEPENDS>M-BUILD</DEPENDS>
-  <LINKS>install.sh,INSTALL.md,.github/workflows/release.yml</LINKS>
+  <LINKS>install.sh,INSTALL.md,.github/workflows/release.yml,docs/phases/Phase-59.xml</LINKS>
   <VERIFICATION_REF>V-M-INSTALL</VERIFICATION_REF>
 </MODULE>

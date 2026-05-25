@@ -1,26 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-59" status="active">
+<PHASE id="Phase-59" status="done">
   <NAME>Persistent Configurable LSP Runtime</NAME>
   <GOAL>Resolve FIX/C2 and FIX/L3 by replacing per-request LSP spawning with a reusable manager and configurable language-server commands.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/CRITICAL/C2-lsp-per-request.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L3-hardcoded-lsp.md</SOURCE_PLAN>
   <MODULE_REFS>
     <MODULE_REF id="M-MCP-LSP" />
     <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP" />
     <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
   </MODULE_REFS>
   <DATA_FLOWS>
     <FLOW id="DF-59-1">MCP LSP requests resolve a language and root, obtain a pooled LSP connection, send didOpen as needed, then dispatch hover/definition/references.</FLOW>
     <FLOW id="DF-59-2">Config-provided LSP server commands override built-in defaults without changing existing fallback behavior.</FLOW>
+    <FLOW id="DF-59-3">Post-v2.6.0 development advances Cargo/install metadata to v2.6.1 so release freshness guards remain meaningful after new commits.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-CONFIG" status="pending">Add an LSP config section for per-language server command overrides.</step-1>
-    <step-2 module="M-MCP-LSP" status="pending">Introduce an LSP connection manager with lifecycle, request ids, didOpen tracking, shutdown cleanup, and graceful missing-binary errors.</step-2>
-    <step-3 module="M-MCP-SERVER" status="pending">Thread config into LSP tool handling and verify MCP tool behavior remains stdio-safe.</step-3>
+    <step-1 module="M-CONFIG" status="done">Added LspConfig and optional lsp.servers command overrides with default fallback behavior.</step-1>
+    <step-2 module="M-MCP-LSP" status="done">Introduced an LSP connection manager with lifecycle, request ids, didOpen tracking, shutdown cleanup, and graceful missing-binary errors.</step-2>
+    <step-3 module="M-MCP-SERVER" status="done">Threaded runtime Config into LSP tool handling while keeping MCP stdio behavior stable.</step-3>
+    <step-4 module="M-BUILD" status="done">Advanced Cargo.lock/Cargo.toml package version to 2.6.1 for post-release freshness.</step-4>
+    <step-5 module="M-INSTALL" status="done">Advanced install.sh default version to v2.6.1.</step-5>
+    <step-6 module="M-CI-RELEASE-SMOKE" status="done">Updated release smoke verification tag expectations to v2.6.1.</step-6>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test mcp::lsp::tests --lib</CHECK>
-    <CHECK status="planned">cargo test --test mcp_protocol</CHECK>
-    <CHECK status="planned">cargo test --all-targets</CHECK>
+    <CHECK status="passed">cargo test mcp::lsp::tests --lib</CHECK>
+    <CHECK status="passed">cargo test mcp::lsp_manager::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test mcp_protocol</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase59-data cargo test --all-targets -- --test-threads=8</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-59-1">Returning references from pooled process state requires avoiding borrowed values across locks; use owned Arc-managed connections.</RISK>

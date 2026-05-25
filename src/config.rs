@@ -1,12 +1,12 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CONFIG
 // PURPOSE: Config model and explicit load/default/init semantics for synapsec.toml
-// SCOPE: Config struct definitions, read-only TOML load, default fallback, explicit default config generation, path resolution
+// SCOPE: Config struct definitions including LSP server overrides, read-only TOML load, default fallback, explicit default config generation, path resolution
 // DEPENDS: N/A
 // LINKS: synapsec.toml
 
 // START_MODULE_MAP
-// Config — Top-level config struct (project, index, search, proxy, compress, tracking, graphrag)
+// Config — Top-level config struct (project, index, search, proxy, compress, tracking, graphrag, lsp)
 // ProjectConfig — Project metadata (name, version, strictness)
 // IndexConfig — Indexer settings (chunk_size, chunk_overlap, require_git)
 // SearchConfig — Search settings (max_results, similarity_threshold, hybrid_enabled)
@@ -14,12 +14,14 @@
 // CompressConfig — Compress settings (output_level, input_enabled)
 // TrackingConfig — Tracking settings (enabled, history_days)
 // GraphRagConfig — GraphRAG settings (enabled, use_llm)
+// LspConfig — Language server command overrides
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.8.0 — Clarified read-only load, default fallback, and explicit init semantics]
+// LAST_CHANGE: [v2.9.0 — Added configurable LSP server command overrides]
 // END_CHANGE_SUMMARY
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 // START_public_api
@@ -34,6 +36,8 @@ pub struct Config {
     pub compress: CompressConfig,
     pub tracking: TrackingConfig,
     pub graphrag: GraphRagConfig,
+    #[serde(default)]
+    pub lsp: LspConfig,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
@@ -96,6 +100,12 @@ impl TrackingConfig {
 pub struct GraphRagConfig {
     pub enabled: bool,
     pub use_llm: bool,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug, Default)]
+pub struct LspConfig {
+    #[serde(default)]
+    pub servers: HashMap<String, Vec<String>>,
 }
 
 impl Config {
@@ -192,6 +202,7 @@ impl Default for Config {
                 enabled: false,
                 use_llm: false,
             },
+            lsp: LspConfig::default(),
         }
     }
 }
