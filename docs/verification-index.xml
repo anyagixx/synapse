@@ -12,6 +12,7 @@
     <VERIFICATION id="V-M-CLI" module="M-CLI" path="docs/verification/V-M-CLI.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-CODE-COMMANDS" module="M-CLI-CODE-COMMANDS" path="docs/verification/V-M-CLI-CODE-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-CONFIG-COMMANDS" module="M-CLI-CONFIG-COMMANDS" path="docs/verification/V-M-CLI-CONFIG-COMMANDS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-CLI-FILTER-COMMANDS" module="M-CLI-FILTER-COMMANDS" path="docs/verification/V-M-CLI-FILTER-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-GRACE-COMMANDS" module="M-CLI-GRACE-COMMANDS" path="docs/verification/V-M-CLI-GRACE-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-RUNTIME-COMMANDS" module="M-CLI-RUNTIME-COMMANDS" path="docs/verification/V-M-CLI-RUNTIME-COMMANDS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-CLI-RTK-COMMANDS" module="M-CLI-RTK-COMMANDS" path="docs/verification/V-M-CLI-RTK-COMMANDS.xml" priority="normal" status="active" />

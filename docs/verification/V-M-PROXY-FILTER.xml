@@ -9,6 +9,7 @@
     <COMMAND>cargo test proxy::toml_filter::tests::test_legacy_regex_like_match_command_warns_and_matches --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_parse_named_rtk_filter_with_inline_test --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_rtk_builtin_filter_pack_loads_and_verifies --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_filter_dry_run_reports_stages --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_project_filters_require_trust --lib</COMMAND>
     <COMMAND>cargo test proxy::toml_filter::tests::test_project_filters_require_trust --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test proxy::filter_trust::tests::test_trust_status_changes_after_file_update --lib -- --test-threads=8</COMMAND>
@@ -102,6 +103,7 @@
     <ASSERTION>The RTK built-in filter pack verifies the final RTK parity filters for helm, just, and make through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies Phase-48 cloud/container filters for Docker/Podman listings, container logs, kubectl listings/logs, and psql tables through the CLI.</ASSERTION>
     <ASSERTION>The RTK built-in filter pack verifies Graphite stacked-PR filters for gt log, gt submit, and gt sync/restack/create through the CLI.</ASSERTION>
+    <ASSERTION>FilterEngine dry-run reports each major TOML filter stage decision and returns the same output as apply without executing the command.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58,Phase-60</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-60,Phase-68</PHASE_GATE>
 </VERIFICATION>

@@ -8,6 +8,7 @@
     <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
     <COMMAND>cargo test --test integration_test test_proxy_evidence_hint_writes_raw_output</COMMAND>
     <COMMAND>cargo test --test integration_test test_tracking_is_scoped_by_canonical_project_path</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_filter_dry_run_reports_stages --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS>
     <MARKER>[Proxy][execute][TRACKING]</MARKER>
@@ -20,6 +21,7 @@
     <ASSERTION>Proxy only applies project-local filters after M-PROXY-FILTER trust checks pass.</ASSERTION>
     <ASSERTION>Proxy preserves raw evidence metadata from M-PROXY-RUNNER for explicit CLI evidence hints.</ASSERTION>
     <ASSERTION>Proxy threads Config.proxy capture and timeout settings into CommandRunner while preserving route-aware token tracking.</ASSERTION>
+    <ASSERTION>Proxy declares the internal filter dry-run submodule while keeping normal command execution behavior unchanged.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-25,Phase-61</PHASE_GATE>
+  <PHASE_GATE>Phase-25,Phase-61,Phase-68</PHASE_GATE>
 </VERIFICATION>

@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-RUNTIME-COMMANDS
 // PURPOSE: CLI runtime, integration, and diagnostic command handlers with storage health, dependency, filter lifecycle, and clean-bootstrap reporting
-// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls, CompressCmd, McpCmd, HooksCmd multi-agent install/status/audit, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
-// DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-PROXY-FILTER, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
+// SCOPE: RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls and delegated dry-run diagnostics, CompressCmd, McpCmd, HooksCmd multi-agent install/status/audit, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd
+// DEPENDS: M-CONFIG, M-RUNNER, M-GRACE-STATUS, M-TRACKING, M-PROXY, M-PROXY-ROUTER, M-PROXY-FILTER, M-CLI-FILTER-COMMANDS, M-COMPRESS, M-MCP, M-HOOKS, M-DASHBOARD, M-INDEXER-STORAGE, M-INDEXER-WALKER
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - route preview for proxied commands
 //   → M-PROXY-FILTER (depends) - filter verification and project trust lifecycle
@@ -22,7 +22,7 @@
 // print_session_stats — Prints session-level savings
 // ProxyCmd::run — Runs proxied shell commands
 // print_route_decision — Prints command-router decision without execution
-// FiltersCmd::run — Verifies, trusts, untrusts, and reports proxy filter status
+// FiltersCmd::run — Verifies, trusts, untrusts, reports proxy filter status, and delegates dry-run diagnostics
 // CompressCmd::run — Compresses or restores files
 // McpCmd::run — Starts MCP server
 // HooksCmd::run — Manages hook installation
@@ -32,7 +32,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.4.0 — Moved config command handling into M-CLI-CONFIG-COMMANDS]
+// LAST_CHANGE: [v5.5.0 — Delegated filters dry-run diagnostics to M-CLI-FILTER-COMMANDS]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -422,7 +422,7 @@ impl ProxyCmd {
 
 impl FiltersCmd {
     // START_CONTRACT_FiltersCmd::run
-    // PURPOSE: Verify inline filter tests and manage trust for project-local proxy filters
+    // PURPOSE: Verify inline filter tests, explain dry-runs, and manage trust for project-local proxy filters
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: may write or remove filter trust metadata
@@ -434,6 +434,10 @@ impl FiltersCmd {
         match &self.action {
             FiltersAction::Verify(cmd) => {
                 let engine = crate::proxy::toml_filter::FilterEngine::new();
+                if cmd.list {
+                    print_filter_names(&engine);
+                    return Ok(());
+                }
                 let results = engine
                     .verify(cmd.filter.as_deref(), cmd.require_all)
                     .map_err(|err| anyhow::anyhow!(err))?;
@@ -443,6 +447,7 @@ impl FiltersCmd {
                 }
                 Ok(())
             }
+            FiltersAction::DryRun(cmd) => super::filter_commands::run_filter_dry_run(cmd),
             FiltersAction::Trust => {
                 let entry = crate::proxy::filter_trust::trust_project_filters()?;
                 println!("Trusted project filters:");
@@ -476,6 +481,22 @@ impl FiltersCmd {
     }
     // END_filters_run
 }
+
+// START_CONTRACT_print_filter_names
+// PURPOSE: Render loaded filter names for CLI discoverability
+// INPUTS: { engine: &FilterEngine }
+// OUTPUTS: { stdout filter list }
+// SIDE_EFFECTS: writes to stdout
+// LINKS:
+//   → M-PROXY-FILTER (depends) - exposes loaded filter names
+// START_print_filter_names
+fn print_filter_names(engine: &crate::proxy::toml_filter::FilterEngine) {
+    println!("=== Synapse Filters ===");
+    for name in engine.filter_names() {
+        println!("{}", name);
+    }
+}
+// END_print_filter_names
 
 // START_CONTRACT_print_filter_verify_results
 // PURPOSE: Render filter inline-test verification results for CLI users and agents

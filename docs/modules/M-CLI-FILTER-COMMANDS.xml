@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CLI-FILTER-COMMANDS" type="CORE_LOGIC" status="active">
+  <NAME>M-CLI-FILTER-COMMANDS</NAME>
+  <PURPOSE>CLI filter diagnostics for explaining token-saving TOML filters without executing shell commands.</PURPOSE>
+  <SCOPE>filters dry-run command handler, --filter/--command selection, --input file/stdin loading, hidden test --sample support, --show-input text output, --format json token/byte metrics, and stage-decision rendering.</SCOPE>
+  <FILES>
+    <FILE>src/cli/filter_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-PROXY-FILTER</DEPENDS>
+  <LINKS>docs/phases/Phase-68.xml,/home/truffle/Загрузки/synapse-main/UPGRADE_1/U7-filter-dry-run.md</LINKS>
+  <VERIFICATION_REF>V-M-CLI-FILTER-COMMANDS</VERIFICATION_REF>
+</MODULE>

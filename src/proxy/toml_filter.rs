@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-PROXY-FILTER
 // PURPOSE: TOML filter engine — applies regex-based output transformations from trusted TOML filter definitions
-// SCOPE: FilterDef, ReplaceRule, MatchOutputRule, FilterFile, FilterEngine with find_filter/apply/verify, project-local trust gating, split Synapse/RTK built-in filter catalogues, 8-stage pipeline
+// SCOPE: FilterDef, ReplaceRule, MatchOutputRule, FilterFile, FilterEngine with find_filter/apply/verify/dry-run, project-local trust gating, split Synapse/RTK built-in filter catalogues, 8-stage pipeline
 // DEPENDS: M-UTILS
 // LINKS:
 //   → M-UTILS (depends) - Unicode-safe truncation helpers
@@ -15,17 +15,20 @@
 // FilterTestDef — Inline test case loaded from TOML tests.<filter-name>
 // FilterFile — Backwards-compatible TOML file containing legacy or named filter definitions
 // FilterSource — Source of a filter (BuiltIn, User, Project)
-// FilterEngine — Loads, applies, and verifies TOML output filters
+// FilterDryRunReport — Agent-facing explanation of a filter pipeline dry run
+// FilterEngine — Loads, applies, verifies, and explains TOML output filters
 // FilterEngine::new_with_project_filter_store — Test-only engine with explicit project trust store
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.4.0 — Added explicit match_command_regex and delegated ANSI stripping to M-UTILS]
+// LAST_CHANGE: [v4.5.0 — Added reusable filter dry-run stage reports]
 // END_CHANGE_SUMMARY
 
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::path::Path;
+
+use super::filter_dry_run::dry_run_filter;
 
 const SUPPORTED_SCHEMA_VERSION: u32 = 1;
 
@@ -182,6 +185,28 @@ impl FilterVerifyResults {
 }
 // END_FilterVerifyResults
 
+// START_FilterDryRunStage
+#[derive(serde::Serialize, Clone, Debug, PartialEq, Eq)]
+pub struct FilterDryRunStage {
+    pub name: String,
+    pub changed: bool,
+    pub before_lines: usize,
+    pub after_lines: usize,
+    pub decision: String,
+}
+// END_FilterDryRunStage
+
+// START_FilterDryRunReport
+#[derive(serde::Serialize, Clone, Debug, PartialEq, Eq)]
+pub struct FilterDryRunReport {
+    pub filter_name: String,
+    pub input_lines: usize,
+    pub output_lines: usize,
+    pub stages: Vec<FilterDryRunStage>,
+    pub output: String,
+}
+// END_FilterDryRunReport
+
 // START_FilterEngine
 pub struct FilterEngine {
     filters: Vec<(FilterDef, FilterSource)>,
@@ -295,6 +320,31 @@ impl FilterEngine {
     }
     // END_fe_find_filter
 
+    // START_CONTRACT_FilterEngine::filter_names
+    // PURPOSE: List loaded filter display names for CLI discoverability
+    // OUTPUTS: { Vec<String> }
+    // START_fe_filter_names
+    pub fn filter_names(&self) -> Vec<String> {
+        self.filters
+            .iter()
+            .map(|(filter, _source)| filter_display_name(filter))
+            .collect()
+    }
+    // END_fe_filter_names
+
+    // START_CONTRACT_FilterEngine::find_filter_by_name
+    // PURPOSE: Find a loaded filter by its RTK/Synapse display name
+    // INPUTS: { name: &str }
+    // OUTPUTS: { Option<&FilterDef> }
+    // START_fe_find_filter_by_name
+    pub fn find_filter_by_name(&self, name: &str) -> Option<&FilterDef> {
+        self.filters
+            .iter()
+            .map(|(filter, _source)| filter)
+            .find(|filter| filter_display_name(filter) == name)
+    }
+    // END_fe_find_filter_by_name
+
     // START_CONTRACT_FilterEngine::apply
     // PURPOSE: Apply a filter definition to command output via 8-stage pipeline
     // INPUTS: { filter: &FilterDef }, { output: &str - raw command output }
@@ -304,6 +354,39 @@ impl FilterEngine {
         apply_filter(filter, output)
     }
     // END_fe_apply
+
+    // START_CONTRACT_FilterEngine::dry_run
+    // PURPOSE: Explain how a filter would transform sample output without executing a command
+    // INPUTS: { filter: &FilterDef }, { output: &str }
+    // OUTPUTS: { FilterDryRunReport }
+    // START_fe_dry_run
+    pub fn dry_run(&self, filter: &FilterDef, output: &str) -> FilterDryRunReport {
+        dry_run_filter(filter, output)
+    }
+    // END_fe_dry_run
+
+    // START_CONTRACT_FilterEngine::dry_run_for_command
+    // PURPOSE: Select a filter by command or explicit filter name and explain its sample-output pipeline
+    // INPUTS: { command: &str }, { filter_name: Option<&str> }, { output: &str }
+    // OUTPUTS: { Result<FilterDryRunReport, String> }
+    // START_fe_dry_run_for_command
+    pub fn dry_run_for_command(
+        &self,
+        command: &str,
+        filter_name: Option<&str>,
+        output: &str,
+    ) -> Result<FilterDryRunReport, String> {
+        let filter = match filter_name {
+            Some(name) => self
+                .find_filter_by_name(name)
+                .ok_or_else(|| format!("filter not found: {name}"))?,
+            None => self
+                .find_filter(command)
+                .ok_or_else(|| format!("no filter matched command: {command}"))?,
+        };
+        Ok(self.dry_run(filter, output))
+    }
+    // END_fe_dry_run_for_command
 
     // START_CONTRACT_FilterEngine::verify
     // PURPOSE: Run inline TOML filter tests loaded from tests.<filter-name>
@@ -746,7 +829,7 @@ fn looks_like_regex(pattern: &str) -> bool {
     })
 }
 
-fn match_output_message(filter: &FilterDef, output: &str) -> Option<String> {
+pub(crate) fn match_output_message(filter: &FilterDef, output: &str) -> Option<String> {
     match filter.match_output.as_ref()? {
         MatchOutputSpec::Legacy(pattern) => {
             let matches = Regex::new(pattern)
@@ -782,7 +865,10 @@ fn match_output_message(filter: &FilterDef, output: &str) -> Option<String> {
     }
 }
 
-fn merged_patterns(primary: &Option<Vec<String>>, alias: &Option<Vec<String>>) -> Vec<String> {
+pub(crate) fn merged_patterns(
+    primary: &Option<Vec<String>>,
+    alias: &Option<Vec<String>>,
+) -> Vec<String> {
     primary
         .iter()
         .chain(alias.iter())
@@ -790,7 +876,7 @@ fn merged_patterns(primary: &Option<Vec<String>>, alias: &Option<Vec<String>>) -
         .collect()
 }
 
-fn matches_any(line: &str, patterns: &[String]) -> bool {
+pub(crate) fn matches_any(line: &str, patterns: &[String]) -> bool {
     patterns
         .iter()
         .any(|pat| Regex::new(pat).map(|re| re.is_match(line)).unwrap_or(false))
@@ -805,7 +891,7 @@ fn merge_tests(
     }
 }
 
-fn filter_display_name(filter: &FilterDef) -> String {
+pub(crate) fn filter_display_name(filter: &FilterDef) -> String {
     filter
         .name
         .clone()
@@ -1074,6 +1160,39 @@ unless = "error"
         let filter = engine.find_filter("build-tool").expect("filter");
         let output = engine.apply(filter, "Finished with error");
         assert_eq!(output, "Finished with error");
+    }
+
+    #[test]
+    fn test_filter_dry_run_reports_stages() {
+        let toml = r#"
+schema_version = 1
+
+[filters.unit-dry]
+match_command = "unit"
+strip_ansi = true
+keep_lines_matching = ["error|FAIL"]
+max_lines = 1
+"#;
+        let engine = FilterEngine::from_toml(toml, "unit").expect("parse dry-run filter");
+        let filter = engine.find_filter("unit run").expect("filter");
+        let sample = "\u{1b}[31merror one\u{1b}[0m\nok\nFAIL two";
+        let report = engine.dry_run(filter, sample);
+
+        assert_eq!(report.filter_name, "unit-dry");
+        assert_eq!(report.output, engine.apply(filter, sample));
+        assert_eq!(report.output, "error one\n...");
+        assert!(report
+            .stages
+            .iter()
+            .any(|stage| stage.name == "strip_ansi" && stage.changed));
+        assert!(report
+            .stages
+            .iter()
+            .any(|stage| stage.name == "line_filter" && stage.changed));
+        assert!(report
+            .stages
+            .iter()
+            .any(|stage| stage.name == "max_lines" && stage.changed));
     }
 
     #[test]

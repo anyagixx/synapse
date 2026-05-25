@@ -27,6 +27,8 @@
     <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
     <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
     <COMMAND>cargo test cli::config_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test cli::filter_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --list</COMMAND>
     <COMMAND>cargo check</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
@@ -47,8 +49,9 @@
     <ASSERTION>CLI schema accepts syn run --action plan|next|loop|retry|replay with --run-id and --max-actions.</ASSERTION>
     <ASSERTION>CLI schema accepts verify/review --profile and doctor --deps as documented flags.</ASSERTION>
     <ASSERTION>CLI schema accepts explicit config path, edit, list, get, set, and unset subcommands.</ASSERTION>
+    <ASSERTION>CLI schema accepts filters verify --list and filters dry-run with --filter, --input, --show-input, and --format json flags.</ASSERTION>
     <ASSERTION>CLI schema exposes syn mcp as stdio-only until HTTP/LSP transport flags are implemented.</ASSERTION>
     <ASSERTION>CLI RunCommand owns top-level command dispatch so adding a Command variant no longer requires editing main.rs.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-63,Phase-65</PHASE_GATE>
+  <PHASE_GATE>Phase-63,Phase-65,Phase-68</PHASE_GATE>
 </VERIFICATION>

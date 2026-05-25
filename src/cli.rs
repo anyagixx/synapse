@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, command dispatch, and command argument structs
-// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle commands, CI action enum
-// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
+// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs, run scenario/action flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
+// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-CONFIG-COMMANDS, M-CLI-FILTER-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-RTK-COMMANDS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
@@ -22,14 +22,16 @@
 // HookCmd/HookProcessorAction — RTK-style hook processor schema
 // RtkParityCmd — Machine-checkable RTK parity inventory and full parity matrix report
 // RewriteCmd — Hook-facing command rewrite dry run
+// FiltersDryRunCmd — Explains TOML filter stage decisions for sample output
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.9.0 — Added explicit config subcommands]
+// LAST_CHANGE: [v6.0.0 — Added filters dry-run command schema]
 // END_CHANGE_SUMMARY
 
 mod code_commands;
 mod config_commands;
+mod filter_commands;
 mod grace_commands;
 mod rtk_adapters;
 mod rtk_commands;
@@ -911,6 +913,7 @@ pub struct FiltersCmd {
 #[derive(Subcommand)]
 pub enum FiltersAction {
     Verify(FiltersVerifyCmd),
+    DryRun(FiltersDryRunCmd),
     Trust,
     Untrust,
     Status,
@@ -922,6 +925,26 @@ pub struct FiltersVerifyCmd {
     pub filter: Option<String>,
     #[arg(long)]
     pub require_all: bool,
+    #[arg(long)]
+    pub list: bool,
+}
+
+#[derive(clap::Args)]
+pub struct FiltersDryRunCmd {
+    #[arg(long)]
+    pub command: Option<String>,
+    #[arg(long)]
+    pub filter: Option<String>,
+    #[arg(long, default_value = "-")]
+    pub input: String,
+    #[arg(long)]
+    pub show_input: bool,
+    #[arg(long, default_value = "text")]
+    pub format: String,
+    #[arg(long, hide = true)]
+    pub sample: Option<String>,
+    #[arg(long)]
+    pub json: bool,
 }
 // END_FiltersCmd
 

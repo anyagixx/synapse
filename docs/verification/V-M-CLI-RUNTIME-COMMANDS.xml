@@ -11,6 +11,7 @@
     <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
     <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
     <COMMAND>cargo run --quiet -- filters verify --filter dotnet-build</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --list</COMMAND>
     <COMMAND>cargo run --quiet -- gain --sessions --adapters</COMMAND>
     <COMMAND>cargo run --quiet -- hooks status all</COMMAND>
     <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
@@ -27,11 +28,12 @@
     <ASSERTION>ProxyCmd supports --evidence and prints raw-output artifact location only when explicitly requested.</ASSERTION>
     <ASSERTION>GainCmd supports --graph, --sessions, and --adapters and renders tracked savings bars plus economics summaries, adapter_groups, and session_groups.</ASSERTION>
     <ASSERTION>FiltersCmd exposes verify, trust, untrust, and status controls for RTK-style filter lifecycle management, including built-in RTK pack inline tests.</ASSERTION>
+    <ASSERTION>FiltersCmd exposes verify --list and delegates dry-run diagnostics to M-CLI-FILTER-COMMANDS without running shell commands.</ASSERTION>
     <ASSERTION>HooksCmd dispatches install, uninstall, status, audit, and check actions for opencode, claude, cursor, gemini, copilot, and all targets and can render hook audit JSON.</ASSERTION>
     <ASSERTION>RunCmd creates a bounded scenario run from project gates and emits replay-capable JSON.</ASSERTION>
     <ASSERTION>RunCmd action mode plans, steps, loops, retries, and replays persisted run queues.</ASSERTION>
     <ASSERTION>McpCmd starts the stdio MCP server only; HTTP/LSP options are not public flags until implemented.</ASSERTION>
     <ASSERTION>ConfigCmd handling is delegated to M-CLI-CONFIG-COMMANDS and no longer uses runtime trailing-arg parsing.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-50,Phase-65</PHASE_GATE>
+  <PHASE_GATE>Phase-50,Phase-65,Phase-68</PHASE_GATE>
 </VERIFICATION>
