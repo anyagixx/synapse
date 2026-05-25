@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -10,15 +10,141 @@
 
 // START_MODULE_MAP
 // tool_definitions — Builds the tools/list payload
+// ToolProfile — Workflow-oriented MCP tool visibility profile
+// ToolProfile::parse — Parses profile arguments for tools/list
+// tool_profile_membership — Returns workflow profiles for one tool
+// tool_matches_profile — Checks whether a tool is visible for a requested profile
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.4.0 - Added run phase and pre-commit tool schemas]
+// LAST_CHANGE: [v4.5.0 - Added workflow profile classification for MCP tool disclosure]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
 
 // START_public_api
+
+// START_ToolProfile
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ToolProfile {
+    All,
+    Verification,
+    Planning,
+    Implementation,
+    Debugging,
+    Minimal,
+    Custom(Vec<String>),
+}
+// END_ToolProfile
+
+impl ToolProfile {
+    // START_CONTRACT_ToolProfile::parse
+    // PURPOSE: Parse a tools/list profile argument into a stable workflow profile
+    // INPUTS: { value: &str }
+    // OUTPUTS: { ToolProfile }
+    // START_tool_profile_parse
+    pub(crate) fn parse(value: &str) -> Self {
+        let trimmed = value.trim();
+        match trimmed.to_ascii_lowercase().as_str() {
+            "" | "all" => Self::All,
+            "verify" | "verification" => Self::Verification,
+            "plan" | "planning" => Self::Planning,
+            "impl" | "implementation" => Self::Implementation,
+            "debug" | "debugging" => Self::Debugging,
+            "minimal" => Self::Minimal,
+            custom if custom.starts_with("custom:") => {
+                let tools = trimmed["custom:".len()..]
+                    .split(',')
+                    .map(str::trim)
+                    .filter(|name| !name.is_empty())
+                    .map(ToOwned::to_owned)
+                    .collect();
+                Self::Custom(tools)
+            }
+            _ => Self::All,
+        }
+    }
+    // END_tool_profile_parse
+}
+
+// START_CONTRACT_tool_profile_membership
+// PURPOSE: Return explicit workflow profiles where a tool is useful
+// INPUTS: { tool_name: &str }
+// OUTPUTS: { &'static [ToolProfile] }
+// START_tool_profile_membership
+pub(crate) fn tool_profile_membership(tool_name: &str) -> &'static [ToolProfile] {
+    use ToolProfile::*;
+    match tool_name {
+        "verify_project"
+        | "review_code"
+        | "project_status"
+        | "traceability_report"
+        | "pre_commit_check"
+        | "refresh_project"
+        | "grace_reviewer"
+        | "grace_lint" => &[Verification],
+        "analyze_logs" => &[Verification, Debugging],
+        "mental_test_run" => &[Verification, Planning, Implementation],
+
+        "generate_requirements"
+        | "generate_technology"
+        | "generate_development_plan"
+        | "grace_init"
+        | "grace_plan"
+        | "grace_verification" => &[Planning],
+        "cascade_impact" => &[Planning, Implementation],
+        "extract_belief_state" => &[Planning, Implementation],
+
+        "semantic_search"
+        | "graphrag_query"
+        | "view_signatures"
+        | "suggest_contract"
+        | "lsp_hover"
+        | "lsp_references"
+        | "grace_execute"
+        | "grace_multiagent_execute"
+        | "grace_refactor"
+        | "grace_ask"
+        | "grace_explainer"
+        | "grace_cli"
+        | "grace_setup_subagents"
+        | "grace_status" => &[Implementation],
+        "cascade_execute" => &[Planning, Implementation],
+        "compress_text" | "token_savings" | "grace_refresh" | "grace_run_history" => {
+            &[Implementation]
+        }
+
+        "run_test_guide" | "submit_test_report" | "self_heal" | "diagnose_failure"
+        | "repair_contract" | "grace_fix" => &[Debugging, Implementation],
+        "advance_phase" => &[Implementation],
+
+        _ => &[],
+    }
+}
+// END_tool_profile_membership
+
+// START_CONTRACT_tool_matches_profile
+// PURPOSE: Check whether one tool should be visible under a requested disclosure profile
+// INPUTS: { tool_name: &str }, { profile: &ToolProfile }
+// OUTPUTS: { bool }
+// START_tool_matches_profile
+pub(crate) fn tool_matches_profile(tool_name: &str, profile: &ToolProfile) -> bool {
+    match profile {
+        ToolProfile::All => true,
+        ToolProfile::Minimal => matches!(
+            tool_name,
+            "semantic_search"
+                | "verify_project"
+                | "graphrag_query"
+                | "project_status"
+                | "review_code"
+                | "mental_test_run"
+        ),
+        ToolProfile::Custom(tools) => tools.iter().any(|candidate| candidate == tool_name),
+        requested => tool_profile_membership(tool_name).contains(requested),
+    }
+}
+// END_tool_matches_profile
 
 // START_CONTRACT_tool_definitions
 // PURPOSE: Build MCP tools/list definitions for built-in tools and registered grace_* skills
@@ -397,6 +523,101 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeSet;
+
+    // START_CONTRACT_test_tool_profile_parse_supports_workflow_aliases
+    // PURPOSE: Verify tools/list profile aliases parse into stable workflow profiles
+    // START_test_tool_profile_parse_supports_workflow_aliases
+    #[test]
+    fn test_tool_profile_parse_supports_workflow_aliases() {
+        assert_eq!(ToolProfile::parse(""), ToolProfile::All);
+        assert_eq!(ToolProfile::parse("verify"), ToolProfile::Verification);
+        assert_eq!(ToolProfile::parse("planning"), ToolProfile::Planning);
+        assert_eq!(ToolProfile::parse("impl"), ToolProfile::Implementation);
+        assert_eq!(ToolProfile::parse("debugging"), ToolProfile::Debugging);
+        assert_eq!(ToolProfile::parse("minimal"), ToolProfile::Minimal);
+        assert_eq!(
+            ToolProfile::parse("custom:semantic_search, verify_project"),
+            ToolProfile::Custom(vec!["semantic_search".into(), "verify_project".into()])
+        );
+    }
+    // END_test_tool_profile_parse_supports_workflow_aliases
+
+    // START_CONTRACT_test_minimal_profile_matches_exactly_six_tools
+    // PURPOSE: Verify the minimal disclosure profile exposes the six core tools planned by Phase-83
+    // START_test_minimal_profile_matches_exactly_six_tools
+    #[test]
+    fn test_minimal_profile_matches_exactly_six_tools() {
+        let minimal: Vec<_> = tool_definitions()
+            .into_iter()
+            .filter_map(|tool| tool["name"].as_str().map(ToOwned::to_owned))
+            .filter(|name| tool_matches_profile(name, &ToolProfile::Minimal))
+            .collect();
+
+        assert_eq!(
+            minimal,
+            vec![
+                "semantic_search",
+                "graphrag_query",
+                "verify_project",
+                "review_code",
+                "project_status",
+                "mental_test_run"
+            ]
+        );
+    }
+    // END_test_minimal_profile_matches_exactly_six_tools
+
+    // START_CONTRACT_test_verification_profile_is_bounded_and_relevant
+    // PURPOSE: Verify the verification disclosure profile stays under the Phase-83 token-economy cap
+    // START_test_verification_profile_is_bounded_and_relevant
+    #[test]
+    fn test_verification_profile_is_bounded_and_relevant() {
+        let verification: BTreeSet<_> = tool_definitions()
+            .into_iter()
+            .filter_map(|tool| tool["name"].as_str().map(ToOwned::to_owned))
+            .filter(|name| tool_matches_profile(name, &ToolProfile::Verification))
+            .collect();
+
+        assert!(verification.len() <= 10);
+        assert!(verification.contains("verify_project"));
+        assert!(verification.contains("review_code"));
+        assert!(verification.contains("project_status"));
+        assert!(verification.contains("traceability_report"));
+        assert!(!verification.contains("semantic_search"));
+    }
+    // END_test_verification_profile_is_bounded_and_relevant
+
+    // START_CONTRACT_test_custom_profile_matches_only_named_tools
+    // PURPOSE: Verify custom disclosure profiles expose exactly caller-requested tools
+    // START_test_custom_profile_matches_only_named_tools
+    #[test]
+    fn test_custom_profile_matches_only_named_tools() {
+        let profile = ToolProfile::parse("custom:semantic_search,verify_project");
+        let custom: Vec<_> = tool_definitions()
+            .into_iter()
+            .filter_map(|tool| tool["name"].as_str().map(ToOwned::to_owned))
+            .filter(|name| tool_matches_profile(name, &profile))
+            .collect();
+
+        assert_eq!(custom, vec!["semantic_search", "verify_project"]);
+    }
+    // END_test_custom_profile_matches_only_named_tools
+
+    // START_CONTRACT_test_all_current_tools_have_profile_membership
+    // PURPOSE: Verify every current built-in and skill tool is classified before profile filtering is wired into tools/list
+    // START_test_all_current_tools_have_profile_membership
+    #[test]
+    fn test_all_current_tools_have_profile_membership() {
+        let unclassified: Vec<_> = tool_definitions()
+            .into_iter()
+            .filter_map(|tool| tool["name"].as_str().map(ToOwned::to_owned))
+            .filter(|name| tool_profile_membership(name).is_empty())
+            .collect();
+
+        assert!(unclassified.is_empty(), "{unclassified:?}");
+    }
+    // END_test_all_current_tools_have_profile_membership
 
     // START_CONTRACT_test_semantic_search_schema_exposes_filters
     // PURPOSE: Verify tools/list declares semantic_search language and path filters for MCP clients
