@@ -13,7 +13,7 @@
     <FLOW id="DF-76-2">Fixture factory creates isolated projects with sharded MyGRACE artifacts, source files, and isolated config/data homes.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-TEST-HARNESS" status="pending">Create src/test/mod.rs as the facade for UPGRADE_3 harness modules.</step-1>
+    <step-1 module="M-TEST-HARNESS" status="done">Create src/test/mod.rs as the facade for UPGRADE_3 harness modules.</step-1>
     <step-2 module="M-TEST-FIXTURE" status="pending">Implement TestFixture, FixtureBuilder, templates, overrides, and cleanup guarantees.</step-2>
     <step-3 module="M-CLI-TEST-COMMANDS" status="pending">Add structured syn test action schema without breaking syn test -- &lt;cmd&gt;.</step-3>
     <step-4 module="M-TEST-FIXTURE" status="pending">Add unit tests for Minimal, MultiModule, Broken, and custom override behavior.</step-4>

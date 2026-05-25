@@ -108,7 +108,7 @@
     <MODULE id="M-TESTS-MCP-PROTOCOL" path="docs/modules/M-TESTS-MCP-PROTOCOL.xml" status="active" />
     <MODULE id="M-TESTS-PARITY" path="docs/modules/M-TESTS-PARITY.xml" status="active" />
     <MODULE id="M-TESTS-RELIABILITY" path="docs/modules/M-TESTS-RELIABILITY.xml" status="active" />
-    <MODULE id="M-TEST-HARNESS" path="docs/modules/M-TEST-HARNESS.xml" status="pending" />
+    <MODULE id="M-TEST-HARNESS" path="docs/modules/M-TEST-HARNESS.xml" status="active" />
     <MODULE id="M-TEST-FIXTURE" path="docs/modules/M-TEST-FIXTURE.xml" status="pending" />
     <MODULE id="M-TEST-E2E-RUNNER" path="docs/modules/M-TEST-E2E-RUNNER.xml" status="pending" />
     <MODULE id="M-TEST-SNAPSHOT" path="docs/modules/M-TEST-SNAPSHOT.xml" status="pending" />

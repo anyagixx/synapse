@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-TEST-HARNESS" module="M-TEST-HARNESS" priority="critical" status="pending">
+<VERIFICATION id="V-M-TEST-HARNESS" module="M-TEST-HARNESS" priority="critical" status="active">
   <UNIT_TESTS>
     <TEST>src/test/mod.rs exposes every UPGRADE_3 harness module without circular dependencies.</TEST>
   </UNIT_TESTS>

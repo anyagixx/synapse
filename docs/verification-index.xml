@@ -108,7 +108,7 @@
     <VERIFICATION id="V-M-TESTS-MCP-PROTOCOL" module="M-TESTS-MCP-PROTOCOL" path="docs/verification/V-M-TESTS-MCP-PROTOCOL.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TESTS-PARITY" module="M-TESTS-PARITY" path="docs/verification/V-M-TESTS-PARITY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TESTS-RELIABILITY" module="M-TESTS-RELIABILITY" path="docs/verification/V-M-TESTS-RELIABILITY.xml" priority="normal" status="active" />
-    <VERIFICATION id="V-M-TEST-HARNESS" module="M-TEST-HARNESS" path="docs/verification/V-M-TEST-HARNESS.xml" priority="critical" status="pending" />
+    <VERIFICATION id="V-M-TEST-HARNESS" module="M-TEST-HARNESS" path="docs/verification/V-M-TEST-HARNESS.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-TEST-FIXTURE" module="M-TEST-FIXTURE" path="docs/verification/V-M-TEST-FIXTURE.xml" priority="critical" status="pending" />
     <VERIFICATION id="V-M-TEST-E2E-RUNNER" module="M-TEST-E2E-RUNNER" path="docs/verification/V-M-TEST-E2E-RUNNER.xml" priority="critical" status="pending" />
     <VERIFICATION id="V-M-TEST-SNAPSHOT" module="M-TEST-SNAPSHOT" path="docs/verification/V-M-TEST-SNAPSHOT.xml" priority="normal" status="pending" />
