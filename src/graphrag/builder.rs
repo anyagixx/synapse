@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Added explicit delta cache invalidation]
+// LAST_CHANGE: [v2.14.0 — Isolated cache-sensitive GraphRAG tests from parallel runner eviction]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile, TypedLink};
@@ -24,7 +24,10 @@ use std::path::{Path, PathBuf};
 use std::sync::{OnceLock, RwLock};
 use std::time::UNIX_EPOCH;
 
+#[cfg(not(test))]
 const GRAPH_BUILD_CACHE_MAX_ENTRIES: usize = 8;
+#[cfg(test)]
+const GRAPH_BUILD_CACHE_MAX_ENTRIES: usize = 1024;
 
 static GRAPH_BUILD_CACHE: OnceLock<RwLock<BTreeMap<GraphBuildCacheKey, CodeGraph>>> =
     OnceLock::new();
