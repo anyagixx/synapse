@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-CLI-SETUP-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-SETUP-COMMANDS</NAME>
-  <PURPOSE>CLI setup and indexing command handlers with guarded index storage status reporting and safe OpenCode config merge</PURPOSE>
-  <SCOPE>InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts, gitignore toggle, OpenCode MCP merge, and 39-tool setup summary</SCOPE>
+  <PURPOSE>CLI setup and indexing command handlers with guarded index storage status reporting, delta watch indexing, and safe OpenCode config merge</PURPOSE>
+  <SCOPE>InitCmd, IndexCmd, watch_and_reindex, watch event delta classification, guarded index storage counts, gitignore toggle, OpenCode MCP merge, and 39-tool setup summary</SCOPE>
   <FILES>
     <FILE>src/cli/setup_commands.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-GRACE-BOOTSTRAP,M-GRACE-LAYOUT,M-INDEXER,M-HOOKS</DEPENDS>
-  <LINKS>docs/modules/M-CLI.xml</LINKS>
+  <LINKS>docs/modules/M-CLI.xml,docs/phases/Phase-64.xml</LINKS>
   <VERIFICATION_REF>V-M-CLI-SETUP-COMMANDS</VERIFICATION_REF>
 </MODULE>

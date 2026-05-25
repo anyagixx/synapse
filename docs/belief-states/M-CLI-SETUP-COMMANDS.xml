@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BELIEF_STATE module="M-CLI-SETUP-COMMANDS" version="1.0">
   UNDERSTANDING:
-    Module responsibility: CLI setup and indexing command handlers with guarded index storage status reporting and safe OpenCode config merge
+    Module responsibility: CLI setup and indexing command handlers with guarded index storage status reporting, delta watch indexing, and safe OpenCode config merge
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-CONFIG, M-GRACE-BOOTSTRAP, M-GRACE-LAYOUT, M-INDEXER, M-HOOKS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: InitCmd, IndexCmd, watch_and_reindex, guarded index storage counts, gitignore toggle, OpenCode MCP merge, and 39-tool setup summary
+      - Scope remains bounded to: InitCmd, IndexCmd, watch_and_reindex, watch event delta classification, guarded index storage counts, gitignore toggle, OpenCode MCP merge, and 39-tool setup summary
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
