@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, profile-aware tools/list disclosure, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 
@@ -9,8 +9,13 @@
 // McpServer — MCP stdio server entry point
 // discover_project_count — Counts probable child projects for multi-root mode
 // SynapseHandler — MCP message router, runtime config, and initialization state
+// McpEtagCache — Bounded in-memory cache validator store for cacheable MCP tools
+// McpEtagCacheEntry — One cache validator plus expiry deadline
 // GraphCacheKey — Root/index signature used to invalidate cached GraphRAG state
 // preload_index_storage — Loads index storage without panicking on poisoned locks
+// cache_validator — Extracts _if_none_match from tool arguments
+// maybe_not_modified_response — Returns compact cached-validator response before expensive handlers
+// record_cache_metadata — Adds _meta.cache to tool results and records cacheable ETags
 // tools_list_profile — Parses tools/list profile params
 // tools_list_profile_label — Returns stable tools/list profile metadata
 // tools_list_style — Parses tools/list schema style params
@@ -19,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.22.0 - Wired terse tools/list schema economy metadata]
+// LAST_CHANGE: [v3.23.0 - Added short-lived MCP ETag cache validators]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -33,12 +38,13 @@ use crate::indexer::storage::Storage;
 use crate::indexer::Indexer;
 use crate::skills::{SkillEngine, SkillRequest};
 use crate::tracking::{mcp_metrics::McpCallStatus, Tracker};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, RwLock,
 };
-use std::time::{Instant, UNIX_EPOCH};
+use std::time::{Duration, Instant, UNIX_EPOCH};
 
 // START_public_api
 
@@ -157,11 +163,29 @@ pub struct SynapseHandler {
     indexer: Indexer,
     graphrag: RwLock<Option<GraphRag>>,
     graph_cache_key: RwLock<Option<GraphCacheKey>>,
+    etag_cache: RwLock<McpEtagCache>,
     skill_engine: SkillEngine,
     tracker: Tracker,
     initialized: AtomicBool,
 }
 // END_SynapseHandler
+
+const MCP_ETAG_CACHE_LIMIT: usize = 100;
+
+// START_McpEtagCache
+#[derive(Debug, Default)]
+struct McpEtagCache {
+    entries: BTreeMap<String, McpEtagCacheEntry>,
+}
+// END_McpEtagCache
+
+// START_McpEtagCacheEntry
+#[derive(Clone, Debug)]
+struct McpEtagCacheEntry {
+    metadata: server_response::CacheMetadata,
+    expires_at: Instant,
+}
+// END_McpEtagCacheEntry
 
 // START_GraphCacheKey
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -199,6 +223,7 @@ impl SynapseHandler {
             indexer,
             graphrag: RwLock::new(None),
             graph_cache_key: RwLock::new(None),
+            etag_cache: RwLock::new(McpEtagCache::default()),
             skill_engine,
             tracker,
             initialized: AtomicBool::new(false),
@@ -293,80 +318,96 @@ impl SynapseHandler {
                     }
                 };
 
-                let response = match name {
-                    "semantic_search" => {
-                        server_code_tools::handle_search(&self.indexer, id, args).await
-                    }
-                    "view_signatures" => {
-                        server_code_tools::handle_view_signatures(&self.indexer, id, args).await
-                    }
-                    "graphrag_query" => server_code_tools::handle_graphrag(
-                        &self.graphrag,
-                        &self.graph_cache_key,
-                        id,
-                        args,
-                    ),
-                    "verify_project" => server_grace_tools::handle_verify(id, args).await,
-                    "review_code" => server_grace_tools::handle_review(id, args).await,
-                    "project_status" => server_grace_tools::handle_status(id, args).await,
-                    "analyze_logs" => server_grace_tools::handle_analyze_logs(id, args).await,
-                    "extract_belief_state" => {
-                        server_grace_tools::handle_extract_belief_state(id, args).await
-                    }
-                    "generate_requirements" => {
-                        server_grace_tools::handle_generate_requirements(id, args).await
-                    }
-                    "generate_technology" => {
-                        server_grace_tools::handle_generate_technology(id, args).await
-                    }
-                    "generate_development_plan" => {
-                        server_grace_tools::handle_generate_development_plan(id, args).await
-                    }
-                    "mental_test_run" => server_grace_tools::handle_mental_test_run(id, args).await,
-                    "traceability_report" => {
-                        server_grace_tools::handle_traceability_report(id, args).await
-                    }
-                    "cascade_impact" => server_cascade_tools::handle_cascade_impact(id, args).await,
-                    "cascade_execute" => {
-                        server_cascade_tools::handle_cascade_execute(id, args).await
-                    }
-                    "run_test_guide" => server_grace_tools::handle_run_test_guide(id, args).await,
-                    "submit_test_report" => {
-                        server_grace_tools::handle_submit_test_report(id, args).await
-                    }
-                    "self_heal" => server_grace_tools::handle_self_heal(id, args).await,
-                    "advance_phase" => server_run_tools::handle_advance_phase(id, args).await,
-                    "pre_commit_check" => server_run_tools::handle_pre_commit_check(id, args).await,
-                    "token_savings" => server_grace_tools::handle_gain(id, args).await,
-                    "compress_text" => server_grace_tools::handle_compress(id, args).await,
-                    "refresh_project" => server_grace_tools::handle_refresh(id, args).await,
-                    "diagnose_failure" => {
-                        server_contract_tools::handle_diagnose_failure(id, args).await
-                    }
-                    "repair_contract" => {
-                        server_contract_tools::handle_repair_contract(id, args).await
-                    }
-                    "suggest_contract" => {
-                        server_contract_tools::handle_suggest_contract(id, args).await
-                    }
-                    "lsp_hover" => {
-                        server_code_tools::handle_lsp_hover(&self.config, id, args).await
-                    }
-                    "lsp_references" => {
-                        server_code_tools::handle_lsp_references(&self.config, id, args).await
-                    }
-                    name if name.starts_with("grace_") => {
-                        server_grace_tools::handle_grace_skill(
-                            &self.skill_engine,
-                            SkillRequest {
-                                name: name.to_string(),
-                                arguments: args.clone(),
-                            },
+                let response = if let Some(response) =
+                    self.maybe_not_modified_response(id.clone(), name, args)
+                {
+                    response
+                } else {
+                    let mut response = match name {
+                        "semantic_search" => {
+                            server_code_tools::handle_search(&self.indexer, id, args).await
+                        }
+                        "view_signatures" => {
+                            server_code_tools::handle_view_signatures(&self.indexer, id, args).await
+                        }
+                        "graphrag_query" => server_code_tools::handle_graphrag(
+                            &self.graphrag,
+                            &self.graph_cache_key,
                             id,
-                        )
-                        .await
-                    }
-                    _ => server_response::error(id, -32601, format!("Unknown tool: {}", name)),
+                            args,
+                        ),
+                        "verify_project" => server_grace_tools::handle_verify(id, args).await,
+                        "review_code" => server_grace_tools::handle_review(id, args).await,
+                        "project_status" => server_grace_tools::handle_status(id, args).await,
+                        "analyze_logs" => server_grace_tools::handle_analyze_logs(id, args).await,
+                        "extract_belief_state" => {
+                            server_grace_tools::handle_extract_belief_state(id, args).await
+                        }
+                        "generate_requirements" => {
+                            server_grace_tools::handle_generate_requirements(id, args).await
+                        }
+                        "generate_technology" => {
+                            server_grace_tools::handle_generate_technology(id, args).await
+                        }
+                        "generate_development_plan" => {
+                            server_grace_tools::handle_generate_development_plan(id, args).await
+                        }
+                        "mental_test_run" => {
+                            server_grace_tools::handle_mental_test_run(id, args).await
+                        }
+                        "traceability_report" => {
+                            server_grace_tools::handle_traceability_report(id, args).await
+                        }
+                        "cascade_impact" => {
+                            server_cascade_tools::handle_cascade_impact(id, args).await
+                        }
+                        "cascade_execute" => {
+                            server_cascade_tools::handle_cascade_execute(id, args).await
+                        }
+                        "run_test_guide" => {
+                            server_grace_tools::handle_run_test_guide(id, args).await
+                        }
+                        "submit_test_report" => {
+                            server_grace_tools::handle_submit_test_report(id, args).await
+                        }
+                        "self_heal" => server_grace_tools::handle_self_heal(id, args).await,
+                        "advance_phase" => server_run_tools::handle_advance_phase(id, args).await,
+                        "pre_commit_check" => {
+                            server_run_tools::handle_pre_commit_check(id, args).await
+                        }
+                        "token_savings" => server_grace_tools::handle_gain(id, args).await,
+                        "compress_text" => server_grace_tools::handle_compress(id, args).await,
+                        "refresh_project" => server_grace_tools::handle_refresh(id, args).await,
+                        "diagnose_failure" => {
+                            server_contract_tools::handle_diagnose_failure(id, args).await
+                        }
+                        "repair_contract" => {
+                            server_contract_tools::handle_repair_contract(id, args).await
+                        }
+                        "suggest_contract" => {
+                            server_contract_tools::handle_suggest_contract(id, args).await
+                        }
+                        "lsp_hover" => {
+                            server_code_tools::handle_lsp_hover(&self.config, id, args).await
+                        }
+                        "lsp_references" => {
+                            server_code_tools::handle_lsp_references(&self.config, id, args).await
+                        }
+                        name if name.starts_with("grace_") => {
+                            server_grace_tools::handle_grace_skill(
+                                &self.skill_engine,
+                                SkillRequest {
+                                    name: name.to_string(),
+                                    arguments: args.clone(),
+                                },
+                                id,
+                            )
+                            .await
+                        }
+                        _ => server_response::error(id, -32601, format!("Unknown tool: {}", name)),
+                    };
+                    self.record_cache_metadata(name, args, &mut response);
+                    response
                 };
                 let (status, error_message) = classify_mcp_response(&response);
                 let duration_ms = elapsed_millis_u64(started);
@@ -399,6 +440,62 @@ impl SynapseHandler {
     }
     // END_sh_handle_message
 
+    // START_CONTRACT_SynapseHandler::maybe_not_modified_response
+    // PURPOSE: Return a compact not-modified result when _if_none_match matches a fresh cached ETag
+    // INPUTS: { id: Option<serde_json::Value> }, { tool_name: &str }, { args: &serde_json::Value }
+    // OUTPUTS: { Option<serde_json::Value> }
+    // START_sh_maybe_not_modified_response
+    fn maybe_not_modified_response(
+        &self,
+        id: Option<serde_json::Value>,
+        tool_name: &str,
+        args: &serde_json::Value,
+    ) -> Option<serde_json::Value> {
+        if !server_response::is_tool_cacheable(tool_name) {
+            return None;
+        }
+        let validator = cache_validator(args)?;
+        let key = server_response::cache_key_for_tool_call(tool_name, args);
+        let metadata = match self.etag_cache.write() {
+            Ok(mut cache) => cache.matching_metadata(&key, validator),
+            Err(error) => {
+                tracing::warn!("[SynapseHandler][handle_message][MCP_CACHE_READ] {}", error);
+                None
+            }
+        }?;
+        Some(server_response::not_modified_result(id, &metadata))
+    }
+    // END_sh_maybe_not_modified_response
+
+    // START_CONTRACT_SynapseHandler::record_cache_metadata
+    // PURPOSE: Attach cache metadata to a JSON-RPC tool result and store cacheable validators
+    // INPUTS: { tool_name: &str }, { args: &serde_json::Value }, { response: &mut serde_json::Value }
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: mutates response _meta.cache and in-memory ETag cache
+    // START_sh_record_cache_metadata
+    fn record_cache_metadata(
+        &self,
+        tool_name: &str,
+        args: &serde_json::Value,
+        response: &mut serde_json::Value,
+    ) {
+        let Some(metadata) = server_response::with_cache_metadata(response, tool_name, args) else {
+            return;
+        };
+        if metadata.ttl_secs == 0 {
+            return;
+        }
+        let key = server_response::cache_key_for_tool_call(tool_name, args);
+        match self.etag_cache.write() {
+            Ok(mut cache) => cache.insert(key, metadata),
+            Err(error) => tracing::warn!(
+                "[SynapseHandler][handle_message][MCP_CACHE_WRITE] {}",
+                error
+            ),
+        }
+    }
+    // END_sh_record_cache_metadata
+
     // START_CONTRACT_SynapseHandler::invalidate_graph_cache
     // PURPOSE: Clear cached GraphRAG state so the next graph query rebuilds it
     // SIDE_EFFECTS: mutates graph cache locks when available
@@ -413,6 +510,79 @@ impl SynapseHandler {
     }
     // END_sh_invalidate_graph_cache
 }
+
+impl McpEtagCache {
+    // START_CONTRACT_McpEtagCache::matching_metadata
+    // PURPOSE: Return metadata for a matching fresh validator and evict expired entries
+    // INPUTS: { key: &str }, { validator: &str }
+    // OUTPUTS: { Option<server_response::CacheMetadata> }
+    // START_mcp_etag_cache_matching_metadata
+    fn matching_metadata(
+        &mut self,
+        key: &str,
+        validator: &str,
+    ) -> Option<server_response::CacheMetadata> {
+        let now = Instant::now();
+        if self
+            .entries
+            .get(key)
+            .is_some_and(|entry| entry.expires_at <= now)
+        {
+            self.entries.remove(key);
+            return None;
+        }
+        self.entries
+            .get(key)
+            .and_then(|entry| (entry.metadata.etag == validator).then_some(entry.metadata.clone()))
+    }
+    // END_mcp_etag_cache_matching_metadata
+
+    // START_CONTRACT_McpEtagCache::insert
+    // PURPOSE: Store a fresh cache validator and clear all entries when the bounded cache would exceed 100
+    // INPUTS: { key: String }, { metadata: server_response::CacheMetadata }
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: mutates in-memory cache entries
+    // START_mcp_etag_cache_insert
+    fn insert(&mut self, key: String, metadata: server_response::CacheMetadata) {
+        if metadata.ttl_secs == 0 {
+            return;
+        }
+        if self.entries.len() >= MCP_ETAG_CACHE_LIMIT {
+            self.entries.clear();
+        }
+        let expires_at = Instant::now() + Duration::from_secs(metadata.ttl_secs);
+        self.entries.insert(
+            key,
+            McpEtagCacheEntry {
+                metadata,
+                expires_at,
+            },
+        );
+    }
+    // END_mcp_etag_cache_insert
+
+    // START_CONTRACT_McpEtagCache::len
+    // PURPOSE: Return the number of stored cache validators for tests and diagnostics
+    // OUTPUTS: { usize }
+    // START_mcp_etag_cache_len
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.entries.len()
+    }
+    // END_mcp_etag_cache_len
+}
+
+// START_CONTRACT_cache_validator
+// PURPOSE: Extract a non-empty _if_none_match validator from MCP tool arguments
+// INPUTS: { args: &serde_json::Value }
+// OUTPUTS: { Option<&str> }
+// START_cache_validator
+fn cache_validator(args: &serde_json::Value) -> Option<&str> {
+    args.get("_if_none_match")
+        .and_then(serde_json::Value::as_str)
+        .filter(|validator| !validator.trim().is_empty())
+}
+// END_cache_validator
 
 impl GraphCacheKey {
     // START_CONTRACT_GraphCacheKey::for_root
@@ -586,6 +756,78 @@ mod tests {
         assert_eq!(message, "missing tool");
     }
 
+    // START_CONTRACT_test_cache_validator_extracts_if_none_match
+    // PURPOSE: Verify _if_none_match is accepted only when it is a non-empty string
+    // START_test_cache_validator_extracts_if_none_match
+    #[test]
+    fn test_cache_validator_extracts_if_none_match() {
+        assert_eq!(
+            cache_validator(&serde_json::json!({"_if_none_match": "W/\"syn-a\""})),
+            Some("W/\"syn-a\"")
+        );
+        assert_eq!(
+            cache_validator(&serde_json::json!({"_if_none_match": "   "})),
+            None
+        );
+        assert_eq!(cache_validator(&serde_json::json!({})), None);
+    }
+    // END_test_cache_validator_extracts_if_none_match
+
+    // START_CONTRACT_test_mcp_etag_cache_matches_and_expires
+    // PURPOSE: Verify cache validators match fresh ETags and expired entries are evicted
+    // START_test_mcp_etag_cache_matches_and_expires
+    #[test]
+    fn test_mcp_etag_cache_matches_and_expires() {
+        let metadata = server_response::CacheMetadata::new("W/\"syn-1\"".to_string(), 60);
+        let mut cache = McpEtagCache::default();
+
+        cache.insert("tool:{}".to_string(), metadata.clone());
+
+        assert_eq!(
+            cache.matching_metadata("tool:{}", "W/\"syn-1\""),
+            Some(metadata)
+        );
+        assert_eq!(cache.matching_metadata("tool:{}", "W/\"syn-2\""), None);
+
+        cache.entries.insert(
+            "expired".to_string(),
+            McpEtagCacheEntry {
+                metadata: server_response::CacheMetadata::new("W/\"syn-old\"".to_string(), 60),
+                expires_at: Instant::now() - Duration::from_secs(1),
+            },
+        );
+
+        assert_eq!(cache.matching_metadata("expired", "W/\"syn-old\""), None);
+        assert!(!cache.entries.contains_key("expired"));
+    }
+    // END_test_mcp_etag_cache_matches_and_expires
+
+    // START_CONTRACT_test_mcp_etag_cache_clears_when_over_limit
+    // PURPOSE: Verify the in-memory ETag cache clears all old entries before storing entry 101
+    // START_test_mcp_etag_cache_clears_when_over_limit
+    #[test]
+    fn test_mcp_etag_cache_clears_when_over_limit() {
+        let mut cache = McpEtagCache::default();
+
+        for index in 0..MCP_ETAG_CACHE_LIMIT {
+            cache.insert(
+                format!("key-{index}"),
+                server_response::CacheMetadata::new(format!("W/\"syn-{index}\""), 60),
+            );
+        }
+        cache.insert(
+            "overflow".to_string(),
+            server_response::CacheMetadata::new("W/\"syn-overflow\"".to_string(), 60),
+        );
+
+        assert_eq!(cache.len(), 1);
+        assert!(cache.matching_metadata("key-0", "W/\"syn-0\"").is_none());
+        assert!(cache
+            .matching_metadata("overflow", "W/\"syn-overflow\"")
+            .is_some());
+    }
+    // END_test_mcp_etag_cache_clears_when_over_limit
+
     #[test]
     fn test_tools_list_params_default_to_all_full() {
         let params = serde_json::json!({});
@@ -695,6 +937,60 @@ mod tests {
             .as_f64()
             .is_some_and(|pct| pct > 0.0));
     }
+
+    // START_CONTRACT_test_cache_not_modified_response_for_project_status
+    // PURPOSE: Verify project_status emits cache metadata and a matching _if_none_match returns _not_modified
+    // START_test_cache_not_modified_response_for_project_status
+    #[tokio::test]
+    async fn test_cache_not_modified_response_for_project_status() {
+        let handler = SynapseHandler::new();
+        handler
+            .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
+            .await
+            .expect("initialize response");
+
+        let first_request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {
+                "name": "project_status",
+                "arguments": {}
+            }
+        })
+        .to_string();
+        let first = handler
+            .handle_message(&first_request)
+            .await
+            .expect("first project_status response");
+        let etag = first["result"]["_meta"]["cache"]["etag"]
+            .as_str()
+            .expect("etag")
+            .to_string();
+
+        let second_request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": "project_status",
+                "arguments": {
+                    "_if_none_match": etag
+                }
+            }
+        })
+        .to_string();
+        let second = handler
+            .handle_message(&second_request)
+            .await
+            .expect("second project_status response");
+
+        assert_eq!(first["result"]["_meta"]["cache"]["ttl_secs"], 15);
+        assert_eq!(second["id"], 3);
+        assert_eq!(second["result"]["_not_modified"], true);
+        assert_eq!(second["result"]["_meta"]["cache"]["ttl_secs"], 15);
+    }
+    // END_test_cache_not_modified_response_for_project_status
 }
 
 // END_public_api

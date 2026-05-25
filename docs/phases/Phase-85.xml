@@ -18,14 +18,14 @@
   </DATA_FLOWS>
   <STEPS>
     <step-1 module="M-MCP-SERVER-RESPONSE" status="done">Add CacheMetadata, cache_ttl_for_tool, compute_etag, and result_with_cache helpers.</step-1>
-    <step-2 module="M-MCP-SERVER" status="planned">Add an in-memory ETag cache with deterministic keys and clear-on-over-100 eviction.</step-2>
-    <step-3 module="M-MCP-SERVER" status="planned">Honor _if_none_match before expensive cacheable handlers when a cached ETag is available.</step-3>
+    <step-2 module="M-MCP-SERVER" status="done">Add an in-memory ETag cache with deterministic keys and clear-on-over-100 eviction.</step-2>
+    <step-3 module="M-MCP-SERVER" status="done">Honor _if_none_match before expensive cacheable handlers when a cached ETag is available.</step-3>
     <step-4 module="M-MCP-SERVER-TOOLS" status="planned">Expose _if_none_match in cacheable tool schemas without making it required.</step-4>
     <step-5 module="M-TESTS-MCP-PROTOCOL" status="planned">Test cache metadata for cacheable tools and ttl_secs=0 behavior for volatile tools.</step-5>
   </STEPS>
   <VERIFICATION>
     <CHECK status="planned">cargo test mcp::server_response::tests --lib</CHECK>
-    <CHECK status="planned">cargo test mcp::server::tests --lib cache</CHECK>
+    <CHECK status="planned">cargo test cache --lib</CHECK>
     <CHECK status="planned">project_status returns _meta.cache.etag and ttl_secs.</CHECK>
     <CHECK status="planned">graphrag_query overview returns cache metadata.</CHECK>
     <CHECK status="planned">matching _if_none_match returns _not_modified=true.</CHECK>
