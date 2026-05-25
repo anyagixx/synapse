@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.16.0 — Replaced filesystem timestamp cache keys with stable index content fingerprints]
+// LAST_CHANGE: [v2.17.0 — Matched GraphRAG cache index lookup to Storage root hashing on symlinked macOS temp paths]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile, TypedLink};
@@ -376,8 +376,8 @@ impl GraphBuildCacheKey {
     // OUTPUTS: { Option<GraphBuildCacheKey> }
     // START_graph_build_cache_key_for_root
     fn for_root(root: &Path) -> Option<Self> {
+        let index_path = Storage::db_path_for_root(root);
         let canonical_root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
-        let index_path = Storage::db_path_for_root(&canonical_root);
         let index_bytes = std::fs::read(index_path).ok()?;
         let mut hasher = DefaultHasher::new();
         index_bytes.hash(&mut hasher);
@@ -687,6 +687,26 @@ mod tests {
 
         let first = GraphBuilder::build(dir.path()).expect("first build");
         let second = GraphBuilder::build(dir.path()).expect("cached build");
+
+        assert!(first.shares_storage_with(&second));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_build_cache_uses_storage_hash_for_symlinked_root() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let link_parent = tempfile::tempdir().expect("link parent");
+        let linked_root = link_parent.path().join("linked-root");
+        std::os::unix::fs::symlink(dir.path(), &linked_root).expect("symlink root");
+        let src = linked_root.join("src");
+        std::fs::create_dir_all(&src).expect("create src");
+        std::fs::write(src.join("cached.rs"), "pub fn cached() {}\n").expect("write source");
+        Storage::new(&linked_root)
+            .replace_all_blocks(Vec::new())
+            .expect("write index marker");
+
+        let first = GraphBuilder::build(&linked_root).expect("first build");
+        let second = GraphBuilder::build(&linked_root).expect("cached build");
 
         assert!(first.shares_storage_with(&second));
     }
