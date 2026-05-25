@@ -7,6 +7,7 @@
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_graphrag_query_mermaid_output --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
+    <COMMAND>cargo test mcp::lsp::tests::test_document_text_prefers_content_override --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -16,6 +17,7 @@
     <ASSERTION>graphrag_query operation=mermaid returns MCP text content with format=mermaid while preserving existing GraphRAG response schemas.</ASSERTION>
     <ASSERTION>semantic_search accepts language/path filters and rejects incompatible filter argument types.</ASSERTION>
     <ASSERTION>lsp_hover and lsp_references handlers construct LspClient with the active runtime Config.</ASSERTION>
+    <ASSERTION>lsp_hover and lsp_references pass optional content overrides to M-MCP-LSP so didOpen can use current unsaved buffer text.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-59,Phase-62,Phase-65,Phase-68</PHASE_GATE>
 </VERIFICATION>

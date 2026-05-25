@@ -2,7 +2,7 @@
 <MODULE id="M-MCP-SERVER-CODE-TOOLS" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER-CODE-TOOLS</NAME>
   <PURPOSE>MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups</PURPOSE>
-  <SCOPE>semantic_search with Unicode-safe previews and optional language/path filters, graphrag_query with root/index-keyed cache validation, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover and lsp_references handlers</SCOPE>
+  <SCOPE>semantic_search with Unicode-safe previews and optional language/path filters, graphrag_query with root/index-keyed cache validation, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover and lsp_references handlers with optional content override</SCOPE>
   <FILES>
     <FILE>src/mcp/server_code_tools.rs</FILE>
   </FILES>

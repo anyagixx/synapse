@@ -4,10 +4,10 @@
     Module responsibility: MCP handlers for filtered code search, GraphRAG typed queries, signature views, and guarded LSP lookups
     Key data flows:
       - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
-      - PROCESSING: Implement only the declared scope while preserving dependencies: M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
-      - OUTPUT: Filter-aware MCP search responses and updated code/artifacts that verify against MyGRACE gates
+      - PROCESSING: Route code search, GraphRAG, signature, and LSP requests while preserving runtime Config and forwarding optional LSP content overrides to M-MCP-LSP
+      - OUTPUT: Filter-aware MCP search responses, Mermaid GraphRAG output, and LSP hover/reference responses based on current buffer content when supplied
     Critical invariants:
-      - Scope remains bounded to: semantic_search with Unicode-safe previews and optional filters, graphrag_query with type filters, GraphRAG lock health, view_signatures, lsp_hover, lsp_references handlers
+      - Scope remains bounded to: semantic_search with Unicode-safe previews and optional filters, graphrag_query with type filters and Mermaid output, GraphRAG lock health, view_signatures, lsp_hover, and lsp_references handlers with content override
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
@@ -16,6 +16,7 @@
   VERIFICATION_INTENT:
     I expect the following to be true after my code runs:
     - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - lsp_hover and lsp_references pass optional content to M-MCP-LSP
     - verify_project, review_code, and relevant unit tests pass after implementation
   RISKS_ACKNOWLEDGED:
     - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation

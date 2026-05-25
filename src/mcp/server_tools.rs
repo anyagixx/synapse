@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG Mermaid options, GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG Mermaid options, LSP content override options, GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.9.0 - Added GraphRAG Mermaid schema options]
+// LAST_CHANGE: [v4.0.0 - Added LSP content override schema options]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -286,7 +286,8 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                 "properties": {
                     "file": { "type": "string", "description": "File path" },
                     "line": { "type": "number", "description": "Line (1-based)" },
-                    "column": { "type": "number", "description": "Column (0-based)" }
+                    "column": { "type": "number", "description": "Column (0-based)" },
+                    "content": { "type": "string", "description": "Optional current file content for recently edited unsaved buffers" }
                 },
                 "required": ["file", "line", "column"]
             }
@@ -299,7 +300,8 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
                 "properties": {
                     "file": { "type": "string", "description": "File path" },
                     "line": { "type": "number", "description": "Line (1-based)" },
-                    "column": { "type": "number", "description": "Column (0-based)" }
+                    "column": { "type": "number", "description": "Column (0-based)" },
+                    "content": { "type": "string", "description": "Optional current file content for recently edited unsaved buffers" }
                 },
                 "required": ["file", "line", "column"]
             }
@@ -364,6 +366,29 @@ mod tests {
         assert!(properties.contains_key("max_nodes"));
     }
     // END_test_graphrag_schema_exposes_mermaid_options
+
+    // START_CONTRACT_test_lsp_schema_exposes_content_override
+    // PURPOSE: Verify tools/list declares optional content override for LSP hover and references
+    // LINKS:
+    //   -> M-MCP-LSP (depends) - content override reaches didOpen
+    //   -> NFR-002 (traces_to) - avoids stale LSP reads after edits
+    // START_test_lsp_schema_exposes_content_override
+    #[test]
+    fn test_lsp_schema_exposes_content_override() {
+        let tools = tool_definitions();
+        for name in ["lsp_hover", "lsp_references"] {
+            let tool = tools
+                .iter()
+                .find(|tool| tool["name"] == name)
+                .unwrap_or_else(|| panic!("{name} tool"));
+            let properties = tool["inputSchema"]["properties"]
+                .as_object()
+                .expect("properties");
+
+            assert!(properties.contains_key("content"));
+        }
+    }
+    // END_test_lsp_schema_exposes_content_override
 }
 
 // END_public_api

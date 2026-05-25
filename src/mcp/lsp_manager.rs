@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-LSP
 // PURPOSE: Persistent LSP connection manager — pools language-server stdio processes by root, language, and command
-// SCOPE: LspManager, LspConnection, LSP message framing, initialize/initialized lifecycle, didOpen tracking, request serialization, shutdown cleanup
+// SCOPE: LspManager, LspConnection, LSP message framing, initialize/initialized lifecycle, didOpen tracking, didClose cleanup, request serialization, shutdown cleanup
 // DEPENDS: M-CONFIG
 // LINKS:
 //   -> M-MCP-LSP (depends) - runtime used by LspClient
@@ -9,14 +9,14 @@
 
 // START_MODULE_MAP
 // LspManager — Pool of persistent LSP connections
-// LspConnection — One long-lived language-server process with serialized stdio
+// LspConnection — One long-lived language-server process with serialized stdio and opened-document state
 // global_lsp_manager — Process-wide LSP manager singleton
 // write_lsp_message — Write one Content-Length framed LSP JSON message
 // read_lsp_message — Read one Content-Length framed LSP JSON message
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added persistent LSP process pool]
+// LAST_CHANGE: [v1.1.0 - Added didClose cleanup for opened LSP documents]
 // END_CHANGE_SUMMARY
 
 use std::collections::{HashMap, HashSet};
@@ -170,26 +170,37 @@ impl LspConnection {
             .io
             .lock()
             .map_err(|_| anyhow::anyhow!("LSP connection lock poisoned"))?;
-        if io.opened_files.contains(uri) {
-            return Ok(());
-        }
-        let notification = serde_json::json!({
-            "jsonrpc": "2.0",
-            "method": "textDocument/didOpen",
-            "params": {
-                "textDocument": {
-                    "uri": uri,
-                    "languageId": self.language,
-                    "version": 1,
-                    "text": text
-                }
-            }
-        });
-        write_lsp_message(&mut io.stdin, &notification)?;
-        io.opened_files.insert(uri.to_string());
+        let LspIo {
+            stdin,
+            opened_files,
+            ..
+        } = &mut *io;
+        write_did_open_if_needed(stdin, opened_files, &self.language, uri, text)?;
         Ok(())
     }
     // END_lsp_connection_ensure_opened
+
+    // START_CONTRACT_LspConnection::close_opened
+    // PURPOSE: Send textDocument/didClose for a previously opened file on this connection
+    // INPUTS: { uri: &str }
+    // OUTPUTS: { anyhow::Result<bool> }
+    // SIDE_EFFECTS: may write a notification to the LSP process stdin
+    // LINKS:
+    //   -> NFR-002 (traces_to) - LSP lifecycle cleanup should not leave stale server state
+    // START_lsp_connection_close_opened
+    pub fn close_opened(&self, uri: &str) -> anyhow::Result<bool> {
+        let mut io = self
+            .io
+            .lock()
+            .map_err(|_| anyhow::anyhow!("LSP connection lock poisoned"))?;
+        let LspIo {
+            stdin,
+            opened_files,
+            ..
+        } = &mut *io;
+        write_did_close_if_opened(stdin, opened_files, uri)
+    }
+    // END_lsp_connection_close_opened
 
     // START_CONTRACT_LspConnection::request
     // PURPOSE: Send one serialized LSP request and read the matching response
@@ -223,6 +234,12 @@ impl LspConnection {
 impl Drop for LspConnection {
     fn drop(&mut self) {
         if let Ok(mut io) = self.io.lock() {
+            let LspIo {
+                stdin,
+                opened_files,
+                ..
+            } = &mut *io;
+            let _ = write_did_close_all(stdin, opened_files);
             let shutdown = serde_json::json!({
                 "jsonrpc": "2.0",
                 "id": 999_999_u64,
@@ -266,6 +283,98 @@ fn read_matching_response<R: BufRead>(
             return Ok(response);
         }
     }
+}
+
+// START_CONTRACT_write_did_open_if_needed
+// PURPOSE: Write didOpen once per URI using the provided document text
+// INPUTS: { writer: &mut W }, { opened_files: &mut HashSet<String> }, { language: &str }, { uri: &str }, { text: &str }
+// OUTPUTS: { anyhow::Result<bool> }
+// SIDE_EFFECTS: writes framed LSP notification when the URI was not already opened
+// LINKS:
+//   -> NFR-002 (traces_to) - first LSP request must use current document content
+// START_write_did_open_if_needed
+fn write_did_open_if_needed<W: Write>(
+    writer: &mut W,
+    opened_files: &mut HashSet<String>,
+    language: &str,
+    uri: &str,
+    text: &str,
+) -> anyhow::Result<bool> {
+    if opened_files.contains(uri) {
+        return Ok(false);
+    }
+    write_lsp_message(writer, &did_open_notification(language, uri, text))?;
+    opened_files.insert(uri.to_string());
+    Ok(true)
+}
+// END_write_did_open_if_needed
+
+// START_CONTRACT_write_did_close_if_opened
+// PURPOSE: Write didClose for one URI only when it is tracked as opened
+// INPUTS: { writer: &mut W }, { opened_files: &mut HashSet<String> }, { uri: &str }
+// OUTPUTS: { anyhow::Result<bool> }
+// SIDE_EFFECTS: writes framed LSP notification when the URI was opened
+// LINKS:
+//   -> NFR-002 (traces_to) - explicit LSP close avoids stale opened document state
+// START_write_did_close_if_opened
+fn write_did_close_if_opened<W: Write>(
+    writer: &mut W,
+    opened_files: &mut HashSet<String>,
+    uri: &str,
+) -> anyhow::Result<bool> {
+    if !opened_files.remove(uri) {
+        return Ok(false);
+    }
+    write_lsp_message(writer, &did_close_notification(uri))?;
+    Ok(true)
+}
+// END_write_did_close_if_opened
+
+// START_CONTRACT_write_did_close_all
+// PURPOSE: Write didClose notifications for all tracked opened documents
+// INPUTS: { writer: &mut W }, { opened_files: &mut HashSet<String> }
+// OUTPUTS: { anyhow::Result<usize> }
+// SIDE_EFFECTS: writes framed LSP notifications and clears opened file state
+// LINKS:
+//   -> NFR-002 (traces_to) - connection drop closes all opened LSP documents
+// START_write_did_close_all
+fn write_did_close_all<W: Write>(
+    writer: &mut W,
+    opened_files: &mut HashSet<String>,
+) -> anyhow::Result<usize> {
+    let mut uris = opened_files.iter().cloned().collect::<Vec<_>>();
+    uris.sort();
+    for uri in &uris {
+        write_lsp_message(writer, &did_close_notification(uri))?;
+    }
+    opened_files.clear();
+    Ok(uris.len())
+}
+// END_write_did_close_all
+
+fn did_open_notification(language: &str, uri: &str, text: &str) -> serde_json::Value {
+    serde_json::json!({
+        "jsonrpc": "2.0",
+        "method": "textDocument/didOpen",
+        "params": {
+            "textDocument": {
+                "uri": uri,
+                "languageId": language,
+                "version": 1,
+                "text": text
+            }
+        }
+    })
+}
+
+fn did_close_notification(uri: &str) -> serde_json::Value {
+    serde_json::json!({
+        "jsonrpc": "2.0",
+        "method": "textDocument/didClose",
+        "params": {
+            "textDocument": { "uri": uri }
+        }
+    })
 }
 
 fn write_lsp_message<W: Write>(writer: &mut W, value: &serde_json::Value) -> anyhow::Result<()> {
@@ -313,5 +422,52 @@ mod tests {
         let parsed = read_lsp_message(&mut cursor).expect("read message");
         assert_eq!(parsed["id"].as_u64(), Some(7));
         assert_eq!(parsed["result"]["ok"].as_bool(), Some(true));
+    }
+
+    #[test]
+    fn test_did_open_is_written_once_with_provided_content() {
+        let mut opened = HashSet::new();
+        let mut bytes = Vec::new();
+        assert!(write_did_open_if_needed(
+            &mut bytes,
+            &mut opened,
+            "rust",
+            "file:///tmp/a.rs",
+            "memory content"
+        )
+        .expect("first didOpen"));
+        assert!(!write_did_open_if_needed(
+            &mut bytes,
+            &mut opened,
+            "rust",
+            "file:///tmp/a.rs",
+            "disk content"
+        )
+        .expect("second didOpen"));
+
+        let mut cursor = Cursor::new(bytes);
+        let parsed = read_lsp_message(&mut cursor).expect("read didOpen");
+        assert_eq!(parsed["method"], "textDocument/didOpen");
+        assert_eq!(parsed["params"]["textDocument"]["text"], "memory content");
+    }
+
+    #[test]
+    fn test_did_close_all_writes_and_clears_opened_documents() {
+        let mut opened = HashSet::from([
+            "file:///tmp/b.rs".to_string(),
+            "file:///tmp/a.rs".to_string(),
+        ]);
+        let mut bytes = Vec::new();
+        let count = write_did_close_all(&mut bytes, &mut opened).expect("didClose all");
+
+        assert_eq!(count, 2);
+        assert!(opened.is_empty());
+        let mut cursor = Cursor::new(bytes);
+        let first = read_lsp_message(&mut cursor).expect("first close");
+        let second = read_lsp_message(&mut cursor).expect("second close");
+        assert_eq!(first["method"], "textDocument/didClose");
+        assert_eq!(second["method"], "textDocument/didClose");
+        assert_eq!(first["params"]["textDocument"]["uri"], "file:///tmp/a.rs");
+        assert_eq!(second["params"]["textDocument"]["uri"], "file:///tmp/b.rs");
     }
 }

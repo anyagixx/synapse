@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
 // PURPOSE: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
-// SCOPE: semantic_search with optional language/path filters, graphrag_query with indexed GraphRAG cache key validation, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover, lsp_references handlers
+// SCOPE: semantic_search with optional language/path filters, graphrag_query with indexed GraphRAG cache key validation, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover/lsp_references handlers with optional content override
 // DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-GRAPHRAG-MERMAID, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.9.0 — Added graphrag_query Mermaid output operation]
+// LAST_CHANGE: [v4.0.0 — Added optional LSP content override handling]
 // END_CHANGE_SUMMARY
 
 use super::server::GraphCacheKey;
@@ -607,6 +607,9 @@ pub(crate) async fn handle_view_signatures(
 // PURPOSE: Execute lsp_hover and return hover contents as MCP text
 // INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
 // OUTPUTS: { serde_json::Value }
+// LINKS:
+//   -> M-MCP-LSP (depends) - uses content override aware hover
+//   -> NFR-002 (traces_to) - avoids stale LSP reads after edits
 // START_handle_lsp_hover
 pub(crate) async fn handle_lsp_hover(
     config: &Config,
@@ -616,7 +619,8 @@ pub(crate) async fn handle_lsp_hover(
     let file = args["file"].as_str().unwrap_or("");
     let line = args["line"].as_u64().unwrap_or(0) as u32;
     let col = args["column"].as_u64().unwrap_or(0) as u32;
-    match crate::mcp::lsp::LspClient::new(config).hover(file, line, col) {
+    let content = args["content"].as_str();
+    match crate::mcp::lsp::LspClient::new(config).hover_with_content(file, line, col, content) {
         Ok(h) => result(
             id,
             serde_json::json!({
@@ -633,6 +637,9 @@ pub(crate) async fn handle_lsp_hover(
 // PURPOSE: Execute lsp_references and summarize returned reference locations
 // INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
 // OUTPUTS: { serde_json::Value }
+// LINKS:
+//   -> M-MCP-LSP (depends) - uses content override aware references
+//   -> NFR-002 (traces_to) - avoids stale LSP reads after edits
 // START_handle_lsp_references
 pub(crate) async fn handle_lsp_references(
     config: &Config,
@@ -642,7 +649,9 @@ pub(crate) async fn handle_lsp_references(
     let file = args["file"].as_str().unwrap_or("");
     let line = args["line"].as_u64().unwrap_or(0) as u32;
     let col = args["column"].as_u64().unwrap_or(0) as u32;
-    match crate::mcp::lsp::LspClient::new(config).references(file, line, col) {
+    let content = args["content"].as_str();
+    match crate::mcp::lsp::LspClient::new(config).references_with_content(file, line, col, content)
+    {
         Ok(refs) => {
             let text = if refs.is_empty() {
                 "No references found".into()

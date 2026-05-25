@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-LSP
 // PURPOSE: LSP client bridge — sends guarded hover, go-to-definition, and references requests through persistent configurable language-server connections
-// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, configurable LSP command detection, didOpen preparation, persistent LSP manager integration
+// SCOPE: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, configurable LSP command detection, didOpen preparation with content override, persistent LSP manager integration
 // DEPENDS: M-CONFIG, M-UTILS
 // LINKS:
 //   -> M-MCP-LSP (depends) - persistent LSP manager
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 — Replaced per-request LSP spawning with persistent configurable manager]
+// LAST_CHANGE: [v4.1.0 — Added LSP content override before hover and references]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -79,7 +79,25 @@ impl LspClient {
     // OUTPUTS: { anyhow::Result<LspHoverResult> }
     // START_lsp_client_hover
     pub fn hover(&self, file: &str, line: u32, column: u32) -> anyhow::Result<LspHoverResult> {
-        let prepared = self.prepare_request(file, line, column)?;
+        self.hover_with_content(file, line, column, None)
+    }
+    // END_lsp_client_hover
+
+    // START_CONTRACT_LspClient::hover_with_content
+    // PURPOSE: Send textDocument/hover after didOpen uses current or caller-provided content
+    // INPUTS: { file: &str }, { line: u32 }, { column: u32 }, { content_override: Option<&str> }
+    // OUTPUTS: { anyhow::Result<LspHoverResult> }
+    // LINKS:
+    //   -> NFR-002 (traces_to) - LSP hover should not read stale disk content after edits
+    // START_lsp_client_hover_with_content
+    pub fn hover_with_content(
+        &self,
+        file: &str,
+        line: u32,
+        column: u32,
+        content_override: Option<&str>,
+    ) -> anyhow::Result<LspHoverResult> {
+        let prepared = self.prepare_request(file, line, column, content_override)?;
         let response = prepared.connection.request(
             "textDocument/hover",
             &serde_json::json!({
@@ -93,7 +111,7 @@ impl LspClient {
             range: None,
         })
     }
-    // END_lsp_client_hover
+    // END_lsp_client_hover_with_content
 
     // START_CONTRACT_LspClient::go_to_def
     // PURPOSE: Send textDocument/definition request
@@ -106,7 +124,7 @@ impl LspClient {
         line: u32,
         column: u32,
     ) -> anyhow::Result<Vec<LspDefinitionResult>> {
-        let prepared = self.prepare_request(file, line, column)?;
+        let prepared = self.prepare_request(file, line, column, None)?;
         let response = prepared.connection.request(
             "textDocument/definition",
             &serde_json::json!({
@@ -137,7 +155,25 @@ impl LspClient {
         line: u32,
         column: u32,
     ) -> anyhow::Result<Vec<LspReferenceResult>> {
-        let prepared = self.prepare_request(file, line, column)?;
+        self.references_with_content(file, line, column, None)
+    }
+    // END_lsp_client_references
+
+    // START_CONTRACT_LspClient::references_with_content
+    // PURPOSE: Send textDocument/references after didOpen uses current or caller-provided content
+    // INPUTS: { file: &str }, { line: u32 }, { column: u32 }, { content_override: Option<&str> }
+    // OUTPUTS: { anyhow::Result<Vec<LspReferenceResult>> }
+    // LINKS:
+    //   -> NFR-002 (traces_to) - LSP references should not read stale disk content after edits
+    // START_lsp_client_references_with_content
+    pub fn references_with_content(
+        &self,
+        file: &str,
+        line: u32,
+        column: u32,
+        content_override: Option<&str>,
+    ) -> anyhow::Result<Vec<LspReferenceResult>> {
+        let prepared = self.prepare_request(file, line, column, content_override)?;
         let response = prepared.connection.request(
             "textDocument/references",
             &serde_json::json!({
@@ -159,15 +195,27 @@ impl LspClient {
             .map(|(uri, ranges)| LspReferenceResult { uri, ranges })
             .collect())
     }
-    // END_lsp_client_references
+    // END_lsp_client_references_with_content
 
     fn prepare_request(
         &self,
         file: &str,
         line: u32,
         column: u32,
+        content_override: Option<&str>,
     ) -> anyhow::Result<PreparedLspRequest> {
-        let file_path = std::fs::canonicalize(file)?;
+        let file_path = match std::fs::canonicalize(file) {
+            Ok(path) => path,
+            Err(_) if content_override.is_some() => {
+                let path = Path::new(file);
+                if path.is_absolute() {
+                    path.to_path_buf()
+                } else {
+                    std::env::current_dir()?.join(path)
+                }
+            }
+            Err(error) => return Err(error.into()),
+        };
         let uri = format!("file://{}", file_path.display());
         let (language, ext) = Self::detect_language(file)?;
         let cmd = Self::detect_lsp_command_for(&language, &ext, &self.config)?;
@@ -176,7 +224,7 @@ impl LspClient {
         let root = root_path.to_string_lossy().to_string();
         let connection =
             crate::mcp::lsp_manager::global_lsp_manager().get_or_spawn(&root, &language, cmd)?;
-        let text = std::fs::read_to_string(&file_path)?;
+        let text = Self::document_text(&file_path, content_override)?;
         connection.ensure_opened(&uri, &text)?;
         let (line, character) = Self::protocol_position(line, column);
         Ok(PreparedLspRequest {
@@ -186,6 +234,21 @@ impl LspClient {
             character,
         })
     }
+
+    // START_CONTRACT_LspClient::document_text
+    // PURPOSE: Return caller-provided LSP document content or read the current file from disk
+    // INPUTS: { file_path: &Path }, { content_override: Option<&str> }
+    // OUTPUTS: { anyhow::Result<String> }
+    // LINKS:
+    //   -> NFR-002 (traces_to) - content override prevents stale LSP document reads
+    // START_lsp_client_document_text
+    fn document_text(file_path: &Path, content_override: Option<&str>) -> anyhow::Result<String> {
+        if let Some(content) = content_override {
+            return Ok(content.to_string());
+        }
+        Ok(std::fs::read_to_string(file_path)?)
+    }
+    // END_lsp_client_document_text
 
     fn detect_language(file: &str) -> anyhow::Result<(String, String)> {
         let ext = Path::new(file)
@@ -299,6 +362,22 @@ mod tests {
         let config = Config::default();
         let command = LspClient::detect_lsp_command_for("rust", "rs", &config).unwrap();
         assert_eq!(command, vec!["rust-analyzer".to_string()]);
+    }
+
+    #[test]
+    fn test_document_text_prefers_content_override() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let file = dir.path().join("main.rs");
+        std::fs::write(&file, "disk content").expect("write file");
+
+        assert_eq!(
+            LspClient::document_text(&file, Some("memory content")).unwrap(),
+            "memory content"
+        );
+        assert_eq!(
+            LspClient::document_text(&file, None).unwrap(),
+            "disk content"
+        );
     }
 }
 // END_public_api
