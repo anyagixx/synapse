@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, profile-aware tools/list disclosure, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 
@@ -11,11 +11,14 @@
 // SynapseHandler — MCP message router, runtime config, and initialization state
 // GraphCacheKey — Root/index signature used to invalidate cached GraphRAG state
 // preload_index_storage — Loads index storage without panicking on poisoned locks
+// tools_list_profile — Parses tools/list profile params
+// tools_list_profile_label — Returns stable tools/list profile metadata
+// tools_list_style — Parses tools/list schema style params
 // classify_mcp_response — Converts JSON-RPC tool responses into tracking status metadata
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.20.0 - Routed advance_phase and pre_commit_check tools]
+// LAST_CHANGE: [v3.21.0 - Added profile-aware tools/list routing metadata]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -244,10 +247,28 @@ impl SynapseHandler {
                 if !self.initialized.load(Ordering::SeqCst) {
                     return Some(server_response::error(id, -32000, "Not initialized"));
                 }
+                let params = &msg["params"];
+                let profile = tools_list_profile(params);
+                let style = tools_list_style(params);
+                let all_tools = server_tools::tool_definitions();
+                let total_available = all_tools.len();
+                let tools: Vec<_> = all_tools
+                    .into_iter()
+                    .filter(|tool| {
+                        tool["name"]
+                            .as_str()
+                            .is_some_and(|name| server_tools::tool_matches_profile(name, &profile))
+                    })
+                    .collect();
+                let total_visible = tools.len();
                 server_response::result(
                     id,
                     serde_json::json!({
-                        "tools": server_tools::tool_definitions()
+                        "tools": tools,
+                        "profile": tools_list_profile_label(&profile),
+                        "style": style,
+                        "total_available": total_available,
+                        "total_visible": total_visible
                     }),
                 )
             }
@@ -434,6 +455,63 @@ fn preload_index_storage(indexer: &Indexer, root: &Path) -> anyhow::Result<()> {
 }
 // END_preload_index_storage
 
+// START_CONTRACT_tools_list_profile
+// PURPOSE: Parse tools/list profile params into a stable disclosure profile
+// INPUTS: { params: &serde_json::Value }
+// OUTPUTS: { server_tools::ToolProfile }
+// LINKS:
+//   -> M-MCP-SERVER-TOOLS (depends) - profile matching registry
+// START_tools_list_profile
+fn tools_list_profile(params: &serde_json::Value) -> server_tools::ToolProfile {
+    let value = params
+        .get("profile")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("all");
+    server_tools::ToolProfile::parse(value)
+}
+// END_tools_list_profile
+
+// START_CONTRACT_tools_list_profile_label
+// PURPOSE: Return a compact normalized profile label for tools/list response metadata
+// INPUTS: { profile: &server_tools::ToolProfile }
+// OUTPUTS: { &'static str }
+// LINKS:
+//   -> NFR-003 (traces_to) - clients can observe schema disclosure decisions
+// START_tools_list_profile_label
+fn tools_list_profile_label(profile: &server_tools::ToolProfile) -> &'static str {
+    match profile {
+        server_tools::ToolProfile::All => "all",
+        server_tools::ToolProfile::Verification => "verification",
+        server_tools::ToolProfile::Planning => "planning",
+        server_tools::ToolProfile::Implementation => "implementation",
+        server_tools::ToolProfile::Debugging => "debugging",
+        server_tools::ToolProfile::Minimal => "minimal",
+        server_tools::ToolProfile::Custom(_) => "custom",
+    }
+}
+// END_tools_list_profile_label
+
+// START_CONTRACT_tools_list_style
+// PURPOSE: Parse tools/list schema style params while defaulting to backward-compatible full schemas
+// INPUTS: { params: &serde_json::Value }
+// OUTPUTS: { &'static str }
+// LINKS:
+//   -> NFR-003 (traces_to) - style metadata exposes token economy mode
+// START_tools_list_style
+fn tools_list_style(params: &serde_json::Value) -> &'static str {
+    match params
+        .get("style")
+        .and_then(serde_json::Value::as_str)
+        .map(str::trim)
+        .map(str::to_ascii_lowercase)
+        .as_deref()
+    {
+        Some("terse") => "terse",
+        _ => "full",
+    }
+}
+// END_tools_list_style
+
 // START_CONTRACT_classify_mcp_response
 // PURPOSE: Convert one JSON-RPC response into MCP metrics status and error text
 // INPUTS: { response: &serde_json::Value }
@@ -493,6 +571,69 @@ mod tests {
 
         assert_eq!(status, McpCallStatus::Error);
         assert_eq!(message, "missing tool");
+    }
+
+    #[test]
+    fn test_tools_list_params_default_to_all_full() {
+        let params = serde_json::json!({});
+
+        assert_eq!(tools_list_profile(&params), server_tools::ToolProfile::All);
+        assert_eq!(tools_list_style(&params), "full");
+    }
+
+    #[test]
+    fn test_tools_list_params_parse_profile_and_style() {
+        let params = serde_json::json!({
+            "profile": "custom:semantic_search,verify_project",
+            "style": "terse"
+        });
+
+        assert_eq!(
+            tools_list_profile(&params),
+            server_tools::ToolProfile::Custom(vec![
+                "semantic_search".into(),
+                "verify_project".into()
+            ])
+        );
+        assert_eq!(tools_list_style(&params), "terse");
+    }
+
+    #[tokio::test]
+    async fn test_tools_list_profile_metadata_filters_tools() {
+        let handler = SynapseHandler::new();
+        handler
+            .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
+            .await
+            .expect("initialize response");
+
+        let response = handler
+            .handle_message(
+                r#"{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"profile":"minimal"}}"#,
+            )
+            .await
+            .expect("tools/list response");
+        let result = &response["result"];
+        let tools = result["tools"].as_array().expect("tools array");
+        let names: Vec<_> = tools
+            .iter()
+            .filter_map(|tool| tool["name"].as_str())
+            .collect();
+
+        assert_eq!(result["profile"], "minimal");
+        assert_eq!(result["style"], "full");
+        assert_eq!(result["total_visible"], 6);
+        assert!(result["total_available"].as_u64().unwrap_or(0) > 6);
+        assert_eq!(
+            names,
+            vec![
+                "semantic_search",
+                "graphrag_query",
+                "verify_project",
+                "review_code",
+                "project_status",
+                "mental_test_run"
+            ]
+        );
     }
 }
 
