@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-76" status="active">
+<PHASE id="Phase-76" status="done">
   <NAME>UPGRADE_3 Test Harness Foundation</NAME>
   <GOAL>Create the foundational test harness, fixture factory, and CLI planning surface for structured Synapse E2E and regression testing.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/README.md</SOURCE_PLAN>
@@ -19,10 +19,10 @@
     <step-4 module="M-TEST-FIXTURE" status="done">Add unit tests for Minimal, MultiModule, Broken, and custom override behavior.</step-4>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo fmt --all -- --check</CHECK>
-    <CHECK status="planned">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
-    <CHECK status="planned">cargo test --all-targets fixture</CHECK>
-    <CHECK status="planned">cargo test --all-targets cli_test</CHECK>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo test --all-targets fixture</CHECK>
+    <CHECK status="passed">cargo test --all-targets cli_test</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-76-1">Clap schema can conflict with the existing RTK syn test adapter if fallback behavior is not explicit.</RISK>
