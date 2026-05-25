@@ -1,14 +1,15 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-CODE-TOOLS
 // PURPOSE: MCP handlers for code search, GraphRAG typed queries, signature views, and guarded LSP lookups
-// SCOPE: semantic_search with optional language/path filters, graphrag_query with indexed GraphRAG cache key validation and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover, lsp_references handlers
-// DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
+// SCOPE: semantic_search with optional language/path filters, graphrag_query with indexed GraphRAG cache key validation, Mermaid output, and type filters, GraphRAG lock health, view_signatures, config-aware lsp_hover, lsp_references handlers
+// DEPENDS: M-CONFIG, M-GRACE-CONTRACT, M-INDEXER, M-GRAPHRAG, M-GRAPHRAG-MERMAID, M-MCP-LSP, M-MCP-SERVER-RESPONSE, M-UTILS
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
 // START_MODULE_MAP
 // handle_search — Runs indexed semantic search with optional filters and formats MCP text content
 // search_filters_from_args — Builds validated SearchFilters from MCP arguments
-// handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship operations
+// handle_graphrag — Runs graph overview/search/node/path/type-filtered relationship/Mermaid operations
+// parse_mermaid_options_arg — Builds Mermaid render options from GraphRAG MCP arguments
 // ensure_graphrag — Builds or reuses GraphRAG state based on root/index cache key
 // read_graphrag — Reads GraphRAG state without panicking on poisoned locks
 // handle_view_signatures — Returns indexed signatures for a file
@@ -17,14 +18,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.8.0 — Added semantic_search language and path filters]
+// LAST_CHANGE: [v3.9.0 — Added graphrag_query Mermaid output operation]
 // END_CHANGE_SUMMARY
 
 use super::server::GraphCacheKey;
 use super::server_response::{error, result};
 use crate::config::Config;
 use crate::grace::contract::LinkType;
-use crate::graphrag::GraphRag;
+use crate::graphrag::{render_mermaid, GraphRag, MermaidGraphSubset, MermaidRenderOptions};
 use crate::indexer::storage::SearchFilters;
 use crate::indexer::Indexer;
 use std::sync::{RwLock, RwLockReadGuard};
@@ -114,7 +115,7 @@ fn optional_string_arg(args: &serde_json::Value, key: &str) -> Result<Option<Str
 // END_optional_string_arg
 
 // START_CONTRACT_handle_graphrag
-// PURPOSE: Execute GraphRAG overview, search, node lookup, relationship lookup, path, dependents, or tracedown query
+// PURPOSE: Execute GraphRAG overview, search, node lookup, relationship lookup, path, dependents, tracedown, or Mermaid query
 // INPUTS: { graphrag: &RwLock<Option<GraphRag>> }, { graph_cache_key: &RwLock<Option<GraphCacheKey>> }, { id: Option<serde_json::Value> }, { args: &serde_json::Value }
 // OUTPUTS: { serde_json::Value }
 // START_handle_graphrag
@@ -373,6 +374,25 @@ pub(crate) fn handle_graphrag(
                 }),
             )
         }
+        "mermaid" => {
+            let options = match parse_mermaid_options_arg(args) {
+                Ok(options) => options,
+                Err(message) => return error(id, -32602, message),
+            };
+            let Some(graph) = graphrag.graph() else {
+                return error(id, -32603, "GraphRAG not built. Run `syn index` first.");
+            };
+            let diagram = render_mermaid(graph, &options);
+            result(
+                id,
+                serde_json::json!({
+                    "content": [{"type": "text", "text": diagram}],
+                    "format": "mermaid",
+                    "subset": format!("{:?}", options.subset).to_ascii_lowercase(),
+                    "isError": false
+                }),
+            )
+        }
         _ => error(
             id,
             -32601,
@@ -452,6 +472,86 @@ fn parse_link_type_arg(args: &serde_json::Value) -> Result<Option<LinkType>, Str
         .map(Some)
         .ok_or_else(|| format!("Invalid link_type '{}'", raw))
 }
+
+// START_CONTRACT_parse_mermaid_options_arg
+// PURPOSE: Build Mermaid render options from GraphRAG MCP arguments
+// INPUTS: { args: &serde_json::Value }
+// OUTPUTS: { Result<MermaidRenderOptions, String> }
+// LINKS:
+//   -> M-GRAPHRAG-MERMAID (depends) - configures Mermaid graph subset output
+//   -> UC-001 (implements) - agents request Mermaid graph views through MCP
+// START_parse_mermaid_options_arg
+fn parse_mermaid_options_arg(args: &serde_json::Value) -> Result<MermaidRenderOptions, String> {
+    Ok(MermaidRenderOptions {
+        subset: parse_mermaid_subset_arg(args)?,
+        focus_ids: parse_mermaid_focus_ids_arg(args)?,
+        max_nodes: args["max_nodes"].as_u64().unwrap_or(80) as usize,
+    }
+    .normalized())
+}
+// END_parse_mermaid_options_arg
+
+// START_CONTRACT_parse_mermaid_subset_arg
+// PURPOSE: Parse Mermaid subset argument for GraphRAG MCP output
+// INPUTS: { args: &serde_json::Value }
+// OUTPUTS: { Result<MermaidGraphSubset, String> }
+// LINKS:
+//   -> M-GRAPHRAG-MERMAID (depends) - selects Mermaid graph subset mode
+//   -> UC-001 (implements) - agents can choose module, symbol, or relation views
+// START_parse_mermaid_subset_arg
+fn parse_mermaid_subset_arg(args: &serde_json::Value) -> Result<MermaidGraphSubset, String> {
+    match args["subset"]
+        .as_str()
+        .unwrap_or("relations")
+        .trim()
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "module" | "modules" => Ok(MermaidGraphSubset::Modules),
+        "symbol" | "symbols" => Ok(MermaidGraphSubset::Symbols),
+        "relation" | "relations" | "graph" => Ok(MermaidGraphSubset::Relations),
+        other => Err(format!(
+            "Invalid mermaid subset '{}'. Expected modules, symbols, or relations",
+            other
+        )),
+    }
+}
+// END_parse_mermaid_subset_arg
+
+// START_CONTRACT_parse_mermaid_focus_ids_arg
+// PURPOSE: Parse optional Mermaid focus ids from string or array GraphRAG MCP arguments
+// INPUTS: { args: &serde_json::Value }
+// OUTPUTS: { Result<Vec<String>, String> }
+// LINKS:
+//   -> M-GRAPHRAG-MERMAID (depends) - focuses Mermaid graph neighborhoods
+//   -> UC-001 (implements) - agents can request bounded focused diagrams
+// START_parse_mermaid_focus_ids_arg
+fn parse_mermaid_focus_ids_arg(args: &serde_json::Value) -> Result<Vec<String>, String> {
+    if let Some(raw) = args["focus_ids"].as_array() {
+        return raw
+            .iter()
+            .map(|value| {
+                value
+                    .as_str()
+                    .map(|text| text.trim().to_string())
+                    .filter(|text| !text.is_empty())
+                    .ok_or_else(|| "focus_ids entries must be non-empty strings".to_string())
+            })
+            .collect();
+    }
+    let focus = args["focus"]
+        .as_str()
+        .or_else(|| args["focus_id"].as_str())
+        .or_else(|| args["node_id"].as_str())
+        .unwrap_or("")
+        .trim();
+    if focus.is_empty() {
+        Ok(Vec::new())
+    } else {
+        Ok(vec![focus.to_string()])
+    }
+}
+// END_parse_mermaid_focus_ids_arg
 
 fn format_typed_relationship(rel: &crate::graphrag::types::TypedCodeRelationship) -> String {
     let direction = rel.direction.label();
@@ -662,6 +762,90 @@ mod tests {
         );
     }
     // END_test_handle_graphrag_reports_poisoned_lock
+
+    // START_CONTRACT_test_graphrag_query_mermaid_output
+    // PURPOSE: Verify graphrag_query can return Mermaid output without changing MCP content shape
+    // START_test_graphrag_query_mermaid_output
+    #[tokio::test]
+    async fn test_graphrag_query_mermaid_output() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
+        let previous = std::env::current_dir().expect("cwd");
+        let dir = tempfile::tempdir().expect("tempdir");
+        let src = dir.path().join("src");
+        std::fs::create_dir_all(&src).expect("src dir");
+        std::fs::write(
+            src.join("a.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-A\n",
+                "// PURPOSE: A module\n",
+                "// SCOPE: Mermaid test\n",
+                "// DEPENDS: M-B\n",
+                "// LINKS:\n",
+                "//   -> M-B (depends) - test dependency\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// build_a - Builds A\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 - Test fixture]\n",
+                "// END_CHANGE_SUMMARY\n",
+                "\n",
+                "// START_CONTRACT_build_a\n",
+                "// PURPOSE: Build A\n",
+                "// LINKS:\n",
+                "//   -> UC-001 (implements) - fixture\n",
+                "// START_build_a\n",
+                "pub fn build_a() {}\n",
+                "// END_build_a\n",
+            ),
+        )
+        .expect("write a");
+        std::fs::write(
+            src.join("b.rs"),
+            concat!(
+                "// MODULE_CONTRACT\n",
+                "// MODULE_ID: M-B\n",
+                "// PURPOSE: B module\n",
+                "// SCOPE: Mermaid test\n",
+                "// DEPENDS: N/A\n",
+                "// LINKS:\n",
+                "\n",
+                "// START_MODULE_MAP\n",
+                "// build_b - Builds B\n",
+                "// END_MODULE_MAP\n",
+                "\n",
+                "// START_CHANGE_SUMMARY\n",
+                "// LAST_CHANGE: [v1.0.0 - Test fixture]\n",
+                "// END_CHANGE_SUMMARY\n",
+            ),
+        )
+        .expect("write b");
+        std::env::set_current_dir(dir.path()).expect("set cwd");
+
+        let response = handle_graphrag(
+            &RwLock::new(None),
+            &RwLock::new(None),
+            Some(serde_json::json!(1)),
+            &serde_json::json!({
+                "operation": "mermaid",
+                "subset": "modules",
+                "focus_ids": ["M-A"],
+                "max_nodes": 10
+            }),
+        );
+        std::env::set_current_dir(previous).expect("restore cwd");
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .expect("mermaid text");
+
+        assert_eq!(response["result"]["format"], "mermaid");
+        assert!(text.starts_with("graph TD"), "unexpected text: {text}");
+        assert!(text.contains("M-A"), "unexpected text: {text}");
+        assert!(!response["result"]["isError"].as_bool().unwrap_or(true));
+    }
+    // END_test_graphrag_query_mermaid_output
 }
 
 // END_public_api

@@ -20,14 +20,14 @@
   </DATA_FLOWS>
   <STEPS>
     <step-1 module="M-GRAPHRAG-MERMAID" status="done">Add deterministic Mermaid rendering for module, symbol, and relation graph subsets with escaping for unsafe labels.</step-1>
-    <step-2 module="M-MCP-SERVER-CODE-TOOLS" status="planned">Expose Mermaid rendering through graphrag_query or a bounded operation field while preserving existing GraphRAG response schemas.</step-2>
+    <step-2 module="M-MCP-SERVER-CODE-TOOLS" status="done">Expose Mermaid rendering through graphrag_query or a bounded operation field while preserving existing GraphRAG response schemas.</step-2>
     <step-3 module="M-CLI-FILTER-COMMANDS" status="planned">Add filters dry-run command support for TOML filter selection, stdin or file sample input, and explain-stage output.</step-3>
     <step-4 module="M-PROXY-FILTER" status="planned">Provide a reusable dry-run API that reports filter stage decisions without mutating command execution state.</step-4>
     <step-5 module="M-MCP-LSP" status="planned">Complete didOpen content override handling and didClose lifecycle cleanup for hover, references, and diagnostics workflows.</step-5>
   </STEPS>
   <VERIFICATION>
     <CHECK status="passed">cargo test graphrag::mermaid --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test mcp::server_code_tools::tests::test_graphrag_query_mermaid_output --lib</CHECK>
+    <CHECK status="passed">cargo test mcp::server_code_tools::tests::test_graphrag_query_mermaid_output --lib -- --test-threads=8</CHECK>
     <CHECK status="planned">cargo test cli::filter_commands --lib</CHECK>
     <CHECK status="planned">cargo test proxy::toml_filter::tests::test_filter_dry_run_reports_stages --lib</CHECK>
     <CHECK status="planned">cargo test mcp::lsp_manager --lib</CHECK>

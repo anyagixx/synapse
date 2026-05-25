@@ -388,6 +388,7 @@
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-GRACE-CONTRACT" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-GRAPHRAG" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-GRAPHRAG-MERMAID" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-MCP-LSP" type="DEPENDS" />
     <REL source="M-MCP-SERVER-CODE-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />

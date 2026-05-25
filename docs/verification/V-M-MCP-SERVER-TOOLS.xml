@@ -3,6 +3,7 @@
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test mcp::server_tools::tests::test_semantic_search_schema_exposes_filters --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_tools::tests::test_graphrag_schema_exposes_mermaid_options --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -16,6 +17,7 @@
     <ASSERTION>tools/list exposes cascade_impact and cascade_execute schemas with cascade id and auto-apply controls.</ASSERTION>
     <ASSERTION>tools/list exposes run_test_guide and submit_test_report schemas for tester-agent workflows.</ASSERTION>
     <ASSERTION>tools/list exposes semantic_search language, path, and path_contains filter schema fields.</ASSERTION>
+    <ASSERTION>tools/list exposes graphrag_query operation=mermaid with subset, focus_ids, and max_nodes schema fields.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13,Phase-65</PHASE_GATE>
+  <PHASE_GATE>Phase-13,Phase-65,Phase-68</PHASE_GATE>
 </VERIFICATION>

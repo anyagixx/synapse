@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG Mermaid options, GRACE profiles, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS: docs/modules/M-MCP-SERVER.xml
 
@@ -10,7 +10,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.8.0 - Added semantic_search filter schema]
+// LAST_CHANGE: [v3.9.0 - Added GraphRAG Mermaid schema options]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -51,17 +51,21 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
         }),
         serde_json::json!({
             "name": "graphrag_query",
-            "description": "Query the code knowledge graph. Supports: search, get-node, get-relationships, find-path, dependents, tracedown, overview",
+            "description": "Query the code knowledge graph. Supports: search, get-node, get-relationships, find-path, dependents, tracedown, overview, mermaid",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "operation": { "type": "string", "description": "Operation: search | get-node | get-relationships | find-path | dependents | tracedown | overview" },
+                    "operation": { "type": "string", "description": "Operation: search | get-node | get-relationships | find-path | dependents | tracedown | overview | mermaid" },
                     "query": { "type": "string", "description": "Search query" },
                     "node_id": { "type": "string", "description": "Node ID" },
                     "from": { "type": "string", "description": "Source node ID" },
                     "to": { "type": "string", "description": "Target node ID" },
                     "target": { "type": "string", "description": "Target artifact for dependents/tracedown" },
-                    "link_type": { "type": "string", "description": "Typed LINKS filter: implements | depends | refines | traces_to | verified_by | manages | uses" }
+                    "link_type": { "type": "string", "description": "Typed LINKS filter: implements | depends | refines | traces_to | verified_by | manages | uses" },
+                    "subset": { "type": "string", "description": "Mermaid subset for operation=mermaid: modules | symbols | relations", "default": "relations" },
+                    "focus": { "type": "string", "description": "Optional Mermaid focus node id" },
+                    "focus_ids": { "type": "array", "items": { "type": "string" }, "description": "Optional Mermaid focus node ids" },
+                    "max_nodes": { "type": "number", "description": "Maximum Mermaid graph nodes", "default": 80 }
                 },
                 "required": ["operation"]
             }
@@ -337,6 +341,29 @@ mod tests {
         assert!(properties.contains_key("path_contains"));
     }
     // END_test_semantic_search_schema_exposes_filters
+
+    // START_CONTRACT_test_graphrag_schema_exposes_mermaid_options
+    // PURPOSE: Verify tools/list declares GraphRAG Mermaid operation options for MCP clients
+    // START_test_graphrag_schema_exposes_mermaid_options
+    #[test]
+    fn test_graphrag_schema_exposes_mermaid_options() {
+        let tools = tool_definitions();
+        let graphrag = tools
+            .iter()
+            .find(|tool| tool["name"] == "graphrag_query")
+            .expect("graphrag_query tool");
+        let properties = graphrag["inputSchema"]["properties"]
+            .as_object()
+            .expect("properties");
+
+        assert!(graphrag["description"]
+            .as_str()
+            .is_some_and(|description| description.contains("mermaid")));
+        assert!(properties.contains_key("subset"));
+        assert!(properties.contains_key("focus_ids"));
+        assert!(properties.contains_key("max_nodes"));
+    }
+    // END_test_graphrag_schema_exposes_mermaid_options
 }
 
 // END_public_api
