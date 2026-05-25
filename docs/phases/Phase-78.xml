@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-78" status="active">
+<PHASE id="Phase-78" status="done">
   <NAME>UPGRADE_3 MCP Regression</NAME>
   <GOAL>Add real MCP stdio JSON-RPC regression coverage against fixture projects.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/E4-mcp-regression.md</SOURCE_PLAN>
@@ -18,9 +18,9 @@
     <step-3 module="M-CLI-TEST-COMMANDS" status="done">Wire syn test mcp command to the MCP regression suite where practical.</step-3>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test --test e2e_mcp</CHECK>
-    <CHECK status="planned">cargo test --test mcp_protocol</CHECK>
-    <CHECK status="planned">cargo run --quiet -- test mcp</CHECK>
+    <CHECK status="passed">cargo test --test e2e_mcp</CHECK>
+    <CHECK status="passed">cargo test --test mcp_protocol</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test mcp</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-78-1">Stdio tests can hang without explicit timeout and child process cleanup.</RISK>
