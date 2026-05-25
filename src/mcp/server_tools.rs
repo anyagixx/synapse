@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including response economy parameters, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -20,13 +20,35 @@
 // apply_tool_schema_style — Applies full or terse schema style
 // terse_tool_definition — Removes description fields recursively
 // tool_definitions_json_bytes — Estimates serialized schema size
+// response_economy_tool_names — Returns tools that support max_tokens and style
+// tool_supports_response_economy — Checks response economy schema membership
+// add_response_economy_schemas — Adds max_tokens/style schema fields to selected tools
+// add_response_economy_schema — Adds response economy fields to one tool definition
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.6.0 - Added terse tool schema transform and size accounting]
+// LAST_CHANGE: [v4.7.0 - Exposed response economy params on high-output tool schemas]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
+
+const RESPONSE_ECONOMY_TOOL_NAMES: &[&str] = &[
+    "semantic_search",
+    "graphrag_query",
+    "view_signatures",
+    "lsp_hover",
+    "lsp_references",
+    "project_status",
+    "verify_project",
+    "review_code",
+    "analyze_logs",
+    "mental_test_run",
+    "traceability_report",
+    "token_savings",
+    "refresh_project",
+    "cascade_impact",
+    "cascade_execute",
+];
 
 // START_public_api
 
@@ -282,6 +304,76 @@ pub(crate) fn tool_definitions_json_bytes(tools: &[serde_json::Value]) -> usize 
     serde_json::to_vec(tools).map_or(0, |bytes| bytes.len())
 }
 // END_tool_definitions_json_bytes
+
+// START_CONTRACT_response_economy_tool_names
+// PURPOSE: Return built-in tools that expose max_tokens and style response economy params
+// OUTPUTS: { &'static [&'static str] }
+// START_response_economy_tool_names
+pub(crate) fn response_economy_tool_names() -> &'static [&'static str] {
+    RESPONSE_ECONOMY_TOOL_NAMES
+}
+// END_response_economy_tool_names
+
+// START_CONTRACT_tool_supports_response_economy
+// PURPOSE: Check whether a tool should expose max_tokens and style schema parameters
+// INPUTS: { tool_name: &str }
+// OUTPUTS: { bool }
+// START_tool_supports_response_economy
+fn tool_supports_response_economy(tool_name: &str) -> bool {
+    RESPONSE_ECONOMY_TOOL_NAMES.contains(&tool_name)
+}
+// END_tool_supports_response_economy
+
+// START_CONTRACT_add_response_economy_schemas
+// PURPOSE: Add response economy schema fields to all selected tool definitions
+// INPUTS: { tools: &mut [serde_json::Value] }
+// SIDE_EFFECTS: mutates tool inputSchema properties
+// START_add_response_economy_schemas
+fn add_response_economy_schemas(tools: &mut [serde_json::Value]) {
+    for tool in tools {
+        let Some(name) = tool.get("name").and_then(serde_json::Value::as_str) else {
+            continue;
+        };
+        if tool_supports_response_economy(name) {
+            add_response_economy_schema(tool);
+        }
+    }
+}
+// END_add_response_economy_schemas
+
+// START_CONTRACT_add_response_economy_schema
+// PURPOSE: Add max_tokens and style properties to one tool input schema
+// INPUTS: { tool: &mut serde_json::Value }
+// SIDE_EFFECTS: mutates tool inputSchema properties
+// START_add_response_economy_schema
+fn add_response_economy_schema(tool: &mut serde_json::Value) {
+    let Some(properties) = tool
+        .get_mut("inputSchema")
+        .and_then(|schema| schema.get_mut("properties"))
+        .and_then(serde_json::Value::as_object_mut)
+    else {
+        return;
+    };
+
+    properties.insert(
+        "max_tokens".into(),
+        serde_json::json!({
+            "type": "number",
+            "default": 0,
+            "description": "Maximum estimated response tokens; 0 keeps the full response"
+        }),
+    );
+    properties.insert(
+        "style".into(),
+        serde_json::json!({
+            "type": "string",
+            "enum": ["full", "terse"],
+            "default": "full",
+            "description": "Response verbosity style"
+        }),
+    );
+}
+// END_add_response_economy_schema
 
 // START_CONTRACT_tool_definitions
 // PURPOSE: Build MCP tools/list definitions for built-in tools and registered grace_* skills
@@ -645,6 +737,8 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
         }),
     ];
 
+    add_response_economy_schemas(&mut tools);
+
     for skill in SKILL_DEFS {
         tools.push(serde_json::json!({
             "name": skill.name,
@@ -803,6 +897,49 @@ mod tests {
         assert!(unclassified.is_empty(), "{unclassified:?}");
     }
     // END_test_all_current_tools_have_profile_membership
+
+    // START_CONTRACT_test_response_economy_schema_exposes_max_tokens_and_style
+    // PURPOSE: Verify high-output MCP tools expose max_tokens and style schema fields
+    // START_test_response_economy_schema_exposes_max_tokens_and_style
+    #[test]
+    fn test_response_economy_schema_exposes_max_tokens_and_style() {
+        let tools = tool_definitions();
+
+        for expected in response_economy_tool_names() {
+            let tool = tools
+                .iter()
+                .find(|tool| tool["name"] == *expected)
+                .unwrap_or_else(|| panic!("{expected} tool"));
+            let properties = tool["inputSchema"]["properties"]
+                .as_object()
+                .unwrap_or_else(|| panic!("{expected} properties"));
+
+            assert!(
+                properties.contains_key("max_tokens"),
+                "{expected} missing max_tokens"
+            );
+            assert!(properties.contains_key("style"), "{expected} missing style");
+            assert_eq!(properties["max_tokens"]["default"], 0);
+            assert_eq!(properties["style"]["enum"][1], "terse");
+        }
+    }
+    // END_test_response_economy_schema_exposes_max_tokens_and_style
+
+    // START_CONTRACT_test_response_economy_schema_covers_at_least_ten_tools
+    // PURPOSE: Verify Phase-84 covers at least ten high-output MCP tools with response economy params
+    // START_test_response_economy_schema_covers_at_least_ten_tools
+    #[test]
+    fn test_response_economy_schema_covers_at_least_ten_tools() {
+        let covered = tool_definitions()
+            .into_iter()
+            .filter_map(|tool| tool["name"].as_str().map(ToOwned::to_owned))
+            .filter(|name| tool_supports_response_economy(name))
+            .count();
+
+        assert!(covered >= 10, "covered={covered}");
+        assert_eq!(covered, response_economy_tool_names().len());
+    }
+    // END_test_response_economy_schema_covers_at_least_ten_tools
 
     // START_CONTRACT_test_terse_tool_definition_preserves_machine_schema
     // PURPOSE: Verify terse schemas remove descriptions recursively while preserving JSON schema shape

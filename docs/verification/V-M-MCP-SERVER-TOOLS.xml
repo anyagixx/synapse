@@ -9,6 +9,7 @@
     <COMMAND>cargo test mcp::server_tools::tests::test_self_heal_schema_exposes_run_id_and_profile --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::server_tools::tests::test_phase_and_pre_commit_schemas_are_exposed --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::server_tools::tests::test_diagnose_and_repair_schemas_are_exposed --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::server_tools::tests::test_response_economy_schema_exposes_max_tokens_and_style --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -28,6 +29,7 @@
     <ASSERTION>tools/list exposes graphrag_query operation=impact with depth and include_tests schema fields.</ASSERTION>
     <ASSERTION>tools/list exposes graphrag_query operation=mermaid with subset, focus_ids, and max_nodes schema fields.</ASSERTION>
     <ASSERTION>tools/list exposes optional content override fields for lsp_hover and lsp_references.</ASSERTION>
+    <ASSERTION>tools/list exposes max_tokens and style response economy fields for at least 10 high-output tools.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13,Phase-65,Phase-68,Phase-70,Phase-71,Phase-72,Phase-73</PHASE_GATE>
+  <PHASE_GATE>Phase-13,Phase-65,Phase-68,Phase-70,Phase-71,Phase-72,Phase-73,Phase-83,Phase-84</PHASE_GATE>
 </VERIFICATION>
