@@ -4,6 +4,7 @@
     <TEST>CLI parses syn test e2e, mcp, snapshot, coverage, perf, contract, and resilience actions.</TEST>
     <TEST>Legacy syn test -- &lt;cmd&gt; continues to route to the RTK compact test adapter.</TEST>
     <TEST>CLI preserves e2e --scenario paths and snapshot --update/--filter options.</TEST>
+    <TEST>CLI parses syn test perf --baseline, --check, --threshold, and --baseline-path options.</TEST>
   </UNIT_TESTS>
   <INTEGRATION_TESTS>
     <TEST>cargo test --all-targets covers command parsing and dispatch behavior.</TEST>
@@ -12,6 +13,7 @@
     <TEST>syn test e2e without --scenario keeps planned output while --scenario runs the E2E runner.</TEST>
     <TEST>syn test mcp invokes cargo test --test e2e_mcp and emits bounded text or JSON reports.</TEST>
     <TEST>syn test coverage --json builds the real coverage matrix.</TEST>
+    <TEST>syn test perf --baseline writes a platform-aware baseline and --check compares medians against threshold.</TEST>
     <TEST>syn test contract &lt;spec&gt; runs real contract differential specs.</TEST>
   </INTEGRATION_TESTS>
   <REQUIRED_LOG_MARKERS>
@@ -21,5 +23,5 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>CLI schema links to M-TEST-HARNESS and all UPGRADE_3 test modules.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-76,Phase-77,Phase-78,Phase-79</PHASE_GATE>
+  <PHASE_GATE>Phase-76,Phase-77,Phase-78,Phase-79,Phase-80</PHASE_GATE>
 </VERIFICATION>

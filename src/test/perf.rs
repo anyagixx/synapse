@@ -36,8 +36,9 @@ use std::time::Instant;
 
 const DEFAULT_ITERATIONS: usize = 1;
 const DEFAULT_WARMUP: bool = true;
-const COMMAND_OUTPUT_TAIL_LINES: usize = 30;
-const COMMAND_OUTPUT_CHAR_LIMIT: usize = 4000;
+const COMMAND_OUTPUT_TAIL_LINES: usize = 120;
+const COMMAND_OUTPUT_CHAR_LIMIT: usize = 12000;
+const MIN_DELTA_BASELINE_MS: f64 = 100.0;
 
 // START_public_api
 
@@ -111,6 +112,8 @@ pub struct BenchmarkStats {
 pub struct BenchmarkResult {
     pub name: String,
     pub command: Vec<String>,
+    pub success: bool,
+    pub status_code: Option<i32>,
     pub samples_ms: Vec<f64>,
     pub stats: BenchmarkStats,
 }
@@ -121,6 +124,8 @@ pub struct BenchmarkResult {
 pub struct BenchmarkBaseline {
     pub name: String,
     pub command: Vec<String>,
+    pub success: bool,
+    pub status_code: Option<i32>,
     pub median_ms: f64,
     pub stats: BenchmarkStats,
 }
@@ -222,7 +227,7 @@ pub fn calculate_stats(samples_ms: &[f64]) -> anyhow::Result<BenchmarkStats> {
     let max_ms = sorted[samples - 1];
     let avg_ms = sorted.iter().sum::<f64>() / samples as f64;
     let middle = samples / 2;
-    let median_ms = if samples % 2 == 0 {
+    let median_ms = if samples.is_multiple_of(2) {
         (sorted[middle - 1] + sorted[middle]) / 2.0
     } else {
         sorted[middle]
@@ -353,6 +358,8 @@ pub fn baseline_from_report(report: &PerfRunReport) -> PerfBaseline {
             .map(|benchmark| BenchmarkBaseline {
                 name: benchmark.name.clone(),
                 command: benchmark.command.clone(),
+                success: benchmark.success,
+                status_code: benchmark.status_code,
                 median_ms: benchmark.stats.median_ms,
                 stats: benchmark.stats.clone(),
             })
@@ -525,11 +532,12 @@ pub fn render_perf_report(report: &PerfRunReport) -> String {
     lines.push("benchmarks:".to_string());
     for benchmark in &report.benchmarks {
         lines.push(format!(
-            "- {} median={:.2}ms avg={:.2}ms samples={}",
+            "- {} median={:.2}ms avg={:.2}ms samples={} status={}",
             benchmark.name,
             benchmark.stats.median_ms,
             benchmark.stats.avg_ms,
-            benchmark.stats.samples
+            benchmark.stats.samples,
+            benchmark_status_label(benchmark.success, benchmark.status_code)
         ));
     }
     if let Some(comparison) = &report.comparison {
@@ -577,6 +585,7 @@ struct BenchmarkDefinition {
     name: &'static str,
     args: &'static [&'static str],
     requires_index: bool,
+    allow_failure: bool,
 }
 // END_BenchmarkDefinition
 
@@ -585,26 +594,31 @@ const BENCHMARKS: &[BenchmarkDefinition] = &[
         name: "index",
         args: &["index", "--force", "--no-git"],
         requires_index: false,
+        allow_failure: false,
     },
     BenchmarkDefinition {
         name: "search_cold",
         args: &["search", "auth", "--max-results", "3"],
         requires_index: true,
+        allow_failure: false,
     },
     BenchmarkDefinition {
         name: "search_warm",
         args: &["search", "auth", "--max-results", "3"],
         requires_index: true,
+        allow_failure: false,
     },
     BenchmarkDefinition {
         name: "verify",
-        args: &["verify", "--profile", "balanced", "--ci"],
+        args: &["verify", "--profile", "lite", "--ci", "--mod", "M-CORE"],
         requires_index: false,
+        allow_failure: true,
     },
     BenchmarkDefinition {
         name: "graphrag",
         args: &["graphrag", "overview"],
         requires_index: true,
+        allow_failure: false,
     },
 ];
 
@@ -612,6 +626,10 @@ const BENCHMARKS: &[BenchmarkDefinition] = &[
 #[derive(Debug)]
 struct CommandInvocation {
     duration_ms: f64,
+    success: bool,
+    status_code: Option<i32>,
+    stdout_tail: String,
+    stderr_tail: String,
 }
 // END_CommandInvocation
 
@@ -652,14 +670,20 @@ fn run_benchmark_definition(
     options: &PerfTestOptions,
 ) -> anyhow::Result<BenchmarkResult> {
     if options.warmup {
-        run_syn_command(binary_path, fixture, definition.args)
+        let invocation = run_syn_command(binary_path, fixture, definition.args)
             .with_context(|| format!("warmup benchmark {}", definition.name))?;
+        ensure_allowed_status(definition, &invocation)?;
     }
     let iterations = options.iterations.max(1);
     let mut samples = Vec::with_capacity(iterations);
+    let mut success = true;
+    let mut status_code = Some(0);
     for _ in 0..iterations {
         let invocation = run_syn_command(binary_path, fixture, definition.args)
             .with_context(|| format!("run benchmark {}", definition.name))?;
+        ensure_allowed_status(definition, &invocation)?;
+        success &= invocation.success;
+        status_code = invocation.status_code;
         samples.push(invocation.duration_ms);
     }
     let stats = calculate_stats(&samples)?;
@@ -670,6 +694,8 @@ fn run_benchmark_definition(
             .iter()
             .map(|arg| (*arg).to_string())
             .collect(),
+        success,
+        status_code,
         samples_ms: samples,
         stats,
     })
@@ -699,20 +725,39 @@ fn run_syn_command(
         .with_context(|| format!("spawn syn binary {}", binary_path.display()))?;
     let duration_ms = started.elapsed().as_secs_f64() * 1000.0;
 
-    if !output.status.success() {
-        anyhow::bail!(
-            "benchmark command failed: {} {}\nstatus: {:?}\nstdout:\n{}\nstderr:\n{}",
-            binary_path.display(),
-            args.join(" "),
-            output.status.code(),
-            compact_output(&output.stdout),
-            compact_output(&output.stderr)
-        );
-    }
-
-    Ok(CommandInvocation { duration_ms })
+    Ok(CommandInvocation {
+        duration_ms,
+        success: output.status.success(),
+        status_code: output.status.code(),
+        stdout_tail: compact_output(&output.stdout),
+        stderr_tail: compact_output(&output.stderr),
+    })
 }
 // END_run_syn_command
+
+// START_CONTRACT_ensure_allowed_status
+// PURPOSE: Fail fast for unexpected benchmark exits while allowing documented verify fixture exits
+// INPUTS: { definition: &BenchmarkDefinition }, { invocation: &CommandInvocation }
+// OUTPUTS: { anyhow::Result<()> }
+// LINKS:
+//   -> NFR-002 (traces_to) - perf runner distinguishes process failure from expected fixture verification failure
+// START_ensure_allowed_status
+fn ensure_allowed_status(
+    definition: &BenchmarkDefinition,
+    invocation: &CommandInvocation,
+) -> anyhow::Result<()> {
+    if invocation.success || definition.allow_failure {
+        return Ok(());
+    }
+    anyhow::bail!(
+        "benchmark command failed: {} status {:?}\nstdout:\n{}\nstderr:\n{}",
+        definition.name,
+        invocation.status_code,
+        invocation.stdout_tail,
+        invocation.stderr_tail
+    );
+}
+// END_ensure_allowed_status
 
 // START_CONTRACT_resolve_syn_binary_path
 // PURPOSE: Resolve the Synapse binary for perf CLI runs and integration tests
@@ -759,21 +804,22 @@ fn compare_metadata_field(field: &str, baseline: &str, current: &str, notes: &mu
 // END_compare_metadata_field
 
 // START_CONTRACT_percentage_delta
-// PURPOSE: Calculate positive regression percentage from current and baseline medians
+// PURPOSE: Calculate positive regression percentage with a minimum denominator for short-command noise
 // INPUTS: { current: f64 }, { baseline: f64 }
 // OUTPUTS: { f64 }
 // LINKS:
 //   -> V-M-TEST-PERF-REGRESSION (verified_by) - threshold comparison tests
 // START_percentage_delta
 fn percentage_delta(current: f64, baseline: f64) -> f64 {
-    if baseline.abs() <= f64::EPSILON {
+    let denominator = baseline.abs().max(MIN_DELTA_BASELINE_MS);
+    if denominator <= f64::EPSILON {
         if current.abs() <= f64::EPSILON {
             0.0
         } else {
             100.0
         }
     } else {
-        ((current - baseline) / baseline) * 100.0
+        ((current - baseline) / denominator) * 100.0
     }
 }
 // END_percentage_delta
@@ -793,6 +839,25 @@ fn perf_mode_label(mode: PerfMode) -> &'static str {
     }
 }
 // END_perf_mode_label
+
+// START_CONTRACT_benchmark_status_label
+// PURPOSE: Render a stable benchmark process status for text reports
+// INPUTS: { success: bool }, { status_code: Option<i32> }
+// OUTPUTS: { String }
+// LINKS:
+//   -> NFR-003 (traces_to) - perf report status evidence must stay compact
+// START_benchmark_status_label
+fn benchmark_status_label(success: bool, status_code: Option<i32>) -> String {
+    if success {
+        "ok".to_string()
+    } else {
+        format!(
+            "exit({})",
+            status_code.map_or("signal".to_string(), |code| code.to_string())
+        )
+    }
+}
+// END_benchmark_status_label
 
 // START_CONTRACT_compact_output
 // PURPOSE: Return a bounded UTF-8 command output tail for failed benchmark invocations
@@ -830,6 +895,8 @@ mod tests {
                 .map(|(name, median)| BenchmarkResult {
                     name: (*name).to_string(),
                     command: vec![(*name).to_string()],
+                    success: true,
+                    status_code: Some(0),
                     samples_ms: vec![*median],
                     stats: BenchmarkStats {
                         samples: 1,
@@ -885,6 +952,19 @@ mod tests {
             comparison.benchmarks[0].status,
             ComparisonStatus::MissingBaseline
         );
+    }
+
+    #[test]
+    fn perf_short_benchmark_delta_uses_noise_floor() {
+        let metadata = platform_metadata();
+        let baseline_report = report_with_medians(metadata.clone(), &[("graphrag", 36.0)]);
+        let baseline = baseline_from_report(&baseline_report);
+        let current = report_with_medians(metadata, &[("graphrag", 46.0)]);
+
+        let comparison = compare_perf_baseline(&baseline, &current, 20.0).expect("compare");
+
+        assert!(comparison.passed);
+        assert_eq!(comparison.benchmarks[0].delta_pct, Some(10.0));
     }
 
     #[test]

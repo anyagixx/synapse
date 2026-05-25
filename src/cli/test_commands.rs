@@ -1,15 +1,17 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-TEST-COMMANDS
-// PURPOSE: Structured Synapse test command dispatcher with E2E/MCP/coverage/contract/snapshot handlers and RTK legacy fallback.
-// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, MCP cargo target execution, coverage matrix rendering, contract differential spec execution, snapshot listing, and legacy RTK fallback dispatch.
-// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-MCP-REGRESSION, M-TEST-COVERAGE-MATRIX, M-TEST-CONTRACT-DIFFERENTIAL, M-TEST-SNAPSHOT
+// PURPOSE: Structured Synapse test command dispatcher with E2E/MCP/coverage/perf/contract/snapshot handlers and RTK legacy fallback.
+// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, MCP cargo target execution, coverage matrix rendering, perf baseline/check execution, contract differential spec execution, snapshot listing, and legacy RTK fallback dispatch.
+// DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-MCP-REGRESSION, M-TEST-COVERAGE-MATRIX, M-TEST-PERF-REGRESSION, M-TEST-CONTRACT-DIFFERENTIAL, M-TEST-SNAPSHOT
 // LINKS:
 //   -> Phase-76 (implements) - UPGRADE_3 test command foundation
 //   -> Phase-78 (implements) - MCP regression command wiring
 //   -> Phase-79 (implements) - coverage and contract command wiring
+//   -> Phase-80 (implements) - perf regression command wiring
 //   -> M-CLI-RTK-COMMANDS (depends) - legacy compact test adapter
 //   -> M-TEST-MCP-REGRESSION (depends) - real MCP stdio regression suite
 //   -> M-TEST-COVERAGE-MATRIX (depends) - coverage matrix command surface
+//   -> M-TEST-PERF-REGRESSION (depends) - performance regression command surface
 //   -> M-TEST-CONTRACT-DIFFERENTIAL (depends) - contract differential command surface
 //   <- V-M-CLI-TEST-COMMANDS (verified_by) - command parsing and compatibility verification
 
@@ -20,6 +22,7 @@
 // run_e2e_action - Runs one or more E2E scenario TOML files
 // run_mcp_action - Runs the real MCP regression cargo target
 // run_coverage_action - Builds and renders the module evidence coverage matrix
+// run_perf_action - Runs performance baselines or threshold checks
 // run_contract_action - Runs one or more contract differential TOML specs
 // run_snapshot_action - Lists or acknowledges snapshot check/update mode
 // render_structured_action - Emits compact text or machine-readable JSON planning output
@@ -27,7 +30,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.3.0 - Wired syn test coverage and contract handlers]
+// LAST_CHANGE: [v1.4.0 - Wired syn test perf baseline and check handlers]
 // END_CHANGE_SUMMARY
 
 use super::TestCmd;
@@ -37,6 +40,7 @@ use crate::test::contract_test::{
 };
 use crate::test::coverage::{build_coverage_matrix, render_coverage_json, render_coverage_table};
 use crate::test::e2e::{run_e2e_scenario, E2EResult};
+use crate::test::perf::{render_perf_report, run_perf_suite, PerfMode, PerfTestOptions};
 use serde::Serialize;
 use serde_json::json;
 use std::ffi::OsString;
@@ -87,6 +91,14 @@ pub struct StructuredTestArgs {
     pub update: bool,
     #[arg(long)]
     pub filter: Option<String>,
+    #[arg(long)]
+    pub baseline: bool,
+    #[arg(long)]
+    pub check: bool,
+    #[arg(long, default_value_t = 20.0, value_name = "PCT")]
+    pub threshold: f64,
+    #[arg(long, default_value = "tests/baselines/perf.json")]
+    pub baseline_path: PathBuf,
     #[arg(long, default_value = "tests/snapshots")]
     pub snapshot_dir: PathBuf,
     #[arg(value_name = "SPEC")]
@@ -108,11 +120,13 @@ impl TestCmd {
     //   -> M-TEST-E2E-RUNNER (depends) - E2E scenario execution
     //   -> M-TEST-MCP-REGRESSION (depends) - MCP regression command surface
     //   -> M-TEST-COVERAGE-MATRIX (depends) - coverage matrix command surface
+    //   -> M-TEST-PERF-REGRESSION (depends) - performance regression command surface
     //   -> M-TEST-CONTRACT-DIFFERENTIAL (depends) - contract differential command surface
     //   -> M-TEST-SNAPSHOT (depends) - snapshot command surface
     //   -> Phase-77 (implements) - E2E and snapshot handler wiring
     //   -> Phase-78 (implements) - MCP regression handler wiring
     //   -> Phase-79 (implements) - coverage and contract handler wiring
+    //   -> Phase-80 (implements) - perf regression handler wiring
     //   -> NFR-002 (traces_to) - release verification commands must route deterministically
     //   <- V-M-CLI-TEST-COMMANDS (verified_by) - parse and dispatch tests
     // <LOG id="test_command_dispatch" level="INFO" ref="test-command-dispatch" module="M-CLI-TEST-COMMANDS" contract="TestCmd::run">
@@ -140,6 +154,7 @@ impl TestCmd {
             TestAction::Mcp(args) => run_mcp_action(args),
             TestAction::Snapshot(args) => run_snapshot_action(args),
             TestAction::Coverage(args) => run_coverage_action(args),
+            TestAction::Perf(args) => run_perf_action(args),
             TestAction::Contract(args) => run_contract_action(args),
             _ => {
                 println!("{}", render_structured_action(action)?);
@@ -429,6 +444,59 @@ fn run_coverage_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
     Ok(())
 }
 // END_run_coverage_action
+
+// START_CONTRACT_run_perf_action
+// PURPOSE: Run structured syn test perf baseline save or threshold check modes
+// INPUTS: { args: &StructuredTestArgs }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: executes Synapse benchmark commands in an isolated fixture, reads or writes baseline JSON, writes stdout
+// LINKS:
+//   -> M-TEST-PERF-REGRESSION (depends) - performance regression runner
+//   -> M-CLI-TEST-COMMANDS (depends) - CLI handler wiring
+//   -> Phase-80 (implements) - syn test perf handler
+//   -> NFR-002 (traces_to) - perf gates must be invokable from CLI
+//   -> NFR-003 (traces_to) - perf reports are bounded and JSON-capable
+// START_run_perf_action
+fn run_perf_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
+    if args.baseline && args.check {
+        anyhow::bail!("syn test perf accepts only one of --baseline or --check");
+    }
+    if !args.baseline && !args.check {
+        println!(
+            "{}",
+            render_structured_action(&TestAction::Perf(args.clone()))?
+        );
+        return Ok(());
+    }
+
+    let baseline_path = resolve_project_path(&args.project, &args.baseline_path);
+    let options = PerfTestOptions {
+        mode: if args.baseline {
+            PerfMode::Baseline
+        } else {
+            PerfMode::Check
+        },
+        baseline_path,
+        threshold_pct: args.threshold,
+        filter: args.filter.clone(),
+        ..PerfTestOptions::default()
+    };
+    let report = run_perf_suite(&options)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+    } else {
+        println!("{}", render_perf_report(&report));
+    }
+    if report
+        .comparison
+        .as_ref()
+        .is_some_and(|comparison| !comparison.passed)
+    {
+        anyhow::bail!("performance regression check failed");
+    }
+    Ok(())
+}
+// END_run_perf_action
 
 // START_CONTRACT_run_contract_action
 // PURPOSE: Run one or more TOML contract differential specs
@@ -756,6 +824,10 @@ fn render_structured_action(action: &TestAction) -> anyhow::Result<String> {
                 "scenarios": args.scenarios,
                 "update": args.update,
                 "filter": args.filter,
+                "baseline": args.baseline,
+                "check": args.check,
+                "threshold": args.threshold,
+                "baseline_path": args.baseline_path.display().to_string(),
                 "snapshot_dir": args.snapshot_dir.display().to_string(),
                 "specs": args.specs.iter().map(|path| path.display().to_string()).collect::<Vec<_>>(),
                 "passthrough": args.passthrough,
@@ -783,6 +855,14 @@ fn render_structured_action(action: &TestAction) -> anyhow::Result<String> {
     if let Some(filter) = &args.filter {
         lines.push(format!("filter: {filter}"));
     }
+    if args.baseline {
+        lines.push("baseline: true".to_string());
+    }
+    if args.check {
+        lines.push("check: true".to_string());
+    }
+    lines.push(format!("threshold: {:.1}", args.threshold));
+    lines.push(format!("baseline_path: {}", args.baseline_path.display()));
     if !args.specs.is_empty() {
         let specs = args
             .specs
@@ -940,6 +1020,48 @@ mod tests {
         assert_eq!(value["matrix"][0]["action"], "contract");
         assert_eq!(value["matrix"][0]["module"], "M-TEST-CONTRACT-DIFFERENTIAL");
         assert_eq!(value["matrix"][0]["phase"], "Phase-79");
+    }
+
+    #[test]
+    fn cli_test_perf_baseline_options_are_parsed() {
+        let action = parse_test_action(&[
+            "syn",
+            "test",
+            "perf",
+            "--baseline",
+            "--threshold",
+            "17.5",
+            "--baseline-path",
+            "tests/baselines/perf.json",
+        ]);
+        let TestAction::Perf(args) = action else {
+            panic!("expected perf action");
+        };
+
+        assert!(args.baseline);
+        assert!(!args.check);
+        assert_eq!(args.threshold, 17.5);
+        assert_eq!(
+            args.baseline_path,
+            PathBuf::from("tests/baselines/perf.json")
+        );
+    }
+
+    #[test]
+    fn cli_test_perf_action_points_to_phase_80() {
+        let action = parse_test_action(&["syn", "test", "perf", "--json", "--check"]);
+        let rendered = render_structured_action(&action).expect("perf JSON should render");
+        let value: serde_json::Value =
+            serde_json::from_str(&rendered).expect("perf output should be JSON");
+
+        assert_eq!(value["matrix"][0]["action"], "perf");
+        assert_eq!(value["matrix"][0]["module"], "M-TEST-PERF-REGRESSION");
+        assert_eq!(value["matrix"][0]["phase"], "Phase-80");
+        assert_eq!(value["matrix"][0]["check"], true);
+        assert_eq!(
+            value["matrix"][0]["baseline_path"],
+            "tests/baselines/perf.json"
+        );
     }
 
     #[test]

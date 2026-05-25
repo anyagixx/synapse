@@ -6,6 +6,8 @@
     <TEST>Missing baseline produces an actionable message.</TEST>
     <TEST>Baseline JSON round-trips OS, architecture, profile, and Synapse version metadata.</TEST>
     <TEST>Platform metadata mismatch blocks check mode even when benchmark deltas pass.</TEST>
+    <TEST>Sub-100ms benchmark deltas use a minimum denominator to avoid CI noise failures.</TEST>
+    <TEST>Benchmark reports record process success and exit code for measured workflows.</TEST>
   </UNIT_TESTS>
   <INTEGRATION_TESTS>
     <TEST>syn test perf --baseline writes tests/baselines/perf.json.</TEST>
