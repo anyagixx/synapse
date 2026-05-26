@@ -15,11 +15,11 @@ OpenCode, Claude Code, Cursor, Windsurf, Cline, Copilot, Gemini CLI, Codex, and 
 
 **How do I install?**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh | sh
 ```
 Without sudo:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
 **What platforms are supported?**
@@ -34,7 +34,7 @@ Windows packaging is deferred and is not part of the current release matrix.
 
 **How do I diagnose install failures?**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh -o /tmp/synapse-install.sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh -o /tmp/synapse-install.sh
 sh /tmp/synapse-install.sh --diagnose
 ```
 The diagnostic report prints the detected artifact, install directory status, required tools, checksum support, and source fallback prerequisites.
@@ -63,10 +63,10 @@ syn proxy --route -- cargo test
 ## Privacy
 
 **Is my code sent anywhere?**
-Synapse has no telemetry upload path and does not send code to Synapse servers. When you use OpenCode or another AI client, prompts and code snippets may be sent to the AI provider configured in that client.
+Synapse does not send code to Synapse servers. Telemetry is disabled by default; when Synapse is built with the `telemetry` feature and `telemetry.enabled=true`, it can export operational spans to the OTLP endpoint you configure. When you use OpenCode or another AI client, prompts and code snippets may be sent to the AI provider configured in that client.
 
 **What does telemetry collect?**
-Synapse currently has no telemetry upload path. Token savings are tracked locally for `syn gain`.
+By default, nothing is exported. Optional OTLP telemetry records operational spans such as command/tool names, durations, route metadata, and error status for your configured collector; token savings are tracked locally for `syn gain`.
 
 ## Troubleshooting
 

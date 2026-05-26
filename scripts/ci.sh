@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
-# PURPOSE: CI quality gate — runs Rust checks and MyGRACE truth gates in one reproducible entrypoint
-# SCOPE: Formatting, linting, runtime panic guard, tests, isolated XDG data path, UPGRADE_4 token economy gate, release tag guard, local release-candidate dry-run with release-context freshness skipped, optional full RTK release gate, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
+# PURPOSE: CI quality gate — runs Rust checks, UPGRADE integration gates, and MyGRACE truth gates in one reproducible entrypoint
+# SCOPE: Formatting, linting, runtime panic guard, tests, isolated XDG data path, UPGRADE_4 token economy gate, UPGRADE_5 integration gate, release tag guard, local release-candidate dry-run with release-context freshness skipped, optional full RTK release gate, release/install smoke, canonical MyGRACE verification, review, refresh, and status checks
 # DEPENDS: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-RTK-FULL-PARITY, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS
 # LINKS: .github/workflows/ci.yml, docs/verification-index.xml
 
@@ -12,18 +12,19 @@
 # release_freshness_guard.sh — Prevents stale release tags from masquerading as current Cargo versions
 # release_candidate_dry_run.sh — Validates release-candidate metadata and installer truth before publishing
 # token_economy_gate.sh — Validates UPGRADE_4 token economy MCP behavior
+# upgrade5_gate.sh — Validates UPGRADE_5 workspace/tools/hooks/telemetry/coverage/benchmark surfaces
 # rtk_full_release_gate.sh — Validates source-derived full RTK release parity when explicitly enabled
 # release_install_smoke.sh — Builds and validates the packaged release artifact
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.10.0 - Added UPGRADE_4 token economy gate]
+# LAST_CHANGE: [v1.11.0 - Added UPGRADE_5 integration gate]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_ci_gate
 # PURPOSE: Execute the full quality gate expected by CI and maintainers
 # OUTPUTS: { exit code 0 — all checks passed }
-# SIDE_EFFECTS: invokes cargo, Python guard, token economy gate, release version guard, release candidate dry-run, release smoke, and syn verification commands; writes build artifacts under target/
+# SIDE_EFFECTS: invokes cargo, Python guard, token economy and UPGRADE_5 gates, release version guard, release candidate dry-run, release smoke, and syn verification commands; writes build artifacts under target/
 # LINKS:
 #   -> M-CI-RUNTIME-GUARD (depends) - production panic guard
 #   -> M-CI-RELEASE-SMOKE (depends) - release policy gates
@@ -52,6 +53,9 @@ cargo test --all-targets
 
 echo "[CI][run_ci_gate][TOKEN_ECONOMY] Running UPGRADE_4 token economy gate"
 bash scripts/token_economy_gate.sh
+
+echo "[CI][run_ci_gate][UPGRADE5] Running UPGRADE_5 integration gate"
+bash scripts/upgrade5_gate.sh
 
 echo "[CI][run_ci_gate][RELEASE_VERSION] Checking release tag policy"
 bash scripts/release_version_guard.sh

@@ -5,6 +5,7 @@
     <COMMAND>cargo test capabilities --lib</COMMAND>
     <COMMAND>cargo test --test docs_parity test_command_count_matches_capabilities</COMMAND>
     <COMMAND>cargo test --test docs_parity test_no_ghost_commands</COMMAND>
+    <COMMAND>cargo test --test docs_parity upgrade5</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -13,6 +14,7 @@
     <ASSERTION>RTK_DISCOVERY_CAPABILITIES publishes bounded discover and learn metadata for CLI, MCP, and status consumers.</ASSERTION>
     <ASSERTION>MCP capability counts include 32 core tools / 48 total tools, including run-control, token-economy, cascade_impact, cascade_execute, run_test_guide, and submit_test_report as core tools.</ASSERTION>
     <ASSERTION>PLATFORMS lists supported Linux x86_64/aarch64 and macOS x86_64/arm64 release targets.</ASSERTION>
+    <ASSERTION>COMMANDS lists UPGRADE_5 workspace, tools, hooks, config, and test coverage command surfaces.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-49,Phase-92</PHASE_GATE>
+  <PHASE_GATE>Phase-49,Phase-92,Phase-95</PHASE_GATE>
 </VERIFICATION>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, token-economy gate claims, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit/cc-economics flags, public docs, install docs, supported Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, token-economy gate claims, UPGRADE_5 workspace/tools/hooks/telemetry/coverage/benchmark claims, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit/cc-economics flags, public docs, install docs, supported Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-CLI, M-CLI-SETUP-COMMANDS, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE, M-SKILLS-REGISTRY
 // LINKS: docs/phases/Phase-27.xml, docs/phases/Phase-88.xml
 
@@ -27,10 +27,11 @@
 // test_mcp_help_hides_unimplemented_flags — MCP CLI truth check
 // test_installer_dry_run_maps_linux_macos_artifacts — Installer dry-run mapping check
 // test_token_economy_gate_claims_are_enforced — Token economy gate check
+// test_upgrade5_surfaces_are_documented_and_gated — UPGRADE_5 capability/docs/CI gate check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.9.0 - Advanced release installer truth to v2.6.6]
+// LAST_CHANGE: [v5.10.0 - Added UPGRADE_5 integration parity checks]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -38,6 +39,8 @@ use syn::capabilities;
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
 const CARGO_TOML: &str = include_str!("../Cargo.toml");
 const CI_SCRIPT: &str = include_str!("../scripts/ci.sh");
+const MAKEFILE: &str = include_str!("../Makefile");
+const CONFIG_RS: &str = include_str!("../src/config.rs");
 const TOKEN_ECONOMY_GATE: &str = include_str!("../scripts/token_economy_gate.sh");
 const RELEASE_FRESHNESS_GUARD: &str = include_str!("../scripts/release_freshness_guard.sh");
 const RELEASE_SMOKE_SCRIPT: &str = include_str!("../scripts/release_install_smoke.sh");
@@ -53,7 +56,7 @@ const FAQ: &str = include_str!("../docs/FAQ.md");
 const WORKFLOW_DOC: &str = include_str!("../docs/WORKFLOW.md");
 const SUPPORT_DOC: &str = include_str!("../docs/SUPPORT.md");
 const INSTALL_COMMAND: &str =
-    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh | sh";
+    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh | sh";
 const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
     "syn-x86_64-unknown-linux-gnu.tar.gz",
     "syn-aarch64-unknown-linux-gnu.tar.gz",
@@ -136,7 +139,17 @@ fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
         "json" => &["--depth", "--keys-only"],
         "learn" => &["--json"],
         "session" => &["--json"],
+        "test" => &[
+            "--json",
+            "--code",
+            "--project",
+            "--scenario",
+            "--baseline",
+            "--check",
+            "--update",
+        ],
         "tools" => &["--json", "--output", "--force"],
+        "workspace" => &["--json", "--sequential", "--profile"],
         "cc-economics" => &[
             "--daily",
             "--weekly",
@@ -765,6 +778,77 @@ fn test_token_economy_gate_claims_are_enforced() {
         );
     }
 }
+
+#[test]
+// START_CONTRACT_test_upgrade5_surfaces_are_documented_and_gated
+// PURPOSE: Verify UPGRADE_5 command, telemetry, coverage, benchmark, and CI gate surfaces stay synchronized
+fn test_upgrade5_surfaces_are_documented_and_gated() {
+    let command_names: std::collections::HashSet<_> = capabilities::COMMANDS
+        .iter()
+        .map(|(name, _)| *name)
+        .collect();
+    for command in ["workspace", "tools", "hooks", "test", "config"] {
+        assert!(
+            command_names.contains(command),
+            "capability registry missing UPGRADE_5 command {command}"
+        );
+    }
+    for marker in [
+        "syn workspace init <members...>",
+        "syn workspace verify --sequential --profile strict",
+        "syn test coverage --code --json",
+        "syn tools list --json",
+        "syn hooks audit [agent] --json",
+    ] {
+        assert!(
+            COMMANDS_DOC.contains(marker),
+            "docs/COMMANDS.md must document UPGRADE_5 marker {marker}"
+        );
+    }
+    for marker in [
+        "coverage:",
+        "cargo tarpaulin",
+        "COVERAGE_THRESHOLD ?= 65",
+        "bench:",
+        "cargo bench --bench search",
+        "cargo bench --bench graph",
+        "cargo bench --bench cascade",
+    ] {
+        assert!(MAKEFILE.contains(marker), "Makefile missing {marker}");
+    }
+    for marker in [
+        "coverage:",
+        "COVERAGE_THRESHOLD: 65",
+        "cargo install cargo-tarpaulin --locked",
+        "actions/upload-artifact@v7",
+        "benchmarks:",
+        "cargo bench --bench search",
+        "cargo bench --bench graph",
+        "cargo bench --bench cascade",
+    ] {
+        assert!(CI_WORKFLOW.contains(marker), "CI workflow missing {marker}");
+    }
+    for marker in [
+        "telemetry.enabled",
+        "TelemetryConfig::default()",
+        "OTLP telemetry",
+    ] {
+        assert!(
+            CONFIG_RS.contains(marker) || FAQ.contains(marker) || QUICKSTART.contains(marker),
+            "telemetry truth marker missing: {marker}"
+        );
+    }
+    for obsolete in [
+        "Synapse has no telemetry upload path",
+        "Synapse currently has no telemetry upload path",
+    ] {
+        assert!(
+            !FAQ.contains(obsolete) && !QUICKSTART.contains(obsolete),
+            "public docs contain obsolete telemetry claim: {obsolete}"
+        );
+    }
+}
+// END_test_upgrade5_surfaces_are_documented_and_gated
 
 #[test]
 // START_CONTRACT_test_mcp_help_hides_unimplemented_flags

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <VERIFICATION id="V-M-CI-RELEASE-SMOKE" module="M-CI-RELEASE-SMOKE" priority="normal" status="active">
   <UNIT_TESTS>
-    <COMMAND>SYN_RELEASE_TAG=v2.6.6 bash scripts/release_version_guard.sh</COMMAND>
-    <COMMAND>SYN_RELEASE_TAG=v2.6.6 bash scripts/release_freshness_guard.sh</COMMAND>
+    <COMMAND>SYN_RELEASE_TAG=v2.6.7 bash scripts/release_version_guard.sh</COMMAND>
+    <COMMAND>SYN_RELEASE_TAG=v2.6.7 bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>bash scripts/rtk_release_gate.sh</COMMAND>
     <COMMAND>bash scripts/rtk_full_release_gate.sh</COMMAND>
@@ -40,5 +40,5 @@
     <ASSERTION>Full RTK release gate requires source-derived full standalone parity from a local or pinned public RTK source, missing-total 0, all-agent hook install/audit trust, streaming route previews, ecosystem route previews, measured discover/learn/session/economics analytics, clippy, verify, and full review.</ASSERTION>
     <ASSERTION>Phase-63 release gate runs after CLI dispatch cleanup and Dockerfile release-build cleanup complete.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-63</PHASE_GATE>
+  <PHASE_GATE>Phase-63,Phase-95</PHASE_GATE>
 </VERIFICATION>

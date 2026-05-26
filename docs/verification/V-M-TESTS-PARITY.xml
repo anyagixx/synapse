@@ -4,6 +4,7 @@
     <COMMAND>cargo test --test docs_parity</COMMAND>
     <COMMAND>cargo test --test docs_parity token_economy</COMMAND>
     <COMMAND>cargo test --test docs_parity test_no_ghost_commands</COMMAND>
+    <COMMAND>cargo test --test docs_parity upgrade5</COMMAND>
     <COMMAND>cargo test --test release_candidate</COMMAND>
     <COMMAND>cargo test --test support_readiness</COMMAND>
     <COMMAND>cargo test --all-targets</COMMAND>
@@ -19,6 +20,7 @@
     <ASSERTION>Docs parity tests require push CI to declare Linux/macOS public-installer fresh install evidence pinned to SYN_INSTALL_SOURCE_REF.</ASSERTION>
     <ASSERTION>Release candidate parity tests require manual dry-run workflow permissions to stay read-only, checkout the requested candidate ref, validate release tag/notes/checksums/installer mapping, require the full RTK gate in release workflows, capture fresh-install evidence, and block publishing actions before the actual release workflow runs.</ASSERTION>
     <ASSERTION>Support readiness tests require installer diagnose mode, precise OS/architecture diagnostic status, actionable unsupported-platform guidance, supported macOS Intel diagnostics, and support docs that keep Windows packaging deferred until release artifacts exist.</ASSERTION>
+    <ASSERTION>Docs parity tests require UPGRADE_5 workspace/tools/hooks/telemetry/coverage/benchmark claims to match capability registry, Makefile, config, and CI workflow truth.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-57,Phase-88</PHASE_GATE>
+  <PHASE_GATE>Phase-57,Phase-88,Phase-95</PHASE_GATE>
 </VERIFICATION>

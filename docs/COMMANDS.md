@@ -41,6 +41,18 @@ This page lists shipped CLI commands only.
 | `syn ci review` | CI-friendly review output |
 | `syn ci status` | CI-friendly status output |
 
+## UPGRADE_5 Gates
+
+| Command | Description |
+|---------|-------------|
+| `syn workspace init <members...>` | Create `Synapse.toml` for multi-project orchestration |
+| `syn workspace list` | List configured workspace members |
+| `syn workspace verify --sequential --profile strict` | Run MyGRACE verification across workspace members |
+| `syn test coverage --code --json` | Render evidence coverage plus cargo-tarpaulin module coverage |
+| `syn tools list --json` | List valid local user-defined MCP tools from `~/.synapse/tools` |
+| `syn tools validate <path>` | Validate one user tool JSON file or directory |
+| `syn tools new <name> --output <path>` | Create a starter user tool JSON definition |
+
 ## Runtime Utilities
 
 | Command | Description |
@@ -121,9 +133,6 @@ This page lists shipped CLI commands only.
 | `syn config` | Print current configuration |
 | `syn config path` | Print the config file path |
 | `syn config edit` | Open the config file in `$EDITOR` |
-| `syn tools list --json` | List valid local user-defined MCP tools from `~/.synapse/tools` |
-| `syn tools validate <path>` | Validate one user tool JSON file or directory |
-| `syn tools new <name> --output <path>` | Create a starter user tool JSON definition |
 | `syn serve` | Start the local dashboard with health, token, belief-state, MentalTest, traceability, and cascade views |
 
 ## Skills

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics adoption analytics, tracking-backed discover/learn diagnostics, hook processors and multi-agent hook install/audit targets, rewrite, filters, user-defined MCP tool management, 32-tool core MCP list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/run-control/token-economy/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics adoption analytics, tracking-backed discover/learn diagnostics, run-control, workspace orchestration, hook processors and multi-agent hook install/audit targets, rewrite, filters, user-defined MCP tool management, coverage/benchmark/telemetry release surfaces, 32-tool core MCP list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/run-control/token-economy/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml, docs/phases/Phase-54.xml, docs/phases/Phase-56.xml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.38.0 - Added user-defined MCP tools CLI capability]
+// LAST_CHANGE: [v2.39.0 - Synchronized UPGRADE_5 workspace, coverage, telemetry, and release gate capabilities]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -159,12 +159,15 @@ pub const COMMANDS: &[(&str, &str)] = &[
         "hook",
         "Process RTK-style agent hook JSON or dry-run rewrites",
     ),
+    ("agent", "Resume or inspect compact bounded-run agent context"),
+    ("run", "Run bounded autonomous workflow scenario or action queue"),
     ("proxy", "Run command through token-saving proxy"),
     ("filters", "Verify and trust token-saving proxy filters"),
     ("gain", "View token savings analytics"),
     ("compress", "Compress files for AI context"),
     ("mcp", "Start MCP server"),
     ("config", "Manage configuration"),
+    ("workspace", "Manage multi-project Synapse workspaces"),
     ("tools", "Manage local user-defined MCP tools"),
     ("graphrag", "Query the code knowledge graph"),
     (

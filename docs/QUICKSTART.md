@@ -6,7 +6,7 @@
 ## 1. Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh | sh
 syn --version
 ```
 
@@ -85,4 +85,4 @@ Every module has contracts and tests. Mistakes are caught automatically.
 If something slips through, use `grace_fix` through OpenCode or `syn skills run`.
 
 **Is my code safe?**
-Synapse runs locally and has no telemetry upload path. Your AI client may still send prompts or selected code context to whichever model provider you configure.
+Synapse runs locally and telemetry is disabled by default. Optional OTLP export is available only when built with the `telemetry` feature and explicitly enabled in config; your AI client may still send prompts or selected code context to whichever model provider you configure.

@@ -5,13 +5,13 @@ Synapse currently ships prebuilt release archives for Linux x86_64/aarch64 and m
 ## Quick Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh | sh
 ```
 
 Without sudo:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 ```
 
 The installer downloads a matching release tarball when available, verifies `SHA256SUMS`, installs `syn`, and then runs `syn --version`. If a matching archive is unavailable, it falls back to a locked Cargo install from the selected Git tag. During the short pre-tag release-candidate window, the default installer can build the repository `main` branch instead of failing on a not-yet-published tag.
@@ -21,7 +21,7 @@ The installer downloads a matching release tarball when available, verifies `SHA
 Before opening an install issue, run the installer diagnostic mode on the same machine:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh -o /tmp/synapse-install.sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh -o /tmp/synapse-install.sh
 sh /tmp/synapse-install.sh --diagnose
 ```
 
@@ -51,7 +51,7 @@ make install
 For the latest published release tag:
 
 ```bash
-cargo install --locked --git https://github.com/anyagixx/synapse --tag v2.6.6
+cargo install --locked --git https://github.com/anyagixx/synapse --tag v2.6.7
 ```
 
 The Cargo package name is `synapse-agent`, but the installed binary remains `syn`.

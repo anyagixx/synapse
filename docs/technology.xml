@@ -99,7 +99,7 @@
     </Issue>
     <Issue id="KI-003" component="ort/x86_64-apple-darwin" version="2.0.0-rc.12">
       <Description>ort does not publish a prebuilt ONNX Runtime binary for hosted x86_64-apple-darwin.</Description>
-      <Workaround>v2.6.6 uses fastembed ort-load-dynamic; optional Intel macOS embeddings require ORT_DYLIB_PATH.</Workaround>
+      <Workaround>v2.6.7 uses fastembed ort-load-dynamic; optional Intel macOS embeddings require ORT_DYLIB_PATH.</Workaround>
     </Issue>
   </KnownIssues>
   <DevOps>
