@@ -23,7 +23,7 @@
   <STEPS>
     <step-1 module="M-CONFIG" status="done">Add context_window_limit to budget config with a conservative default and config-key update support.</step-1>
     <step-2 module="M-TRACKING" status="done">Add ContextPressure and PressureLevel with low, moderate, high, and critical thresholds.</step-2>
-    <step-3 module="M-MCP-SERVER-GRACE-TOOLS" status="planned">Expose context_pressure MCP tool.</step-3>
+    <step-3 module="M-MCP-SERVER-GRACE-TOOLS" status="done">Expose context_pressure MCP tool.</step-3>
     <step-4 module="M-MCP-SERVER" status="planned">Append critical pressure metadata and agent_resume recommendation to tool responses.</step-4>
     <step-5 module="M-MCP-SERVER-TOOLS" status="planned">Force terse tools/list output when pressure is high or critical.</step-5>
     <step-6 module="M-CI" status="planned">Add an UPGRADE_4 token economy gate covering profiles, terse schemas, response trimming, cache hints, recommendations, compaction, budget, and pressure.</step-6>
@@ -37,6 +37,7 @@
     <CHECK status="planned">cargo run --quiet -- mcp stdio with tools/list profile=verification style=terse</CHECK>
     <CHECK status="passed">budget.context_window_limit defaults to 200000 and is configurable through typed config keys.</CHECK>
     <CHECK status="passed">context_pressure reports low, moderate, high, and critical thresholds correctly.</CHECK>
+    <CHECK status="passed">context_pressure MCP tool reports the configured context window limit and pressure state.</CHECK>
     <CHECK status="planned">critical context pressure includes _context_pressure recommendation.</CHECK>
     <CHECK status="planned">pressure above 90 percent includes agent_resume auto recommendation.</CHECK>
     <CHECK status="planned">syn refresh --json reports no canonical drift.</CHECK>

@@ -37,7 +37,8 @@
     <ASSERTION>MCP repair_contract defaults to dry_run and returns preview evidence without writing source content.</ASSERTION>
     <ASSERTION>MCP token_savings reports command, adapter, and recent session economics from M-TRACKING.</ASSERTION>
     <ASSERTION>MCP check_budget reports current session budget state and optional estimated-token affordability from M-TRACKING.</ASSERTION>
+    <ASSERTION>MCP context_pressure reports current session context-window pressure and recommendation from M-TRACKING.</ASSERTION>
     <ASSERTION>MCP verify_project, review_code, project_status, analyze_logs, mental_test_run, traceability_report, token_savings, and refresh_project return shared response economy metadata.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-21,Phase-70,Phase-71,Phase-84,Phase-87</PHASE_GATE>
+  <PHASE_GATE>Phase-21,Phase-70,Phase-71,Phase-84,Phase-87,Phase-88</PHASE_GATE>
 </VERIFICATION>
