@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.6.0 - Advanced public support installer URL to v2.6.5]
+// LAST_CHANGE: [v1.7.0 - Advanced public support installer URL to v2.6.6]
 // END_CHANGE_SUMMARY
 
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
@@ -163,7 +163,7 @@ fn test_support_docs_document_diagnostics() {
             "{name} must document installer diagnose mode"
         );
         assert!(
-            doc.contains("https://raw.githubusercontent.com/anyagixx/synapse/v2.6.5/install.sh"),
+            doc.contains("https://raw.githubusercontent.com/anyagixx/synapse/v2.6.6/install.sh"),
             "{name} must use the supported installer URL"
         );
     }
