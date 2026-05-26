@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER-SELF-HEAL
 // PURPOSE: Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, creates fixer handoffs, delegates safe contract repairs, and escalates when retry budget is exhausted
-// SCOPE: SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, verification execution, diagnosis capture, verifier-to-fixer handoff creation, dry-run repair action capture, and bounded escalation
+// SCOPE: SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, periodic evidence compaction, verification execution, diagnosis capture, verifier-to-fixer handoff creation, dry-run repair action capture, and bounded escalation
 // DEPENDS: M-RUNNER, M-RUNNER-HANDOFF, M-GRACE, M-GRACE-CONTRACT-GENERATOR, M-GRACE-FIX, M-GRACE-VERIFY-TYPES
 // LINKS:
 //   -> M-RUNNER (depends) - persists self-heal state inside durable run records
@@ -19,11 +19,12 @@
 // RunManager::load_self_heal_plan - Reads self-heal metadata from a run record
 // RunManager::save_self_heal_plan - Persists self-heal metadata to a run record
 // RunManager::execute_self_heal - Runs one bounded verify/diagnose/escalate iteration
+// should_compact_self_heal_evidence - Detects periodic evidence compaction checkpoints
 // self-heal handoff - Creates verifier-to-fixer handoff when diagnoses remain unresolved
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.2.0 - Added verifier-to-fixer handoff creation]
+// LAST_CHANGE: [v1.3.0 - Added periodic self-heal evidence compaction]
 // END_CHANGE_SUMMARY
 
 use super::handoff::HandoffRole;
@@ -38,6 +39,7 @@ const SELF_HEAL_PLAN_KEY: &str = "self_heal_plan";
 const SELF_HEAL_REQUESTED_KEY: &str = "self_heal_requested";
 const SELF_HEAL_DIAGNOSIS_READY_KEY: &str = "self_heal_diagnosis_ready";
 const SELF_HEAL_SUGGESTED_ACTION_KEY: &str = "suggested_action";
+const SELF_HEAL_EVIDENCE_COMPACTION_INTERVAL: u32 = 5;
 
 // START_public_api
 
@@ -154,7 +156,11 @@ impl RunManager {
             .metadata
             .insert("self_heal_profile".into(), plan.profile.clone());
         record.touch();
-        self.save(record)
+        if should_compact_self_heal_evidence(plan) {
+            self.save_with_compaction(record).map(|_| ())
+        } else {
+            self.save(record)
+        }
     }
     // END_run_manager_save_self_heal_plan
 
@@ -340,6 +346,16 @@ fn self_heal_budget(record: &RunRecord) -> u32 {
         .unwrap_or(3)
 }
 // END_self_heal_budget
+
+// START_CONTRACT_should_compact_self_heal_evidence
+// PURPOSE: Return true at periodic self-heal checkpoints where evidence refs should be compacted.
+// INPUTS: { plan: &SelfHealPlan }
+// OUTPUTS: { bool }
+// START_should_compact_self_heal_evidence
+fn should_compact_self_heal_evidence(plan: &SelfHealPlan) -> bool {
+    plan.iteration > 0 && plan.iteration % SELF_HEAL_EVIDENCE_COMPACTION_INTERVAL == 0
+}
+// END_should_compact_self_heal_evidence
 
 // START_CONTRACT_handoff_next_actions
 // PURPOSE: Build compact fixer next actions from the latest unresolved self-heal diagnoses.
@@ -529,6 +545,51 @@ mod tests {
         assert_eq!(record.metadata["self_heal_remaining_budget"], "2");
     }
     // END_self_heal_plan_round_trips_in_run_metadata
+
+    #[test]
+    // START_CONTRACT_save_self_heal_plan_compacts_evidence_on_interval
+    // PURPOSE: Verify self-heal plan saves compact evidence refs at periodic iteration checkpoints.
+    // START_save_self_heal_plan_compacts_evidence_on_interval
+    fn save_self_heal_plan_compacts_evidence_on_interval() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = RunManager::new(root.path());
+        let mut record = blocked_record(5);
+        record.evidence_refs = vec![
+            "action://verify".into(),
+            "action://verify".into(),
+            "docs/runs/run-1/evidence.log".into(),
+        ];
+        let mut plan = SelfHealPlan::new(&record, GraceProfile::Lite, 5);
+        plan.iteration = 5;
+
+        manager.save_self_heal_plan(&mut record, &plan).unwrap();
+        let restored = manager.load(&record.run_id).unwrap();
+
+        assert_eq!(
+            restored.evidence_refs,
+            vec!["▶verify".to_string(), "📁run-1/evidence.log".to_string()]
+        );
+    }
+    // END_save_self_heal_plan_compacts_evidence_on_interval
+
+    #[test]
+    // START_CONTRACT_save_self_heal_plan_preserves_evidence_before_interval
+    // PURPOSE: Verify self-heal plan saves do not compact evidence before periodic checkpoints.
+    // START_save_self_heal_plan_preserves_evidence_before_interval
+    fn save_self_heal_plan_preserves_evidence_before_interval() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = RunManager::new(root.path());
+        let mut record = blocked_record(5);
+        record.evidence_refs = vec!["action://verify".into(), "action://verify".into()];
+        let mut plan = SelfHealPlan::new(&record, GraceProfile::Lite, 5);
+        plan.iteration = 4;
+
+        manager.save_self_heal_plan(&mut record, &plan).unwrap();
+        let restored = manager.load(&record.run_id).unwrap();
+
+        assert_eq!(restored.evidence_refs, record.evidence_refs);
+    }
+    // END_save_self_heal_plan_preserves_evidence_before_interval
 
     #[test]
     // START_CONTRACT_execute_self_heal_exhausts_retry_budget

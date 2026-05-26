@@ -14,7 +14,8 @@
     <ASSERTION>Failing verification groups produce SelfHealDiagnosis entries without losing failed check details.</ASSERTION>
     <ASSERTION>Unresolved self-heal diagnoses create structured verifier-to-fixer handoffs with next actions.</ASSERTION>
     <ASSERTION>Missing-contract failures attach dry-run ContractRepairResult actions to SelfHealDiagnosis.</ASSERTION>
+    <ASSERTION>Self-heal plan saves compact evidence refs at periodic checkpoints and preserve refs before the checkpoint.</ASSERTION>
     <ASSERTION>Self-heal stops and escalates when retry budget is exhausted.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-70,Phase-71,Phase-74</PHASE_GATE>
+  <PHASE_GATE>Phase-70,Phase-71,Phase-74,Phase-87</PHASE_GATE>
 </VERIFICATION>
