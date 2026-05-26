@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-MCP-PROTOCOL
 // PURPOSE: MCP protocol tests — verify initialize, tools/list shape, tools/recommend preselection, compact_evidence, check_budget, and context_pressure tool calls, response economy/cache schemas, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
-// SCOPE: Direct handler tests, tools/recommend context/run_id/custom terse profile behavior, compact_evidence persisted-run behavior, check_budget unlimited behavior, context_pressure default limit behavior, response economy/cache schema assertions, cache metadata behavior, and binary stdio protocol behavior
+// SCOPE: Direct handler tests with isolated token-economy session identity, tools/recommend context/run_id/custom terse profile behavior, compact_evidence persisted-run behavior, check_budget unlimited behavior, context_pressure default limit behavior, response economy/cache schema assertions, cache metadata behavior, and binary stdio protocol behavior
 // DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-RUNNER, M-RUNNER-AGENT-CONTEXT, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
@@ -38,14 +38,27 @@
 use serde_json::Value;
 use std::io::Write;
 use std::process::{Command, Stdio};
+use std::sync::Once;
 use syn::mcp::server::SynapseHandler;
 use syn::run::{RunGate, RunGateStatus, RunManager, RunRecord, RunStatus};
+
+static MCP_PROTOCOL_SESSION: Once = Once::new();
+
+// START_CONTRACT_ensure_protocol_test_session
+// PURPOSE: Isolate protocol tests from the developer's live token-economy session.
+// SIDE_EFFECTS: sets SYNAPSE_SESSION_ID once for this test process
+fn ensure_protocol_test_session() {
+    MCP_PROTOCOL_SESSION.call_once(|| {
+        std::env::set_var("SYNAPSE_SESSION_ID", "mcp-protocol-test");
+    });
+}
 
 // START_CONTRACT_initialized_handler
 // PURPOSE: Create an initialized in-process MCP handler for protocol tests
 // OUTPUTS: { SynapseHandler }
 // SIDE_EFFECTS: creates in-process MCP handler
 async fn initialized_handler() -> SynapseHandler {
+    ensure_protocol_test_session();
     let handler = SynapseHandler::new();
     handler
         .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#)

@@ -30,6 +30,7 @@ mod server_pressure;
 mod server_response;
 mod server_run_tools;
 mod server_tools;
+mod server_tools_pressure;
 mod tool_recommend;
 
 pub mod lsp;

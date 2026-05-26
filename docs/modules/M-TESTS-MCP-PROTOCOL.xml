@@ -2,7 +2,7 @@
 <MODULE id="M-TESTS-MCP-PROTOCOL" type="INTEGRATION" status="active">
   <NAME>M-TESTS-MCP-PROTOCOL</NAME>
   <PURPOSE>MCP protocol tests — verify initialize, tools/list shape, tools/recommend preselection, compact_evidence, check_budget, and context_pressure tool calls, response economy/cache schemas, stdio cleanliness, notification silence, profile/terse schema economy, and representative grace tool exposure</PURPOSE>
-  <SCOPE>Direct handler tests, 48-tool registry shape including tools/recommend, compact_evidence, check_budget, and context_pressure, tools/list all/verification/minimal/custom/full/terse/profile+terse behavior, tools/recommend context/run_id/custom terse profile behavior, compact_evidence persisted-run behavior, check_budget unlimited behavior, context_pressure default-limit behavior, max_tokens/style schema coverage for 10+ high-output tools, _if_none_match cache hint schemas, _meta.cache/_not_modified tool-call behavior, and binary stdio protocol behavior</SCOPE>
+  <SCOPE>Direct handler tests with isolated token-economy session identity, 48-tool registry shape including tools/recommend, compact_evidence, check_budget, and context_pressure, tools/list all/verification/minimal/custom/full/terse/profile+terse behavior, tools/recommend context/run_id/custom terse profile behavior, compact_evidence persisted-run behavior, check_budget unlimited behavior, context_pressure default-limit behavior, max_tokens/style schema coverage for 10+ high-output tools, _if_none_match cache hint schemas, _meta.cache/_not_modified tool-call behavior, and binary stdio protocol behavior</SCOPE>
   <FILES>
     <FILE>tests/mcp_protocol.rs</FILE>
   </FILES>

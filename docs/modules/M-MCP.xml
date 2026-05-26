@@ -2,7 +2,7 @@
 <MODULE id="M-MCP" type="INTEGRATION" status="active">
   <NAME>M-MCP</NAME>
   <PURPOSE>MCP module declaration — exports lsp, persistent LSP manager, stdio pipeline, and server sub-modules</PURPOSE>
-  <SCOPE>Module declarations for MCP server facade, MCP stdio pipeline, LSP manager, and private server helper modules including budget, pressure, and tool recommendation</SCOPE>
+  <SCOPE>Module declarations for MCP server facade, MCP stdio pipeline, LSP manager, and private server helper modules including budget, pressure, pressure-aware tool schemas, and tool recommendation</SCOPE>
   <FILES>
     <FILE>src/mcp/mod.rs</FILE>
   </FILES>
