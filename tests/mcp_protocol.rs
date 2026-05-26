@@ -32,7 +32,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.36.0 - Isolated pressure-aware tools/list tests by process session]
+// LAST_CHANGE: [v2.36.1 - Kept protocol budget estimate clippy-clean]
 // END_CHANGE_SUMMARY
 
 use serde_json::Value;
@@ -388,7 +388,7 @@ async fn test_tools_recommend_run_id_and_suggested_terse_profile_budget() {
     let visible_bytes = terse["result"]["schema_economy"]["visible_bytes"]
         .as_u64()
         .expect("visible bytes");
-    let estimated_schema_tokens = (visible_bytes + 3) / 4;
+    let estimated_schema_tokens = visible_bytes.div_ceil(4);
 
     assert_eq!(terse["result"]["profile"], "custom");
     assert_eq!(terse["result"]["style"], "terse");

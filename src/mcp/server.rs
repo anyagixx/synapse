@@ -25,7 +25,7 @@
 // classify_mcp_response — Converts JSON-RPC tool responses into tracking status metadata
 // END_MODULE_MAP
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.31.0 - Applied pressure-aware tools/list style]
+// LAST_CHANGE: [v3.31.1 - Isolated tools/list metadata test session]
 // END_CHANGE_SUMMARY
 use super::server_budget_tools::handle_check_budget as budget;
 use super::server_budget_tools::handle_context_pressure as pressure;
@@ -1012,12 +1012,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_tools_list_profile_metadata_filters_tools() {
+        std::env::set_var("SYNAPSE_SESSION_ID", std::process::id().to_string());
         let handler = SynapseHandler::new();
         handler
             .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
             .await
             .expect("initialize response");
-
         let response = handler
             .handle_message(
                 r#"{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{"profile":"minimal"}}"#,

@@ -26,7 +26,7 @@
 // add_cache_hint_schema — Adds one optional cache validator field to one tool definition
 // END_MODULE_MAP
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.12.0 - Added context_pressure schema]
+// LAST_CHANGE: [v4.12.1 - Kept response economy registry helper clippy-clean]
 // END_CHANGE_SUMMARY
 use crate::skills::registry::SKILL_DEFS;
 const RESPONSE_ECONOMY_TOOL_NAMES: &[&str] = &[
@@ -313,6 +313,7 @@ pub(crate) fn tool_definitions_json_bytes(tools: &[serde_json::Value]) -> usize 
 // PURPOSE: Return built-in tools that expose max_tokens and style response economy params
 // OUTPUTS: { &'static [&'static str] }
 // START_response_economy_tool_names
+#[allow(dead_code)]
 pub(crate) fn response_economy_tool_names() -> &'static [&'static str] {
     RESPONSE_ECONOMY_TOOL_NAMES
 }

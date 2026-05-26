@@ -24,7 +24,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.3.0 - Added periodic self-heal evidence compaction]
+// LAST_CHANGE: [v1.3.1 - Replaced manual modulo check for release clippy gate]
 // END_CHANGE_SUMMARY
 
 use super::handoff::HandoffRole;
@@ -353,7 +353,10 @@ fn self_heal_budget(record: &RunRecord) -> u32 {
 // OUTPUTS: { bool }
 // START_should_compact_self_heal_evidence
 fn should_compact_self_heal_evidence(plan: &SelfHealPlan) -> bool {
-    plan.iteration > 0 && plan.iteration % SELF_HEAL_EVIDENCE_COMPACTION_INTERVAL == 0
+    plan.iteration > 0
+        && plan
+            .iteration
+            .is_multiple_of(SELF_HEAL_EVIDENCE_COMPACTION_INTERVAL)
 }
 // END_should_compact_self_heal_evidence
 

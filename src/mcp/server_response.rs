@@ -34,7 +34,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.6.0 - Added MCP cache metadata and stable ETag helpers]
+// LAST_CHANGE: [v2.6.1 - Kept cache result helper clippy-clean for release gate]
 // END_CHANGE_SUMMARY
 
 use crate::utils::{estimate_tokens, truncate_chars};
@@ -215,6 +215,7 @@ pub(crate) fn compute_etag(tool_name: &str, args: &Value, result_payload: &Value
 // INPUTS: { id: Option<serde_json::Value> }, { result_payload: serde_json::Value }, { tool_name: &str }, { args: &serde_json::Value }
 // OUTPUTS: { serde_json::Value }
 // START_result_with_cache
+#[allow(dead_code)]
 pub(crate) fn result_with_cache(
     id: Option<Value>,
     result_payload: Value,
