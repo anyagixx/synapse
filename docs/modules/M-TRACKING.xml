@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-TRACKING" type="DATA_LAYER" status="active">
   <NAME>M-TRACKING</NAME>
-  <PURPOSE>SQLite token tracker — records route-aware command token usage by canonical project identity and provides stats and session budget status</PURPOSE>
-  <SCOPE>Tracker struct, canonical project identity, explicit test state overrides, cached SQLite connection with WAL and busy timeout, migration-safe SQLite schema, token recording with adapter/route/session metadata for proxy and local adapters, per-session budget status/can-afford queries, MCP metrics module boundary, RTK adapter/session coverage counts, route adoption counts, missed-route candidate querying, stats querying, TrackingStats model</SCOPE>
+  <PURPOSE>SQLite token tracker — records route-aware command token usage by canonical project identity and provides stats, session budget status, and context pressure estimates</PURPOSE>
+  <SCOPE>Tracker struct, canonical project identity, explicit test state overrides, cached SQLite connection with WAL and busy timeout, migration-safe SQLite schema, token recording with adapter/route/session metadata for proxy and local adapters, per-session budget status/can-afford queries, context pressure estimates, MCP metrics module boundary, RTK adapter/session coverage counts, route adoption counts, missed-route candidate querying, stats querying, TrackingStats model</SCOPE>
   <FILES>
     <FILE>src/tracking/mod.rs</FILE>
     <FILE>src/tracking/session_budget.rs</FILE>
+    <FILE>src/tracking/context_pressure.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-TRACKING-MCP-METRICS</DEPENDS>
-  <LINKS>tracking.db,docs/phases/Phase-21.xml,docs/phases/Phase-46.xml,docs/phases/Phase-50.xml,docs/phases/Phase-56.xml,docs/phases/Phase-58.xml,docs/phases/Phase-61.xml,docs/phases/Phase-67.xml,docs/phases/Phase-87.xml</LINKS>
+  <LINKS>tracking.db,docs/phases/Phase-21.xml,docs/phases/Phase-46.xml,docs/phases/Phase-50.xml,docs/phases/Phase-56.xml,docs/phases/Phase-58.xml,docs/phases/Phase-61.xml,docs/phases/Phase-67.xml,docs/phases/Phase-87.xml,docs/phases/Phase-88.xml</LINKS>
   <VERIFICATION_REF>V-M-TRACKING</VERIFICATION_REF>
 </MODULE>
