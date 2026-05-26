@@ -46,6 +46,7 @@
     <ASSERTION>The in-memory ETag cache clears all entries when the next insert would exceed 100 validators.</ASSERTION>
     <ASSERTION>tools/call routes tools/recommend and returns bounded run-state-aware recommendations.</ASSERTION>
     <ASSERTION>tools/call routes compact_evidence through run tools and returns persisted evidence compaction reports.</ASSERTION>
+    <ASSERTION>Session budget gates block expensive tools with budget_exhausted=true, attach warning metadata near the limit, and allow light tools such as project_status and verify_project.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-59,Phase-62,Phase-67,Phase-73,Phase-85,Phase-86</PHASE_GATE>
 </VERIFICATION>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 
@@ -16,6 +16,8 @@
 // cache_validator — Extracts _if_none_match from tool arguments
 // maybe_not_modified_response — Returns compact cached-validator response before expensive handlers
 // record_cache_metadata — Adds _meta.cache to tool results and records cacheable ETags
+// budget_status_for_tool — Checks session budget for expensive tools
+// budget_blocked_response / attach_budget_warning_metadata — Render budget gate results
 // tool_recommend — Delegates tools/recommend to the run-state-aware recommendation engine
 // tools_list_profile — Parses tools/list profile params
 // tools_list_profile_label — Returns stable tools/list profile metadata
@@ -25,7 +27,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.26.0 - Routed compact_evidence run tool]
+// LAST_CHANGE: [v3.27.0 - Added MCP session budget gates]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -38,7 +40,7 @@ use crate::graphrag::GraphRag;
 use crate::indexer::storage::Storage;
 use crate::indexer::Indexer;
 use crate::skills::{SkillEngine, SkillRequest};
-use crate::tracking::{mcp_metrics::McpCallStatus, Tracker};
+use crate::tracking::{mcp_metrics::McpCallStatus, BudgetLevel, BudgetStatus, Tracker};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{
@@ -232,6 +234,28 @@ impl SynapseHandler {
     }
     // END_sh_new
 
+    // START_CONTRACT_SynapseHandler::new_for_test
+    // PURPOSE: Create a handler with explicit config and tracker for scoped protocol tests.
+    // INPUTS: { config: Config }, { tracker: Tracker }
+    // OUTPUTS: { Self }
+    // START_sh_new_for_test
+    #[cfg(test)]
+    fn new_for_test(config: Config, tracker: Tracker) -> Self {
+        let indexer = Indexer::new(&config);
+        let skill_engine = SkillEngine::new(&config);
+        Self {
+            config,
+            indexer,
+            graphrag: RwLock::new(None),
+            graph_cache_key: RwLock::new(None),
+            etag_cache: RwLock::new(McpEtagCache::default()),
+            skill_engine,
+            tracker,
+            initialized: AtomicBool::new(false),
+        }
+    }
+    // END_sh_new_for_test
+
     // START_CONTRACT_SynapseHandler::handle_message
     // PURPOSE: Route one JSON-RPC message to MCP initialization, tool listing, or tool execution
     // INPUTS: { line: &str — JSON-RPC request line }
@@ -318,8 +342,23 @@ impl SynapseHandler {
                         None
                     }
                 };
+                let budget_status = match self.budget_status_for_tool(name).await {
+                    Ok(status) => status,
+                    Err(error) => {
+                        tracing::warn!(
+                            "[SynapseHandler][handle_message][MCP_BUDGET_CHECK] {}",
+                            error
+                        );
+                        None
+                    }
+                };
 
-                let response = if let Some(response) =
+                let response = if let Some(status) = budget_status
+                    .as_ref()
+                    .filter(|status| status.status == BudgetLevel::Blocked)
+                {
+                    budget_blocked_response(id.clone(), status)
+                } else if let Some(response) =
                     self.maybe_not_modified_response(id.clone(), name, args)
                 {
                     response
@@ -411,6 +450,12 @@ impl SynapseHandler {
                         }
                         _ => server_response::error(id, -32601, format!("Unknown tool: {}", name)),
                     };
+                    if let Some(status) = budget_status
+                        .as_ref()
+                        .filter(|status| status.status == BudgetLevel::Warning)
+                    {
+                        attach_budget_warning_metadata(&mut response, status);
+                    }
                     self.record_cache_metadata(name, args, &mut response);
                     response
                 };
@@ -500,6 +545,32 @@ impl SynapseHandler {
         }
     }
     // END_sh_record_cache_metadata
+
+    // START_CONTRACT_SynapseHandler::budget_status_for_tool
+    // PURPOSE: Check configured session budget for expensive MCP tools.
+    // INPUTS: { tool_name: &str }
+    // OUTPUTS: { anyhow::Result<Option<BudgetStatus>> }
+    // LINKS:
+    //   -> M-TRACKING (depends) - reads current session budget state
+    // START_sh_budget_status_for_tool
+    async fn budget_status_for_tool(
+        &self,
+        tool_name: &str,
+    ) -> anyhow::Result<Option<BudgetStatus>> {
+        let budget = &self.config.budget;
+        if budget.session_token_limit == 0 || !is_budget_gated_tool(tool_name) {
+            return Ok(None);
+        }
+        self.tracker
+            .check_budget(
+                budget.session_token_limit,
+                budget.warn_at_pct,
+                budget.block_at_pct,
+            )
+            .await
+            .map(Some)
+    }
+    // END_sh_budget_status_for_tool
 
     // START_CONTRACT_SynapseHandler::invalidate_graph_cache
     // PURPOSE: Clear cached GraphRAG state so the next graph query rebuilds it
@@ -683,6 +754,78 @@ fn tools_list_style(params: &serde_json::Value) -> server_tools::ToolSchemaStyle
     server_tools::ToolSchemaStyle::parse(value)
 }
 // END_tools_list_style
+
+// START_CONTRACT_is_budget_gated_tool
+// PURPOSE: Return true for expensive tools that should be blocked when the session budget is exhausted.
+// INPUTS: { tool_name: &str }
+// OUTPUTS: { bool }
+// START_is_budget_gated_tool
+fn is_budget_gated_tool(tool_name: &str) -> bool {
+    matches!(
+        tool_name,
+        "semantic_search"
+            | "graphrag_query"
+            | "analyze_logs"
+            | "extract_belief_state"
+            | "generate_requirements"
+            | "generate_technology"
+            | "generate_development_plan"
+            | "mental_test_run"
+            | "traceability_report"
+            | "cascade_impact"
+            | "cascade_execute"
+            | "run_test_guide"
+            | "submit_test_report"
+            | "self_heal"
+            | "diagnose_failure"
+            | "repair_contract"
+            | "suggest_contract"
+            | "lsp_hover"
+            | "lsp_references"
+    )
+}
+// END_is_budget_gated_tool
+
+// START_CONTRACT_budget_blocked_response
+// PURPOSE: Build a compact MCP result for an expensive tool blocked by session budget.
+// INPUTS: { id: Option<serde_json::Value> }, { status: &BudgetStatus }
+// OUTPUTS: { serde_json::Value }
+// START_budget_blocked_response
+fn budget_blocked_response(
+    id: Option<serde_json::Value>,
+    status: &BudgetStatus,
+) -> serde_json::Value {
+    server_response::result(
+        id,
+        serde_json::json!({
+            "content": [{"type": "text", "text": status.message}],
+            "budget_exhausted": true,
+            "isError": true,
+            "_meta": {"budget": status}
+        }),
+    )
+}
+// END_budget_blocked_response
+
+// START_CONTRACT_attach_budget_warning_metadata
+// PURPOSE: Attach budget warning metadata to a successful tool result.
+// INPUTS: { response: &mut serde_json::Value }, { status: &BudgetStatus }
+// OUTPUTS: { () }
+// START_attach_budget_warning_metadata
+fn attach_budget_warning_metadata(response: &mut serde_json::Value, status: &BudgetStatus) {
+    if let Some(result) = response
+        .get_mut("result")
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        let meta = result
+            .entry("_meta")
+            .or_insert_with(|| serde_json::json!({}));
+        if let Some(meta) = meta.as_object_mut() {
+            meta.insert("budget".into(), serde_json::json!(status));
+        }
+    }
+}
+// END_attach_budget_warning_metadata
 
 // START_CONTRACT_schema_savings_pct
 // PURPOSE: Compute one-decimal percentage savings for tools/list schema economy metadata
@@ -974,6 +1117,92 @@ mod tests {
             .is_some_and(|profile| profile.starts_with("custom:semantic_search")));
     }
     // END_test_tools_recommend_routes_through_tools_call
+
+    // START_CONTRACT_test_budget_gate_blocks_expensive_tools_and_allows_light_tools
+    // PURPOSE: Verify exhausted budgets block expensive tools while light status tools remain available.
+    // START_test_budget_gate_blocks_expensive_tools_and_allows_light_tools
+    #[tokio::test]
+    async fn test_budget_gate_blocks_expensive_tools_and_allows_light_tools() {
+        let data_home = tempfile::tempdir().expect("data home");
+        let project_root = tempfile::tempdir().expect("project root");
+        let mut config = Config::default();
+        config.budget.session_token_limit = 100;
+        config.budget.warn_at_pct = 80;
+        config.budget.block_at_pct = 100;
+        let tracker = Tracker::new_for_test(
+            &config,
+            data_home.path(),
+            project_root.path(),
+            Some("budget-blocked"),
+        );
+        tracker.record("spent", 100, 20).await.expect("seed spend");
+        let handler = SynapseHandler::new_for_test(config, tracker);
+        handler
+            .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
+            .await
+            .expect("initialize response");
+
+        let blocked = handler
+            .handle_message(
+                r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"semantic_search","arguments":{"query":"Phase-87","max_results":1}}}"#,
+            )
+            .await
+            .expect("blocked response");
+        let light = handler
+            .handle_message(
+                r#"{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"project_status","arguments":{}}}"#,
+            )
+            .await
+            .expect("light response");
+
+        assert_eq!(blocked["result"]["budget_exhausted"], true);
+        assert_eq!(blocked["result"]["_meta"]["budget"]["status"], "blocked");
+        assert_ne!(light["result"]["budget_exhausted"], true);
+        assert!(is_budget_gated_tool("semantic_search"));
+        assert!(!is_budget_gated_tool("project_status"));
+        assert!(!is_budget_gated_tool("verify_project"));
+    }
+    // END_test_budget_gate_blocks_expensive_tools_and_allows_light_tools
+
+    // START_CONTRACT_test_budget_gate_appends_warning_metadata
+    // PURPOSE: Verify warning-level budgets append budget metadata without blocking the expensive tool.
+    // START_test_budget_gate_appends_warning_metadata
+    #[tokio::test]
+    async fn test_budget_gate_appends_warning_metadata() {
+        let data_home = tempfile::tempdir().expect("data home");
+        let project_root = tempfile::tempdir().expect("project root");
+        let mut config = Config::default();
+        config.budget.session_token_limit = 100;
+        config.budget.warn_at_pct = 80;
+        config.budget.block_at_pct = 100;
+        let tracker = Tracker::new_for_test(
+            &config,
+            data_home.path(),
+            project_root.path(),
+            Some("budget-warning"),
+        );
+        tracker.record("spent", 85, 20).await.expect("seed spend");
+        let handler = SynapseHandler::new_for_test(config, tracker);
+        handler
+            .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
+            .await
+            .expect("initialize response");
+
+        let response = handler
+            .handle_message(
+                r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"semantic_search","arguments":{"query":"Phase-87","max_results":1}}}"#,
+            )
+            .await
+            .expect("warning response");
+
+        assert_ne!(response["result"]["budget_exhausted"], true);
+        assert_eq!(response["result"]["_meta"]["budget"]["status"], "warning");
+        assert_eq!(
+            response["result"]["_meta"]["budget"]["used_input_tokens"],
+            85
+        );
+    }
+    // END_test_budget_gate_appends_warning_metadata
 
     // START_CONTRACT_test_cache_not_modified_response_for_project_status
     // PURPOSE: Verify project_status emits cache metadata and a matching _if_none_match returns _not_modified
