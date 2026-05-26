@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-TESTS-MCP-PROTOCOL" type="INTEGRATION" status="active">
   <NAME>M-TESTS-MCP-PROTOCOL</NAME>
-  <PURPOSE>MCP protocol tests — verify initialize, tools/list shape, response economy/cache schemas, stdio cleanliness, notification silence, profile/terse schema economy, and representative grace tool exposure</PURPOSE>
-  <SCOPE>Direct handler tests, 44-tool registry shape, tools/list all/verification/minimal/custom/full/terse/profile+terse behavior, max_tokens/style schema coverage for 10+ high-output tools, _if_none_match cache hint schemas, _meta.cache/_not_modified tool-call behavior, and binary stdio protocol behavior</SCOPE>
+  <PURPOSE>MCP protocol tests — verify initialize, tools/list shape, tools/recommend preselection, response economy/cache schemas, stdio cleanliness, notification silence, profile/terse schema economy, and representative grace tool exposure</PURPOSE>
+  <SCOPE>Direct handler tests, 45-tool registry shape including tools/recommend, tools/list all/verification/minimal/custom/full/terse/profile+terse behavior, tools/recommend context/run_id/custom terse profile behavior, max_tokens/style schema coverage for 10+ high-output tools, _if_none_match cache hint schemas, _meta.cache/_not_modified tool-call behavior, and binary stdio protocol behavior</SCOPE>
   <FILES>
     <FILE>tests/mcp_protocol.rs</FILE>
   </FILES>
-  <DEPENDS>M-MCP-SERVER,M-MCP-SERVER-TOOLS,M-SKILLS,M-CAPABILITIES</DEPENDS>
-  <LINKS>docs/phases/Phase-70.xml,docs/phases/Phase-71.xml,docs/phases/Phase-73.xml,docs/phases/Phase-83.xml,docs/phases/Phase-84.xml,docs/phases/Phase-85.xml</LINKS>
+  <DEPENDS>M-MCP-SERVER,M-MCP-SERVER-TOOLS,M-RUNNER,M-RUNNER-AGENT-CONTEXT,M-SKILLS,M-CAPABILITIES</DEPENDS>
+  <LINKS>docs/phases/Phase-70.xml,docs/phases/Phase-71.xml,docs/phases/Phase-73.xml,docs/phases/Phase-83.xml,docs/phases/Phase-84.xml,docs/phases/Phase-85.xml,docs/phases/Phase-86.xml</LINKS>
   <VERIFICATION_REF>V-M-TESTS-MCP-PROTOCOL</VERIFICATION_REF>
 </MODULE>

@@ -533,6 +533,8 @@
     <REL source="M-TESTS-MCP" target="M-CAPABILITIES" type="DEPENDS" />
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-MCP-SERVER" type="DEPENDS" />
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
+    <REL source="M-TESTS-MCP-PROTOCOL" target="M-RUNNER" type="DEPENDS" />
+    <REL source="M-TESTS-MCP-PROTOCOL" target="M-RUNNER-AGENT-CONTEXT" type="DEPENDS" />
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-SKILLS" type="DEPENDS" />
     <REL source="M-TESTS-MCP-PROTOCOL" target="M-CAPABILITIES" type="DEPENDS" />
     <REL source="M-TESTS-PARITY" target="M-CAPABILITIES" type="DEPENDS" />

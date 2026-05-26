@@ -15,10 +15,11 @@
 // phase_from_run_state - Detect work phase from persisted run signals
 // phase_from_context - Detect work phase from task context text
 // recommendations_for_phase - Return bounded recommendation candidates
+// suggested_profile_names - Build a token-budgeted custom tools/list profile subset
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added predictive MCP tool recommendation engine]
+// LAST_CHANGE: [v1.1.0 - Added token-budgeted suggested custom profiles]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result};
@@ -105,13 +106,16 @@ fn recommend_tools(args: &serde_json::Value) -> Result<serde_json::Value, String
         .iter()
         .filter_map(|tool| tool["name"].as_str())
         .collect::<Vec<_>>();
+    let profile_names = suggested_profile_names(&names);
 
     Ok(serde_json::json!({
         "phase": phase.label(),
         "source": source,
         "run_state": run_state,
         "recommended_tools": recommended_tools,
-        "suggested_profile": format!("custom:{}", names.join(",")),
+        "suggested_profile": format!("custom:{}", profile_names.join(",")),
+        "suggested_profile_tools": profile_names,
+        "schema_token_budget": 300,
         "max_tools": max_tools
     }))
 }
@@ -267,6 +271,16 @@ fn recommendations_for_phase(phase: WorkPhase, max_tools: usize) -> Vec<serde_js
         .collect()
 }
 // END_recommendations_for_phase
+
+// START_CONTRACT_suggested_profile_names
+// PURPOSE: Return the highest-relevance subset for a terse custom tools/list profile under the schema token budget.
+// INPUTS: { names: &[&str] }
+// OUTPUTS: { Vec<&str> }
+// START_suggested_profile_names
+fn suggested_profile_names<'a>(names: &[&'a str]) -> Vec<&'a str> {
+    names.iter().copied().take(3).collect()
+}
+// END_suggested_profile_names
 
 // START_CONTRACT_candidates_for_phase
 // PURPOSE: Return ordered recommendation candidates for each work phase.

@@ -1,20 +1,24 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-MCP-PROTOCOL
-// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, response economy/cache schemas, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
-// SCOPE: Direct handler tests, response economy/cache schema assertions, cache metadata behavior, and binary stdio protocol behavior
-// DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-SKILLS, M-CAPABILITIES
+// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, tools/recommend preselection, response economy/cache schemas, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
+// SCOPE: Direct handler tests, tools/recommend context/run_id/custom terse profile behavior, response economy/cache schema assertions, cache metadata behavior, and binary stdio protocol behavior
+// DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-RUNNER, M-RUNNER-AGENT-CONTEXT, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
-// test_initialize_then_list_tools — MCP handler lists all 44 tools after initialize
+// test_initialize_then_list_tools — MCP handler lists all 45 tools after initialize
 // initialized_handler — Creates an initialized in-process MCP handler
 // initialized_tools_list — Creates a handler, initializes MCP, and returns tools/list
 // tools_call — Executes one initialized tools/call request against a handler
+// tools_list — Executes one tools/list request against a handler
 // tool_names — Extracts tool names from a tools/list response
+// recommended_tool_names — Extracts tool names from a tools/recommend response
 // contains_schema_description_key — Detects schema description metadata in tools/list payloads
 // test_tools_list_contains_grace_and_core_tools — Tool list contains representative core and grace tools
 // test_tools_list_profiles_return_expected_counts — tools/list profiles expose bounded tool sets
 // test_tools_list_full_and_terse_styles — tools/list style controls schema verbosity and economy metadata
 // test_tools_list_profile_and_terse_style_compose — tools/list profile and terse style combine
+// test_tools_recommend_contexts_and_general_output — tools/recommend maps context and fallback scenarios
+// test_tools_recommend_run_id_and_suggested_terse_profile_budget — run_id-aware recommendation yields a token-budgeted custom profile
 // test_tools_list_response_economy_schema_covers_core_tools — tools/list exposes max_tokens/style on 10+ tools
 // test_tools_list_cache_hint_schema_covers_cacheable_tools — tools/list exposes optional cache validators
 // test_tools_call_cache_metadata_and_not_modified — project_status emits _meta.cache and honors _if_none_match
@@ -25,13 +29,14 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.31.0 - Added MCP cache hint protocol coverage]
+// LAST_CHANGE: [v2.32.0 - Added tools/recommend protocol coverage]
 // END_CHANGE_SUMMARY
 
 use serde_json::Value;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use syn::mcp::server::SynapseHandler;
+use syn::run::{RunGate, RunGateStatus, RunManager, RunRecord, RunStatus};
 
 // START_CONTRACT_initialized_handler
 // PURPOSE: Create an initialized in-process MCP handler for protocol tests
@@ -82,6 +87,25 @@ async fn tools_call(handler: &SynapseHandler, id: u64, name: &str, arguments: Va
         .expect("tools/call request should produce a response")
 }
 
+// START_CONTRACT_tools_list
+// PURPOSE: Execute one tools/list request against an initialized in-process handler
+// INPUTS: { handler: &SynapseHandler }, { id: u64 }, { params: serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// SIDE_EFFECTS: invokes MCP tools/list handler
+async fn tools_list(handler: &SynapseHandler, id: u64, params: Value) -> Value {
+    let request = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": id,
+        "method": "tools/list",
+        "params": params
+    })
+    .to_string();
+    handler
+        .handle_message(&request)
+        .await
+        .expect("tools/list request should produce a response")
+}
+
 // START_CONTRACT_tool_names
 // PURPOSE: Extract ordered tool names from a tools/list response
 // INPUTS: { response: &serde_json::Value }
@@ -90,6 +114,19 @@ fn tool_names(response: &Value) -> Vec<String> {
     response["result"]["tools"]
         .as_array()
         .expect("tools array")
+        .iter()
+        .filter_map(|tool| tool["name"].as_str().map(ToOwned::to_owned))
+        .collect()
+}
+
+// START_CONTRACT_recommended_tool_names
+// PURPOSE: Extract ordered tool names from a tools/recommend response
+// INPUTS: { response: &serde_json::Value }
+// OUTPUTS: { Vec<String> }
+fn recommended_tool_names(response: &Value) -> Vec<String> {
+    response["result"]["recommended_tools"]
+        .as_array()
+        .expect("recommended_tools array")
         .iter()
         .filter_map(|tool| tool["name"].as_str().map(ToOwned::to_owned))
         .collect()
@@ -140,11 +177,11 @@ async fn test_initialize_then_list_tools() {
         .await
         .expect("tools/list request should produce a response");
     let tools = list["result"]["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 44);
+    assert_eq!(tools.len(), 45);
     assert_eq!(list["result"]["profile"], "all");
     assert_eq!(list["result"]["style"], "full");
-    assert_eq!(list["result"]["total_available"], 44);
-    assert_eq!(list["result"]["total_visible"], 44);
+    assert_eq!(list["result"]["total_available"], 45);
+    assert_eq!(list["result"]["total_visible"], 45);
 }
 
 #[tokio::test]
@@ -163,7 +200,7 @@ async fn test_tools_list_profiles_return_expected_counts() {
     let minimal_names = tool_names(&minimal);
     let custom_names = tool_names(&custom);
 
-    assert_eq!(all_names.len(), 44);
+    assert_eq!(all_names.len(), 45);
     assert!(verification_names.len() <= 10, "{verification:?}");
     assert!(verification_names.contains(&"verify_project".to_string()));
     assert!(verification_names.contains(&"review_code".to_string()));
@@ -181,7 +218,7 @@ async fn test_tools_list_profiles_return_expected_counts() {
     );
     assert_eq!(custom_names, vec!["semantic_search", "verify_project"]);
     assert_eq!(custom["result"]["profile"], "custom");
-    assert_eq!(custom["result"]["total_available"], 44);
+    assert_eq!(custom["result"]["total_available"], 45);
     assert_eq!(custom["result"]["total_visible"], 2);
 }
 
@@ -197,7 +234,7 @@ async fn test_tools_list_full_and_terse_styles() {
     assert_eq!(terse["result"]["style"], "terse");
     assert!(contains_schema_description_key(&full["result"]["tools"]));
     assert!(!contains_schema_description_key(&terse["result"]["tools"]));
-    assert_eq!(terse["result"]["total_visible"], 44);
+    assert_eq!(terse["result"]["total_visible"], 45);
     assert!(terse["result"]["schema_economy"]["savings_pct"]
         .as_f64()
         .is_some_and(|pct| pct >= 60.0));
@@ -222,6 +259,125 @@ async fn test_tools_list_profile_and_terse_style_compose() {
     assert!(response["result"]["schema_economy"]["savings_pct"]
         .as_f64()
         .is_some_and(|pct| pct > 0.0));
+}
+
+#[tokio::test]
+// START_CONTRACT_test_tools_recommend_contexts_and_general_output
+// PURPOSE: Verify tools/recommend maps verification, debug, and no-context requests to bounded tool sets
+// SIDE_EFFECTS: creates in-process MCP handler
+async fn test_tools_recommend_contexts_and_general_output() {
+    let handler = initialized_handler().await;
+
+    let verify = tools_call(
+        &handler,
+        2,
+        "tools/recommend",
+        serde_json::json!({"context": "verify contracts"}),
+    )
+    .await;
+    let verify_names = recommended_tool_names(&verify);
+
+    assert_eq!(verify["result"]["phase"], "verify");
+    assert_eq!(verify["result"]["source"], "context");
+    assert!(verify_names.contains(&"verify_project".to_string()));
+    assert!(verify_names.contains(&"review_code".to_string()));
+    assert!(verify_names.contains(&"traceability_report".to_string()));
+    assert!(verify_names.len() <= 8);
+
+    let debug = tools_call(
+        &handler,
+        3,
+        "tools/recommend",
+        serde_json::json!({"context": "debug M-AUTH"}),
+    )
+    .await;
+    let debug_names = recommended_tool_names(&debug);
+
+    assert_eq!(debug["result"]["phase"], "debug");
+    assert!(debug_names.contains(&"diagnose_failure".to_string()));
+    assert!(debug_names.contains(&"self_heal".to_string()));
+    assert!(debug_names.contains(&"analyze_logs".to_string()));
+    assert!(debug_names.len() <= 8);
+
+    let general = tools_call(&handler, 4, "tools/recommend", serde_json::json!({})).await;
+    let general_names = recommended_tool_names(&general);
+
+    assert_eq!(general["result"]["phase"], "general");
+    assert_eq!(general["result"]["source"], "general");
+    assert!(general_names.contains(&"semantic_search".to_string()));
+    assert!(general_names.contains(&"graphrag_query".to_string()));
+    assert!(general_names.len() <= 8);
+}
+
+#[tokio::test]
+// START_CONTRACT_test_tools_recommend_run_id_and_suggested_terse_profile_budget
+// PURPOSE: Verify run_id-aware recommendations override context and produce a custom terse tools/list profile within budget
+// SIDE_EFFECTS: creates temporary run state and in-process MCP handler
+async fn test_tools_recommend_run_id_and_suggested_terse_profile_budget() {
+    let root = tempfile::tempdir().expect("temp root");
+    let manager = RunManager::new(root.path());
+    let mut record = RunRecord::new(
+        "goal".into(),
+        "Phase-86".into(),
+        "M-AUTH".into(),
+        "verify auth contract".into(),
+    );
+    record.status = RunStatus::Blocked;
+    record.required_gates.push(RunGate {
+        id: "gate-verification".into(),
+        name: "Verification".into(),
+        required: true,
+        status: RunGateStatus::Blocked,
+        reason: None,
+        evidence_refs: Vec::new(),
+    });
+    manager.save(&record).expect("save run record");
+
+    let handler = initialized_handler().await;
+    let recommendation = tools_call(
+        &handler,
+        2,
+        "tools/recommend",
+        serde_json::json!({
+            "context": "implement M-AUTH",
+            "run_id": record.run_id,
+            "project_root": root.path().to_string_lossy().to_string()
+        }),
+    )
+    .await;
+    let names = recommended_tool_names(&recommendation);
+
+    assert_eq!(recommendation["result"]["source"], "run_state");
+    assert_eq!(recommendation["result"]["phase"], "verify");
+    assert!(names.contains(&"verify_project".to_string()));
+    assert!(names.contains(&"review_code".to_string()));
+    assert!(names.contains(&"traceability_report".to_string()));
+
+    let profile = recommendation["result"]["suggested_profile"]
+        .as_str()
+        .expect("suggested profile");
+    assert_eq!(
+        profile,
+        "custom:verify_project,review_code,traceability_report"
+    );
+
+    let terse = tools_list(
+        &handler,
+        3,
+        serde_json::json!({"profile": profile, "style": "terse"}),
+    )
+    .await;
+    let visible_bytes = terse["result"]["schema_economy"]["visible_bytes"]
+        .as_u64()
+        .expect("visible bytes");
+    let estimated_schema_tokens = (visible_bytes + 3) / 4;
+
+    assert_eq!(terse["result"]["profile"], "custom");
+    assert_eq!(terse["result"]["style"], "terse");
+    assert!(
+        estimated_schema_tokens <= 300,
+        "estimated_schema_tokens={estimated_schema_tokens}, visible_bytes={visible_bytes}"
+    );
 }
 
 #[tokio::test]

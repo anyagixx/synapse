@@ -8,6 +8,6 @@
     <FILE>tests/e2e_mcp.rs</FILE>
   </FILES>
   <DEPENDS>M-MCP-SERVER,M-MCP-SERVER-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-TEST-FIXTURE</DEPENDS>
-  <LINKS>docs/phases/Phase-78.xml,docs/phases/Phase-82.xml,docs/phases/Phase-83.xml</LINKS>
+  <LINKS>docs/phases/Phase-78.xml,docs/phases/Phase-82.xml,docs/phases/Phase-83.xml,docs/phases/Phase-86.xml</LINKS>
   <VERIFICATION_REF>V-M-TEST-MCP-REGRESSION</VERIFICATION_REF>
 </MODULE>
