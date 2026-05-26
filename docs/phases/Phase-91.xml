@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-91" status="planned">
+  <NAME>UPGRADE_5 Multi-Project Workspace</NAME>
+  <GOAL>Add Synapse.toml workspace orchestration for verifying, indexing, listing, and summarizing multiple member projects.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_5/V2-multi-project-workspace.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-TEST-COVERAGE-MATRIX" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-91-1">Synapse.toml defines workspace members, excludes, and defaults for profile, parallel execution, and fail-fast behavior.</FLOW>
+    <FLOW id="DF-91-2">syn workspace verify loads the workspace, validates members, runs per-member verification, and returns an aggregate report.</FLOW>
+    <FLOW id="DF-91-3">syn workspace index, status, and coverage reuse existing single-project engines from each member root.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-CONFIG" status="planned">Implement workspace config model, load/init validation, member resolution, excludes, and default policy.</step-1>
+    <step-2 module="M-CLI" status="planned">Implement sequential and parallel member execution with fail-fast semantics and compact reports.</step-2>
+    <step-3 module="M-CLI" status="planned">Add syn workspace init, list, verify, status, index, and coverage command surface.</step-3>
+    <step-4 module="M-TEST-COVERAGE-MATRIX" status="planned">Prepare coverage aggregation for workspace members and later code coverage integration.</step-4>
+    <step-5 module="M-TESTS-INTEGRATION" status="planned">Add workspace CLI tests with passing and failing member fixtures.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test workspace --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test cli::workspace_commands --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">syn workspace init proj-a proj-b creates Synapse.toml.</CHECK>
+    <CHECK status="planned">syn workspace list shows resolved members.</CHECK>
+    <CHECK status="planned">syn workspace verify supports default parallel mode and --sequential mode.</CHECK>
+    <CHECK status="planned">syn workspace status returns aggregate health without reading unrelated directories.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-91-1">Parallel verification can overload local machines; keep --sequential and fail-fast defaults explicit.</RISK>
+    <RISK id="R-91-2">Workspace roots may not all be MyGRACE projects; report per-member errors without hiding successful members.</RISK>
+  </RISKS>
+</PHASE>

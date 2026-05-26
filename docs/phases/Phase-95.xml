@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-95" status="planned">
+  <NAME>UPGRADE_5 Integration And Release Gate</NAME>
+  <GOAL>Run the combined UPGRADE_5 verification surface, synchronize docs parity, and prepare the next release candidate.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_5/README.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+    <MODULE_REF id="M-TEST-PERF-REGRESSION" />
+    <MODULE_REF id="M-HOOKS" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-TEST-COVERAGE-MATRIX" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-95-1">UPGRADE_5 feature surfaces update capability truth, docs parity, verification shards, and CI coverage.</FLOW>
+    <FLOW id="DF-95-2">Release gates run fmt, clippy, tests, targeted benches, tarpaulin smoke, MyGRACE verify, review, refresh, and status.</FLOW>
+    <FLOW id="DF-95-3">Hosted CI validates Linux and macOS compatibility before tagging the next release.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-CAPABILITIES" status="planned">Update command and MCP capability truth after UPGRADE_5 command surfaces land.</step-1>
+    <step-2 module="M-TESTS-PARITY" status="planned">Update docs parity tests for workspace, tools, hook, telemetry, coverage, and benchmark claims.</step-2>
+    <step-3 module="M-CI" status="planned">Add an UPGRADE_5 gate script or grouped CI checks for the new cross-cutting features.</step-3>
+    <step-4 module="M-CI" status="planned">Run full local release-candidate dry run and hosted CI before release tagging.</step-4>
+    <step-5 module="M-CI" status="planned">Refresh MyGRACE indexes and close Phase-89 through Phase-95 with verification evidence.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo fmt --all -- --check</CHECK>
+    <CHECK status="planned">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="planned">cargo test --all-targets --all-features</CHECK>
+    <CHECK status="planned">cargo bench --bench search</CHECK>
+    <CHECK status="planned">cargo bench --bench graph</CHECK>
+    <CHECK status="planned">cargo bench --bench cascade</CHECK>
+    <CHECK status="planned">syn test coverage --code</CHECK>
+    <CHECK status="planned">syn refresh --json reports no canonical drift.</CHECK>
+    <CHECK status="planned">syn verify passes under strict profile.</CHECK>
+    <CHECK status="planned">syn review --json passes.</CHECK>
+    <CHECK status="planned">syn status reports UPGRADE_5 active or complete state accurately.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-95-1">Cross-cutting changes touch CLI, MCP, CI, and config; integrate in small phase commits to keep regressions attributable.</RISK>
+    <RISK id="R-95-2">Optional telemetry and local user tools must remain disabled or harmless by default for release safety.</RISK>
+  </RISKS>
+</PHASE>

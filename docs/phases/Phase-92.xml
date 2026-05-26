@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-92" status="planned">
+  <NAME>UPGRADE_5 User-Defined MCP Tools</NAME>
+  <GOAL>Allow local user-defined command tools from ~/.synapse/tools while preserving MCP safety, built-in tool integrity, and token economy controls.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_5/V3-plugin-system.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-RESPONSE" />
+    <MODULE_REF id="M-UTILS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-92-1">User tool JSON definitions are loaded from ~/.synapse/tools, validated, and rejected if they override built-in MCP tools.</FLOW>
+    <FLOW id="DF-92-2">tools/list merges built-in tool definitions and user tool schemas, marking user tools with source metadata.</FLOW>
+    <FLOW id="DF-92-3">tools/call dispatches user command tools through timeout-bounded execution, path allowlists, ANSI stripping, and max output token caps.</FLOW>
+    <FLOW id="DF-92-4">syn tools list, validate, and new support local authoring without recompiling Synapse.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-MCP-SERVER" status="planned">Implement user tool definition model, loader, schema validation, built-in name protection, and warning collection.</step-1>
+    <step-2 module="M-MCP-SERVER" status="planned">Implement command interpolation, allowed-path validation, timeout handling, ANSI stripping, and output token trimming.</step-2>
+    <step-3 module="M-MCP-SERVER-TOOLS" status="planned">Merge user tools into tools/list with source metadata and compatible terse/full schema policies.</step-3>
+    <step-4 module="M-MCP-SERVER" status="planned">Route unknown tools/call names to validated user tools after built-in dispatch misses.</step-4>
+    <step-5 module="M-CLI" status="planned">Add syn tools list, validate, and new commands with JSON-capable output.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="planned">cargo test mcp::user_tools --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test mcp::server user_tools --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">cargo test cli::tools_commands --lib -- --test-threads=8</CHECK>
+    <CHECK status="planned">syn tools validate accepts a valid command tool and rejects built-in override names.</CHECK>
+    <CHECK status="planned">MCP tools/list includes user tools with source metadata.</CHECK>
+    <CHECK status="planned">MCP tools/call executes a user tool with timeout and max output token controls.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-92-1">User command tools can execute arbitrary local commands; first implementation must stay local-only and enforce timeout, path, and output controls.</RISK>
+    <RISK id="R-92-2">Dynamic tools can bloat tools/list; reuse existing terse/profile disclosure and source metadata.</RISK>
+  </RISKS>
+</PHASE>
