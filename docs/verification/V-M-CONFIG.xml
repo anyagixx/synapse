@@ -17,7 +17,7 @@
     <ASSERTION>Typed scalar config key helpers get, set, unset, reject invalid values, and persist TOML updates.</ASSERTION>
     <ASSERTION>Embedding config deserializes with release-safe disabled defaults for existing files and exposes typed enablement/provider/model/cache_dir/batch_size keys.</ASSERTION>
     <ASSERTION>Observability config deserializes with release-safe defaults for existing files and exposes typed enablement, MCP retention, stats limits, and pipeline bounds keys.</ASSERTION>
-    <ASSERTION>Budget config deserializes with unlimited session_token_limit=0 defaults for existing files and exposes typed session limit, warning, block, and reset keys.</ASSERTION>
+    <ASSERTION>Budget config deserializes with unlimited session_token_limit=0 and context_window_limit=200000 defaults for existing files and exposes typed session limit, context window, warning, block, and reset keys.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-61,Phase-65,Phase-66,Phase-67,Phase-87</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-61,Phase-65,Phase-66,Phase-67,Phase-87,Phase-88</PHASE_GATE>
 </VERIFICATION>

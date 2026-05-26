@@ -29,6 +29,13 @@ input_enabled = true
 enabled = true
 history_days = 90
 
+[budget]
+session_token_limit = 0
+context_window_limit = 200000
+warn_at_pct = 80
+block_at_pct = 100
+reset_on_new_session = true
+
 [observability]
 enabled = true
 mcp_metrics_enabled = true

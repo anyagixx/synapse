@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CONFIG
 // PURPOSE: Config model and explicit load/default/init semantics for synapsec.toml
-// SCOPE: Config struct definitions including embedding provider settings, budget settings, observability runtime bounds, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
+// SCOPE: Config struct definitions including embedding provider settings, budget and context-window settings, observability runtime bounds, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
 // DEPENDS: N/A
 // LINKS: synapsec.toml
 
@@ -13,7 +13,7 @@
 // ProxyConfig — Proxy settings (enabled, passthrough_max_chars, capture caps, command timeout)
 // CompressConfig — Compress settings (output_level, input_enabled)
 // TrackingConfig — Tracking settings (enabled, history_days)
-// BudgetConfig — Per-session token budget settings (limit, warn/block percentages, reset behavior)
+// BudgetConfig — Per-session token budget and context-window settings
 // ObservabilityConfig — Dashboard/MCP observability settings and runtime bounds
 // GraphRagConfig — GraphRAG settings (enabled, use_llm)
 // EmbeddingConfig — Local semantic embedding settings (enabled, provider, model, cache_dir, batch_size)
@@ -23,7 +23,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.11.0 - Added backward-compatible budget config]
+// LAST_CHANGE: [v3.12.0 - Added context window budget config]
 // END_CHANGE_SUMMARY
 
 use std::collections::HashMap;
@@ -118,6 +118,8 @@ impl TrackingConfig {
 pub struct BudgetConfig {
     #[serde(default = "default_session_token_limit")]
     pub session_token_limit: u64,
+    #[serde(default = "default_context_window_limit")]
+    pub context_window_limit: u64,
     #[serde(default = "default_budget_warn_at_pct")]
     pub warn_at_pct: u64,
     #[serde(default = "default_budget_block_at_pct")]
@@ -130,6 +132,7 @@ impl Default for BudgetConfig {
     fn default() -> Self {
         Self {
             session_token_limit: default_session_token_limit(),
+            context_window_limit: default_context_window_limit(),
             warn_at_pct: default_budget_warn_at_pct(),
             block_at_pct: default_budget_block_at_pct(),
             reset_on_new_session: default_budget_reset_on_new_session(),
@@ -142,6 +145,13 @@ impl Default for BudgetConfig {
 // OUTPUTS: { u64 }
 fn default_session_token_limit() -> u64 {
     0
+}
+
+// START_CONTRACT_default_context_window_limit
+// PURPOSE: Provide serde/default context window limit used for pressure estimates.
+// OUTPUTS: { u64 }
+fn default_context_window_limit() -> u64 {
+    200_000
 }
 
 // START_CONTRACT_default_budget_warn_at_pct
@@ -336,6 +346,10 @@ const CONFIG_KEY_SPECS: &[ConfigKeySpec] = &[
         value_type: "u64",
     },
     ConfigKeySpec {
+        key: "budget.context_window_limit",
+        value_type: "u64",
+    },
+    ConfigKeySpec {
         key: "budget.warn_at_pct",
         value_type: "u64",
     },
@@ -510,6 +524,7 @@ impl Config {
             "tracking.enabled" => self.tracking.enabled.to_string(),
             "tracking.history_days" => self.tracking.history_days.to_string(),
             "budget.session_token_limit" => self.budget.session_token_limit.to_string(),
+            "budget.context_window_limit" => self.budget.context_window_limit.to_string(),
             "budget.warn_at_pct" => self.budget.warn_at_pct.to_string(),
             "budget.block_at_pct" => self.budget.block_at_pct.to_string(),
             "budget.reset_on_new_session" => self.budget.reset_on_new_session.to_string(),
@@ -594,6 +609,9 @@ impl Config {
             "tracking.history_days" => self.tracking.history_days = parse_u32(&canonical, value)?,
             "budget.session_token_limit" => {
                 self.budget.session_token_limit = parse_u64(&canonical, value)?
+            }
+            "budget.context_window_limit" => {
+                self.budget.context_window_limit = parse_u64_range(&canonical, value, 1, 2_000_000)?
             }
             "budget.warn_at_pct" => {
                 self.budget.warn_at_pct = parse_u64_range(&canonical, value, 0, 100)?
@@ -689,6 +707,9 @@ impl Config {
             "tracking.history_days" => self.tracking.history_days = defaults.tracking.history_days,
             "budget.session_token_limit" => {
                 self.budget.session_token_limit = defaults.budget.session_token_limit
+            }
+            "budget.context_window_limit" => {
+                self.budget.context_window_limit = defaults.budget.context_window_limit
             }
             "budget.warn_at_pct" => self.budget.warn_at_pct = defaults.budget.warn_at_pct,
             "budget.block_at_pct" => self.budget.block_at_pct = defaults.budget.block_at_pct,
@@ -1061,6 +1082,7 @@ use_llm = false
         assert_eq!(config.embedding.model, "AllMiniLML6V2");
         assert_eq!(config.embedding.batch_size, 256);
         assert_eq!(config.budget.session_token_limit, 0);
+        assert_eq!(config.budget.context_window_limit, 200_000);
         assert_eq!(config.budget.warn_at_pct, 80);
         assert_eq!(config.budget.block_at_pct, 100);
         assert!(config.budget.reset_on_new_session);
@@ -1093,6 +1115,7 @@ use_llm = false
         let config = Config::default();
 
         assert_eq!(config.budget.session_token_limit, 0);
+        assert_eq!(config.budget.context_window_limit, 200_000);
         assert_eq!(config.budget.warn_at_pct, 80);
         assert_eq!(config.budget.block_at_pct, 100);
         assert!(config.budget.reset_on_new_session);
@@ -1147,6 +1170,13 @@ use_llm = false
         assert_eq!(entry.key, "budget.session_token_limit");
         assert_eq!(entry.value, "500000");
         assert_eq!(config.budget.session_token_limit, 500_000);
+
+        let entry = config
+            .set_config_key("budget.context-window-limit", "180000")
+            .expect("set context window limit");
+        assert_eq!(entry.key, "budget.context_window_limit");
+        assert_eq!(entry.value, "180000");
+        assert_eq!(config.budget.context_window_limit, 180_000);
 
         let entry = config
             .set_config_key("budget.warn-at-pct", "75")
@@ -1207,6 +1237,9 @@ use_llm = false
             .is_err());
         assert!(config.set_config_key("budget.warn_at_pct", "101").is_err());
         assert!(config.set_config_key("budget.block_at_pct", "0").is_err());
+        assert!(config
+            .set_config_key("budget.context_window_limit", "0")
+            .is_err());
     }
 
     #[test]
@@ -1224,6 +1257,7 @@ use_llm = false
 
         assert!(!loaded.tracking.enabled);
         assert_eq!(loaded.budget.session_token_limit, 0);
+        assert_eq!(loaded.budget.context_window_limit, 200_000);
     }
 }
 // END_public_api
