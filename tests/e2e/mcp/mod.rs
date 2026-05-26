@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TEST-MCP-REGRESSION
 // PURPOSE: Real stdio JSON-RPC regression helper and tests for the Synapse MCP server.
-// SCOPE: Server spawn, request/notification helpers, timeout-bounded stdout reads, response ID checks, and child cleanup.
+// SCOPE: Server spawn, request/notification helpers, timeout-bounded stdout reads, response ID checks, token economy smoke coverage, and child cleanup.
 // DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-TEST-FIXTURE
 // LINKS:
 //   -> Phase-78 (implements) - MCP regression suite
@@ -19,10 +19,11 @@
 // tools_list_names - Extract tool names from a tools/list response
 // contains_schema_description_key - Detect schema description metadata in tools/list payloads
 // mcp_regression_tools_list_profiles_and_terse_style - Real stdio tools/list profile and terse coverage
+// mcp_regression_token_economy_gate - Real stdio token economy smoke coverage
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.7.0 - Updated tools/list registry count for context_pressure]
+// LAST_CHANGE: [v1.8.0 - Added token economy e2e smoke gate]
 // END_CHANGE_SUMMARY
 
 use serde_json::{json, Value};
@@ -597,6 +598,71 @@ mod tests {
             &verification_terse["result"]["tools"]
         ));
     }
+
+    #[test]
+    // START_CONTRACT_mcp_regression_token_economy_gate
+    // PURPOSE: Verify real stdio MCP covers the UPGRADE_4 token economy surface.
+    // SIDE_EFFECTS: spawns syn mcp with a Minimal fixture
+    fn mcp_regression_token_economy_gate() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Minimal)
+            .build()
+            .expect("fixture");
+        let mut server = McpTestServer::spawn_for_fixture(&fixture).expect("spawn mcp server");
+        server.initialize().expect("initialize response");
+
+        let terse_tools = server
+            .request(
+                "tools/list",
+                &json!({"profile": "verification", "style": "terse"}),
+            )
+            .expect("terse tools/list response");
+        assert_eq!(terse_tools["result"]["profile"], "verification");
+        assert_eq!(terse_tools["result"]["style"], "terse");
+        assert!(!contains_schema_description_key(
+            &terse_tools["result"]["tools"]
+        ));
+
+        let recommendation = call_tool(
+            &mut server,
+            "tools/recommend",
+            json!({"context": "verify contracts", "max_tools": 4}),
+        )
+        .expect("tools/recommend response");
+        let recommended = recommendation["result"]["recommended_tools"]
+            .as_array()
+            .expect("recommended tools");
+        assert!(recommended
+            .iter()
+            .any(|tool| tool["name"] == "verify_project"));
+
+        let budget = call_tool(
+            &mut server,
+            "check_budget",
+            json!({"estimated_tokens": 1024}),
+        )
+        .expect("check_budget response");
+        assert_eq!(budget["result"]["budget"]["status"], "normal");
+
+        let pressure = call_tool(&mut server, "context_pressure", json!({}))
+            .expect("context_pressure response");
+        assert_eq!(pressure["result"]["context_window_limit"], 200_000);
+
+        let status =
+            call_tool(&mut server, "project_status", json!({})).expect("project_status response");
+        let etag = status["result"]["_meta"]["cache"]["etag"]
+            .as_str()
+            .expect("project_status cache etag")
+            .to_string();
+        let not_modified = call_tool(
+            &mut server,
+            "project_status",
+            json!({"_if_none_match": etag}),
+        )
+        .expect("project_status not modified response");
+        assert_eq!(not_modified["result"]["_not_modified"], true);
+    }
+    // END_mcp_regression_token_economy_gate
 
     #[test]
     fn mcp_regression_semantic_search_returns_content_envelope() {

@@ -1,4 +1,4 @@
-.PHONY: build test run clean install lint fmt check ci
+.PHONY: build test run clean install lint fmt check ci token-economy
 
 BIN_NAME = syn
 
@@ -30,6 +30,9 @@ check: fmt-check lint test
 
 ci:
 	bash scripts/ci.sh
+
+token-economy:
+	bash scripts/token_economy_gate.sh
 
 clean:
 	cargo clean

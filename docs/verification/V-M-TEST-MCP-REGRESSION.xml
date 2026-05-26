@@ -5,6 +5,7 @@
     <TEST>Drop kills and waits on the child process without leaking a server.</TEST>
     <TEST>e2e_mcp integration target spawns syn mcp against a Minimal fixture.</TEST>
     <TEST>McpTestServer read_any_response captures malformed JSON protocol errors without an id.</TEST>
+    <TEST>Real stdio token_economy smoke covers profile, terse, cache, recommendation, budget, and pressure paths.</TEST>
   </UNIT_TESTS>
   <INTEGRATION_TESTS>
     <TEST>Real stdio initialize succeeds on Minimal fixture.</TEST>
@@ -21,6 +22,7 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>MCP stdout remains JSON-RPC-only; diagnostics stay off stdout.</ASSERTION>
     <ASSERTION>Real stdio tools/list all profile sees the 48-tool registry including tools/recommend, compact_evidence, check_budget, and context_pressure.</ASSERTION>
+    <ASSERTION>Real stdio token_economy gate covers tools/recommend, check_budget, context_pressure, terse tools/list, and cache hints.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-78,Phase-83,Phase-86,Phase-87,Phase-88</PHASE_GATE>
 </VERIFICATION>
