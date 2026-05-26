@@ -115,6 +115,27 @@ jobs:
           rustup default stable
       - run: cargo test --all-targets
 
+  benchmarks:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust
+        run: |
+          for attempt in 1 2 3; do
+            rustup toolchain install stable --profile minimal && break
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+          rustup default stable
+      - name: Run Criterion benchmark smoke
+        run: |
+          cargo bench --bench search
+          cargo bench --bench graph
+          cargo bench --bench cascade
+
   security:
     runs-on: ubuntu-latest
     steps:

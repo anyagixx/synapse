@@ -10,6 +10,9 @@
     <COMMAND>cargo test --test release_candidate</COMMAND>
     <COMMAND>bash scripts/token_economy_gate.sh</COMMAND>
     <COMMAND>cargo test --test e2e_mcp token_economy</COMMAND>
+    <COMMAND>cargo bench --bench search</COMMAND>
+    <COMMAND>cargo bench --bench graph</COMMAND>
+    <COMMAND>cargo bench --bench cascade</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>bash scripts/ci.sh</COMMAND>
   </UNIT_TESTS>
@@ -41,6 +44,7 @@
     <ASSERTION>CI and release workflows pin Node 24-ready action majors for checkout, artifact upload, and GitHub release publishing; release artifact download uses GitHub CLI to avoid Node runtime deprecation noise.</ASSERTION>
     <ASSERTION>CI and release workflows install Rust through retrying rustup shell steps to avoid third-party Node runtime deprecation noise and absorb transient network lookup failures; hosted main CI run 26120689647 completed successfully without Node/deprecation log markers.</ASSERTION>
     <ASSERTION>UPGRADE_4 token economy CI gate covers tools/list profiles, terse schemas, response trimming, cache hints, tools/recommend, compact_evidence, check_budget, and context_pressure.</ASSERTION>
+    <ASSERTION>Criterion benchmark smoke runs search, graph, and cascade groups in a non-release-blocking hosted job.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-12,Phase-88</PHASE_GATE>
+  <PHASE_GATE>Phase-12,Phase-88,Phase-89</PHASE_GATE>
 </VERIFICATION>

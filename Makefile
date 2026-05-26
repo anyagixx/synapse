@@ -1,4 +1,4 @@
-.PHONY: build test run clean install lint fmt check ci token-economy
+.PHONY: build test run clean install lint fmt check ci token-economy bench bench-search bench-graph bench-cascade
 
 BIN_NAME = syn
 
@@ -47,7 +47,18 @@ doc:
 	cargo doc --no-deps --open
 
 bench:
-	cargo bench
+	cargo bench --bench search
+	cargo bench --bench graph
+	cargo bench --bench cascade
+
+bench-search:
+	cargo bench --bench search
+
+bench-graph:
+	cargo bench --bench graph
+
+bench-cascade:
+	cargo bench --bench cascade
 
 audit:
 	cargo audit --deny warnings --ignore RUSTSEC-2024-0436

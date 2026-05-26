@@ -50,6 +50,21 @@ tower-http = { version = "0.5", features = ["cors"] }
 rayon = "1"
 tempfile = "3"
 
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "search"
+harness = false
+
+[[bench]]
+name = "graph"
+harness = false
+
+[[bench]]
+name = "cascade"
+harness = false
+
 [target.'cfg(all(target_os = "macos", target_arch = "x86_64"))'.dependencies]
 fastembed = { version = "5.13.4", default-features = false, features = ["ort-load-dynamic", "hf-hub-rustls-tls"] }
 
