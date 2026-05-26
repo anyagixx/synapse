@@ -17,12 +17,13 @@
 // E2EResult - Serializable scenario run result
 // StepFailure - Bounded actionable failure detail
 // run_e2e_scenario - Load a scenario file, create fixture, and run steps
+// resolve_scenario_path - Resolve repository scenario paths for cargo and tarpaulin runners
 // run_step - Execute one scenario step against a fixture
 // run_command_in_fixture - Execute shell command inside isolated fixture root
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.2 - Added repository scenario fixture coverage]
+// LAST_CHANGE: [v1.0.3 - Made repository scenario paths tarpaulin-safe]
 // END_CHANGE_SUMMARY
 
 use crate::test::fixture::{FixtureBuilder, FixtureTemplate, TestFixture};
@@ -175,6 +176,7 @@ pub struct StepFailure {
 // START_run_e2e_scenario
 pub fn run_e2e_scenario(scenario_path: &Path) -> anyhow::Result<E2EResult> {
     let started = Instant::now();
+    let scenario_path = resolve_scenario_path(scenario_path)?;
     let content = std::fs::read_to_string(scenario_path)?;
     let scenario: E2EScenario = toml::from_str(&content)?;
     let template = fixture_template_from_name(&scenario.scenario.fixture)?;
@@ -210,6 +212,26 @@ pub fn run_e2e_scenario(scenario_path: &Path) -> anyhow::Result<E2EResult> {
 // END_run_e2e_scenario
 
 // END_public_api
+
+// START_CONTRACT_resolve_scenario_path
+// PURPOSE: Resolve scenario files from either the current working directory or the crate manifest root
+// INPUTS: { scenario_path: &Path }
+// OUTPUTS: { anyhow::Result<PathBuf> }
+// LINKS:
+//   -> Phase-94 (implements) - tarpaulin coverage runner compatibility
+//   -> NFR-002 (traces_to) - E2E release evidence must not depend on runner cwd
+// START_resolve_scenario_path
+fn resolve_scenario_path(scenario_path: &Path) -> anyhow::Result<PathBuf> {
+    if scenario_path.exists() {
+        return Ok(scenario_path.to_path_buf());
+    }
+    let manifest_path = Path::new(env!("CARGO_MANIFEST_DIR")).join(scenario_path);
+    if manifest_path.exists() {
+        return Ok(manifest_path);
+    }
+    Ok(scenario_path.to_path_buf())
+}
+// END_resolve_scenario_path
 
 // START_StepOutcome
 #[derive(Debug, Clone, PartialEq, Eq)]

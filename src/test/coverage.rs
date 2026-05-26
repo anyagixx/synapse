@@ -1,33 +1,42 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TEST-COVERAGE-MATRIX
-// PURPOSE: Build an index-first module evidence coverage matrix for Synapse test visibility.
-// SCOPE: Index-based module discovery, evidence counting, table output, JSON output, and uncovered module reporting.
+// PURPOSE: Build index-first evidence and code coverage reports for Synapse test visibility.
+// SCOPE: Index-based module discovery, evidence counting, cargo-tarpaulin JSON execution/parsing, module source mapping, table output, JSON output, threshold reporting, and uncovered module reporting.
 // DEPENDS: M-GRACE-LOG, M-GRACE-MENTAL-TEST, M-GRACE-VERIFY, M-GRACE-LAYOUT
 // LINKS:
 //   -> Phase-79 (implements) - coverage matrix
+//   -> NFR-003 (traces_to) - coverage reporting must stay index-first and token-bounded
 //   <- V-M-TEST-COVERAGE-MATRIX (verified_by) - coverage evidence verification
 
 // START_MODULE_MAP
 // CoverageMatrix - Project coverage report with summary and per-module rows
 // ModuleCoverage - Per-module evidence and coverage status
 // CoverageEvidence - Evidence booleans for contract, verification, mental tests, guides, LOGs, and verify status
+// CodeCoverageReport - cargo-tarpaulin code coverage summary mapped to modules
+// ModuleCodeCoverage - Per-module line/function/branch coverage row
 // build_coverage_matrix - Builds the coverage matrix using graph-index first
+// measure_code_coverage - Runs cargo tarpaulin and parses JSON output
+// render_coverage_output - Renders evidence-only or combined evidence/code coverage output
 // render_coverage_table - Renders a bounded human-readable coverage table
 // render_coverage_json - Renders stable JSON for automation
+// tarpaulin_path_value - Normalizes real cargo-tarpaulin path field variants
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Implemented index-first coverage matrix]
+// LAST_CHANGE: [v1.1.0 - Added Phase-94 cargo-tarpaulin code coverage integration]
 // END_CHANGE_SUMMARY
 
 use crate::grace::inventory_artifacts::{parse_graph_index, parse_verification_index};
 use crate::grace::inventory_types::{GraphEntry, VerificationEntry};
 use crate::grace::layout::DocsLayout;
 use serde::Serialize;
+use serde_json::json;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 const COVERED_EVIDENCE_THRESHOLD: usize = 3;
+const DEFAULT_CODE_COVERAGE_THRESHOLD: f64 = 65.0;
 
 // START_public_api
 
@@ -86,6 +95,29 @@ pub enum CoverageStatus {
     Uncovered,
 }
 // END_CoverageStatus
+
+// START_CodeCoverageReport
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct CodeCoverageReport {
+    pub overall_pct: f64,
+    pub by_module: Vec<ModuleCodeCoverage>,
+    pub threshold_pct: f64,
+    pub passed: bool,
+}
+// END_CodeCoverageReport
+
+// START_ModuleCodeCoverage
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct ModuleCodeCoverage {
+    pub module_id: String,
+    pub source_file: String,
+    pub line_pct: f64,
+    pub function_pct: f64,
+    pub branch_pct: f64,
+    pub uncovered_functions: Vec<String>,
+    pub below_threshold: bool,
+}
+// END_ModuleCodeCoverage
 
 impl CoverageEvidence {
     // START_CONTRACT_CoverageEvidence::count
@@ -240,6 +272,80 @@ pub fn render_coverage_json(matrix: &CoverageMatrix) -> anyhow::Result<String> {
     Ok(serde_json::to_string_pretty(matrix)?)
 }
 // END_render_coverage_json
+
+// START_CONTRACT_measure_code_coverage
+// PURPOSE: Run cargo-tarpaulin and parse its JSON report into module-level code coverage.
+// INPUTS: { root: &Path }
+// OUTPUTS: { anyhow::Result<CodeCoverageReport> }
+// SIDE_EFFECTS: executes cargo tarpaulin and writes coverage/tarpaulin-report.json
+// LINKS:
+//   -> Phase-94 (implements) - code coverage gate
+//   -> NFR-002 (traces_to) - release verification command must fail clearly
+// START_measure_code_coverage
+pub fn measure_code_coverage(root: &Path) -> anyhow::Result<CodeCoverageReport> {
+    let output = Command::new("cargo")
+        .args([
+            "tarpaulin",
+            "--out",
+            "Json",
+            "--output-dir",
+            "coverage",
+            "--exclude-files",
+            "tests/*",
+            "--exclude-files",
+            "benches/*",
+        ])
+        .current_dir(root)
+        .output()
+        .map_err(|error| anyhow::anyhow!("failed to run cargo tarpaulin: {error}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        anyhow::bail!("cargo-tarpaulin failed: {}", stderr.trim());
+    }
+    let report_path = root.join("coverage").join("tarpaulin-report.json");
+    parse_code_coverage_report(
+        root,
+        &std::fs::read_to_string(&report_path)?,
+        DEFAULT_CODE_COVERAGE_THRESHOLD,
+    )
+}
+// END_measure_code_coverage
+
+// START_CONTRACT_render_coverage_output
+// PURPOSE: Render evidence coverage alone or combined with optional cargo-tarpaulin code coverage.
+// INPUTS: { root: &Path }, { json_output: bool }, { include_code: bool }
+// OUTPUTS: { anyhow::Result<String> }
+// LINKS:
+//   -> M-CLI-TEST-COMMANDS (depends) - syn test coverage rendering
+//   -> Phase-94 (implements) - syn test coverage --code
+// START_render_coverage_output
+pub fn render_coverage_output(
+    root: &Path,
+    json_output: bool,
+    include_code: bool,
+) -> anyhow::Result<String> {
+    let matrix = build_coverage_matrix(root)?;
+    if !include_code {
+        return if json_output {
+            render_coverage_json(&matrix)
+        } else {
+            Ok(render_coverage_table(&matrix))
+        };
+    }
+    match measure_code_coverage(root) {
+        Ok(report) => render_combined_coverage(&matrix, Some(report), None, json_output),
+        Err(error) => render_combined_coverage(
+            &matrix,
+            None,
+            Some(format!(
+                "{}. Install cargo-tarpaulin with: cargo install cargo-tarpaulin",
+                error
+            )),
+            json_output,
+        ),
+    }
+}
+// END_render_coverage_output
 
 // END_public_api
 
@@ -443,6 +549,304 @@ fn contains_module_ref(text: &str, module_id: &str) -> bool {
 }
 // END_contains_module_ref
 
+// START_CONTRACT_parse_code_coverage_report
+// PURPOSE: Parse tarpaulin JSON and map covered source files to graph-index modules.
+// INPUTS: { root: &Path }, { content: &str }, { threshold_pct: f64 }
+// OUTPUTS: { anyhow::Result<CodeCoverageReport> }
+// LINKS:
+//   -> M-GRACE-LAYOUT (depends) - graph-index-first source mapping
+//   -> Phase-94 (implements) - tarpaulin JSON parsing
+// START_parse_code_coverage_report
+fn parse_code_coverage_report(
+    root: &Path,
+    content: &str,
+    threshold_pct: f64,
+) -> anyhow::Result<CodeCoverageReport> {
+    let report: serde_json::Value = serde_json::from_str(content)?;
+    let source_map = module_source_map(root)?;
+    let mut by_module = Vec::new();
+    for (path, data) in tarpaulin_file_entries(&report) {
+        let normalized = normalize_report_path(root, &path);
+        if !normalized.starts_with("src/") {
+            continue;
+        }
+        let Some(module_id) = source_map
+            .get(&normalized)
+            .cloned()
+            .or_else(|| fallback_module_id(&normalized))
+        else {
+            continue;
+        };
+        let line_pct = coverage_pct(&data, &["line_coverage", "coverage"]);
+        by_module.push(ModuleCodeCoverage {
+            module_id,
+            source_file: normalized,
+            line_pct,
+            function_pct: coverage_pct(&data, &["function_coverage", "functions_coverage"]),
+            branch_pct: coverage_pct(&data, &["branch_coverage", "branches_coverage"]),
+            uncovered_functions: extract_string_array(&data, "uncovered_functions")
+                .or_else(|| extract_string_array(&data, "missed_functions"))
+                .unwrap_or_default(),
+            below_threshold: line_pct < threshold_pct,
+        });
+    }
+    by_module.sort_by(|left, right| {
+        left.module_id
+            .cmp(&right.module_id)
+            .then_with(|| left.source_file.cmp(&right.source_file))
+    });
+    let overall_pct = coverage_pct(&report, &["coverage", "line_coverage"]);
+    Ok(CodeCoverageReport {
+        overall_pct,
+        threshold_pct,
+        passed: overall_pct >= threshold_pct,
+        by_module,
+    })
+}
+// END_parse_code_coverage_report
+
+// START_CONTRACT_render_combined_coverage
+// PURPOSE: Render evidence coverage plus optional code coverage in text or JSON.
+// INPUTS: { matrix: &CoverageMatrix }, { code: Option<CodeCoverageReport> }, { error: Option<String> }, { json_output: bool }
+// OUTPUTS: { anyhow::Result<String> }
+// START_render_combined_coverage
+fn render_combined_coverage(
+    matrix: &CoverageMatrix,
+    code: Option<CodeCoverageReport>,
+    error: Option<String>,
+    json_output: bool,
+) -> anyhow::Result<String> {
+    if json_output {
+        let code_json = match (code, error) {
+            (Some(report), _) => json!({"available": true, "report": report}),
+            (None, Some(error)) => json!({
+                "available": false,
+                "error": error,
+                "install": "cargo install cargo-tarpaulin"
+            }),
+            (None, None) => json!({"available": false}),
+        };
+        return Ok(serde_json::to_string_pretty(&json!({
+            "evidence": matrix,
+            "code": code_json
+        }))?);
+    }
+    let mut text = render_coverage_table(matrix);
+    text.push_str("\n\n--- Code Coverage (cargo-tarpaulin) ---\n");
+    match (code, error) {
+        (Some(report), _) => text.push_str(&render_code_coverage_table(&report)),
+        (None, Some(error)) => {
+            text.push_str("Code coverage unavailable: ");
+            text.push_str(&error);
+            text.push('\n');
+        }
+        (None, None) => text.push_str("Code coverage unavailable\n"),
+    }
+    Ok(text)
+}
+// END_render_combined_coverage
+
+// START_CONTRACT_render_code_coverage_table
+// PURPOSE: Render module-level code coverage rows with threshold status.
+// INPUTS: { report: &CodeCoverageReport }
+// OUTPUTS: { String }
+// START_render_code_coverage_table
+fn render_code_coverage_table(report: &CodeCoverageReport) -> String {
+    let mut lines = vec![
+        format!(
+            "Overall: {:.1}% ({})",
+            report.overall_pct,
+            if report.passed {
+                "above threshold"
+            } else {
+                "below threshold"
+            }
+        ),
+        "module | lines% | funcs% | branch% | status | source".to_string(),
+    ];
+    for module in &report.by_module {
+        lines.push(format!(
+            "{} | {:.1} | {:.1} | {:.1} | {} | {}",
+            module.module_id,
+            module.line_pct,
+            module.function_pct,
+            module.branch_pct,
+            if module.below_threshold {
+                "below-threshold"
+            } else {
+                "ok"
+            },
+            module.source_file
+        ));
+    }
+    lines.join("\n")
+}
+// END_render_code_coverage_table
+
+// START_CONTRACT_module_source_map
+// PURPOSE: Map graph-index module source files to module ids using only indexed shards.
+// INPUTS: { root: &Path }
+// OUTPUTS: { anyhow::Result<BTreeMap<String, String>> }
+// START_module_source_map
+fn module_source_map(root: &Path) -> anyhow::Result<BTreeMap<String, String>> {
+    let layout = DocsLayout::new(root);
+    let mut map = BTreeMap::new();
+    for entry in parse_graph_index(&layout.graph_index_path()) {
+        for source_file in module_source_files(&root.join(&entry.path))? {
+            map.insert(normalize_report_path(root, &source_file), entry.id.clone());
+        }
+    }
+    Ok(map)
+}
+// END_module_source_map
+
+// START_CONTRACT_tarpaulin_file_entries
+// PURPOSE: Extract path/data pairs from supported tarpaulin JSON shapes.
+// INPUTS: { report: &serde_json::Value }
+// OUTPUTS: { Vec<(String, serde_json::Value)> }
+// START_tarpaulin_file_entries
+fn tarpaulin_file_entries(report: &serde_json::Value) -> Vec<(String, serde_json::Value)> {
+    match report.get("files") {
+        Some(serde_json::Value::Object(files)) => files
+            .iter()
+            .map(|(path, data)| (path.clone(), data.clone()))
+            .collect(),
+        Some(serde_json::Value::Array(files)) => files
+            .iter()
+            .filter_map(|data| {
+                let path = data
+                    .get("path")
+                    .or_else(|| data.get("name"))
+                    .or_else(|| data.get("file"))
+                    .and_then(tarpaulin_path_value)?;
+                Some((path, data.clone()))
+            })
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+// END_tarpaulin_file_entries
+
+// START_CONTRACT_tarpaulin_path_value
+// PURPOSE: Convert tarpaulin path fields from string or component-array shapes into a file path
+// INPUTS: { value: &serde_json::Value }
+// OUTPUTS: { Option<String> }
+// LINKS:
+//   -> Phase-94 (implements) - real cargo-tarpaulin JSON compatibility
+//   -> NFR-003 (traces_to) - parser avoids verbose post-processing
+// START_tarpaulin_path_value
+fn tarpaulin_path_value(value: &serde_json::Value) -> Option<String> {
+    if let Some(path) = value.as_str() {
+        return Some(path.to_string());
+    }
+    let parts = value.as_array()?;
+    let mut path = String::new();
+    for part in parts {
+        let part = part.as_str()?;
+        if part == "/" {
+            path.push('/');
+            continue;
+        }
+        if !path.is_empty() && !path.ends_with('/') {
+            path.push('/');
+        }
+        path.push_str(part.trim_matches('/'));
+    }
+    if path.is_empty() {
+        None
+    } else {
+        Some(path)
+    }
+}
+// END_tarpaulin_path_value
+
+// START_CONTRACT_coverage_pct
+// PURPOSE: Read a percentage value from one of several tarpaulin field names.
+// INPUTS: { data: &serde_json::Value }, { keys: &[&str] }
+// OUTPUTS: { f64 }
+// START_coverage_pct
+fn coverage_pct(data: &serde_json::Value, keys: &[&str]) -> f64 {
+    keys.iter()
+        .filter_map(|key| data.get(*key).and_then(serde_json::Value::as_f64))
+        .map(|value| if value <= 1.0 { value * 100.0 } else { value })
+        .next()
+        .or_else(|| {
+            if !keys
+                .iter()
+                .any(|key| matches!(*key, "coverage" | "line_coverage"))
+            {
+                return None;
+            }
+            let covered = data.get("covered")?.as_f64()?;
+            let coverable = data.get("coverable")?.as_f64()?;
+            (coverable > 0.0).then_some((covered / coverable) * 100.0)
+        })
+        .unwrap_or(0.0)
+}
+// END_coverage_pct
+
+// START_CONTRACT_extract_string_array
+// PURPOSE: Extract optional string arrays from tarpaulin file metadata.
+// INPUTS: { data: &serde_json::Value }, { key: &str }
+// OUTPUTS: { Option<Vec<String>> }
+// START_extract_string_array
+fn extract_string_array(data: &serde_json::Value, key: &str) -> Option<Vec<String>> {
+    Some(
+        data.get(key)?
+            .as_array()?
+            .iter()
+            .filter_map(|value| value.as_str().map(str::to_string))
+            .collect(),
+    )
+}
+// END_extract_string_array
+
+// START_CONTRACT_normalize_report_path
+// PURPOSE: Normalize tarpaulin paths to project-relative slash-separated paths.
+// INPUTS: { root: &Path }, { path: &str }
+// OUTPUTS: { String }
+// START_normalize_report_path
+fn normalize_report_path(root: &Path, path: &str) -> String {
+    let value = Path::new(path);
+    let canonical_root = std::fs::canonicalize(root).unwrap_or_else(|_| {
+        if root.is_absolute() {
+            root.to_path_buf()
+        } else {
+            std::env::current_dir()
+                .unwrap_or_else(|_| PathBuf::from("."))
+                .join(root)
+        }
+    });
+    let relative = value
+        .strip_prefix(&canonical_root)
+        .or_else(|_| value.strip_prefix(root))
+        .unwrap_or(value);
+    relative.to_string_lossy().replace('\\', "/")
+}
+// END_normalize_report_path
+
+// START_CONTRACT_fallback_module_id
+// PURPOSE: Derive a best-effort module id when graph-index lacks a source mapping.
+// INPUTS: { path: &str }
+// OUTPUTS: { Option<String> }
+// START_fallback_module_id
+fn fallback_module_id(path: &str) -> Option<String> {
+    let path = path.strip_prefix("src/")?.strip_suffix(".rs")?;
+    let parts = path.split('/').collect::<Vec<_>>();
+    match parts.as_slice() {
+        ["main"] => Some("M-MAIN".to_string()),
+        ["lib"] => Some("M-LIB".to_string()),
+        [dir, "mod"] => Some(format!("M-{}", dir.replace('_', "-").to_ascii_uppercase())),
+        [dir, file] => Some(format!(
+            "M-{}-{}",
+            dir.replace('_', "-").to_ascii_uppercase(),
+            file.replace('_', "-").to_ascii_uppercase()
+        )),
+        _ => None,
+    }
+}
+// END_fallback_module_id
+
 // START_CONTRACT_summarize_modules
 // PURPOSE: Build project-level coverage summary from module rows
 // INPUTS: { modules: &[ModuleCoverage] }
@@ -613,5 +1017,106 @@ fn main() {}
         let matrix = build_coverage_matrix(fixture.root()).expect("coverage matrix");
 
         assert!(matrix.modules[0].evidence.log_marker);
+    }
+
+    #[test]
+    fn code_coverage_report_maps_tarpaulin_json_to_modules() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Minimal)
+            .build()
+            .expect("fixture");
+        let json = r#"{
+          "coverage": 72.5,
+          "files": {
+            "src/main.rs": {
+              "line_coverage": 65.0,
+              "function_coverage": 80.0,
+              "branch_coverage": 55.0,
+              "uncovered_functions": ["main"]
+            },
+            "tests/integration.rs": {
+              "line_coverage": 100.0
+            }
+          }
+        }"#;
+
+        let report = parse_code_coverage_report(fixture.root(), json, 70.0).expect("code coverage");
+
+        assert_eq!(report.overall_pct, 72.5);
+        assert!(report.passed);
+        assert_eq!(report.by_module.len(), 1);
+        assert_eq!(report.by_module[0].module_id, "M-CORE");
+        assert!(report.by_module[0].below_threshold);
+        assert_eq!(report.by_module[0].uncovered_functions, ["main"]);
+    }
+
+    #[test]
+    fn code_coverage_report_parses_real_tarpaulin_path_arrays() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Minimal)
+            .build()
+            .expect("fixture");
+        let source_path = fixture.root().join("src").join("main.rs");
+        let path_parts = source_path
+            .components()
+            .map(|part| part.as_os_str().to_string_lossy().to_string())
+            .collect::<Vec<_>>();
+        let json = serde_json::json!({
+            "coverage": 0.673,
+            "files": [{
+                "path": path_parts,
+                "covered": 2,
+                "coverable": 4
+            }]
+        });
+
+        let report = parse_code_coverage_report(fixture.root(), &json.to_string(), 65.0)
+            .expect("code coverage");
+
+        assert!(report.passed);
+        assert_eq!(report.by_module.len(), 1);
+        assert_eq!(report.by_module[0].source_file, "src/main.rs");
+        assert_eq!(report.by_module[0].line_pct, 50.0);
+        assert_eq!(report.by_module[0].function_pct, 0.0);
+        assert_eq!(report.by_module[0].branch_pct, 0.0);
+        assert!(report.by_module[0].below_threshold);
+    }
+
+    #[test]
+    fn code_coverage_normalizes_absolute_paths_for_relative_project_root() {
+        let absolute_source = std::env::current_dir()
+            .expect("current dir")
+            .join("src")
+            .join("test")
+            .join("coverage.rs");
+
+        let normalized = normalize_report_path(Path::new("."), &absolute_source.to_string_lossy());
+
+        assert_eq!(normalized, "src/test/coverage.rs");
+    }
+
+    #[test]
+    fn combined_coverage_json_reports_unavailable_code_coverage() {
+        let fixture = TestFixture::builder()
+            .with_template(FixtureTemplate::Minimal)
+            .build()
+            .expect("fixture");
+        let matrix = build_coverage_matrix(fixture.root()).expect("coverage matrix");
+
+        let rendered = render_combined_coverage(
+            &matrix,
+            None,
+            Some("cargo-tarpaulin failed".to_string()),
+            true,
+        )
+        .expect("combined JSON");
+        let value: serde_json::Value = serde_json::from_str(&rendered).expect("valid JSON");
+
+        assert_eq!(value["evidence"]["summary"]["total_modules"], 1);
+        assert_eq!(value["code"]["available"], false);
+        assert!(value["code"]["install"]
+            .as_str()
+            .expect("install hint")
+            .contains("cargo install cargo-tarpaulin"));
     }
 }

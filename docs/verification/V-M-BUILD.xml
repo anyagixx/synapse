@@ -5,6 +5,7 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
     <COMMAND>cargo clippy --all-targets --all-features -- -D warnings</COMMAND>
+    <COMMAND>make -n coverage</COMMAND>
     <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>cargo build --release</COMMAND>
   </UNIT_TESTS>
@@ -20,6 +21,7 @@
     <ASSERTION>Dockerfile builder stage avoids unused protobuf/OpenSSL system packages after dependency-tree audit.</ASSERTION>
     <ASSERTION>Cargo.toml keeps OpenTelemetry dependencies behind the optional telemetry feature and default features remain empty.</ASSERTION>
     <ASSERTION>Makefile exposes telemetry-up, telemetry-down, and telemetry-ui targets backed by docker-compose.telemetry.yml.</ASSERTION>
+    <ASSERTION>Makefile exposes coverage, coverage-watch, and coverage-open targets backed by cargo-tarpaulin.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-63,Phase-93</PHASE_GATE>
+  <PHASE_GATE>Phase-63,Phase-93,Phase-94</PHASE_GATE>
 </VERIFICATION>

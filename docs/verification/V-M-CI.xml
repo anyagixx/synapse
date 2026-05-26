@@ -13,6 +13,7 @@
     <COMMAND>cargo bench --bench search</COMMAND>
     <COMMAND>cargo bench --bench graph</COMMAND>
     <COMMAND>cargo bench --bench cascade</COMMAND>
+    <COMMAND>make -n coverage</COMMAND>
     <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
     <COMMAND>bash scripts/ci.sh</COMMAND>
   </UNIT_TESTS>
@@ -45,6 +46,7 @@
     <ASSERTION>CI and release workflows install Rust through retrying rustup shell steps to avoid third-party Node runtime deprecation noise and absorb transient network lookup failures; hosted main CI run 26120689647 completed successfully without Node/deprecation log markers.</ASSERTION>
     <ASSERTION>UPGRADE_4 token economy CI gate covers tools/list profiles, terse schemas, response trimming, cache hints, tools/recommend, compact_evidence, check_budget, and context_pressure.</ASSERTION>
     <ASSERTION>Criterion benchmark smoke runs search, graph, and cascade groups in a non-release-blocking hosted job.</ASSERTION>
+    <ASSERTION>CI coverage job installs cargo-tarpaulin, runs JSON coverage with tests/ and benches/ excluded, enforces the configured baseline threshold, uploads coverage artifacts, and writes a coverage summary.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-12,Phase-88,Phase-89</PHASE_GATE>
+  <PHASE_GATE>Phase-12,Phase-88,Phase-89,Phase-94</PHASE_GATE>
 </VERIFICATION>

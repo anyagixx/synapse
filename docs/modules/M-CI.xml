@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-CI" type="CORE_LOGIC" status="active">
   <NAME>M-CI</NAME>
-  <PURPOSE>CI quality gate — runs Rust checks, token economy gates, benchmark smoke, release truth gates, security audit, release-candidate dry-runs, and MyGRACE truth gates in reproducible entrypoints</PURPOSE>
-  <SCOPE>Formatting, linting, runtime panic guard, tests with isolated XDG data path, UPGRADE_4 token economy gate, Criterion benchmark smoke for search/graph/cascade, Linux/macOS hosted platform tests, push-time public fresh-install smoke pinned to the workflow commit, release tag/version guard, release-context freshness guard, release-candidate dry-run policy and GitHub Step Summary evidence, public fresh-install smoke, Linux/macOS release/install smoke matrix, strict cargo audit warning policy with documented RustSec waivers, Node 24-ready workflow actions, shell-based Rust toolchain setup, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
+  <PURPOSE>CI quality gate — runs Rust checks, code coverage, token economy gates, benchmark smoke, release truth gates, security audit, release-candidate dry-runs, and MyGRACE truth gates in reproducible entrypoints</PURPOSE>
+  <SCOPE>Formatting, linting, runtime panic guard, tests with isolated XDG data path, cargo-tarpaulin code coverage gate and artifact upload, UPGRADE_4 token economy gate, Criterion benchmark smoke for search/graph/cascade, Linux/macOS hosted platform tests, push-time public fresh-install smoke pinned to the workflow commit, release tag/version guard, release-context freshness guard, release-candidate dry-run policy and GitHub Step Summary evidence, public fresh-install smoke, Linux/macOS release/install smoke matrix, strict cargo audit warning policy with documented RustSec waivers, Node 24-ready workflow actions, shell-based Rust toolchain setup, canonical MyGRACE verification, review, refresh, and status checks</SCOPE>
   <FILES>
     <FILE>scripts/ci.sh</FILE>
     <FILE>scripts/token_economy_gate.sh</FILE>
@@ -14,6 +14,6 @@
     <FILE>.github/workflows/release.yml</FILE>
   </FILES>
   <DEPENDS>M-CI-RUNTIME-GUARD,M-CI-RELEASE-SMOKE,M-GRACE-VERIFY,M-GRACE-REVIEW,M-GRACE-REFRESH,M-GRACE-STATUS,M-INSTALL,M-TESTS-PARITY</DEPENDS>
-  <LINKS>.github/workflows/ci.yml,.github/workflows/release-candidate.yml,.github/workflows/release.yml,docs/verification-index.xml,docs/phases/Phase-88.xml,docs/phases/Phase-89.xml</LINKS>
+  <LINKS>.github/workflows/ci.yml,.github/workflows/release-candidate.yml,.github/workflows/release.yml,docs/verification-index.xml,docs/phases/Phase-88.xml,docs/phases/Phase-89.xml,docs/phases/Phase-94.xml</LINKS>
   <VERIFICATION_REF>V-M-CI</VERIFICATION_REF>
 </MODULE>

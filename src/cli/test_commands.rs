@@ -1,12 +1,13 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-TEST-COMMANDS
 // PURPOSE: Structured Synapse test command dispatcher with E2E/MCP/coverage/perf/contract/resilience/snapshot handlers and RTK legacy fallback.
-// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, MCP cargo target execution, coverage matrix rendering, perf baseline/check execution, contract differential spec execution, resilience spec discovery/execution, snapshot listing, and legacy RTK fallback dispatch.
+// SCOPE: syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, MCP cargo target execution, evidence and code coverage rendering, perf baseline/check execution, contract differential spec execution, resilience spec discovery/execution, snapshot listing, and legacy RTK fallback dispatch.
 // DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-TEST-HARNESS, M-TEST-E2E-RUNNER, M-TEST-MCP-REGRESSION, M-TEST-COVERAGE-MATRIX, M-TEST-PERF-REGRESSION, M-TEST-CONTRACT-DIFFERENTIAL, M-TEST-RESILIENCE-CHAOS, M-TEST-SNAPSHOT
 // LINKS:
 //   -> Phase-76 (implements) - UPGRADE_3 test command foundation
 //   -> Phase-78 (implements) - MCP regression command wiring
 //   -> Phase-79 (implements) - coverage and contract command wiring
+//   -> Phase-94 (implements) - code coverage command wiring
 //   -> Phase-80 (implements) - perf regression command wiring
 //   -> Phase-81 (implements) - resilience chaos command wiring
 //   -> M-CLI-RTK-COMMANDS (depends) - legacy compact test adapter
@@ -23,7 +24,7 @@
 // TestCmd::run - Dispatches structured actions or delegates legacy commands to RTK fallback
 // run_e2e_action - Runs one or more E2E scenario TOML files
 // run_mcp_action - Runs the real MCP regression cargo target
-// run_coverage_action - Builds and renders the module evidence coverage matrix
+// run_coverage_action - Builds and renders evidence and optional code coverage
 // run_perf_action - Runs performance baselines or threshold checks
 // run_contract_action - Runs one or more contract differential TOML specs
 // run_resilience_action - Runs resilience chaos TOML specs
@@ -33,7 +34,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.5.0 - Wired syn test resilience handler]
+// LAST_CHANGE: [v1.6.0 - Added syn test coverage --code]
 // END_CHANGE_SUMMARY
 
 use super::TestCmd;
@@ -41,7 +42,7 @@ use crate::config::Config;
 use crate::test::contract_test::{
     render_contract_test_report, run_contract_test_file, ContractTestOptions, ContractTestReport,
 };
-use crate::test::coverage::{build_coverage_matrix, render_coverage_json, render_coverage_table};
+use crate::test::coverage::render_coverage_output;
 use crate::test::e2e::{run_e2e_scenario, E2EResult};
 use crate::test::perf::{render_perf_report, run_perf_suite, PerfMode, PerfTestOptions};
 use crate::test::resilience::{render_resilience_report, run_resilience_specs, ResilienceOptions};
@@ -90,6 +91,8 @@ pub struct StructuredTestArgs {
     pub scenarios: Vec<String>,
     #[arg(long)]
     pub json: bool,
+    #[arg(long)]
+    pub code: bool,
     #[arg(long)]
     pub list: bool,
     #[arg(long)]
@@ -434,7 +437,7 @@ fn run_mcp_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
 // END_run_mcp_action
 
 // START_CONTRACT_run_coverage_action
-// PURPOSE: Build and render the module evidence coverage matrix for a project
+// PURPOSE: Build and render module evidence coverage plus optional code coverage for a project
 // INPUTS: { args: &StructuredTestArgs }
 // OUTPUTS: { anyhow::Result<()> }
 // SIDE_EFFECTS: reads MyGRACE indexes and evidence files, writes stdout
@@ -442,15 +445,14 @@ fn run_mcp_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
 //   -> M-TEST-COVERAGE-MATRIX (depends) - coverage matrix builder
 //   -> M-CLI-TEST-COMMANDS (depends) - CLI handler wiring
 //   -> Phase-79 (implements) - syn test coverage handler
+//   -> Phase-94 (implements) - syn test coverage --code handler
 //   -> NFR-003 (traces_to) - coverage output is compact and JSON-capable
 // START_run_coverage_action
 fn run_coverage_action(args: &StructuredTestArgs) -> anyhow::Result<()> {
-    let matrix = build_coverage_matrix(&args.project)?;
-    if args.json {
-        println!("{}", render_coverage_json(&matrix)?);
-    } else {
-        println!("{}", render_coverage_table(&matrix));
-    }
+    println!(
+        "{}",
+        render_coverage_output(&args.project, args.json, args.code)?
+    );
     Ok(())
 }
 // END_run_coverage_action
@@ -1194,6 +1196,7 @@ mod tests {
             fixture: None,
             scenarios: Vec::new(),
             json: false,
+            code: false,
             list: false,
             update: false,
             filter: None,

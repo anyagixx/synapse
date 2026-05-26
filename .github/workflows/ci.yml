@@ -115,6 +115,46 @@ jobs:
           rustup default stable
       - run: cargo test --all-targets
 
+  coverage:
+    runs-on: ubuntu-latest
+    env:
+      COVERAGE_THRESHOLD: 65
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust
+        run: |
+          for attempt in 1 2 3; do
+            rustup toolchain install stable --profile minimal && break
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+          rustup default stable
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin --locked
+      - name: Run coverage
+        run: |
+          cargo tarpaulin \
+            --out Json \
+            --output-dir coverage \
+            --exclude-files 'tests/*' \
+            --exclude-files 'benches/*' \
+            --fail-under "$COVERAGE_THRESHOLD"
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/
+      - name: Coverage summary
+        if: always()
+        run: |
+          if [ -f coverage/tarpaulin-report.json ]; then
+            COVERAGE=$(jq '.coverage' coverage/tarpaulin-report.json)
+            echo "## Code Coverage: ${COVERAGE}% (threshold ${COVERAGE_THRESHOLD}%)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   benchmarks:
     runs-on: ubuntu-latest
     continue-on-error: true

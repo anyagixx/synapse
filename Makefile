@@ -1,6 +1,7 @@
-.PHONY: build test run clean install lint fmt check ci token-economy bench bench-search bench-graph bench-cascade telemetry-up telemetry-down telemetry-ui
+.PHONY: build test run clean install lint fmt check ci token-economy coverage coverage-watch coverage-open bench bench-search bench-graph bench-cascade telemetry-up telemetry-down telemetry-ui
 
 BIN_NAME = syn
+COVERAGE_THRESHOLD ?= 65
 
 build:
 	cargo build
@@ -33,6 +34,15 @@ ci:
 
 token-economy:
 	bash scripts/token_economy_gate.sh
+
+coverage:
+	cargo tarpaulin --out Html --out Json --output-dir coverage --exclude-files 'tests/*' --exclude-files 'benches/*' --fail-under $(COVERAGE_THRESHOLD)
+
+coverage-watch:
+	cargo tarpaulin --out Html --output-dir coverage --exclude-files 'tests/*' --exclude-files 'benches/*'
+
+coverage-open:
+	@if command -v xdg-open >/dev/null 2>&1; then xdg-open coverage/tarpaulin-report.html; elif command -v open >/dev/null 2>&1; then open coverage/tarpaulin-report.html; else echo coverage/tarpaulin-report.html; fi
 
 clean:
 	cargo clean

@@ -6,6 +6,7 @@
     <TEST>CLI preserves e2e --scenario paths and snapshot --update/--filter options.</TEST>
     <TEST>CLI parses syn test perf --baseline, --check, --threshold, and --baseline-path options.</TEST>
     <TEST>CLI parses syn test resilience --fail-fast and explicit spec paths.</TEST>
+    <TEST>CLI parses syn test coverage --code and routes it to code coverage rendering.</TEST>
   </UNIT_TESTS>
   <INTEGRATION_TESTS>
     <TEST>cargo test --all-targets covers command parsing and dispatch behavior.</TEST>
@@ -14,6 +15,7 @@
     <TEST>syn test e2e without --scenario keeps planned output while --scenario runs the E2E runner.</TEST>
     <TEST>syn test mcp invokes cargo test --test e2e_mcp and emits bounded text or JSON reports.</TEST>
     <TEST>syn test coverage --json builds the real coverage matrix.</TEST>
+    <TEST>syn test coverage --code --json emits evidence and code coverage sections.</TEST>
     <TEST>syn test perf --baseline writes a platform-aware baseline and --check compares medians against threshold.</TEST>
     <TEST>syn test contract &lt;spec&gt; runs real contract differential specs.</TEST>
     <TEST>syn test resilience discovers default resilience specs in sorted order and fails on failed cases.</TEST>
@@ -24,6 +26,7 @@
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>CLI schema links to M-TEST-HARNESS and all UPGRADE_3 test modules.</ASSERTION>
+    <ASSERTION>syn test coverage --code preserves evidence matrix output and adds cargo-tarpaulin code coverage status.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-76,Phase-77,Phase-78,Phase-79,Phase-80,Phase-81</PHASE_GATE>
+  <PHASE_GATE>Phase-76,Phase-77,Phase-78,Phase-79,Phase-80,Phase-81,Phase-94</PHASE_GATE>
 </VERIFICATION>
