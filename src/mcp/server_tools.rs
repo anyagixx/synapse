@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including response economy parameters, cache validator hints, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including tools/recommend, response economy parameters, cache validator hints, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.8.0 - Exposed optional _if_none_match schemas for cacheable tools]
+// LAST_CHANGE: [v4.9.0 - Added tools/recommend schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -190,6 +190,7 @@ pub(crate) fn tool_profile_membership(tool_name: &str) -> &'static [ToolProfile]
         "run_test_guide" | "submit_test_report" | "self_heal" | "diagnose_failure"
         | "repair_contract" | "grace_fix" => &[Debugging, Implementation],
         "advance_phase" => &[Implementation],
+        "tools/recommend" => &[Planning, Implementation, Debugging],
 
         _ => &[],
     }
@@ -771,6 +772,7 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
         }),
     ];
 
+    tools.push(serde_json::json!({"name":"tools/recommend","description":"Recommend up to eight context-relevant tools before listing schemas.","inputSchema":{"type":"object","properties":{"context":{"type":"string","description":"Current task or surrounding agent context"},"run_id":{"type":"string","description":"Optional persisted run id for run-state-aware recommendations"},"max_tools":{"type":"number","default":8,"description":"Maximum tools to recommend; clamped to 1..8"}}}}));
     add_response_economy_schemas(&mut tools);
     for tool in &mut tools {
         if tool
