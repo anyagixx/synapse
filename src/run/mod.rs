@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER
 // PURPOSE: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, handoffs, resumable context, phase gates, pre-commit gates, action queues, self-heal plans, scenarios, and outcomes for controlled execution
-// SCOPE: Run state model, task model, step model, gate model, review model, replay model, structured handoffs, agent context, action queue executor, phase gate engine, pre-commit verification, self-heal metadata, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
+// SCOPE: Run state model, task model, step model, gate model, review model, replay model, structured handoffs, agent context, action queue executor, phase gate engine, pre-commit verification, evidence compaction, self-heal metadata, scenario harness, outcome model, durable JSON persistence, run lifecycle helpers
 // DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-STATUS, M-GRACE-VERIFY, M-RUNNER-HANDOFF, M-RUNNER-AGENT-CONTEXT, M-RUNNER-PHASE-ENGINE, M-RUNNER-PRECOMMIT, M-RUNNER-SELF-HEAL, M-TRACKING
 // LINKS:
 //   → UC-002 (implements) - verify and review bounded autonomous changes
@@ -14,16 +14,17 @@
 // RunRecord — Persisted run state
 // RunReviewDecision — Persisted human review decision for blocked runs
 // RunReplay — Replayable run timeline assembled from persisted state
-// phase / pre_commit — Active phase and pre-commit verification gates
+// phase / pre_commit / evidence_compaction — Phase gates, pre-commit gates, and compact evidence refs
 // RunActionPlan / SelfHealPlan / RunScenarioResult — End-to-end bounded action, self-heal, and scenario results
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v0.8.0 - Skipped action snapshots when listing run records]
+// LAST_CHANGE: [v0.9.0 - Added run evidence compaction module]
 // END_CHANGE_SUMMARY
 
 pub mod actions;
 pub mod agent_context;
+pub mod evidence_compaction;
 pub mod handoff;
 pub mod phase;
 pub mod pre_commit;
@@ -32,6 +33,7 @@ mod review;
 pub mod scenario;
 pub mod self_heal;
 
+pub use evidence_compaction::EvidenceCompactionReport;
 pub use replay::{RunReplay, RunReplayEvent};
 pub use review::{RunReviewDecision, RunReviewStatus};
 

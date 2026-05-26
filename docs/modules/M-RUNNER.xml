@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-RUNNER" type="RUNTIME" status="active">
   <NAME>M-RUNNER</NAME>
-  <PURPOSE>Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, handoffs, resumable context, phase gates, pre-commit gates, action queues, self-heal plans, scenarios, and outcomes for controlled execution</PURPOSE>
-  <SCOPE>Run state model, task model, step model, gate model, human review model, replay timeline model, structured handoffs, agent resume context, durable action queue executor, phase gate engine, pre-commit verification, self-heal metadata handoff, autonomous scenario harness, outcome model, durable JSON persistence, run lifecycle helpers</SCOPE>
+  <PURPOSE>Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, handoffs, resumable context, phase gates, pre-commit gates, evidence compaction, action queues, self-heal plans, scenarios, and outcomes for controlled execution</PURPOSE>
+  <SCOPE>Run state model, task model, step model, gate model, human review model, replay timeline model, structured handoffs, agent resume context, durable action queue executor, phase gate engine, pre-commit verification, evidence reference deduplication/aliasing/truncation, self-heal metadata handoff, autonomous scenario harness, outcome model, durable JSON persistence, run lifecycle helpers</SCOPE>
   <FILES>
     <FILE>src/run/mod.rs</FILE>
+    <FILE>src/run/evidence_compaction.rs</FILE>
     <FILE>src/run/actions.rs</FILE>
     <FILE>src/run/agent_context.rs</FILE>
     <FILE>src/run/handoff.rs</FILE>
@@ -15,6 +16,6 @@
     <FILE>src/run/scenario.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-STATUS,M-GRACE-VERIFY,M-RUNNER-HANDOFF,M-RUNNER-AGENT-CONTEXT,M-RUNNER-PHASE-ENGINE,M-RUNNER-PRECOMMIT,M-RUNNER-SELF-HEAL,M-TRACKING</DEPENDS>
-  <LINKS>V-M-RUNNER,docs/phases/Phase-23.xml,docs/phases/Phase-70.xml,docs/phases/Phase-73.xml,docs/phases/Phase-74.xml,docs/phases/Phase-75.xml</LINKS>
+  <LINKS>V-M-RUNNER,docs/phases/Phase-23.xml,docs/phases/Phase-70.xml,docs/phases/Phase-73.xml,docs/phases/Phase-74.xml,docs/phases/Phase-75.xml,docs/phases/Phase-87.xml</LINKS>
   <VERIFICATION_REF>V-M-RUNNER</VERIFICATION_REF>
 </MODULE>
