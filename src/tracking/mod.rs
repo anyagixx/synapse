@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TRACKING
 // PURPOSE: SQLite tracking and provenance ledger — records route-aware token usage plus autonomous run events by canonical project identity and provides stats
-// SCOPE: Tracker struct, canonical project identity, explicit test state overrides, SQLite schema, route-aware token recording, MCP metrics module boundary, provenance event recording, RTK coverage counts, session/adapter stats querying, route adoption and missed-route candidate querying, TrackingStats and RunEvent models
+// SCOPE: Tracker struct, canonical project identity, explicit test state overrides, SQLite schema, route-aware token recording, session budget queries, MCP metrics module boundary, provenance event recording, RTK coverage counts, session/adapter stats querying, route adoption and missed-route candidate querying, TrackingStats and RunEvent models
 // DEPENDS: M-CONFIG, M-TRACKING-MCP-METRICS
 // LINKS:
 //   → M-PROXY-ROUTER (depends) - adapter and route metadata source
@@ -15,13 +15,14 @@
 // TrackingStats — Aggregate token economy statistics
 // TrackingAdapterStat — Aggregate savings grouped by routed adapter
 // TrackingSessionStat — Aggregate savings grouped by session id
+// BudgetStatus / BudgetLevel — Per-session token budget status and threshold level
 // TrackingAdoptionStats — Aggregate RTK route adoption statistics
 // TrackingMissedRouteStat — Passthrough command candidate for RTK routing review
 // RunEvent — Autonomous run lifecycle event record
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.5.0 — Added MCP metrics module boundary for Phase-67]
+// LAST_CHANGE: [v3.6.0 - Added session budget module]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -30,6 +31,9 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 pub mod mcp_metrics;
+pub mod session_budget;
+
+pub use session_budget::{BudgetLevel, BudgetStatus};
 
 const DEFAULT_MISSED_ROUTE_LIMIT: usize = 12;
 const MAX_MISSED_ROUTE_COMMAND_CHARS: i64 = 160;

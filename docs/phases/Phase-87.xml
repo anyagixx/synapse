@@ -28,7 +28,7 @@
     <step-2 module="M-RUNNER-SELF-HEAL" status="done">Compact evidence periodically during long self-heal loops.</step-2>
     <step-3 module="M-MCP-SERVER-RUN-TOOLS" status="done">Expose compact_evidence MCP tool for persisted run records.</step-3>
     <step-4 module="M-CONFIG" status="done">Add backward-compatible budget config with session_token_limit=0 default.</step-4>
-    <step-5 module="M-TRACKING" status="planned">Add BudgetStatus, BudgetLevel, check_budget, and can_afford session queries.</step-5>
+    <step-5 module="M-TRACKING" status="done">Add BudgetStatus, BudgetLevel, check_budget, and can_afford session queries.</step-5>
     <step-6 module="M-MCP-SERVER" status="planned">Gate expensive tools and append warning metadata when session budget is near exhaustion.</step-6>
     <step-7 module="M-MCP-SERVER-GRACE-TOOLS" status="planned">Expose check_budget MCP tool.</step-7>
   </STEPS>
@@ -37,11 +37,11 @@
     <CHECK status="passed">cargo test run::self_heal --lib -- --test-threads=8</CHECK>
     <CHECK status="passed">cargo test mcp::server_run_tools --lib -- --test-threads=8</CHECK>
     <CHECK status="passed">cargo test config::tests::default_budget_runtime_limits_are_unlimited --lib</CHECK>
-    <CHECK status="planned">cargo test tracking::session_budget::tests --lib</CHECK>
+    <CHECK status="passed">cargo test tracking::session_budget::tests --lib</CHECK>
     <CHECK status="passed">compact_evidence removes duplicates and aliases action://, scenario://, docs/runs/, docs/verification/, docs/modules/, and docs/phases/.</CHECK>
     <CHECK status="passed">compact_evidence truncates above 20 refs with a summary marker.</CHECK>
     <CHECK status="passed">compact_evidence MCP tool compacts and persists refs for a run record.</CHECK>
-    <CHECK status="planned">check_budget returns normal, warning, and blocked states.</CHECK>
+    <CHECK status="passed">check_budget returns normal, warning, and blocked states.</CHECK>
     <CHECK status="passed">budget limit 0 remains unlimited and backward-compatible.</CHECK>
     <CHECK status="planned">blocked budget prevents expensive tools with budget_exhausted=true but allows project_status and verify_project.</CHECK>
   </VERIFICATION>
