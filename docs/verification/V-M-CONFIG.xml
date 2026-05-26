@@ -8,6 +8,8 @@
     <COMMAND>cargo test config::tests::config_key_helpers --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test config::tests::proxy_config_deserializes_runtime_defaults_for_existing_files --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test config::tests::default_observability_runtime_limits_are_release_defaults --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test config::tests::config_key_helpers_get_set_and_unset_typed_values --lib</COMMAND>
+    <COMMAND>syn config get telemetry.enabled</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests::test_detect_lsp_command_uses_config_override --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
@@ -18,6 +20,7 @@
     <ASSERTION>Embedding config deserializes with release-safe disabled defaults for existing files and exposes typed enablement/provider/model/cache_dir/batch_size keys.</ASSERTION>
     <ASSERTION>Observability config deserializes with release-safe defaults for existing files and exposes typed enablement, MCP retention, stats limits, and pipeline bounds keys.</ASSERTION>
     <ASSERTION>Budget config deserializes with unlimited session_token_limit=0 and context_window_limit=200000 defaults for existing files and exposes typed session limit, context window, warning, block, and reset keys.</ASSERTION>
+    <ASSERTION>Telemetry config deserializes with enabled=false by default and exposes telemetry.enabled as a typed boolean config key.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-61,Phase-65,Phase-66,Phase-67,Phase-87,Phase-88</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-61,Phase-65,Phase-66,Phase-67,Phase-87,Phase-88,Phase-93</PHASE_GATE>
 </VERIFICATION>

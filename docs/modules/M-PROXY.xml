@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-PROXY" type="INTEGRATION" status="active">
   <NAME>M-PROXY</NAME>
-  <PURPOSE>Proxy executor — routes shell commands, applies TOML filters, and reports token tracking degradation</PURPOSE>
-  <SCOPE>Proxy struct, ProxyOutput status/evidence model, CommandRouter integration, FilterEngine integration, filter dry-run submodule declaration, async-friendly configurable CommandRunner integration, Unicode-safe passthrough truncation, adapter-aware token tracking with degraded-mode logging</SCOPE>
+  <PURPOSE>Proxy executor — routes shell commands, applies TOML filters, records telemetry fields, and reports token tracking degradation</PURPOSE>
+  <SCOPE>Proxy struct, ProxyOutput status/evidence model, CommandRouter integration, FilterEngine integration, filter dry-run submodule declaration, async-friendly configurable CommandRunner integration, Unicode-safe passthrough truncation, adapter-aware token tracking with degraded-mode logging, and proxy.execute tracing fields</SCOPE>
   <FILES>
     <FILE>src/proxy/mod.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-TRACKING,M-PROXY-ROUTER,M-PROXY-RUNNER,M-PROXY-FILTER,M-UTILS</DEPENDS>
-  <LINKS>filters.toml,docs/phases/Phase-21.xml,docs/phases/Phase-24.xml,docs/phases/Phase-25.xml,docs/phases/Phase-61.xml,docs/phases/Phase-68.xml</LINKS>
+  <LINKS>filters.toml,docs/phases/Phase-21.xml,docs/phases/Phase-24.xml,docs/phases/Phase-25.xml,docs/phases/Phase-61.xml,docs/phases/Phase-68.xml,docs/phases/Phase-93.xml</LINKS>
   <VERIFICATION_REF>V-M-PROXY</VERIFICATION_REF>
 </MODULE>

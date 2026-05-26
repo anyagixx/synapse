@@ -3,6 +3,8 @@
   <UNIT_TESTS>
     <COMMAND>cargo audit --deny warnings --ignore RUSTSEC-2024-0436</COMMAND>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
+    <COMMAND>cargo clippy --all-targets --all-features -- -D warnings</COMMAND>
     <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
     <COMMAND>cargo build --release</COMMAND>
   </UNIT_TESTS>
@@ -16,6 +18,8 @@
     <ASSERTION>Dockerfile copies the embedded OpenCode rules and plugin assets required by include_str! during release compilation.</ASSERTION>
     <ASSERTION>Dockerfile runtime image provides a GLIBC version compatible with the Rust 1.95.0 builder output.</ASSERTION>
     <ASSERTION>Dockerfile builder stage avoids unused protobuf/OpenSSL system packages after dependency-tree audit.</ASSERTION>
+    <ASSERTION>Cargo.toml keeps OpenTelemetry dependencies behind the optional telemetry feature and default features remain empty.</ASSERTION>
+    <ASSERTION>Makefile exposes telemetry-up, telemetry-down, and telemetry-ui targets backed by docker-compose.telemetry.yml.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-63</PHASE_GATE>
+  <PHASE_GATE>Phase-63,Phase-93</PHASE_GATE>
 </VERIFICATION>

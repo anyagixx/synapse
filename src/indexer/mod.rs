@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-INDEXER
-// PURPOSE: Code indexer — walks, delegates pipeline block construction, stores full or delta snapshots, and searches code blocks with guarded storage health checks
-// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, embedding attachment, stale-entry pruning, GraphBuilder cache invalidation, filtered search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
+// PURPOSE: Code indexer — walks, delegates pipeline block construction, stores full or delta snapshots, records index telemetry fields, and searches code blocks with guarded storage health checks
+// SCOPE: Indexer struct, SearchResult, guarded storage locks, index_directory, index_delta, gitignore-aware indexing, embedding attachment, stale-entry pruning, GraphBuilder cache invalidation, indexer.index_directory tracing fields, filtered search, search_in_root, hybrid_search, hybrid_search_in_root, storage health propagation, view_signatures
 // DEPENDS: M-INDEXER-EMBEDDING, M-INDEXER-PIPELINE, M-INDEXER-WALKER, M-INDEXER-PARSER, M-INDEXER-STORAGE, M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES, M-CONFIG
 // LINKS:
 //   → M-INDEXER-EMBEDDING (depends) — semantic embedding provider specification
@@ -26,7 +26,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.0.0 - Added best-effort embedding generation for indexing and search]
+// LAST_CHANGE: [v4.1.0 - Added index_directory telemetry fields]
 // END_CHANGE_SUMMARY
 
 pub mod embedding;
@@ -138,9 +138,18 @@ impl Indexer {
         root: &Path,
         respect_gitignore: bool,
     ) -> anyhow::Result<()> {
+        let span = tracing::info_span!(
+            "indexer.index_directory",
+            root = %root.display(),
+            respect_gitignore,
+            files = tracing::field::Empty,
+            blocks = tracing::field::Empty
+        );
+        let _enter = span.enter();
         let walker = walker::Walker::new_with_gitignore(root, respect_gitignore);
         let files = walker.walk();
         let total = files.len();
+        span.record("files", total as u64);
 
         tracing::info!("Indexing {} files in {}", total, root.display());
 
@@ -153,9 +162,11 @@ impl Indexer {
             .ok_or_else(|| anyhow::anyhow!("index storage unavailable after initialization"))?;
         storage.replace_all_blocks(all_stored)?;
         GraphBuilder::invalidate_cache(root);
+        let block_count = storage.count();
+        span.record("blocks", block_count as u64);
         tracing::info!(
             "Index complete: {} blocks from {} files",
-            storage.count(),
+            block_count,
             total
         );
         Ok(())

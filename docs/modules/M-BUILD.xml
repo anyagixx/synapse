@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-BUILD" type="UTILITY" status="active">
   <NAME>M-BUILD</NAME>
-  <PURPOSE>Build metadata and release container policy — declares public package identity, dependency lock state, rebuild triggers, and Docker release build semantics</PURPOSE>
-  <SCOPE>Cargo.toml package metadata including target-specific macOS Intel fastembed/ort dynamic loading, Cargo.lock dependency lock state, build.rs rerun-if-changed directives for embedded Synapse/RTK proxy filters and OpenCode assets, and Dockerfile release build stages using a Rust 1.95.0-compatible builder image, copied OpenCode embedded assets, GLIBC-compatible Debian trixie runtime, locked cargo release semantics, and audited system packages</SCOPE>
+  <PURPOSE>Build metadata and release container policy — declares public package identity, dependency lock state, telemetry feature flag, rebuild triggers, and Docker release build semantics</PURPOSE>
+  <SCOPE>Cargo.toml package metadata including target-specific macOS Intel fastembed/ort dynamic loading, optional telemetry feature dependencies, Cargo.lock dependency lock state, Makefile telemetry targets, docker-compose.telemetry.yml local Jaeger stack, build.rs rerun-if-changed directives for embedded Synapse/RTK proxy filters and OpenCode assets, and Dockerfile release build stages using a Rust 1.95.0-compatible builder image, copied OpenCode embedded assets, GLIBC-compatible Debian trixie runtime, locked cargo release semantics, and audited system packages</SCOPE>
   <FILES>
     <FILE>Cargo.toml</FILE>
     <FILE>Cargo.lock</FILE>
+    <FILE>Makefile</FILE>
+    <FILE>docker-compose.telemetry.yml</FILE>
     <FILE>build.rs</FILE>
     <FILE>Dockerfile</FILE>
   </FILES>
   <DEPENDS>M-PROXY-FILTER,M-HOOKS</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-33.xml,docs/phases/Phase-59.xml,docs/phases/Phase-63.xml</LINKS>
+  <LINKS>Cargo.toml,docs/phases/Phase-33.xml,docs/phases/Phase-59.xml,docs/phases/Phase-63.xml,docs/phases/Phase-93.xml</LINKS>
   <VERIFICATION_REF>V-M-BUILD</VERIFICATION_REF>
 </MODULE>

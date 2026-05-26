@@ -18,7 +18,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.2 - Added Phase-89 Criterion benchmark helpers with traced explicit failure handling]
+// LAST_CHANGE: [v1.1.3 - Replaced manual binary candidate search with Iterator::find for clippy gate]
 // END_CHANGE_SUMMARY
 
 #![allow(dead_code)]
@@ -203,15 +203,12 @@ fn syn_binary_path() -> Option<PathBuf> {
         }
     }
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    for candidate in [
+    [
         manifest.join("target").join("release").join(binary_name()),
         manifest.join("target").join("debug").join(binary_name()),
-    ] {
-        if candidate.exists() {
-            return Some(candidate);
-        }
-    }
-    None
+    ]
+    .into_iter()
+    .find(|candidate| candidate.exists())
 }
 // END_syn_binary_path
 

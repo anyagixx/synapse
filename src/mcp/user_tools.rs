@@ -30,7 +30,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added Phase-92 user-defined MCP command tools]
+// LAST_CHANGE: [v1.0.1 - Serialized shell-spawning user tool tests against global cwd changes]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{self, trim_text_to_budget};
@@ -915,6 +915,7 @@ mod tests {
     // START_execute_strips_ansi_and_honors_allowed_paths
     #[tokio::test]
     async fn execute_strips_ansi_and_honors_allowed_paths() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let tool: UserToolDefinition =
             serde_json::from_value(valid_tool("local_echo")).expect("valid tool");
 
@@ -947,6 +948,7 @@ mod tests {
     // START_execute_trims_long_output
     #[tokio::test]
     async fn execute_trims_long_output() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let mut value = valid_tool("local_echo");
         value["handler"]["command"] =
             Value::from("printf 'alpha beta gamma delta epsilon zeta eta theta iota kappa'");
@@ -966,6 +968,7 @@ mod tests {
     // START_execute_times_out_long_running_tool
     #[tokio::test]
     async fn execute_times_out_long_running_tool() {
+        let _cwd = crate::utils::test_cwd_lock().lock().await;
         let mut value = valid_tool("slow_tool");
         value["handler"]["command"] = Value::from("sleep 5");
         value["handler"]["timeout_secs"] = Value::from(1);

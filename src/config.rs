@@ -1,12 +1,12 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CONFIG
 // PURPOSE: Config model and explicit load/default/init semantics for synapsec.toml
-// SCOPE: Config struct definitions including embedding provider settings, budget and context-window settings, observability runtime bounds, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
+// SCOPE: Config struct definitions including embedding provider settings, budget and context-window settings, observability runtime bounds, telemetry defaults, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
 // DEPENDS: N/A
 // LINKS: synapsec.toml
 
 // START_MODULE_MAP
-// Config — Top-level config struct (project, index, search, proxy, compress, tracking, budget, observability, graphrag, embedding, lsp)
+// Config — Top-level config struct (project, index, search, proxy, compress, tracking, budget, observability, telemetry, graphrag, embedding, lsp)
 // ProjectConfig — Project metadata (name, version, strictness)
 // IndexConfig — Indexer settings (chunk_size, chunk_overlap, require_git)
 // SearchConfig — Search settings (max_results, similarity_threshold, hybrid_enabled)
@@ -15,6 +15,7 @@
 // TrackingConfig — Tracking settings (enabled, history_days)
 // BudgetConfig — Per-session token budget and context-window settings
 // ObservabilityConfig — Dashboard/MCP observability settings and runtime bounds
+// TelemetryConfig — Optional OpenTelemetry OTLP export settings
 // GraphRagConfig — GraphRAG settings (enabled, use_llm)
 // EmbeddingConfig — Local semantic embedding settings (enabled, provider, model, cache_dir, batch_size)
 // LspConfig — Language server command overrides
@@ -23,14 +24,16 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.12.0 - Added context window budget config]
+// LAST_CHANGE: [v3.13.0 - Added default-off telemetry config]
 // END_CHANGE_SUMMARY
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 mod observability;
+mod telemetry;
 pub use observability::ObservabilityConfig;
+pub use telemetry::TelemetryConfig;
 
 // START_public_api
 
@@ -47,6 +50,8 @@ pub struct Config {
     pub budget: BudgetConfig,
     #[serde(default)]
     pub observability: ObservabilityConfig,
+    #[serde(default)]
+    pub telemetry: TelemetryConfig,
     pub graphrag: GraphRagConfig,
     #[serde(default)]
     pub embedding: EmbeddingConfig,
@@ -394,6 +399,10 @@ const CONFIG_KEY_SPECS: &[ConfigKeySpec] = &[
         value_type: "usize",
     },
     ConfigKeySpec {
+        key: "telemetry.enabled",
+        value_type: "bool",
+    },
+    ConfigKeySpec {
         key: "graphrag.enabled",
         value_type: "bool",
     },
@@ -550,6 +559,7 @@ impl Config {
             "observability.pipeline_max_line_bytes" => {
                 self.observability.pipeline_max_line_bytes.to_string()
             }
+            "telemetry.enabled" => self.telemetry.enabled.to_string(),
             "graphrag.enabled" => self.graphrag.enabled.to_string(),
             "graphrag.use_llm" => self.graphrag.use_llm.to_string(),
             "embedding.enabled" => self.embedding.enabled.to_string(),
@@ -649,6 +659,7 @@ impl Config {
                 self.observability.pipeline_max_line_bytes =
                     parse_usize_range(&canonical, value, 1024, 67_108_864)?
             }
+            "telemetry.enabled" => self.telemetry.enabled = parse_bool(&canonical, value)?,
             "graphrag.enabled" => self.graphrag.enabled = parse_bool(&canonical, value)?,
             "graphrag.use_llm" => self.graphrag.use_llm = parse_bool(&canonical, value)?,
             "embedding.enabled" => self.embedding.enabled = parse_bool(&canonical, value)?,
@@ -743,6 +754,7 @@ impl Config {
                 self.observability.pipeline_max_line_bytes =
                     defaults.observability.pipeline_max_line_bytes
             }
+            "telemetry.enabled" => self.telemetry.enabled = defaults.telemetry.enabled,
             "graphrag.enabled" => self.graphrag.enabled = defaults.graphrag.enabled,
             "graphrag.use_llm" => self.graphrag.use_llm = defaults.graphrag.use_llm,
             "embedding.enabled" => self.embedding.enabled = defaults.embedding.enabled,
@@ -807,6 +819,7 @@ impl Default for Config {
             },
             budget: BudgetConfig::default(),
             observability: ObservabilityConfig::default(),
+            telemetry: TelemetryConfig::default(),
             graphrag: GraphRagConfig {
                 enabled: false,
                 use_llm: false,
@@ -1126,6 +1139,11 @@ use_llm = false
         let mut config = Config::default();
 
         let entry = config
+            .get_config_key("telemetry.enabled")
+            .expect("get telemetry default");
+        assert_eq!(entry.value, "false");
+
+        let entry = config
             .set_config_key("search.max-results", "42")
             .expect("set key");
         assert_eq!(entry.key, "search.max_results");
@@ -1137,6 +1155,12 @@ use_llm = false
             .expect("set bool");
         assert_eq!(entry.value, "false");
         assert!(!config.tracking.enabled);
+
+        let entry = config
+            .set_config_key("telemetry.enabled", "true")
+            .expect("set telemetry toggle");
+        assert_eq!(entry.value, "true");
+        assert!(config.telemetry.enabled);
 
         let entry = config
             .set_config_key("embedding.enabled", "true")
@@ -1256,6 +1280,7 @@ use_llm = false
         let loaded: Config = toml::from_str(&persisted).expect("parse persisted config");
 
         assert!(!loaded.tracking.enabled);
+        assert!(!loaded.telemetry.enabled);
         assert_eq!(loaded.budget.session_token_limit, 0);
         assert_eq!(loaded.budget.context_window_limit, 200_000);
     }

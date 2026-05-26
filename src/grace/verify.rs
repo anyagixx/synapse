@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, delegated phase, and staged git checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests, traceability, cascade-no-drift, non-human patterns, anchor syntax validation, verify_all, verify_all_with_profile, verify_staged_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests, traceability, cascade-no-drift, non-human patterns, anchor syntax validation, verify_all, verify_all_with_profile telemetry span, verify_staged_with_profile, verify_module_local, verify_wave, delegated verify_phase
 // DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 - Added staged git verification entrypoint for pre-commit hooks]
+// LAST_CHANGE: [v2.24.0 - Added grace.verify telemetry span fields]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -61,6 +61,11 @@ impl Verifier {
     // INPUTS: { root: &Path — project root }, { profile: GraceProfile }
     // OUTPUTS: { anyhow::Result<Vec<VerificationResult>> }
     // START_verifier_verify_all_with_profile
+    #[tracing::instrument(
+        name = "grace.verify",
+        skip(root),
+        fields(root = %root.display(), profile = profile.as_str(), checks = tracing::field::Empty, passed = tracing::field::Empty)
+    )]
     pub async fn verify_all_with_profile(
         root: &Path,
         profile: GraceProfile,
@@ -70,6 +75,12 @@ impl Verifier {
         results.push(Self::verify_module_local_with_profile(root, profile).await?);
         results.push(Self::verify_wave(root).await?);
         results.push(Self::verify_phase(root).await?);
+
+        let passed = results.iter().filter(|result| result.passed).count();
+        let checks: usize = results.iter().map(|result| result.checks.len()).sum();
+        tracing::Span::current()
+            .record("checks", checks as u64)
+            .record("passed", passed as u64);
 
         Ok(results)
     }

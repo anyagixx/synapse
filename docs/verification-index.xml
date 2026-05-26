@@ -85,6 +85,7 @@
     <VERIFICATION id="V-M-MCP-SERVER-GRACE-TOOLS" module="M-MCP-SERVER-GRACE-TOOLS" path="docs/verification/V-M-MCP-SERVER-GRACE-TOOLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-RESPONSE" module="M-MCP-SERVER-RESPONSE" path="docs/verification/V-M-MCP-SERVER-RESPONSE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-RUN-TOOLS" module="M-MCP-SERVER-RUN-TOOLS" path="docs/verification/V-M-MCP-SERVER-RUN-TOOLS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-MCP-SERVER-TELEMETRY" module="M-MCP-SERVER-TELEMETRY" path="docs/verification/V-M-MCP-SERVER-TELEMETRY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-SERVER-TOOLS" module="M-MCP-SERVER-TOOLS" path="docs/verification/V-M-MCP-SERVER-TOOLS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-MCP-USER-TOOLS" module="M-MCP-USER-TOOLS" path="docs/verification/V-M-MCP-USER-TOOLS.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-MEMORY" module="M-MEMORY" path="docs/verification/V-M-MEMORY.xml" priority="normal" status="active" />
@@ -118,6 +119,7 @@
     <VERIFICATION id="V-M-TEST-PERF-REGRESSION" module="M-TEST-PERF-REGRESSION" path="docs/verification/V-M-TEST-PERF-REGRESSION.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TEST-CONTRACT-DIFFERENTIAL" module="M-TEST-CONTRACT-DIFFERENTIAL" path="docs/verification/V-M-TEST-CONTRACT-DIFFERENTIAL.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-TEST-RESILIENCE-CHAOS" module="M-TEST-RESILIENCE-CHAOS" path="docs/verification/V-M-TEST-RESILIENCE-CHAOS.xml" priority="critical" status="active" />
+    <VERIFICATION id="V-M-TELEMETRY" module="M-TELEMETRY" path="docs/verification/V-M-TELEMETRY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TRACKING" module="M-TRACKING" path="docs/verification/V-M-TRACKING.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TRACKING-MCP-METRICS" module="M-TRACKING-MCP-METRICS" path="docs/verification/V-M-TRACKING-MCP-METRICS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-UTILS" module="M-UTILS" path="docs/verification/V-M-UTILS.xml" priority="normal" status="active" />

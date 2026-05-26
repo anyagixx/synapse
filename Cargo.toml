@@ -15,6 +15,10 @@ categories = ["command-line-utilities", "development-tools"]
 name = "syn"
 path = "src/lib.rs"
 
+[features]
+default = []
+telemetry = ["dep:opentelemetry", "dep:opentelemetry-otlp", "dep:opentelemetry_sdk", "dep:tracing-opentelemetry"]
+
 [[bin]]
 name = "syn"
 path = "src/main.rs"
@@ -28,6 +32,10 @@ toml = "0.8"
 tokio = { version = "1", features = ["full", "io-util"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+opentelemetry = { version = "0.27", features = ["trace"], optional = true }
+opentelemetry-otlp = { version = "0.27", features = ["grpc-tonic", "trace"], optional = true }
+opentelemetry_sdk = { version = "0.27", features = ["rt-tokio"], optional = true }
+tracing-opentelemetry = { version = "0.28", optional = true }
 tree-sitter = "0.24"
 tree-sitter-rust = "0.24"
 tree-sitter-python = "0.25"

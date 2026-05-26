@@ -46,6 +46,15 @@ pipeline_response_queue_capacity = 128
 pipeline_max_concurrent_requests = 16
 pipeline_max_line_bytes = 10485760
 
+[telemetry]
+enabled = false
+endpoint = "http://localhost:4317"
+service_name = "synapse"
+sampling = "always_on"
+batch_interval_ms = 2000
+
+[telemetry.resource]
+
 [graphrag]
 enabled = false
 use_llm = false

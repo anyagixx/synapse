@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Technology project="Synapse" version="1.2" updated="2026-05-25">
+<Technology project="Synapse" version="1.3" updated="2026-05-26">
   <Stack>
     <Language name="Rust" version="1.95.0">
       <Runtime name="native-binary" version="1.95.0" />
@@ -7,8 +7,6 @@
     </Language>
     <Framework name="Axum" version="0.7.9">
       <Purpose>HTTP dashboard and API server for Synapse local tooling</Purpose>
-      <Documentation>https://docs.rs/axum/0.7/axum/</Documentation>
-      <Installation>cargo add axum@0.7.9</Installation>
     </Framework>
     <Database name="SQLite" version="3.45.0">
       <Driver name="rusqlite" version="0.31.0" />
@@ -27,6 +25,9 @@
       <Dependency ecosystem="rust" name="hf-hub" version="0.5.0" source="Cargo.lock transitive via fastembed" exact="true" />
       <Dependency ecosystem="rust" name="ignore" version="0.4.25" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="notify" version="8.2.0" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="opentelemetry" version="0.27.1" source="Cargo.toml/Cargo.lock optional telemetry feature" exact="true" />
+      <Dependency ecosystem="rust" name="opentelemetry-otlp" version="0.27.0" source="Cargo.toml/Cargo.lock optional telemetry feature" exact="true" features="grpc-tonic,trace" />
+      <Dependency ecosystem="rust" name="opentelemetry_sdk" version="0.27.1" source="Cargo.toml/Cargo.lock optional telemetry feature" exact="true" features="rt-tokio" />
       <Dependency ecosystem="rust" name="ort" version="2.0.0-rc.12" source="Cargo.lock transitive via fastembed" exact="true" />
       <Dependency ecosystem="rust" name="regex" version="1.12.3" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="rusqlite" version="0.31.0" source="Cargo.toml/Cargo.lock" exact="true" />
@@ -37,6 +38,7 @@
       <Dependency ecosystem="rust" name="toml" version="0.8.23" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="tower-http" version="0.5.2" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="tracing" version="0.1.44" source="Cargo.toml/Cargo.lock" exact="true" />
+      <Dependency ecosystem="rust" name="tracing-opentelemetry" version="0.28.0" source="Cargo.toml/Cargo.lock optional telemetry feature" exact="true" />
       <Dependency ecosystem="rust" name="tree-sitter" version="0.24.7" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="uuid" version="1.23.1" source="Cargo.toml/Cargo.lock" exact="true" />
       <Dependency ecosystem="rust" name="walkdir" version="2.5.0" source="Cargo.toml/Cargo.lock" exact="true" />
@@ -68,7 +70,7 @@
       <ComponentA>fastembed 5.13.4</ComponentA>
       <ComponentB>ort 2.0.0-rc.12</ComponentB>
       <Status>compatible</Status>
-      <Note>fastembed pins ort 2.0.0-rc.12. Synapse enables rustls-backed ONNX Runtime binary downloads on supported non-Intel-macOS targets and dynamic ONNX Runtime loading on x86_64-apple-darwin to keep Intel macOS packaging buildable.</Note>
+      <Note>fastembed pins ort 2.0.0-rc.12; non-Intel macOS uses rustls downloads and x86_64-apple-darwin uses dynamic ORT loading.</Note>
       <VerifiedAt>2026-05-25</VerifiedAt>
     </CompatibilityCheck>
     <CompatibilityCheck id="CHECK-005">
@@ -78,19 +80,26 @@
       <Note>AllMiniLML6V2 produces 384-dimensional ONNX embeddings stored with model id fastembed:AllMiniLML6V2@5.13.4.</Note>
       <VerifiedAt>2026-05-25</VerifiedAt>
     </CompatibilityCheck>
+    <CompatibilityCheck id="CHECK-006">
+      <ComponentA>opentelemetry 0.27.1 / opentelemetry_sdk 0.27.1 / opentelemetry-otlp 0.27.0</ComponentA>
+      <ComponentB>tracing-opentelemetry 0.28.0</ComponentB>
+      <Status>compatible</Status>
+      <Note>Phase-93 validates optional telemetry with cargo test --all-targets --features telemetry and all-features clippy.</Note>
+      <VerifiedAt>2026-05-26</VerifiedAt>
+    </CompatibilityCheck>
   </DependencyMatrix>
   <KnownIssues>
     <Issue id="KI-001" component="fastembed/ort" version="5.13.4/2.0.0-rc.12">
-      <Description>First embedding use may download ONNX model assets and, on non-Intel-macOS targets, ONNX Runtime binaries into the configured cache directory. macOS Intel uses dynamic ONNX Runtime loading because the transitive ort download table has no x86_64-apple-darwin binary.</Description>
-      <Workaround>Embeddings are disabled by default for release-safe installs; enable with syn config set embedding.enabled true when local model downloads are acceptable. On macOS Intel, set ORT_DYLIB_PATH to a compatible libonnxruntime.dylib before enabling embeddings. Indexing and search fall back to lexical behavior on provider failure.</Workaround>
+      <Description>First embedding use can download ONNX assets; macOS Intel requires dynamic ONNX Runtime loading.</Description>
+      <Workaround>Embeddings are disabled by default. Enable with syn config set embedding.enabled true; on macOS Intel set ORT_DYLIB_PATH first. Search falls back to lexical on provider failure.</Workaround>
     </Issue>
     <Issue id="KI-002" component="fastembed/tokenizers/paste" version="5.13.4/0.22.2/1.0.15">
-      <Description>cargo audit reports RUSTSEC-2024-0436 because tokenizers depends on the unmaintained paste crate through fastembed 5.13.4. fastembed is currently the latest available release and the advisory is a maintenance warning, not a vulnerability.</Description>
-      <Workaround>CI runs cargo audit --deny warnings with an explicit RUSTSEC-2024-0436 waiver until fastembed releases a tokenizers line that removes paste or Synapse replaces the embedding provider.</Workaround>
+      <Description>cargo audit reports RUSTSEC-2024-0436 because tokenizers pulls paste through fastembed 5.13.4.</Description>
+      <Workaround>CI waives RUSTSEC-2024-0436 until fastembed removes paste or Synapse replaces the embedding provider.</Workaround>
     </Issue>
     <Issue id="KI-003" component="ort/x86_64-apple-darwin" version="2.0.0-rc.12">
-      <Description>ort does not publish a prebuilt ONNX Runtime binary for the hosted x86_64-apple-darwin target used by the v2.6.6 release workflow.</Description>
-      <Workaround>v2.6.6 keeps the macOS Intel prebuilt artifact with fastembed's ort-load-dynamic feature. Core Synapse runs without ONNX Runtime because embeddings are disabled by default; optional embeddings require ORT_DYLIB_PATH on Intel macOS.</Workaround>
+      <Description>ort does not publish a prebuilt ONNX Runtime binary for hosted x86_64-apple-darwin.</Description>
+      <Workaround>v2.6.6 uses fastembed ort-load-dynamic; optional Intel macOS embeddings require ORT_DYLIB_PATH.</Workaround>
     </Issue>
   </KnownIssues>
   <DevOps>

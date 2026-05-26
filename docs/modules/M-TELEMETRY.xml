@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TELEMETRY" type="INTEGRATION" status="active">
+  <NAME>M-TELEMETRY</NAME>
+  <PURPOSE>Optional OpenTelemetry initialization for Synapse tracing while preserving default stderr JSON logs.</PURPOSE>
+  <SCOPE>TelemetryGuard, sampler parsing, default-off stderr tracing, feature-gated OTLP exporter initialization, resource attributes, and exporter shutdown.</SCOPE>
+  <FILES>
+    <FILE>src/telemetry.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG</DEPENDS>
+  <LINKS>docs/phases/Phase-93.xml,Cargo.toml,synapsec.toml</LINKS>
+  <VERIFICATION_REF>V-M-TELEMETRY</VERIFICATION_REF>
+</MODULE>

@@ -85,6 +85,7 @@
     <MODULE id="M-MCP-SERVER-GRACE-TOOLS" path="docs/modules/M-MCP-SERVER-GRACE-TOOLS.xml" status="active" />
     <MODULE id="M-MCP-SERVER-RESPONSE" path="docs/modules/M-MCP-SERVER-RESPONSE.xml" status="active" />
     <MODULE id="M-MCP-SERVER-RUN-TOOLS" path="docs/modules/M-MCP-SERVER-RUN-TOOLS.xml" status="active" />
+    <MODULE id="M-MCP-SERVER-TELEMETRY" path="docs/modules/M-MCP-SERVER-TELEMETRY.xml" status="active" />
     <MODULE id="M-MCP-SERVER-TOOLS" path="docs/modules/M-MCP-SERVER-TOOLS.xml" status="active" />
     <MODULE id="M-MCP-USER-TOOLS" path="docs/modules/M-MCP-USER-TOOLS.xml" status="active" />
     <MODULE id="M-MEMORY" path="docs/modules/M-MEMORY.xml" status="active" />
@@ -118,6 +119,7 @@
     <MODULE id="M-TEST-PERF-REGRESSION" path="docs/modules/M-TEST-PERF-REGRESSION.xml" status="active" />
     <MODULE id="M-TEST-CONTRACT-DIFFERENTIAL" path="docs/modules/M-TEST-CONTRACT-DIFFERENTIAL.xml" status="active" />
     <MODULE id="M-TEST-RESILIENCE-CHAOS" path="docs/modules/M-TEST-RESILIENCE-CHAOS.xml" status="active" />
+    <MODULE id="M-TELEMETRY" path="docs/modules/M-TELEMETRY.xml" status="active" />
     <MODULE id="M-TRACKING" path="docs/modules/M-TRACKING.xml" status="active" />
     <MODULE id="M-TRACKING-MCP-METRICS" path="docs/modules/M-TRACKING-MCP-METRICS.xml" status="active" />
     <MODULE id="M-UTILS" path="docs/modules/M-UTILS.xml" status="active" />
@@ -429,6 +431,7 @@
     <REL source="M-MAIN" target="M-LIB" type="DEPENDS" />
     <REL source="M-MAIN" target="M-CLI" type="DEPENDS" />
     <REL source="M-MAIN" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-MAIN" target="M-TELEMETRY" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-CASCADE-TOOLS" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-CODE-TOOLS" type="DEPENDS" />
@@ -436,6 +439,7 @@
     <REL source="M-MCP" target="M-MCP-PIPELINE" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-RUN-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP" target="M-MCP-SERVER-TELEMETRY" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
     <REL source="M-MCP" target="M-MCP-LSP" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-CONFIG" type="DEPENDS" />
@@ -447,6 +451,7 @@
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-GRACE-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-RUN-TOOLS" type="DEPENDS" />
+    <REL source="M-MCP-SERVER" target="M-MCP-SERVER-TELEMETRY" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-MCP-SERVER-TOOLS" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-MCP-SERVER" target="M-TRACKING-MCP-METRICS" type="DEPENDS" />
@@ -486,6 +491,8 @@
     <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER-PHASE-ENGINE" type="DEPENDS" />
     <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER-PRECOMMIT" type="DEPENDS" />
     <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-TELEMETRY" target="M-TELEMETRY" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-TELEMETRY" target="M-TRACKING" type="DEPENDS" />
     <REL source="M-MCP-SERVER-TOOLS" target="M-SKILLS-REGISTRY" type="DEPENDS" />
     <REL source="M-PLUGIN" target="M-PROXY" type="DEPENDS" />
     <REL source="M-PLUGIN" target="M-MCP" type="DEPENDS" />
@@ -577,6 +584,7 @@
     <REL source="M-TEST-RESILIENCE-CHAOS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TEST-RESILIENCE-CHAOS" target="M-INDEXER-STORAGE" type="DEPENDS" />
     <REL source="M-TEST-RESILIENCE-CHAOS" target="M-TEST-FIXTURE" type="DEPENDS" />
+    <REL source="M-TELEMETRY" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TRACKING" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TRACKING" target="M-TRACKING-MCP-METRICS" type="DEPENDS" />
     <REL source="M-TRACKING-MCP-METRICS" target="M-CONFIG" type="DEPENDS" />

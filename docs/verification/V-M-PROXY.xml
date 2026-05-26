@@ -18,10 +18,11 @@
     <ASSERTION>Proxy preserves the wrapped command exit status while still emitting filtered output.</ASSERTION>
     <ASSERTION>Proxy passthrough truncation is Unicode-safe and does not split UTF-8 characters.</ASSERTION>
     <ASSERTION>Proxy records adapter and route metadata from M-PROXY-ROUTER for token-economy analytics.</ASSERTION>
+    <ASSERTION>Proxy emits a proxy.execute span with command, adapter, route, input token, output token, and savings fields.</ASSERTION>
     <ASSERTION>Proxy only applies project-local filters after M-PROXY-FILTER trust checks pass.</ASSERTION>
     <ASSERTION>Proxy preserves raw evidence metadata from M-PROXY-RUNNER for explicit CLI evidence hints.</ASSERTION>
     <ASSERTION>Proxy threads Config.proxy capture and timeout settings into CommandRunner while preserving route-aware token tracking.</ASSERTION>
     <ASSERTION>Proxy declares the internal filter dry-run submodule while keeping normal command execution behavior unchanged.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-25,Phase-61,Phase-68</PHASE_GATE>
+  <PHASE_GATE>Phase-25,Phase-61,Phase-68,Phase-93</PHASE_GATE>
 </VERIFICATION>

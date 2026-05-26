@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-MAIN" type="ENTRY_POINT" status="active">
   <NAME>M-MAIN</NAME>
-  <PURPOSE>Binary entry point — parses CLI, resolves runtime config, initializes stderr tracing, and delegates command dispatch through the CLI module</PURPOSE>
-  <SCOPE>CLI argument parsing, stderr tracing init, config loading, tokio runtime creation, and CLI-owned command dispatch delegation</SCOPE>
+  <PURPOSE>Binary entry point — parses CLI, resolves runtime config, initializes telemetry-aware tracing, and delegates command dispatch through the CLI module</PURPOSE>
+  <SCOPE>CLI argument parsing, config loading, tokio runtime creation before telemetry init, CLI-owned command dispatch delegation, and runtime-entered telemetry shutdown</SCOPE>
   <FILES>
     <FILE>src/main.rs</FILE>
   </FILES>
-  <DEPENDS>M-LIB,M-CLI,M-CONFIG</DEPENDS>
-  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml,docs/phases/Phase-48.xml,docs/phases/Phase-49.xml,docs/phases/Phase-63.xml</LINKS>
+  <DEPENDS>M-LIB,M-CLI,M-CONFIG,M-TELEMETRY</DEPENDS>
+  <LINKS>Cargo.toml,docs/phases/Phase-26.xml,docs/phases/Phase-27.xml,docs/phases/Phase-28.xml,docs/phases/Phase-44.xml,docs/phases/Phase-45.xml,docs/phases/Phase-46.xml,docs/phases/Phase-47.xml,docs/phases/Phase-48.xml,docs/phases/Phase-49.xml,docs/phases/Phase-63.xml,docs/phases/Phase-93.xml</LINKS>
   <VERIFICATION_REF>V-M-MAIN</VERIFICATION_REF>
 </MODULE>

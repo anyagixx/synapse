@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER-TELEMETRY" type="UTILITY" status="active">
+  <NAME>M-MCP-SERVER-TELEMETRY</NAME>
+  <PURPOSE>Bounded span helpers for MCP tools/list and tools/call telemetry metadata.</PURPOSE>
+  <SCOPE>tools/list span creation, tools/call span creation, budget field recording, context pressure field recording, status field recording, and duration field recording.</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server_telemetry.rs</FILE>
+  </FILES>
+  <DEPENDS>M-MCP-SERVER,M-TELEMETRY,M-TRACKING</DEPENDS>
+  <LINKS>docs/phases/Phase-93.xml</LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER-TELEMETRY</VERIFICATION_REF>
+</MODULE>

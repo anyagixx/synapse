@@ -15,13 +15,15 @@
     <COMMAND>cargo run --quiet -- discover docker ps</COMMAND>
     <COMMAND>cargo run --quiet -- learn --json</COMMAND>
     <COMMAND>cargo test --test mcp_protocol test_stdio_keeps_logs_off_stdout_and_notifications_silent</COMMAND>
+    <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Tracing writes to stderr so MCP stdio stdout remains a clean JSON-RPC channel.</ASSERTION>
+    <ASSERTION>Telemetry-aware tracing writes to stderr so MCP stdio stdout remains a clean JSON-RPC channel.</ASSERTION>
     <ASSERTION>Main delegates command execution to CLI RunCommand after parsing SynCli and loading Config.</ASSERTION>
     <ASSERTION>Main keeps command ownership out of the binary entry point so RTK shortcut dispatch remains centralized in M-CLI.</ASSERTION>
-    <ASSERTION>Main remains a compact entry point focused on tracing, config loading, runtime creation, and dispatch delegation.</ASSERTION>
+    <ASSERTION>Main creates and enters a Tokio runtime before OTLP telemetry initialization and shutdown.</ASSERTION>
+    <ASSERTION>Main remains a compact entry point focused on config loading, runtime creation, telemetry init, dispatch delegation, and exporter shutdown.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-63</PHASE_GATE>
+  <PHASE_GATE>Phase-63,Phase-93</PHASE_GATE>
 </VERIFICATION>

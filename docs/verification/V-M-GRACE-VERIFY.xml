@@ -19,6 +19,7 @@
     <ASSERTION>Verification reports all five non-human pattern checks with profile-aware severity and migration-friendly details.</ASSERTION>
     <ASSERTION>verify --staged inspects git staged files and skips full verification when no Synapse-tracked files are staged.</ASSERTION>
     <ASSERTION>verify --staged runs existing profile-aware verification when staged Rust, Markdown, TOML, or XML files are present.</ASSERTION>
+    <ASSERTION>verify_all_with_profile records a grace.verify span with root, profile, check count, and passed level count.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13,Phase-90</PHASE_GATE>
+  <PHASE_GATE>Phase-13,Phase-90,Phase-93</PHASE_GATE>
 </VERIFICATION>

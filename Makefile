@@ -1,4 +1,4 @@
-.PHONY: build test run clean install lint fmt check ci token-economy bench bench-search bench-graph bench-cascade
+.PHONY: build test run clean install lint fmt check ci token-economy bench bench-search bench-graph bench-cascade telemetry-up telemetry-down telemetry-ui
 
 BIN_NAME = syn
 
@@ -59,6 +59,15 @@ bench-graph:
 
 bench-cascade:
 	cargo bench --bench cascade
+
+telemetry-up:
+	docker compose -f docker-compose.telemetry.yml up -d
+
+telemetry-down:
+	docker compose -f docker-compose.telemetry.yml down
+
+telemetry-ui:
+	@if command -v xdg-open >/dev/null 2>&1; then xdg-open http://localhost:16686; elif command -v open >/dev/null 2>&1; then open http://localhost:16686; else echo http://localhost:16686; fi
 
 audit:
 	cargo audit --deny warnings --ignore RUSTSEC-2024-0436

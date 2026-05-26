@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRAPHRAG
-// PURPOSE: GraphRAG facade — knowledge graph navigation with search, typed relationships, path finding, Mermaid rendering, and impact analysis exports
-// SCOPE: GraphRag struct, build from storage, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview, Mermaid render module export, impact analysis facade
+// PURPOSE: GraphRAG facade — knowledge graph navigation with search, typed relationships, path finding, Mermaid rendering, telemetry fields, and impact analysis exports
+// SCOPE: GraphRag struct, build from storage with graphrag.build tracing fields, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview, Mermaid render module export, impact analysis facade
 // DEPENDS: M-GRACE-CONTRACT, M-GRAPHRAG-TYPES, M-GRAPHRAG-BUILDER, M-GRAPHRAG-MERMAID, M-GRAPHRAG-IMPACT
 // LINKS: N/A
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.13.0 — Exported bounded GraphRAG impact analysis]
+// LAST_CHANGE: [v2.14.0 - Added graphrag.build telemetry fields]
 // END_CHANGE_SUMMARY
 
 pub mod builder;
@@ -57,10 +57,14 @@ impl GraphRag {
     // INPUTS: { root: &Path — project root }
     // OUTPUTS: { anyhow::Result<()> }
     // START_graphrag_build
+    #[tracing::instrument(name = "graphrag.build", skip(self), fields(root = %root.display(), nodes = tracing::field::Empty, relationships = tracing::field::Empty))]
     pub fn build(&mut self, root: &Path) -> anyhow::Result<()> {
         let graph = GraphBuilder::build(root)?;
         let nodes = graph.nodes().len();
         let rels = graph.relationships().len();
+        tracing::Span::current()
+            .record("nodes", nodes as u64)
+            .record("relationships", rels as u64);
         tracing::info!(
             "GraphRAG: built graph with {} nodes and {} relationships",
             nodes,

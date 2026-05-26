@@ -14,6 +14,7 @@
     <COMMAND>cargo test mcp::server_pressure::tests --lib</COMMAND>
     <COMMAND>cargo test mcp::server_run_tools --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::user_tools --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
   </UNIT_TESTS>
@@ -55,7 +56,8 @@
     <ASSERTION>tools/list uses pressure-aware style selection so high and critical pressure force terse schemas.</ASSERTION>
     <ASSERTION>tools/list merges profile-visible user-defined tools with _source=user metadata and warning metadata.</ASSERTION>
     <ASSERTION>tools/call routes unknown names to validated user-defined tools after built-in dispatch misses.</ASSERTION>
+    <ASSERTION>tools/list and tools/call create bounded telemetry spans without recording raw arguments.</ASSERTION>
     <ASSERTION>Session budget gates block expensive tools with budget_exhausted=true, attach warning metadata near the limit, and allow light tools such as project_status and verify_project.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-62,Phase-67,Phase-73,Phase-85,Phase-86,Phase-87,Phase-88,Phase-92</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-62,Phase-67,Phase-73,Phase-85,Phase-86,Phase-87,Phase-88,Phase-92,Phase-93</PHASE_GATE>
 </VERIFICATION>

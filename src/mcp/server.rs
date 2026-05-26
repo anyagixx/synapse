@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, context pressure metadata, pressure-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, user-defined command tools, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, context_pressure, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
-// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-MCP-USER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, context pressure metadata, tools/list and tools/call telemetry spans, pressure-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, user-defined command tools, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, context_pressure, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TELEMETRY, M-MCP-SERVER-TOOLS, M-MCP-USER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 // START_MODULE_MAP
 // McpServer — MCP stdio server entry point
@@ -24,7 +24,7 @@
 // classify_mcp_response — Converts JSON-RPC tool responses into tracking status metadata
 // END_MODULE_MAP
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.32.0 - Routed user-defined MCP command tools]
+// LAST_CHANGE: [v3.33.0 - Added MCP telemetry span metadata]
 // END_CHANGE_SUMMARY
 use super::server_budget_tools::handle_check_budget as budget;
 use super::server_budget_tools::handle_context_pressure as pressure;
@@ -33,7 +33,7 @@ use super::server_tools_pressure::effective_schema_style as eff_style;
 use super::{
     pipeline::{self, McpPipelineConfig, PipelineHandler},
     server_cascade_tools, server_code_tools, server_contract_tools, server_grace_tools,
-    server_response, server_run_tools, server_tools, tool_recommend, user_tools,
+    server_response, server_run_tools, server_telemetry, server_tools, tool_recommend, user_tools,
 };
 use crate::config::Config;
 use crate::graphrag::GraphRag;
@@ -49,11 +49,9 @@ use std::sync::{
 };
 use std::time::{Duration, Instant, UNIX_EPOCH};
 // START_public_api
-
 // START_McpServer
 pub struct McpServer;
 // END_McpServer
-
 impl McpServer {
     // START_CONTRACT_McpServer::new
     // PURPOSE: Create a new McpServer
@@ -73,7 +71,6 @@ impl McpServer {
         tracing::info!("MCP server running on stdio");
         let root = std::env::current_dir()
             .map_err(|e| anyhow::anyhow!("MCP server cannot resolve current directory: {}", e))?;
-
         // Auto-discover: if current dir is not a project root but parent has .opencode/
         // or multiple subdirs with source code, use multi-root mode.
         let multi_root = if !root.join(".opencode").exists()
@@ -88,7 +85,6 @@ impl McpServer {
         if multi_root {
             tracing::info!("Multi-root mode: serving {} projects", "multiple");
         }
-
         let config = Config::load_or_default();
         let pipeline_config = McpPipelineConfig {
             response_queue_capacity: config.observability.pipeline_response_queue_capacity(),
@@ -306,12 +302,20 @@ impl SynapseHandler {
                 let tools = server_tools::apply_tool_schema_style(full_tools, style);
                 let schema_bytes = server_tools::tool_definitions_json_bytes(&tools);
                 let total_visible = tools.len();
+                let profile_label = tools_list_profile_label(&profile);
+                let style_label = style.label();
+                let _list_span = server_telemetry::tools_list_span(
+                    profile_label,
+                    style_label,
+                    total_available,
+                    total_visible,
+                );
                 server_response::result(
                     id,
                     serde_json::json!({
                         "tools": tools,
-                        "profile": tools_list_profile_label(&profile),
-                        "style": style.label(),
+                        "profile": profile_label,
+                        "style": style_label,
                         "total_available": total_available,
                         "total_visible": total_visible,
                         "user_tool_warnings": user_report.warnings,
@@ -331,6 +335,7 @@ impl SynapseHandler {
                 let params = &msg["params"];
                 let name = params["name"].as_str().unwrap_or("");
                 let args = &params["arguments"];
+                let call_span = server_telemetry::tools_call_span(name);
                 let started = Instant::now();
                 let active_id = match self.tracker.start_mcp_request(name).await {
                     Ok(active_id) => active_id,
@@ -352,6 +357,7 @@ impl SynapseHandler {
                         None
                     }
                 };
+                server_telemetry::record_budget(&call_span, budget_status.as_ref());
 
                 let mut response = if let Some(status) = budget_status
                     .as_ref()
@@ -464,6 +470,7 @@ impl SynapseHandler {
                 pressure_meta(&self.config, &self.tracker, args, &mut response).await;
                 let (status, error_message) = classify_mcp_response(&response);
                 let duration_ms = elapsed_millis_u64(started);
+                server_telemetry::record_call_result(&call_span, &response, &status, duration_ms);
                 if let Err(error) = self
                     .tracker
                     .finish_mcp_request(active_id, name, duration_ms, status, &error_message)
@@ -492,7 +499,6 @@ impl SynapseHandler {
         }
     }
     // END_sh_handle_message
-
     // START_CONTRACT_SynapseHandler::maybe_not_modified_response
     // PURPOSE: Return a compact not-modified result when _if_none_match matches a fresh cached ETag
     // INPUTS: { id: Option<serde_json::Value> }, { tool_name: &str }, { args: &serde_json::Value }
@@ -519,7 +525,6 @@ impl SynapseHandler {
         Some(server_response::not_modified_result(id, &metadata))
     }
     // END_sh_maybe_not_modified_response
-
     // START_CONTRACT_SynapseHandler::record_cache_metadata
     // PURPOSE: Attach cache metadata to a JSON-RPC tool result and store cacheable validators
     // INPUTS: { tool_name: &str }, { args: &serde_json::Value }, { response: &mut serde_json::Value }
@@ -548,7 +553,6 @@ impl SynapseHandler {
         }
     }
     // END_sh_record_cache_metadata
-
     // START_CONTRACT_SynapseHandler::budget_status_for_tool
     // PURPOSE: Check configured session budget for expensive MCP tools.
     // INPUTS: { tool_name: &str }
@@ -574,7 +578,6 @@ impl SynapseHandler {
             .map(Some)
     }
     // END_sh_budget_status_for_tool
-
     // START_CONTRACT_SynapseHandler::invalidate_graph_cache
     // PURPOSE: Clear cached GraphRAG state so the next graph query rebuilds it
     // SIDE_EFFECTS: mutates graph cache locks when available
@@ -589,7 +592,6 @@ impl SynapseHandler {
     }
     // END_sh_invalidate_graph_cache
 }
-
 impl McpEtagCache {
     // START_CONTRACT_McpEtagCache::matching_metadata
     // PURPOSE: Return metadata for a matching fresh validator and evict expired entries
@@ -615,7 +617,6 @@ impl McpEtagCache {
             .and_then(|entry| (entry.metadata.etag == validator).then_some(entry.metadata.clone()))
     }
     // END_mcp_etag_cache_matching_metadata
-
     // START_CONTRACT_McpEtagCache::insert
     // PURPOSE: Store a fresh cache validator and clear all entries when the bounded cache would exceed 100
     // INPUTS: { key: String }, { metadata: server_response::CacheMetadata }
@@ -639,7 +640,6 @@ impl McpEtagCache {
         );
     }
     // END_mcp_etag_cache_insert
-
     // START_CONTRACT_McpEtagCache::len
     // PURPOSE: Return the number of stored cache validators for tests and diagnostics
     // OUTPUTS: { usize }
