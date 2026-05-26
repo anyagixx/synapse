@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-TESTS-PARITY" module="M-TESTS-PARITY" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --test docs_parity</COMMAND>
+    <COMMAND>cargo test --test docs_parity token_economy</COMMAND>
     <COMMAND>cargo test --test docs_parity test_no_ghost_commands</COMMAND>
     <COMMAND>cargo test --test release_candidate</COMMAND>
     <COMMAND>cargo test --test support_readiness</COMMAND>
@@ -9,14 +10,15 @@
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
-    <ASSERTION>Docs parity tests require capability counts to match the 23 core / 39 total MCP tool registry.</ASSERTION>
+    <ASSERTION>Docs parity tests require capability counts and public docs to match the 32 core / 48 total MCP tool registry.</ASSERTION>
     <ASSERTION>Docs parity tests block ghost CLI commands, unimplemented MCP flags, unsupported command flags including proxy/gain/rewrite/filter/local RTK adapter/discover/learn flags, unsupported installer URLs, obsolete synapse-ai release paths, unsupported Windows install claims, and public docs that drift from the latest published release installer URL across README, INSTALL, COMMANDS, FAQ, QUICKSTART, WORKFLOW, and SUPPORT.</ASSERTION>
     <ASSERTION>Docs parity tests require package metadata to avoid the crates.io syn parser conflict while preserving syn binary/library names.</ASSERTION>
     <ASSERTION>Docs parity tests require installer dry-run mapping, release workflow artifacts, checksum aggregation, tag/version/freshness guards, generated release notes, strict cargo audit warnings with documented advisory waivers, pre-tag source fallback, and release smoke artifact naming to describe the same supported Linux/macOS release matrix.</ASSERTION>
     <ASSERTION>Docs parity accepts documented RTK discover, learn, pipe, hooks audit, and rtk-parity flags only when they are published in the capabilities registry.</ASSERTION>
+    <ASSERTION>Docs parity tests require the UPGRADE_4 token-economy gate to cover tools/recommend, compact_evidence, check_budget, context_pressure, terse schemas, response trimming, budget, pressure, cache, and evidence compaction behavior.</ASSERTION>
     <ASSERTION>Docs parity tests require push CI to declare Linux/macOS public-installer fresh install evidence pinned to SYN_INSTALL_SOURCE_REF.</ASSERTION>
     <ASSERTION>Release candidate parity tests require manual dry-run workflow permissions to stay read-only, checkout the requested candidate ref, validate release tag/notes/checksums/installer mapping, require the full RTK gate in release workflows, capture fresh-install evidence, and block publishing actions before the actual release workflow runs.</ASSERTION>
     <ASSERTION>Support readiness tests require installer diagnose mode, precise OS/architecture diagnostic status, actionable unsupported-platform guidance, supported macOS Intel diagnostics, and support docs that keep Windows packaging deferred until release artifacts exist.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-57</PHASE_GATE>
+  <PHASE_GATE>Phase-57,Phase-88</PHASE_GATE>
 </VERIFICATION>

@@ -1,7 +1,7 @@
 # Synapse
 
 > **AI Agent Engineering Platform — works transparently through OpenCode CLI**
-> *39 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
+> *48 MCP tools. Sharded Phase 0 gate. Self-verified. Zero overhead for humans.*
 
 ---
 
@@ -13,7 +13,7 @@
          ┌─────────────┼─────────────┐
          ▼             ▼             ▼
     MCP Tools       Plugin       AGENTS.md
-  (39 инструментов)  (proxy,      (GRACE
+  (48 инструментов)  (proxy,      (GRACE
                      GRACE)       конституция)
          │
          ▼
@@ -21,7 +21,7 @@
 ```
 
 Ты общаешься с AI через `opencode`. Synapse невидимо:
-- Даёт LLM **39 MCP-инструментов** для поиска, проверки и генерации кода
+- Даёт LLM **48 MCP-инструментов** для поиска, проверки и генерации кода
 - Авто-фильтрует шумный вывод shell-команд; фактическую экономию показывает `syn gain`
 - **Принуждает GRACE методологию**: Phase 0, контракты, верификация, ревью
 - **Сам проходит собственные проверки**: `syn verify` → ALL PASS
@@ -36,7 +36,7 @@
 
 Synapse решает это так:
 - хранит архитектуру в **sharded GRACE artifacts**
-- даёт OpenCode **39 MCP tools**
+- даёт OpenCode **48 MCP tools**
 - даёт **16 workflow tools** для init/plan/execute/review/fix/status/run-history
 - режет shell noise через proxy
 - навязывает verify/review discipline прямо в цикле работы
@@ -100,7 +100,7 @@ mkdir my-project && cd my-project
 syn init          # 1 сек: интеграция с OpenCode
 syn hooks install all
 syn hooks audit all --json
-opencode          # LLM видит 39 MCP инструментов + sharded Phase 0 gate
+opencode          # LLM видит 48 MCP инструментов + sharded Phase 0 gate
 # LLM: "Что ты хочешь построить?"
 # Ты:  "Приложение для заметок с поиском"
 ```
@@ -139,9 +139,9 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 
 ---
 
-## 39 MCP Tools
+## 48 MCP Tools
 
-### 23 Core tools
+### 32 Core tools
 
 | Инструмент | Назначение |
 |-----------|-----------|
@@ -162,12 +162,21 @@ AGENTS.md содержит STOP-правило: «You MAY NOT write source code 
 | `cascade_execute` | Execute cached cascade preview and write proposal/changelog artifacts |
 | `run_test_guide` | Запуск natural-language testing guide и запись tester-agent summary/failure artifacts |
 | `submit_test_report` | Передача XML failure report разработчику с подсветкой LOG evidence refs |
+| `self_heal` | Один bounded self-heal цикл для persisted autonomous run |
+| `advance_phase` | Проверка phase gates и dry-run перехода к следующей фазе |
+| `pre_commit_check` | Pre-commit gate для persisted bounded run |
 | `token_savings` | Статистика экономии токенов |
 | `compress_text` | Сжатие текста (3 уровня) |
 | `refresh_project` | Синхронизация графа и плана с кодом |
+| `diagnose_failure` | Разбор tester-agent failure evidence и bounded fix diagnosis |
+| `repair_contract` | Безопасный MODULE_CONTRACT repair preview/apply |
 | `suggest_contract` | Генерация MODULE_CONTRACT шаблона |
 | `lsp_hover` | Тип/сигнатура через LSP |
 | `lsp_references` | Поиск использований символа |
+| `tools/recommend` | Подбор компактного набора MCP tools под текущий контекст |
+| `compact_evidence` | Сжатие evidence refs для persisted run |
+| `check_budget` | Проверка session token budget и estimated-token affordability |
+| `context_pressure` | Оценка заполнения context window и рекомендация нового session |
 
 ### 16 GRACE workflow tools
 
@@ -272,7 +281,7 @@ Dashboard routes exposed by `syn serve`:
 | **Octocode** | AST-индексация (5 языков) + fallback (14), BM25 + векторный + гибридный поиск |
 | **RTK Proxy** | 30+ TOML-фильтров, 8-стадийный пайплайн, авто-прокси через плагин |
 | **Caveman** | 3 уровня сжатия (lite/full/ultra) |
-| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 39 MCP tools, 16 workflow tools, 3 режима ревью |
+| **GRACE** | Sharded Phase 0 gate, MODULE_CONTRACT/MAP/CHANGE_SUMMARY, 48 MCP tools, 16 workflow tools, 3 режима ревью |
 
 ---
 
@@ -282,7 +291,7 @@ Dashboard routes exposed by `syn serve`:
 |---------|----------|
 | Бинарник | ~13 MB release |
 | Зависимости | 0 внешних системных (всё статически слинковано) |
-| MCP инструментов | **39** |
+| MCP инструментов | **48** |
 | CLI команд | 19 |
 | Проверок verify | 55 |
 | GRACE workflow tools | 16 |

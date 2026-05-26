@@ -13,7 +13,7 @@
     <ASSERTION>Index command passes --no-git through to walker gitignore handling.</ASSERTION>
     <ASSERTION>Watch mode classifies indexable source events into bounded changed/deleted sets for Indexer::index_delta.</ASSERTION>
     <ASSERTION>Init command safely merges mcp.synapse into existing OpenCode config.</ASSERTION>
-    <ASSERTION>Init command prints the current 39-tool MCP registry summary.</ASSERTION>
+    <ASSERTION>Init command prints the current 48-tool MCP registry summary.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-7,Phase-64</PHASE_GATE>
 </VERIFICATION>

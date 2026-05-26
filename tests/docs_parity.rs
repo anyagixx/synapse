@@ -1,12 +1,13 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit/cc-economics flags, public docs, install docs, supported Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
-// DEPENDS: M-CAPABILITIES, M-CLI, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE
-// LINKS: docs/phases/Phase-27.xml
+// SCOPE: Compare README tool count, README command count, token-economy gate claims, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit/cc-economics flags, public docs, install docs, supported Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
+// DEPENDS: M-CAPABILITIES, M-CLI, M-CLI-SETUP-COMMANDS, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE, M-SKILLS-REGISTRY
+// LINKS: docs/phases/Phase-27.xml, docs/phases/Phase-88.xml
 
 // START_MODULE_MAP
 // test_mcp_tool_count_matches_capabilities — MCP tool count check
+// test_public_mcp_registry_claims_match_capabilities — Public MCP count and token-economy docs check
 // test_command_count_matches_capabilities — Command count check
 // test_verify_checks_consistent — Verify check consistency
 // test_no_ghost_commands — No ghost commands, unsupported flags, or obsolete public URLs
@@ -25,10 +26,11 @@
 // test_ci_declares_fresh_install_evidence — Hosted CI fresh install evidence check
 // test_mcp_help_hides_unimplemented_flags — MCP CLI truth check
 // test_installer_dry_run_maps_linux_macos_artifacts — Installer dry-run mapping check
+// test_token_economy_gate_claims_are_enforced — Token economy gate check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.7.0 - Advanced public installer URL parity to v2.6.5]
+// LAST_CHANGE: [v5.8.0 - Added token-economy parity gate and 48-tool registry claims]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -36,8 +38,10 @@ use syn::capabilities;
 const INSTALL_SCRIPT: &str = include_str!("../install.sh");
 const CARGO_TOML: &str = include_str!("../Cargo.toml");
 const CI_SCRIPT: &str = include_str!("../scripts/ci.sh");
+const TOKEN_ECONOMY_GATE: &str = include_str!("../scripts/token_economy_gate.sh");
 const RELEASE_FRESHNESS_GUARD: &str = include_str!("../scripts/release_freshness_guard.sh");
 const RELEASE_SMOKE_SCRIPT: &str = include_str!("../scripts/release_install_smoke.sh");
+const SETUP_COMMANDS: &str = include_str!("../src/cli/setup_commands.rs");
 const CI_WORKFLOW: &str = include_str!("../.github/workflows/ci.yml");
 const RELEASE_WORKFLOW: &str = include_str!("../.github/workflows/release.yml");
 const RELEASE_VERSION_GUARD: &str = include_str!("../scripts/release_version_guard.sh");
@@ -160,13 +164,54 @@ fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
 fn test_mcp_tool_count_matches_capabilities() {
     let expected = capabilities::MCP_TOOLS.len();
     assert_eq!(expected, capabilities::TOTAL_MCP_TOOL_COUNT);
-    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 23);
+    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 32);
     assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 16);
     assert_eq!(capabilities::skill_defs_count(), 16);
+    assert_eq!(
+        capabilities::CORE_TOOLS.len(),
+        capabilities::CORE_MCP_TOOL_COUNT
+    );
     assert!(!capabilities::MCP_TOOLS.is_empty(), "MCP tools list empty");
     let names: Vec<&str> = capabilities::MCP_TOOLS.iter().map(|(n, _)| *n).collect();
     let unique: std::collections::HashSet<_> = names.iter().collect();
     assert_eq!(names.len(), unique.len(), "Duplicate MCP tool names found");
+    for (name, _) in capabilities::CORE_TOOLS {
+        assert!(
+            names.contains(name),
+            "MCP_TOOLS must include core registry tool {name}"
+        );
+    }
+    for expected_tool in [
+        "tools/recommend",
+        "compact_evidence",
+        "check_budget",
+        "context_pressure",
+    ] {
+        assert!(
+            names.contains(&expected_tool),
+            "MCP_TOOLS missing token-economy tool {expected_tool}"
+        );
+    }
+}
+
+#[test]
+// START_CONTRACT_test_public_mcp_registry_claims_match_capabilities
+// PURPOSE: Verify public docs and setup output claim the current MCP registry size
+fn test_public_mcp_registry_claims_match_capabilities() {
+    for marker in [
+        "48 MCP tools",
+        "48 MCP-инструментов",
+        "48 MCP инструментов",
+        "## 48 MCP Tools",
+        "### 32 Core tools",
+        "| MCP инструментов | **48** |",
+    ] {
+        assert!(README.contains(marker), "README missing marker {marker}");
+    }
+    assert!(
+        SETUP_COMMANDS.contains("48 tools: 32 core + 16 GRACE"),
+        "syn init setup summary must publish the current MCP registry size"
+    );
 }
 
 #[test]
@@ -676,6 +721,46 @@ fn test_ci_declares_fresh_install_evidence() {
         assert!(
             CI_WORKFLOW.contains(marker),
             "CI workflow must declare hosted fresh install marker {marker}"
+        );
+    }
+}
+
+#[test]
+// START_CONTRACT_test_token_economy_gate_claims_are_enforced
+// PURPOSE: Verify local CI and public docs pin the UPGRADE_4 token-economy gate
+fn test_token_economy_gate_claims_are_enforced() {
+    for marker in [
+        "bash scripts/token_economy_gate.sh",
+        "[CI][run_ci_gate][TOKEN_ECONOMY]",
+    ] {
+        assert!(
+            CI_SCRIPT.contains(marker),
+            "scripts/ci.sh must invoke token economy gate marker {marker}"
+        );
+    }
+    for marker in [
+        "cargo test --test mcp_protocol",
+        "cargo test --test e2e_mcp token_economy",
+        "test_semantic_search_max_tokens_trims_response",
+        "mcp::server_pressure::tests",
+        "mcp::server_tools_pressure::tests",
+        "mcp::server_budget_tools::tests",
+        "run::evidence_compaction::tests",
+    ] {
+        assert!(
+            TOKEN_ECONOMY_GATE.contains(marker),
+            "token economy gate must keep coverage marker {marker}"
+        );
+    }
+    for marker in [
+        "tools/recommend",
+        "compact_evidence",
+        "check_budget",
+        "context_pressure",
+    ] {
+        assert!(
+            README.contains(marker),
+            "README must document token-economy MCP tool {marker}"
         );
     }
 }

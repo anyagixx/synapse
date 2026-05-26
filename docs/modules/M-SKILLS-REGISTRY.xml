@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-SKILLS-REGISTRY" type="CORE_LOGIC" status="active">
   <NAME>M-SKILLS-REGISTRY</NAME>
-  <PURPOSE>Skill registry — declares 16 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure</PURPOSE>
-  <SCOPE>Skill metadata constants, built-in MCP tool descriptions including cascade and tester-agent tools, and lookup helpers</SCOPE>
+  <PURPOSE>Skill registry — declares 16 first-class GRACE skill tools and 32 core MCP tool descriptions for MCP exposure</PURPOSE>
+  <SCOPE>Skill metadata constants, built-in MCP tool descriptions including run control, token economy, cascade, tester-agent tools, and lookup helpers</SCOPE>
   <FILES>
     <FILE>src/skills/registry.rs</FILE>
   </FILES>

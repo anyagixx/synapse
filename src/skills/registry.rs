@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-REGISTRY
-// PURPOSE: Skill registry — declares 16 first-class GRACE skill tools and core MCP tool descriptions for MCP exposure
-// SCOPE: Skill metadata constants, built-in MCP tool descriptions including cascade and tester-agent tools, and lookup helpers
+// PURPOSE: Skill registry — declares 16 first-class GRACE skill tools and 32 core MCP tool descriptions for MCP exposure
+// SCOPE: Skill metadata constants, built-in MCP tool descriptions including run control, token economy, cascade, tester-agent tools, and lookup helpers
 // DEPENDS: M-SKILLS-TYPES
 // LINKS:
 //   -> M-SKILLS (depends) - skill runtime facade
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.24.0 - Added run history skill to registry]
+// LAST_CHANGE: [v2.25.0 - Synchronized core MCP registry to 32 tools]
 // END_CHANGE_SUMMARY
 
 use super::types::{SkillArg, SkillDef};
@@ -326,15 +326,51 @@ pub const CORE_MCP_TOOLS: &[(&str, &str)] = &[
         "submit_test_report",
         "Submit a tester-agent XML failure report to the developer agent",
     ),
+    (
+        "self_heal",
+        "Run one bounded self-heal iteration for a persisted autonomous run",
+    ),
+    (
+        "advance_phase",
+        "Check active MyGRACE phase gates and optionally advance to the next planned phase",
+    ),
+    (
+        "pre_commit_check",
+        "Run pre-commit verification for a persisted bounded run before final completion",
+    ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),
     (
         "refresh_project",
         "Sync knowledge graph and verification plan with code",
     ),
+    (
+        "diagnose_failure",
+        "Parse tester-agent failure evidence and return a bounded fix diagnosis",
+    ),
+    (
+        "repair_contract",
+        "Generate or apply a safe language-aware MODULE_CONTRACT repair",
+    ),
     ("suggest_contract", "Generate a MODULE_CONTRACT template"),
     ("lsp_hover", "Get type/signature information via LSP"),
     ("lsp_references", "Find all references to a symbol via LSP"),
+    (
+        "tools/recommend",
+        "Recommend a bounded context-relevant MCP tool subset before listing schemas",
+    ),
+    (
+        "compact_evidence",
+        "Deduplicate, alias, and truncate evidence refs for one persisted run",
+    ),
+    (
+        "check_budget",
+        "Check current session token budget and estimated-token affordability",
+    ),
+    (
+        "context_pressure",
+        "Check current session context-window pressure and new-session recommendation",
+    ),
 ];
 
 // END_public_api

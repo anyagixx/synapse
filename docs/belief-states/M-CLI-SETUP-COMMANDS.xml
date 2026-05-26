@@ -7,7 +7,7 @@
       - PROCESSING: Implement only the declared scope while preserving dependencies: M-CONFIG, M-GRACE-BOOTSTRAP, M-GRACE-LAYOUT, M-INDEXER, M-HOOKS
       - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
     Critical invariants:
-      - Scope remains bounded to: InitCmd, IndexCmd, watch_and_reindex, watch event delta classification, guarded index storage counts, gitignore toggle, OpenCode MCP merge, and 39-tool setup summary
+      - Scope remains bounded to: InitCmd, IndexCmd, watch_and_reindex, watch event delta classification, guarded index storage counts, gitignore toggle, OpenCode MCP merge, and 48-tool setup summary
       - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
   IMPLEMENTATION_STRATEGY:
     Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates

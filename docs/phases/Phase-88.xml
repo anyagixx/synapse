@@ -27,13 +27,15 @@
     <step-4 module="M-MCP-SERVER" status="done">Append critical pressure metadata and agent_resume recommendation to tool responses.</step-4>
     <step-5 module="M-MCP-SERVER-TOOLS" status="done">Force terse tools/list output when pressure is high or critical.</step-5>
     <step-6 module="M-CI" status="done">Add an UPGRADE_4 token economy gate covering profiles, terse schemas, response trimming, cache hints, recommendations, compaction, budget, and pressure.</step-6>
-    <step-7 module="M-TESTS-PARITY" status="planned">Update docs parity so public token economy claims match implemented behavior.</step-7>
+    <step-7 module="M-TESTS-PARITY" status="done">Update docs parity so public token economy claims match implemented behavior.</step-7>
   </STEPS>
   <VERIFICATION>
     <CHECK status="planned">cargo fmt --all -- --check</CHECK>
     <CHECK status="planned">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
     <CHECK status="planned">cargo test --all-targets</CHECK>
     <CHECK status="passed">cargo test --test e2e_mcp token_economy</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity token_economy</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity</CHECK>
     <CHECK status="passed">bash scripts/token_economy_gate.sh</CHECK>
     <CHECK status="planned">cargo run --quiet -- mcp stdio with tools/list profile=verification style=terse</CHECK>
     <CHECK status="passed">budget.context_window_limit defaults to 200000 and is configurable through typed config keys.</CHECK>

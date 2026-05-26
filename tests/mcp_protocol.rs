@@ -32,7 +32,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.35.0 - Added context_pressure protocol coverage]
+// LAST_CHANGE: [v2.36.0 - Isolated pressure-aware tools/list tests by process session]
 // END_CHANGE_SUMMARY
 
 use serde_json::Value;
@@ -49,7 +49,8 @@ static MCP_PROTOCOL_SESSION: Once = Once::new();
 // SIDE_EFFECTS: sets SYNAPSE_SESSION_ID once for this test process
 fn ensure_protocol_test_session() {
     MCP_PROTOCOL_SESSION.call_once(|| {
-        std::env::set_var("SYNAPSE_SESSION_ID", "mcp-protocol-test");
+        let session_id = format!("mcp-protocol-test-{}", std::process::id());
+        std::env::set_var("SYNAPSE_SESSION_ID", session_id);
     });
 }
 
@@ -181,6 +182,7 @@ fn contains_schema_description_key_in_context(value: &Value, is_properties_map: 
 // PURPOSE: Verify MCP initialize followed by tools/list returns the full tool registry
 // SIDE_EFFECTS: creates in-process MCP handler
 async fn test_initialize_then_list_tools() {
+    ensure_protocol_test_session();
     let handler = SynapseHandler::new();
     let init = handler
         .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#)

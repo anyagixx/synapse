@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.13.0 - Routed watch re-indexing through incremental index deltas]
+// LAST_CHANGE: [v3.14.0 - Updated MCP setup summary to 48 tools]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
@@ -99,7 +99,7 @@ impl InitCmd {
         println!();
         println!("What was created:");
         println!("  AGENTS.md                    — GRACE constitution (read by every LLM session)");
-        println!("  opencode.jsonc              — MCP auto-start (39 tools: 23 core + 16 GRACE)");
+        println!("  opencode.jsonc              — MCP auto-start (48 tools: 32 core + 16 GRACE)");
         println!(
             "  docs/                        — Sharded architecture layout + compatibility XML docs"
         );

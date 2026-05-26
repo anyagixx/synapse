@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-MCP
 // PURPOSE: MCP and skills integration tests — verify registry, discovery, tester-agent guidance, and representative skill behavior
-// SCOPE: Tool count parity including cascade and agent-based testing tools, grace skill visibility, tester subagent setup, basic CLI skills commands
+// SCOPE: Tool count parity including run-control, token-economy, cascade, and agent-based testing tools, grace skill visibility, tester subagent setup, basic CLI skills commands
 // DEPENDS: M-CLI, M-MCP, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 - Updated MCP capability count for run history skill]
+// LAST_CHANGE: [v2.24.0 - Updated MCP capability count to 48 tools]
 // END_CHANGE_SUMMARY
 
 use std::sync::{Mutex, OnceLock};
@@ -42,8 +42,8 @@ fn test_skill_registry_count() {
 fn test_capabilities_include_skills() {
     assert!(capabilities::COMMANDS.iter().any(|(n, _)| *n == "skills"));
     assert_eq!(capabilities::GRACE_SKILL_TOOL_COUNT, 16);
-    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 23);
-    assert_eq!(capabilities::MCP_TOOLS.len(), 39);
+    assert_eq!(capabilities::CORE_MCP_TOOL_COUNT, 32);
+    assert_eq!(capabilities::MCP_TOOLS.len(), 48);
 }
 
 #[test]

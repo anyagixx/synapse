@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CAPABILITIES
 // PURPOSE: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
-// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics adoption analytics, tracking-backed discover/learn diagnostics, hook processors and multi-agent hook install/audit targets, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+// SCOPE: Command list including RTK shortcuts, local RTK adapters, .NET artifact adapters, core RTK adapters, session/economics adoption analytics, tracking-backed discover/learn diagnostics, hook processors and multi-agent hook install/audit targets, rewrite, and filters, 32-tool core MCP list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/run-control/token-economy/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
 // DEPENDS: M-CLI, M-MCP, M-SKILLS-REGISTRY
 // LINKS: README.md, docs/COMMANDS.md, docs/phases/Phase-27.xml, docs/phases/Phase-28.xml, docs/phases/Phase-49.xml, docs/phases/Phase-54.xml, docs/phases/Phase-56.xml
 
@@ -17,7 +17,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.36.0 - Restored Intel macOS release platform]
+// LAST_CHANGE: [v2.37.0 - Synchronized MCP capability counts to 48 tools]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::{CORE_MCP_TOOLS, SKILL_DEFS};
@@ -181,7 +181,7 @@ pub const COMMANDS: &[(&str, &str)] = &[
     ("serve", "Start web dashboard"),
 ];
 
-pub const CORE_MCP_TOOL_COUNT: usize = 23;
+pub const CORE_MCP_TOOL_COUNT: usize = CORE_MCP_TOOLS.len();
 pub const GRACE_SKILL_TOOL_COUNT: usize = 16;
 pub const TOTAL_MCP_TOOL_COUNT: usize = CORE_MCP_TOOL_COUNT + GRACE_SKILL_TOOL_COUNT;
 
@@ -328,6 +328,18 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "submit_test_report",
         "Submit a tester-agent XML failure report to the developer agent",
     ),
+    (
+        "self_heal",
+        "Run one bounded self-heal iteration for a persisted autonomous run",
+    ),
+    (
+        "advance_phase",
+        "Check active MyGRACE phase gates and optionally advance to the next planned phase",
+    ),
+    (
+        "pre_commit_check",
+        "Run pre-commit verification for a persisted bounded run before final completion",
+    ),
     ("token_savings", "View token savings analytics"),
     ("compress_text", "Compress text for AI context efficiency"),
     (
@@ -335,11 +347,35 @@ pub const MCP_TOOLS: &[(&str, &str)] = &[
         "Report or fix canonical MyGRACE artifact drift",
     ),
     (
+        "diagnose_failure",
+        "Parse tester-agent failure evidence and return a bounded fix diagnosis",
+    ),
+    (
+        "repair_contract",
+        "Generate or apply a safe language-aware MODULE_CONTRACT repair",
+    ),
+    (
         "suggest_contract",
         "Generate a language-aware MODULE_CONTRACT template",
     ),
     ("lsp_hover", "Get type/signature information via LSP"),
     ("lsp_references", "Find all references to a symbol via LSP"),
+    (
+        "tools/recommend",
+        "Recommend a bounded context-relevant MCP tool subset before listing schemas",
+    ),
+    (
+        "compact_evidence",
+        "Deduplicate, alias, and truncate evidence refs for one persisted run",
+    ),
+    (
+        "check_budget",
+        "Check current session token budget and estimated-token affordability",
+    ),
+    (
+        "context_pressure",
+        "Check current session context-window pressure and new-session recommendation",
+    ),
     (
         "grace_init",
         "Initialize MyGrace-style sharded architecture artifacts for current project.",
