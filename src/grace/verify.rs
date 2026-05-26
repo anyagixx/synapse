@@ -1,25 +1,26 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
-// PURPOSE: 3-level verification facade — module-local, wave, and delegated phase checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests, traceability, cascade-no-drift, non-human patterns and anchor syntax validation, verify_all, verify_all_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// PURPOSE: 3-level verification facade — module-local, wave, delegated phase, and staged git checks for profile-aware GRACE compliance
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests, traceability, cascade-no-drift, non-human patterns, anchor syntax validation, verify_all, verify_all_with_profile, verify_staged_with_profile, verify_module_local, verify_wave, delegated verify_phase
 // DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
 // START_MODULE_MAP
 // Verifier — Runs 3-level GRACE verification with strict or lightweight profiles
+// verify_staged_with_profile — Runs verification only when staged Synapse-tracked files exist
 // VerificationResult — Re-exported per-level verification result
 // CheckResult — Re-exported single verification check result
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Added cascade-no-drift verification gate]
+// LAST_CHANGE: [v2.23.0 - Added staged git verification entrypoint for pre-commit hooks]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
 use crate::grace::inventory::MyGraceInventory;
 use crate::grace::layout::DocsLayout;
 use crate::grace::semantic::SemanticExtractor;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub use crate::grace::verify_types::{CheckResult, VerificationResult};
 
@@ -73,6 +74,37 @@ impl Verifier {
         Ok(results)
     }
     // END_verifier_verify_all_with_profile
+
+    // START_CONTRACT_Verifier::verify_staged_with_profile
+    // PURPOSE: Run staged-aware verification when git has staged Synapse-tracked files.
+    // INPUTS: { root: &Path }, { profile: GraceProfile }
+    // OUTPUTS: { anyhow::Result<Vec<VerificationResult>> }
+    // SIDE_EFFECTS: invokes git diff --cached to inspect staged paths
+    // LINKS:
+    //   -> Phase-90 (implements) - pre-commit staged verification
+    //   -> NFR-002 (traces_to) - reliable release verification commands
+    //   <- V-M-GRACE-VERIFY (verified_by) - staged verification tests
+    // START_verifier_verify_staged_with_profile
+    pub async fn verify_staged_with_profile(
+        root: &Path,
+        profile: GraceProfile,
+    ) -> anyhow::Result<Vec<VerificationResult>> {
+        let staged = staged_files(root)?;
+        let tracked = staged
+            .iter()
+            .filter(|path| is_synapse_tracked_staged_path(path))
+            .cloned()
+            .collect::<Vec<_>>();
+        let precheck = staged_precheck_result(staged.len(), &tracked);
+        if tracked.is_empty() {
+            return Ok(vec![precheck]);
+        }
+
+        let mut results = vec![precheck];
+        results.extend(Self::verify_all_with_profile(root, profile).await?);
+        Ok(results)
+    }
+    // END_verifier_verify_staged_with_profile
 
     // START_CONTRACT_Verifier::verify_module_local
     // PURPOSE: Level 1 — per-module checks (contracts, semantic, 500-token, traces)
@@ -949,5 +981,125 @@ impl Verifier {
         crate::grace::verify_phase::verify_phase(root).await
     }
     // END_verifier_verify_phase
+}
+
+// START_CONTRACT_staged_files
+// PURPOSE: Return git staged file paths for added, copied, and modified entries.
+// INPUTS: { root: &Path }
+// OUTPUTS: { anyhow::Result<Vec<PathBuf>> }
+// SIDE_EFFECTS: invokes git diff --cached
+// LINKS:
+//   -> Phase-90 (implements) - staged verification file discovery
+//   -> NFR-002 (traces_to) - reliable release verification commands
+//   <- V-M-GRACE-VERIFY (verified_by) - staged verification tests
+// START_staged_files
+fn staged_files(root: &Path) -> anyhow::Result<Vec<PathBuf>> {
+    let output = std::process::Command::new("git")
+        .args(["diff", "--cached", "--name-only", "--diff-filter=ACM"])
+        .current_dir(root)
+        .output()?;
+    if !output.status.success() {
+        anyhow::bail!("cannot inspect staged files; is this a git repository?");
+    }
+    Ok(String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(PathBuf::from)
+        .collect())
+}
+// END_staged_files
+
+// START_CONTRACT_is_synapse_tracked_staged_path
+// PURPOSE: Return true for staged files that should trigger Synapse verification.
+// INPUTS: { path: &Path }
+// OUTPUTS: { bool }
+// LINKS:
+//   -> Phase-90 (implements) - staged verification filter
+//   -> NFR-002 (traces_to) - reliable release verification commands
+//   <- V-M-GRACE-VERIFY (verified_by) - staged filter tests
+// START_is_synapse_tracked_staged_path
+fn is_synapse_tracked_staged_path(path: &Path) -> bool {
+    matches!(
+        path.extension().and_then(|extension| extension.to_str()),
+        Some("rs" | "md" | "toml" | "xml")
+    )
+}
+// END_is_synapse_tracked_staged_path
+
+// START_CONTRACT_staged_precheck_result
+// PURPOSE: Build the staged verification precheck result shown before full verification.
+// INPUTS: { staged_count: usize }, { tracked: &[PathBuf] }
+// OUTPUTS: { VerificationResult }
+// LINKS:
+//   -> Phase-90 (implements) - staged verification reporting
+//   -> NFR-002 (traces_to) - reliable release verification commands
+//   <- V-M-GRACE-VERIFY (verified_by) - staged reporting tests
+// START_staged_precheck_result
+fn staged_precheck_result(staged_count: usize, tracked: &[PathBuf]) -> VerificationResult {
+    let details = if staged_count == 0 {
+        "No staged files; verification skipped".to_string()
+    } else if tracked.is_empty() {
+        format!("{staged_count} staged files, none require Synapse verification")
+    } else {
+        format!(
+            "{} staged files, {} trigger Synapse verification: {}",
+            staged_count,
+            tracked.len(),
+            tracked
+                .iter()
+                .map(|path| path.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    };
+    VerificationResult {
+        level: "staged".to_string(),
+        passed: true,
+        checks: vec![CheckResult {
+            name: "staged-files".to_string(),
+            passed: true,
+            details,
+        }],
+    }
+}
+// END_staged_precheck_result
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn init_repo(root: &Path) -> anyhow::Result<()> {
+        let output = std::process::Command::new("git")
+            .arg("init")
+            .current_dir(root)
+            .output()?;
+        if !output.status.success() {
+            anyhow::bail!("git init failed");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn staged_path_filter_matches_synapse_extensions() {
+        assert!(is_synapse_tracked_staged_path(Path::new("src/main.rs")));
+        assert!(is_synapse_tracked_staged_path(Path::new("README.md")));
+        assert!(is_synapse_tracked_staged_path(Path::new("Cargo.toml")));
+        assert!(is_synapse_tracked_staged_path(Path::new("docs/Phase.xml")));
+        assert!(!is_synapse_tracked_staged_path(Path::new("target/app.bin")));
+    }
+
+    #[tokio::test]
+    async fn verify_staged_passes_when_no_files_staged() -> anyhow::Result<()> {
+        let temp = tempfile::tempdir()?;
+        init_repo(temp.path())?;
+        let results =
+            Verifier::verify_staged_with_profile(temp.path(), GraceProfile::Strict).await?;
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].level, "staged");
+        assert!(results[0].passed);
+        assert!(results[0].checks[0].details.contains("No staged files"));
+        Ok(())
+    }
 }
 // END_public_api

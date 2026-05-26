@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-INTEGRATION
 // PURPOSE: End-to-end integration tests for Synapse CLI commands
-// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, local RTK adapters, local RTK system adapters, rewrite hook decisions including safe shell chains, pipelines, fd redirects, and shell prefixes, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, compress
+// SCOPE: init, clean config bootstrap, tracking identity, index, search, verify, status, run scenario/action queue, proxy, RTK shortcuts, local RTK adapters, local RTK system adapters, rewrite hook decisions including safe shell chains, pipelines, fd redirects, and shell prefixes, route preview, raw evidence, filter trust/verification, gain, doctor, hooks, git pre-commit hook CLI, compress
 // DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-INDEXER, M-GRACE, M-RUNNER, M-CONFIG, M-PROXY, M-PROXY-RUNNER
 // LINKS:
 //   ← V-M-CLI (verified_by) - CLI integration coverage
@@ -21,6 +21,7 @@
 // test_run_scenario_cli_reports_gate_and_replay_json — Verifies bounded run scenario CLI JSON output
 // test_run_action_cli_plans_and_replays_run — Verifies run action queue CLI plan/replay output
 // test_doctor_and_hooks — Verifies setup diagnostics and hook status
+// test_hook_pre_commit_cli_round_trip — Verifies syn hook install/status/uninstall for git pre-commit hooks
 // test_scoped_and_json_cli — Verifies scoped JSON GRACE gates
 // test_init_from_existing — Verifies existing repository bootstrap
 // test_ci_commands — Verifies CI command aliases
@@ -28,7 +29,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.0.0 — Added RTK system adapter integration coverage]
+// LAST_CHANGE: [v5.1.0 - Added git pre-commit hook CLI integration coverage]
 // END_CHANGE_SUMMARY
 
 use std::process::Command;
@@ -1043,6 +1044,52 @@ fn test_doctor_and_hooks() {
         .unwrap();
     assert!(out.status.success());
 }
+
+// START_CONTRACT_test_hook_pre_commit_cli_round_trip
+// PURPOSE: Verify syn hook install/status/uninstall manages a git pre-commit hook.
+// SIDE_EFFECTS: creates an isolated git repository and writes .git/hooks/pre-commit
+// LINKS:
+//   -> Phase-90 (implements) - git pre-commit hook CLI
+//   -> NFR-002 (traces_to) - reliable release verification commands
+//   <- V-M-TESTS-INTEGRATION (verified_by) - hook CLI coverage
+// START_test_hook_pre_commit_cli_round_trip
+#[test]
+fn test_hook_pre_commit_cli_round_trip() {
+    let dir = tempfile::tempdir().unwrap();
+    let syn = std::env::current_dir().unwrap().join("target/debug/syn");
+    let git_init = Command::new("git")
+        .arg("init")
+        .current_dir(&dir)
+        .output()
+        .unwrap();
+    assert!(git_init.status.success());
+
+    let install = Command::new(&syn)
+        .args(["hook", "install"])
+        .current_dir(&dir)
+        .output()
+        .unwrap();
+    assert!(install.status.success());
+    assert!(dir.path().join(".git/hooks/pre-commit").exists());
+
+    let status = Command::new(&syn)
+        .args(["hook", "status"])
+        .current_dir(&dir)
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&status.stdout);
+    assert!(status.status.success());
+    assert!(stdout.contains("active"));
+
+    let uninstall = Command::new(&syn)
+        .args(["hook", "uninstall"])
+        .current_dir(&dir)
+        .output()
+        .unwrap();
+    assert!(uninstall.status.success());
+    assert!(!dir.path().join(".git/hooks/pre-commit").exists());
+}
+// END_test_hook_pre_commit_cli_round_trip
 
 #[test]
 fn test_skills_cli() {

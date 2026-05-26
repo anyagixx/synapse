@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-HOOKS" type="INTEGRATION" status="active">
   <NAME>M-HOOKS</NAME>
-  <PURPOSE>Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode and RTK-style multi-agent hook processors</PURPOSE>
-  <SCOPE>HookManager struct, install/uninstall/status/audit for opencode, claude, cursor, gemini, copilot, and all targets; JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation, trusted processor manifests, trusted hook marker diagnostics, and syn hook processors for Claude, Cursor, Gemini, Copilot, and check mode</SCOPE>
+  <PURPOSE>Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode, RTK-style multi-agent hook processors, and git pre-commit verification</PURPOSE>
+  <SCOPE>HookManager struct, install/uninstall/status/audit for opencode, claude, cursor, gemini, copilot, git pre-commit, and all targets; JSONC-aware MCP config merge, syn rewrite delegating plugin and shell hook generation, trusted processor manifests, trusted hook marker diagnostics, git pre-commit backup/restore, and syn hook processors for Claude, Cursor, Gemini, Copilot, check mode, install, status, and uninstall</SCOPE>
   <FILES>
     <FILE>src/hooks/mod.rs</FILE>
+    <FILE>src/hooks/git_pre_commit.rs</FILE>
     <FILE>src/cli/rtk_hook_processors.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-CLI,M-CLI-RTK-COMMANDS,M-HOOK-OPENCODE-REWRITE</DEPENDS>
-  <LINKS>.opencode/,docs/phases/Phase-21.xml,docs/phases/Phase-27.xml,docs/phases/Phase-50.xml,docs/phases/Phase-55.xml</LINKS>
+  <LINKS>.opencode/,docs/phases/Phase-21.xml,docs/phases/Phase-27.xml,docs/phases/Phase-50.xml,docs/phases/Phase-55.xml,docs/phases/Phase-90.xml</LINKS>
   <VERIFICATION_REF>V-M-HOOKS</VERIFICATION_REF>
 </MODULE>

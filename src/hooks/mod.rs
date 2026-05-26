@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-HOOKS
-// PURPOSE: Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode and RTK-style multi-agent hook processors
-// SCOPE: HookManager struct, install/uninstall/status/audit for opencode, claude, cursor, gemini, copilot, and all targets; JSONC-aware MCP config merge, syn rewrite delegating plugin, shell hook generation, and trusted processor manifests
+// PURPOSE: Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode, RTK-style multi-agent hook processors, and git pre-commit verification
+// SCOPE: HookManager struct, install/uninstall/status/audit for opencode, claude, cursor, gemini, copilot, git pre-commit, and all targets; JSONC-aware MCP config merge, syn rewrite delegating plugin, shell hook generation, trusted processor manifests, and staged verification hook management
 // DEPENDS: M-CONFIG, M-CLI-RTK-COMMANDS
 // LINKS: .opencode/, .synapse/hooks/, docs/phases/Phase-27.xml, docs/phases/Phase-55.xml
 
@@ -10,17 +10,22 @@
 // HookAuditReport — Reports trusted hook installation checks for agents
 // HookAuditItem — One hook audit check result
 // AgentHookSpec — Describes a trusted local hook processor manifest target
+// GitHookReport/GitHookStatus — Reports git pre-commit hook lifecycle state
 // merge_synapse_mcp_config — Adds mcp.synapse to an existing OpenCode config without dropping sibling keys
 // strip_jsonc_comments — Removes JSONC comments before safe config parsing
 // strip_trailing_commas — Removes JSONC trailing commas before safe config parsing
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.3.0 — Added multi-agent hook install and audit targets]
+// LAST_CHANGE: [v3.4.0 - Added git pre-commit verification hook management]
 // END_CHANGE_SUMMARY
+
+mod git_pre_commit;
 
 use crate::config::Config;
 use std::path::Path;
+
+pub use git_pre_commit::{GitHookReport, GitHookStatus};
 
 const AGENT_HOOK_DIR: &str = ".synapse/hooks";
 const OPENCODE_AGENT: &str = "opencode";

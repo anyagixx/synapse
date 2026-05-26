@@ -1,24 +1,28 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-HOOKS
-// PURPOSE: RTK-style hook processors — consume agent hook JSON and return Synapse rewrite decisions
-// SCOPE: HookCmd execution, Claude/Cursor/Gemini/Copilot processor aliases, dry-run check mode, JSON command extraction, rewrite decision rendering
+// PURPOSE: RTK-style hook processors and git hook actions — consume agent hook JSON, return Synapse rewrite decisions, and manage pre-commit verification hooks
+// SCOPE: HookCmd execution, install/status/uninstall git pre-commit actions, Claude/Cursor/Gemini/Copilot processor aliases, dry-run check mode, JSON command extraction, rewrite decision rendering
 // DEPENDS: M-CLI, M-CLI-RTK-COMMANDS, M-HOOK-OPENCODE-REWRITE
 // LINKS:
 //   -> M-CLI (depends) - exposes syn hook subcommands
 //   -> M-CLI-RTK-COMMANDS (depends) - reuses rewrite_command source of truth
 //   -> M-HOOKS (depends) - hook processing surface
+//   -> Phase-90 (implements) - git pre-commit hook CLI
 //   -> Phase-55 (implements) - full agent hook parity
+//   -> NFR-002 (traces_to) - reliable release verification commands
 //   -> NFR-003 (traces_to) - auto-proxy token-saving adoption
 
 // START_MODULE_MAP
-// HookCmd::run - Dispatches hook processor subcommands
+// HookCmd::run - Dispatches hook processor and git pre-commit subcommands
+// print_git_hook_report - Renders pre-commit install/uninstall reports
+// print_git_hook_status - Renders pre-commit status reports
 // process_hook_stdin - Reads hook JSON from stdin and emits rewrite/pass JSON
 // hook_check - Prints a rewrite for a dry-run command
 // extract_command - Finds a command string inside common agent hook payload shapes
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added Claude/Cursor/Gemini/Copilot hook processors]
+// LAST_CHANGE: [v1.1.0 - Added git pre-commit hook actions]
 // END_CHANGE_SUMMARY
 
 use super::rtk_commands::rewrite_command;
@@ -32,18 +36,32 @@ use std::io::Read;
 
 impl HookCmd {
     // START_CONTRACT_HookCmd::run
-    // PURPOSE: Dispatch RTK-style hook processors or dry-run rewrite checks
+    // PURPOSE: Dispatch RTK-style hook processors, dry-run rewrite checks, or git pre-commit hook actions
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: reads stdin for processor modes, writes stdout JSON or dry-run rewrite
     // LINKS:
     //   -> M-HOOKS (depends) - hook processor surface
     //   -> M-CLI-RTK-COMMANDS (depends) - rewrite source of truth
+    //   -> Phase-90 (implements) - git pre-commit hook CLI
     //   -> Phase-55 (implements) - RTK hook processor parity
+    //   -> NFR-002 (traces_to) - reliable release verification commands
     //   -> NFR-003 (traces_to) - automatic token-saving rewrites
     // START_hook_cmd_run
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         match &self.command {
+            HookProcessorAction::Install => {
+                let manager = crate::hooks::HookManager::new(&_config);
+                print_git_hook_report("install", &manager.install_git_pre_commit()?)
+            }
+            HookProcessorAction::Uninstall => {
+                let manager = crate::hooks::HookManager::new(&_config);
+                print_git_hook_report("uninstall", &manager.uninstall_git_pre_commit()?)
+            }
+            HookProcessorAction::Status => {
+                let manager = crate::hooks::HookManager::new(&_config);
+                print_git_hook_status(&manager.git_pre_commit_status()?)
+            }
             HookProcessorAction::Claude => process_hook_stdin("claude"),
             HookProcessorAction::Cursor => process_hook_stdin("cursor"),
             HookProcessorAction::Gemini => process_hook_stdin("gemini"),
@@ -64,6 +82,55 @@ struct HookResponse<'a> {
     command: Option<String>,
 }
 // END_HookResponse
+
+// START_CONTRACT_print_git_hook_report
+// PURPOSE: Render a compact pre-commit hook lifecycle report for CLI users.
+// INPUTS: { verb: &str }, { report: &crate::hooks::GitHookReport }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: writes stdout
+// LINKS:
+//   -> Phase-90 (implements) - pre-commit hook CLI output
+//   -> NFR-002 (traces_to) - reliable release verification commands
+//   <- V-M-HOOKS (verified_by) - hook CLI integration tests
+// START_print_git_hook_report
+fn print_git_hook_report(verb: &str, report: &crate::hooks::GitHookReport) -> anyhow::Result<()> {
+    println!(
+        "pre-commit hook {verb}: {} at {}",
+        report.action, report.path
+    );
+    if let Some(backup) = &report.backup_path {
+        println!("backup: {backup}");
+    }
+    Ok(())
+}
+// END_print_git_hook_report
+
+// START_CONTRACT_print_git_hook_status
+// PURPOSE: Render active, missing, or foreign git pre-commit hook status.
+// INPUTS: { status: &crate::hooks::GitHookStatus }
+// OUTPUTS: { anyhow::Result<()> }
+// SIDE_EFFECTS: writes stdout
+// LINKS:
+//   -> Phase-90 (implements) - pre-commit hook status CLI
+//   -> NFR-002 (traces_to) - reliable release verification commands
+//   <- V-M-HOOKS (verified_by) - hook CLI integration tests
+// START_print_git_hook_status
+fn print_git_hook_status(status: &crate::hooks::GitHookStatus) -> anyhow::Result<()> {
+    match status {
+        crate::hooks::GitHookStatus::Active { path } => {
+            println!("pre-commit hook status: active at {path}");
+        }
+        crate::hooks::GitHookStatus::NotInstalled { path } => {
+            println!("pre-commit hook status: not-installed at {path}");
+        }
+        crate::hooks::GitHookStatus::Foreign { path, message } => {
+            println!("pre-commit hook status: foreign at {path}");
+            println!("{message}");
+        }
+    }
+    Ok(())
+}
+// END_print_git_hook_status
 
 // START_CONTRACT_process_hook_stdin
 // PURPOSE: Read one JSON hook payload from stdin and emit a rewrite/pass response

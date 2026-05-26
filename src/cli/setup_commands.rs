@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-SETUP-COMMANDS
-// PURPOSE: CLI setup and indexing command handlers with guarded index storage status reporting, delta watch indexing, and safe OpenCode config merge
-// SCOPE: InitCmd, IndexCmd, watch_and_reindex, watch event delta classification, guarded index storage counts, gitignore toggle, OpenCode MCP merge, current MCP tool summary
+// PURPOSE: CLI setup and indexing command handlers with guarded index storage status reporting, delta watch indexing, safe OpenCode config merge, and pre-commit hook guidance
+// SCOPE: InitCmd, IndexCmd, watch_and_reindex, watch event delta classification, guarded index storage counts, gitignore toggle, OpenCode MCP merge, current MCP tool summary, and syn hook install tip
 // DEPENDS: M-CONFIG, M-GRACE-BOOTSTRAP, M-GRACE-LAYOUT, M-INDEXER, M-HOOKS
 // LINKS: docs/modules/M-CLI.xml
 
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.14.0 - Updated MCP setup summary to 48 tools]
+// LAST_CHANGE: [v3.15.0 - Added pre-commit hook install tip after init]
 // END_CHANGE_SUMMARY
 
 use super::{IndexCmd, InitCmd};
@@ -32,6 +32,9 @@ impl InitCmd {
     // INPUTS: { config: Config — runtime config }
     // OUTPUTS: { anyhow::Result<()> }
     // SIDE_EFFECTS: writes project integration files, docs, and index storage
+    // LINKS:
+    //   -> Phase-90 (implements) - pre-commit hook install guidance
+    //   -> NFR-002 (traces_to) - reliable release verification commands
     // START_init_run
     pub async fn run(&self, config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
@@ -107,6 +110,12 @@ impl InitCmd {
         println!("  .opencode/rules/synapse.md   — tool reference for LLM");
         println!();
         println!("Done. Now run: opencode");
+        if matches!(
+            crate::hooks::HookManager::new(&config).git_pre_commit_status(),
+            Ok(crate::hooks::GitHookStatus::NotInstalled { .. })
+        ) {
+            println!("Tip: run `syn hook install` to verify staged changes before each commit.");
+        }
         if self.from_existing {
             println!("Existing repo bootstrap: seeded sharded docs from current source tree.");
         }

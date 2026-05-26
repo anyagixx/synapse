@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-GRACE-VERIFY" module="M-GRACE-VERIFY" priority="normal" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test staged --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -16,6 +17,8 @@
     <ASSERTION>Verification reports dataflow-* and genorder-* checks for DevelopmentPlan.</ASSERTION>
     <ASSERTION>Verification reports mental-tests-defined, mental-tests-passed, and mental-test-no-drift checks.</ASSERTION>
     <ASSERTION>Verification reports all five non-human pattern checks with profile-aware severity and migration-friendly details.</ASSERTION>
+    <ASSERTION>verify --staged inspects git staged files and skips full verification when no Synapse-tracked files are staged.</ASSERTION>
+    <ASSERTION>verify --staged runs existing profile-aware verification when staged Rust, Markdown, TOML, or XML files are present.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13</PHASE_GATE>
+  <PHASE_GATE>Phase-13,Phase-90</PHASE_GATE>
 </VERIFICATION>

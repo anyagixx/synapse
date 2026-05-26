@@ -2,11 +2,11 @@
 <MODULE id="M-CLI-GRACE-COMMANDS" type="CORE_LOGIC" status="active">
   <NAME>M-CLI-GRACE-COMMANDS</NAME>
   <PURPOSE>CLI MyGRACE command handlers</PURPOSE>
-  <SCOPE>VerifyCmd, ReviewCmd, StatusCmd, RefreshCmd, SkillsCmd, GRACE profile parsing</SCOPE>
+  <SCOPE>VerifyCmd including --staged, ReviewCmd, StatusCmd, RefreshCmd, SkillsCmd, GRACE profile parsing</SCOPE>
   <FILES>
     <FILE>src/cli/grace_commands.rs</FILE>
   </FILES>
   <DEPENDS>M-CONFIG,M-GRACE,M-GRACE-REFRESH,M-GRACE-REVIEW,M-GRACE-STATUS,M-SKILLS</DEPENDS>
-  <LINKS>docs/modules/M-CLI.xml</LINKS>
+  <LINKS>docs/modules/M-CLI.xml,docs/phases/Phase-90.xml</LINKS>
   <VERIFICATION_REF>V-M-CLI-GRACE-COMMANDS</VERIFICATION_REF>
 </MODULE>

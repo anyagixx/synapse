@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-90" status="active">
+<PHASE id="Phase-90" status="done">
   <NAME>UPGRADE_5 Git Pre-Commit Verification Hook</NAME>
   <GOAL>Add git-level pre-commit verification while preserving existing RTK and agent hook commands.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_5/V4-pre-commit-hook.md</SOURCE_PLAN>
   <MODULE_REFS>
     <MODULE_REF id="M-HOOKS" />
     <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-GRACE-COMMANDS" />
+    <MODULE_REF id="M-CLI-SETUP-COMMANDS" />
     <MODULE_REF id="M-GRACE-VERIFY" />
     <MODULE_REF id="M-TESTS-INTEGRATION" />
   </MODULE_REFS>
@@ -15,19 +17,19 @@
     <FLOW id="DF-90-3">syn hook status and uninstall report the hook state without interfering with existing syn hook claude, cursor, gemini, copilot, and check processors.</FLOW>
   </DATA_FLOWS>
   <STEPS>
-    <step-1 module="M-HOOKS" status="planned">Create hook manager logic for install, uninstall, status, foreign-hook backup, and backup restore.</step-1>
-    <step-2 module="M-GRACE-VERIFY" status="planned">Add staged-file verification mode backed by git diff --cached and existing verifier profiles.</step-2>
-    <step-3 module="M-CLI" status="planned">Route syn hook install, uninstall, and status while keeping existing agent hook processors backward-compatible.</step-3>
-    <step-4 module="M-HOOKS" status="planned">Add syn init tip for pre-commit installation after project bootstrap.</step-4>
-    <step-5 module="M-TESTS-INTEGRATION" status="planned">Add temporary git repository tests for install, status, uninstall, backup, and staged verification behavior.</step-5>
+    <step-1 module="M-HOOKS" status="done">Create hook manager logic for install, uninstall, status, foreign-hook backup, and backup restore.</step-1>
+    <step-2 module="M-GRACE-VERIFY" status="done">Add staged-file verification mode backed by git diff --cached and existing verifier profiles.</step-2>
+    <step-3 module="M-CLI" status="done">Route syn hook install, uninstall, and status while keeping existing agent hook processors backward-compatible.</step-3>
+    <step-4 module="M-HOOKS" status="done">Add syn init tip for pre-commit installation after project bootstrap.</step-4>
+    <step-5 module="M-TESTS-INTEGRATION" status="done">Add temporary git repository tests for install, status, uninstall, backup, and staged verification behavior.</step-5>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test hooks::git_pre_commit --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test grace::verify staged --lib -- --test-threads=8</CHECK>
-    <CHECK status="planned">cargo test --test integration_test hook</CHECK>
-    <CHECK status="planned">syn hook install creates an executable .git/hooks/pre-commit in a temporary git repository.</CHECK>
-    <CHECK status="planned">syn hook status reports active, not-installed, and foreign states.</CHECK>
-    <CHECK status="planned">git commit is blocked when staged verification fails and succeeds when it passes.</CHECK>
+    <CHECK status="passed">cargo test hooks::git_pre_commit --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test staged --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test --test integration_test hook -- --test-threads=8</CHECK>
+    <CHECK status="passed">syn hook install creates an executable .git/hooks/pre-commit in a temporary git repository.</CHECK>
+    <CHECK status="passed">syn hook status reports active, not-installed, and foreign states.</CHECK>
+    <CHECK status="passed">git commit is blocked when staged verification fails and git commit --no-verify bypass succeeds.</CHECK>
   </VERIFICATION>
   <RISKS>
     <RISK id="R-90-1">The top-level hook command already hosts RTK-style processors; dispatch must remain backward-compatible.</RISK>

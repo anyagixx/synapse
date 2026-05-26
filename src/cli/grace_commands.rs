@@ -1,12 +1,12 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI-GRACE-COMMANDS
 // PURPOSE: CLI MyGRACE command handlers
-// SCOPE: VerifyCmd, ReviewCmd, StatusCmd, RefreshCmd, SkillsCmd, GRACE profile parsing
+// SCOPE: VerifyCmd including --staged, ReviewCmd, StatusCmd, RefreshCmd, SkillsCmd, GRACE profile parsing
 // DEPENDS: M-CONFIG, M-GRACE, M-GRACE-REFRESH, M-GRACE-REVIEW, M-GRACE-STATUS, M-SKILLS
 // LINKS: docs/modules/M-CLI.xml
 
 // START_MODULE_MAP
-// VerifyCmd::run — Runs MyGRACE verification with optional strictness profile
+// VerifyCmd::run — Runs MyGRACE verification with optional strictness profile and staged mode
 // ReviewCmd::run — Runs MyGRACE review with optional strictness profile
 // StatusCmd::run — Prints MyGRACE status
 // RefreshCmd::run — Reports or fixes MyGRACE drift
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.10.0 — Added --profile support for verify and review]
+// LAST_CHANGE: [v2.11.0 - Added verify --staged support for git pre-commit hooks]
 // END_CHANGE_SUMMARY
 
 use super::{RefreshCmd, ReviewCmd, SkillsCmd, StatusCmd, VerifyCmd};
@@ -26,15 +26,22 @@ use crate::grace::GraceProfile;
 
 impl VerifyCmd {
     // START_CONTRACT_VerifyCmd::run
-    // PURPOSE: Run MyGRACE verification and print JSON or human-readable checks
+    // PURPOSE: Run MyGRACE verification and print JSON or human-readable checks, optionally scoped to staged git files
     // INPUTS: { config: Config }
     // OUTPUTS: { anyhow::Result<()> }
+    // LINKS:
+    //   -> Phase-90 (implements) - staged pre-commit verification
+    //   -> NFR-002 (traces_to) - reliable release verification commands
+    //   <- V-M-CLI-GRACE-COMMANDS (verified_by) - verify CLI coverage
     // START_verify_run
     pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
         let root = std::env::current_dir()?;
         let profile = parse_grace_profile(&self.profile)?;
-        let mut results =
-            crate::grace::GraceEngine::verify_project_with_profile(&root, profile).await?;
+        let mut results = if self.staged {
+            crate::grace::verify::Verifier::verify_staged_with_profile(&root, profile).await?
+        } else {
+            crate::grace::GraceEngine::verify_project_with_profile(&root, profile).await?
+        };
         if let Some(module) = self.r#mod.as_deref() {
             let scope = resolve_module_scope(&root, module);
             if !scope.is_empty() {

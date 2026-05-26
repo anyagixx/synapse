@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, command dispatch, and command argument structs
-// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs, run scenario/action flags, agent resume/status flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, structured test command action schema, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
+// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs including verify --staged, run scenario/action flags, agent resume/status flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, structured test command action schema, session/economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, git pre-commit hook actions, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
 // DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-CONFIG-COMMANDS, M-CLI-FILTER-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-AGENT-COMMANDS, M-CLI-RTK-COMMANDS, M-CLI-TEST-COMMANDS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
@@ -21,14 +21,14 @@
 // SessionCmd/CcEconomicsCmd — Local RTK session and economics analytics
 // DiscoverCmd/LearnCmd — Bounded RTK discovery and learning diagnostics
 // HooksCmd — Agent hook install/status/audit schema
-// HookCmd/HookProcessorAction — RTK-style hook processor schema
+// HookCmd/HookProcessorAction — RTK-style hook processor and git pre-commit hook schema
 // RtkParityCmd — Machine-checkable RTK parity inventory and full parity matrix report
 // RewriteCmd — Hook-facing command rewrite dry run
 // FiltersDryRunCmd — Explains TOML filter stage decisions for sample output
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v6.2.0 — Added structured syn test action schema with RTK legacy fallback]
+// LAST_CHANGE: [v6.3.0 - Added verify --staged and git pre-commit hook actions]
 // END_CHANGE_SUMMARY
 
 mod agent_commands;
@@ -612,6 +612,8 @@ pub struct VerifyCmd {
     pub json: bool,
     #[arg(long)]
     pub ci: bool,
+    #[arg(long)]
+    pub staged: bool,
 }
 // END_VerifyCmd
 
@@ -1006,6 +1008,9 @@ pub struct HookCmd {
 // START_HookProcessorAction
 #[derive(Subcommand)]
 pub enum HookProcessorAction {
+    Install,
+    Uninstall,
+    Status,
     Claude,
     Cursor,
     Gemini,
