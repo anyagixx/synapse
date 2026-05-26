@@ -2,11 +2,11 @@
 <MODULE id="M-TEST-COVERAGE-MATRIX" type="UTILITY" status="active">
   <NAME>M-TEST-COVERAGE-MATRIX</NAME>
   <PURPOSE>Build a module by evidence-type coverage matrix for contracts, verification, mental tests, guides, LOG markers, and verify status.</PURPOSE>
-  <SCOPE>Index-based module discovery, evidence counting, table rendering, JSON rendering, uncovered module reporting, and CI-friendly exit behavior.</SCOPE>
+  <SCOPE>Index-based module discovery, evidence counting, table rendering, JSON rendering, uncovered module reporting, workspace coverage aggregation support, and CI-friendly exit behavior.</SCOPE>
   <FILES>
     <FILE>src/test/coverage.rs</FILE>
   </FILES>
   <DEPENDS>M-GRACE-LOG,M-GRACE-MENTAL-TEST,M-GRACE-VERIFY,M-GRACE-LAYOUT</DEPENDS>
-  <LINKS>docs/phases/Phase-79.xml,docs/phases/Phase-82.xml</LINKS>
+  <LINKS>docs/phases/Phase-79.xml,docs/phases/Phase-82.xml,docs/phases/Phase-91.xml</LINKS>
   <VERIFICATION_REF>V-M-TEST-COVERAGE-MATRIX</VERIFICATION_REF>
 </MODULE>

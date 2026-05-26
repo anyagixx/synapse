@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-WORKSPACE" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Multi-project workspace orchestration for Synapse member projects.
+    Key data flows:
+      - INPUT: Synapse.toml workspace config, command-line workspace actions, member project roots, and existing Synapse Config.
+      - PROCESSING: Resolve members from the workspace root, apply excludes/default policy, dispatch verify/status/index/coverage to existing engines, aggregate member outcomes, and render compact text or JSON.
+      - OUTPUT: Synapse.toml files, workspace member lists, aggregate verification/status/index/coverage reports, and nonzero CLI exits when members fail.
+    Critical invariants:
+      - Workspace member resolution never silently ignores missing members.
+      - verify uses existing MyGRACE profile-aware verification rather than a parallel verification implementation.
+      - status/index/coverage reuse established single-project engines from each member root.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep workspace orchestration separate from single-project engines and expose it through a narrow CLI command module.
+    Complexity_areas: parallel fail-fast behavior, stable report aggregation, profile defaults, and avoiding unrelated directory reads.
+    Patterns_applied: explicit config model, typed reports, bounded command dispatch, and reuse of existing verification/index/coverage engines.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test workspace --lib and cli::workspace_commands pass.
+    - syn workspace init/list/verify work against an isolated workspace root.
+    - verify_project and review_code remain green after adding the new module shard.
+  RISKS_ACKNOWLEDGED:
+    - Parallel verification can still start multiple member tasks before fail-fast aborts pending work.
+    - Members without MyGRACE artifacts should be reported as failed members, not hidden.
+</BELIEF_STATE>

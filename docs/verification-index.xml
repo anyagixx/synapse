@@ -120,5 +120,6 @@
     <VERIFICATION id="V-M-TRACKING" module="M-TRACKING" path="docs/verification/V-M-TRACKING.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TRACKING-MCP-METRICS" module="M-TRACKING-MCP-METRICS" path="docs/verification/V-M-TRACKING-MCP-METRICS.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-UTILS" module="M-UTILS" path="docs/verification/V-M-UTILS.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-WORKSPACE" module="M-WORKSPACE" path="docs/verification/V-M-WORKSPACE.xml" priority="normal" status="active" />
   </VERIFICATIONS>
 </VERIFICATION_INDEX>

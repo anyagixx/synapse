@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-LIB
 // PURPOSE: Crate root — declares all public modules, version, and crate-level lints
-// SCOPE: Module declarations, VERSION/NAME constants, clippy allows
+// SCOPE: Module declarations, VERSION/NAME constants, clippy allows, and workspace orchestration facade
 // DEPENDS: all sub-modules
 // LINKS: Cargo.toml
 
@@ -11,10 +11,11 @@
 // VERSION — Crate version from Cargo.toml
 // NAME — Binary name from Cargo.toml
 // test — UPGRADE_3 E2E and regression test harness facade
+// workspace — Multi-project workspace orchestration facade
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.14.0 — Exposed UPGRADE_3 test harness facade]
+// LAST_CHANGE: [v2.15.0 - Exposed workspace orchestration facade]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_public_api
@@ -38,6 +39,7 @@ pub mod skills;
 pub mod test;
 pub mod tracking;
 pub mod utils;
+pub mod workspace;
 
 // START_public_api
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

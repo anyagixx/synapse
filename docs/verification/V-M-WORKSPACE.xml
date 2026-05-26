@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-WORKSPACE" module="M-WORKSPACE" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test workspace --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test cli::workspace_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test workspace_cli -- --test-threads=1</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>syn workspace init writes Synapse.toml with members and default execution policy.</ASSERTION>
+    <ASSERTION>syn workspace list resolves configured members while respecting exact excludes.</ASSERTION>
+    <ASSERTION>syn workspace verify supports sequential mode, parallel mode, profile selection, and fail-fast policy.</ASSERTION>
+    <ASSERTION>syn workspace status, index, and coverage aggregate existing member engines without reading unrelated directories.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-91</PHASE_GATE>
+</VERIFICATION>

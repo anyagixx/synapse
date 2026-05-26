@@ -120,6 +120,7 @@
     <MODULE id="M-TRACKING" path="docs/modules/M-TRACKING.xml" status="active" />
     <MODULE id="M-TRACKING-MCP-METRICS" path="docs/modules/M-TRACKING-MCP-METRICS.xml" status="active" />
     <MODULE id="M-UTILS" path="docs/modules/M-UTILS.xml" status="active" />
+    <MODULE id="M-WORKSPACE" path="docs/modules/M-WORKSPACE.xml" status="active" />
   </MODULES>
   <RELATIONSHIPS>
     <REL source="M-AGENT-CONSOLE" target="M-AGENT-CONSOLE-TOOLS" type="DEPENDS" />
@@ -579,5 +580,10 @@
     <REL source="M-TRACKING" target="M-TRACKING-MCP-METRICS" type="DEPENDS" />
     <REL source="M-TRACKING-MCP-METRICS" target="M-CONFIG" type="DEPENDS" />
     <REL source="M-TRACKING-MCP-METRICS" target="M-TRACKING" type="DEPENDS" />
+    <REL source="M-WORKSPACE" target="M-CLI" type="DEPENDS" />
+    <REL source="M-WORKSPACE" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-WORKSPACE" target="M-GRACE-VERIFY" type="DEPENDS" />
+    <REL source="M-WORKSPACE" target="M-INDEXER" type="DEPENDS" />
+    <REL source="M-WORKSPACE" target="M-TEST-COVERAGE-MATRIX" type="DEPENDS" />
   </RELATIONSHIPS>
 </GRAPH_INDEX>

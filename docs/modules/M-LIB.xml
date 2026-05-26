@@ -2,11 +2,11 @@
 <MODULE id="M-LIB" type="CORE_LOGIC" status="active">
   <NAME>M-LIB</NAME>
   <PURPOSE>Crate root — declares all public modules, version, and crate-level lints</PURPOSE>
-  <SCOPE>Module declarations, including durable memory, VERSION/NAME constants, clippy allows</SCOPE>
+  <SCOPE>Module declarations, including durable memory, workspace orchestration, VERSION/NAME constants, clippy allows</SCOPE>
   <FILES>
     <FILE>src/lib.rs</FILE>
   </FILES>
-  <DEPENDS>all sub-modules</DEPENDS>
-  <LINKS>Cargo.toml</LINKS>
+  <DEPENDS>all sub-modules,M-WORKSPACE</DEPENDS>
+  <LINKS>Cargo.toml,docs/phases/Phase-91.xml</LINKS>
   <VERIFICATION_REF>V-M-LIB</VERIFICATION_REF>
 </MODULE>

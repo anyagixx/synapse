@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE" type="CORE_LOGIC" status="active">
+  <NAME>M-WORKSPACE</NAME>
+  <PURPOSE>Multi-project workspace orchestration for Synapse member projects.</PURPOSE>
+  <SCOPE>Synapse.toml config model, workspace init/load validation, member resolution, verify/status/index/coverage aggregation, parallel verify execution, fail-fast policy, CLI dispatch, JSON/text reports, and compact cross-project evidence.</SCOPE>
+  <FILES>
+    <FILE>src/workspace/mod.rs</FILE>
+    <FILE>src/cli/workspace_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-CONFIG,M-GRACE-VERIFY,M-GRACE-STATUS,M-INDEXER,M-TEST-COVERAGE-MATRIX</DEPENDS>
+  <LINKS>docs/phases/Phase-91.xml</LINKS>
+  <VERIFICATION_REF>V-M-WORKSPACE</VERIFICATION_REF>
+</MODULE>
