@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-MCP-SERVER-GRACE-TOOLS" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER-GRACE-TOOLS</NAME>
-  <PURPOSE>MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, self-heal, failure diagnosis, contract repair, log analysis, belief extraction, compression, tracking, contract suggestions, skills, and response economy</PURPOSE>
-  <SCOPE>profile-aware verify_project/review_code with response economy, project_status response economy, self_heal, diagnose_failure, repair_contract, analyze_logs response economy, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run response economy, traceability_report response economy, run_test_guide, submit_test_report, token_savings with adapter/session stats and response economy, compress_text, refresh_project response economy, language-aware suggest_contract, helper split, and grace_* handlers</SCOPE>
+  <PURPOSE>MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, self-heal, failure diagnosis, contract repair, log analysis, belief extraction, compression, tracking, budget checks, contract suggestions, skills, and response economy</PURPOSE>
+  <SCOPE>profile-aware verify_project/review_code with response economy, project_status response economy, self_heal, diagnose_failure, repair_contract, analyze_logs response economy, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run response economy, traceability_report response economy, run_test_guide, submit_test_report, token_savings with adapter/session stats and response economy, check_budget session budget reporting, compress_text, refresh_project response economy, language-aware suggest_contract, helper split, and grace_* handlers</SCOPE>
   <FILES>
     <FILE>src/mcp/server_grace_tools.rs</FILE>
     <FILE>src/mcp/server_contract_tools.rs</FILE>
+    <FILE>src/mcp/server_budget_tools.rs</FILE>
   </FILES>
   <DEPENDS>M-GRACE,M-GRACE-BELIEF-STATE,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-TESTING,M-GRACE-LOG,M-GRACE-REQUIREMENTS,M-GRACE-TECHNOLOGY,M-GRACE-CONTRACT-GENERATOR,M-GRACE-FAILURE-DIAGNOSIS,M-RUNNER-SELF-HEAL,M-TRACKING,M-COMPRESS,M-SKILLS-ENGINE,M-MCP-SERVER-RESPONSE</DEPENDS>
-  <LINKS>docs/modules/M-MCP-SERVER.xml,docs/phases/Phase-16.xml,docs/phases/Phase-21.xml,docs/phases/Phase-70.xml,docs/phases/Phase-71.xml,docs/phases/Phase-84.xml</LINKS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml,docs/phases/Phase-16.xml,docs/phases/Phase-21.xml,docs/phases/Phase-70.xml,docs/phases/Phase-71.xml,docs/phases/Phase-84.xml,docs/phases/Phase-87.xml</LINKS>
   <VERIFICATION_REF>V-M-MCP-SERVER-GRACE-TOOLS</VERIFICATION_REF>
 </MODULE>

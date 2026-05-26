@@ -1,11 +1,11 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-MCP-PROTOCOL
-// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, tools/recommend preselection, compact_evidence tool calls, response economy/cache schemas, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
-// SCOPE: Direct handler tests, tools/recommend context/run_id/custom terse profile behavior, compact_evidence persisted-run behavior, response economy/cache schema assertions, cache metadata behavior, and binary stdio protocol behavior
+// PURPOSE: MCP protocol tests — verify initialize, tools/list shape, tools/recommend preselection, compact_evidence and check_budget tool calls, response economy/cache schemas, pipelined response IDs, stdio cleanliness, notification silence, and representative grace tool exposure
+// SCOPE: Direct handler tests, tools/recommend context/run_id/custom terse profile behavior, compact_evidence persisted-run behavior, check_budget unlimited behavior, response economy/cache schema assertions, cache metadata behavior, and binary stdio protocol behavior
 // DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-RUNNER, M-RUNNER-AGENT-CONTEXT, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
-// test_initialize_then_list_tools — MCP handler lists all 46 tools after initialize
+// test_initialize_then_list_tools — MCP handler lists all 47 tools after initialize
 // initialized_handler — Creates an initialized in-process MCP handler
 // initialized_tools_list — Creates a handler, initializes MCP, and returns tools/list
 // tools_call — Executes one initialized tools/call request against a handler
@@ -20,6 +20,7 @@
 // test_tools_recommend_contexts_and_general_output — tools/recommend maps context and fallback scenarios
 // test_tools_recommend_run_id_and_suggested_terse_profile_budget — run_id-aware recommendation yields a token-budgeted custom profile
 // test_tools_call_compact_evidence_updates_run_record — compact_evidence compacts persisted run refs
+// test_tools_call_check_budget_reports_unlimited_default — check_budget reports backward-compatible unlimited default
 // test_tools_list_response_economy_schema_covers_core_tools — tools/list exposes max_tokens/style on 10+ tools
 // test_tools_list_cache_hint_schema_covers_cacheable_tools — tools/list exposes optional cache validators
 // test_tools_call_cache_metadata_and_not_modified — project_status emits _meta.cache and honors _if_none_match
@@ -30,7 +31,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.33.0 - Added compact_evidence protocol coverage]
+// LAST_CHANGE: [v2.34.0 - Added check_budget protocol coverage]
 // END_CHANGE_SUMMARY
 
 use serde_json::Value;
@@ -178,11 +179,11 @@ async fn test_initialize_then_list_tools() {
         .await
         .expect("tools/list request should produce a response");
     let tools = list["result"]["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 46);
+    assert_eq!(tools.len(), 47);
     assert_eq!(list["result"]["profile"], "all");
     assert_eq!(list["result"]["style"], "full");
-    assert_eq!(list["result"]["total_available"], 46);
-    assert_eq!(list["result"]["total_visible"], 46);
+    assert_eq!(list["result"]["total_available"], 47);
+    assert_eq!(list["result"]["total_visible"], 47);
 }
 
 #[tokio::test]
@@ -201,7 +202,7 @@ async fn test_tools_list_profiles_return_expected_counts() {
     let minimal_names = tool_names(&minimal);
     let custom_names = tool_names(&custom);
 
-    assert_eq!(all_names.len(), 46);
+    assert_eq!(all_names.len(), 47);
     assert!(verification_names.len() <= 10, "{verification:?}");
     assert!(verification_names.contains(&"verify_project".to_string()));
     assert!(verification_names.contains(&"review_code".to_string()));
@@ -219,7 +220,7 @@ async fn test_tools_list_profiles_return_expected_counts() {
     );
     assert_eq!(custom_names, vec!["semantic_search", "verify_project"]);
     assert_eq!(custom["result"]["profile"], "custom");
-    assert_eq!(custom["result"]["total_available"], 46);
+    assert_eq!(custom["result"]["total_available"], 47);
     assert_eq!(custom["result"]["total_visible"], 2);
 }
 
@@ -235,7 +236,7 @@ async fn test_tools_list_full_and_terse_styles() {
     assert_eq!(terse["result"]["style"], "terse");
     assert!(contains_schema_description_key(&full["result"]["tools"]));
     assert!(!contains_schema_description_key(&terse["result"]["tools"]));
-    assert_eq!(terse["result"]["total_visible"], 46);
+    assert_eq!(terse["result"]["total_visible"], 47);
     assert!(terse["result"]["schema_economy"]["savings_pct"]
         .as_f64()
         .is_some_and(|pct| pct >= 60.0));
@@ -420,6 +421,25 @@ async fn test_tools_call_compact_evidence_updates_run_record() {
         restored.evidence_refs,
         vec!["▶verify".to_string(), "📁run-1/evidence.log".to_string()]
     );
+}
+
+#[tokio::test]
+// START_CONTRACT_test_tools_call_check_budget_reports_unlimited_default
+// PURPOSE: Verify check_budget tools/call reports the backward-compatible unlimited budget default.
+// SIDE_EFFECTS: creates in-process MCP handler
+async fn test_tools_call_check_budget_reports_unlimited_default() {
+    let handler = initialized_handler().await;
+    let response = tools_call(
+        &handler,
+        2,
+        "check_budget",
+        serde_json::json!({"estimated_tokens": 500000}),
+    )
+    .await;
+
+    assert_eq!(response["result"]["budget"]["limit"], 0);
+    assert_eq!(response["result"]["budget"]["status"], "normal");
+    assert_eq!(response["result"]["can_afford_estimated"], true);
 }
 
 #[tokio::test]

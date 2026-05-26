@@ -20,7 +20,7 @@
   </REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
     <ASSERTION>MCP stdout remains JSON-RPC-only; diagnostics stay off stdout.</ASSERTION>
-    <ASSERTION>Real stdio tools/list all profile sees the 46-tool registry including tools/recommend and compact_evidence.</ASSERTION>
+    <ASSERTION>Real stdio tools/list all profile sees the 47-tool registry including tools/recommend, compact_evidence, and check_budget.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-78,Phase-83,Phase-86</PHASE_GATE>
+  <PHASE_GATE>Phase-78,Phase-83,Phase-86,Phase-87</PHASE_GATE>
 </VERIFICATION>

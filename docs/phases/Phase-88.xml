@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-88" status="planned">
+<PHASE id="Phase-88" status="active">
   <NAME>UPGRADE_4 Context Pressure Integration Gate</NAME>
   <GOAL>Implement T6 context pressure monitoring and run the full UPGRADE_4 token economy verification gate.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T6-context-pressure-monitor.md</SOURCE_PLAN>

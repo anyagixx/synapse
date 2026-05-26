@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including tools/recommend, compact_evidence, response economy parameters, cache validator hints, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including tools/recommend, compact_evidence, check_budget, response economy parameters, cache validator hints, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.10.0 - Added compact_evidence schema]
+// LAST_CHANGE: [v4.11.0 - Added check_budget schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -186,7 +186,7 @@ pub(crate) fn tool_profile_membership(tool_name: &str) -> &'static [ToolProfile]
         }
         "run_test_guide" | "submit_test_report" | "self_heal" | "diagnose_failure"
         | "repair_contract" | "grace_fix" => &[Debugging, Implementation],
-        "advance_phase" | "compact_evidence" => &[Implementation],
+        "advance_phase" | "compact_evidence" | "check_budget" => &[Implementation],
         "tools/recommend" => &[Planning, Implementation, Debugging],
         _ => &[],
     }
@@ -769,6 +769,7 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
     ];
     tools.push(serde_json::json!({"name":"tools/recommend","description":"Recommend up to eight context-relevant tools before listing schemas.","inputSchema":{"type":"object","properties":{"context":{"type":"string","description":"Current task or surrounding agent context"},"run_id":{"type":"string","description":"Optional persisted run id for run-state-aware recommendations"},"max_tools":{"type":"number","default":8,"description":"Maximum tools to recommend; clamped to 1..8"}}}}));
     tools.push(serde_json::json!({"name":"compact_evidence","description":"Deduplicate, alias, and truncate evidence refs for one persisted run.","inputSchema":{"type":"object","properties":{"run_id":{"type":"string","description":"Persisted run id"},"project_root":{"type":"string","description":"Optional project root; defaults to current directory"}},"required":["run_id"]}}));
+    tools.push(serde_json::json!({"name":"check_budget","description":"Check current session token budget and optional estimated-token affordability.","inputSchema":{"type":"object","properties":{"estimated_tokens":{"type":"integer","description":"Optional estimated input tokens for a prospective operation"}}}}));
     add_response_economy_schemas(&mut tools);
     for tool in &mut tools {
         if tool

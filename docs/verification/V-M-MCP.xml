@@ -9,6 +9,7 @@
     <ASSERTION>MCP module exports the persistent LSP manager beside the LSP client and server facade.</ASSERTION>
     <ASSERTION>MCP module declares the bounded run tools helper module beside existing server helpers.</ASSERTION>
     <ASSERTION>MCP module declares the predictive tool recommendation helper module beside existing server helpers.</ASSERTION>
+    <ASSERTION>MCP module declares the budget tools helper module beside existing server helpers.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-73,Phase-86</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-73,Phase-86,Phase-87</PHASE_GATE>
 </VERIFICATION>

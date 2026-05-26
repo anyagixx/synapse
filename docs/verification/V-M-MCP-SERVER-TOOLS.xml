@@ -25,7 +25,7 @@
     <ASSERTION>tools/list exposes cascade_impact and cascade_execute schemas with cascade id and auto-apply controls.</ASSERTION>
     <ASSERTION>tools/list exposes run_test_guide and submit_test_report schemas for tester-agent workflows.</ASSERTION>
     <ASSERTION>tools/list exposes self_heal schema with run_id, profile, and optional project_root fields.</ASSERTION>
-    <ASSERTION>tools/list exposes advance_phase, compact_evidence, and pre_commit_check schemas for run gate and evidence automation.</ASSERTION>
+    <ASSERTION>tools/list exposes advance_phase, compact_evidence, check_budget, and pre_commit_check schemas for run gate, budget, and evidence automation.</ASSERTION>
     <ASSERTION>tools/list exposes diagnose_failure and repair_contract schemas for Phase-71 failure-to-fix workflows.</ASSERTION>
     <ASSERTION>tools/list exposes semantic_search language, path, and path_contains filter schema fields.</ASSERTION>
     <ASSERTION>tools/list exposes graphrag_query operation=impact with depth and include_tests schema fields.</ASSERTION>

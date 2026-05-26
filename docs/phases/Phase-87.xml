@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-87" status="active">
+<PHASE id="Phase-87" status="done">
   <NAME>UPGRADE_4 Evidence And Budget Economy</NAME>
   <GOAL>Implement T3 evidence compaction and T4 per-session token budget enforcement while preserving existing run persistence and unlimited default behavior.</GOAL>
   <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/README.md</SOURCE_PLAN>
@@ -30,7 +30,7 @@
     <step-4 module="M-CONFIG" status="done">Add backward-compatible budget config with session_token_limit=0 default.</step-4>
     <step-5 module="M-TRACKING" status="done">Add BudgetStatus, BudgetLevel, check_budget, and can_afford session queries.</step-5>
     <step-6 module="M-MCP-SERVER" status="done">Gate expensive tools and append warning metadata when session budget is near exhaustion.</step-6>
-    <step-7 module="M-MCP-SERVER-GRACE-TOOLS" status="planned">Expose check_budget MCP tool.</step-7>
+    <step-7 module="M-MCP-SERVER-GRACE-TOOLS" status="done">Expose check_budget MCP tool.</step-7>
   </STEPS>
   <VERIFICATION>
     <CHECK status="passed">cargo test run::evidence_compaction::tests --lib</CHECK>
@@ -39,6 +39,14 @@
     <CHECK status="passed">cargo test config::tests::default_budget_runtime_limits_are_unlimited --lib</CHECK>
     <CHECK status="passed">cargo test mcp::server::tests::test_budget_gate --lib</CHECK>
     <CHECK status="passed">cargo test tracking::session_budget::tests --lib</CHECK>
+    <CHECK status="passed">cargo test mcp::server_budget_tools::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test mcp_protocol test_tools_call_check_budget_reports_unlimited_default</CHECK>
+    <CHECK status="passed">cargo test --test mcp_protocol</CHECK>
+    <CHECK status="passed">cargo test --test e2e_mcp tools_list</CHECK>
+    <CHECK status="passed">cargo test --all-targets</CHECK>
+    <CHECK status="passed">syn refresh reports no drift.</CHECK>
+    <CHECK status="passed">syn verify passes under strict profile.</CHECK>
+    <CHECK status="passed">syn review --json passes.</CHECK>
     <CHECK status="passed">compact_evidence removes duplicates and aliases action://, scenario://, docs/runs/, docs/verification/, docs/modules/, and docs/phases/.</CHECK>
     <CHECK status="passed">compact_evidence truncates above 20 refs with a summary marker.</CHECK>
     <CHECK status="passed">compact_evidence MCP tool compacts and persists refs for a run record.</CHECK>

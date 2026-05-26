@@ -1,10 +1,9 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
-
 // START_MODULE_MAP
 // McpServer — MCP stdio server entry point
 // discover_project_count — Counts probable child projects for multi-root mode
@@ -27,9 +26,10 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.27.0 - Added MCP session budget gates]
+// LAST_CHANGE: [v3.28.0 - Routed check_budget MCP tool]
 // END_CHANGE_SUMMARY
 
+use super::server_budget_tools::handle_check_budget as handle_budget;
 use super::{
     pipeline::{self, McpPipelineConfig, PipelineHandler},
     server_cascade_tools, server_code_tools, server_contract_tools, server_grace_tools,
@@ -420,6 +420,9 @@ impl SynapseHandler {
                         }
                         "tools/recommend" => tool_recommend::handle_recommend(id, args).await,
                         "token_savings" => server_grace_tools::handle_gain(id, args).await,
+                        "check_budget" => {
+                            handle_budget(&self.config, &self.tracker, id, args).await
+                        }
                         "compress_text" => server_grace_tools::handle_compress(id, args).await,
                         "refresh_project" => server_grace_tools::handle_refresh(id, args).await,
                         "diagnose_failure" => {
@@ -1294,5 +1297,4 @@ mod tests {
     }
     // END_test_cache_metadata_attaches_to_graphrag_overview
 }
-
 // END_public_api
