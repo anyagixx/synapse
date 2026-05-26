@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, context_pressure, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, context pressure metadata, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, context_pressure, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 // START_MODULE_MAP
@@ -26,11 +26,11 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.29.0 - Routed context_pressure MCP tool]
+// LAST_CHANGE: [v3.30.0 - Added context pressure response metadata]
 // END_CHANGE_SUMMARY
-
 use super::server_budget_tools::handle_check_budget as budget;
 use super::server_budget_tools::handle_context_pressure as pressure;
+use super::server_pressure::attach_context_pressure_metadata as pressure_meta;
 use super::{
     pipeline::{self, McpPipelineConfig, PipelineHandler},
     server_cascade_tools, server_code_tools, server_contract_tools, server_grace_tools,
@@ -49,7 +49,6 @@ use std::sync::{
     Arc, RwLock,
 };
 use std::time::{Duration, Instant, UNIX_EPOCH};
-
 // START_public_api
 
 // START_McpServer
@@ -354,7 +353,7 @@ impl SynapseHandler {
                     }
                 };
 
-                let response = if let Some(status) = budget_status
+                let mut response = if let Some(status) = budget_status
                     .as_ref()
                     .filter(|status| status.status == BudgetLevel::Blocked)
                 {
@@ -462,6 +461,7 @@ impl SynapseHandler {
                     self.record_cache_metadata(name, args, &mut response);
                     response
                 };
+                pressure_meta(&self.config, &self.tracker, args, &mut response).await;
                 let (status, error_message) = classify_mcp_response(&response);
                 let duration_ms = elapsed_millis_u64(started);
                 if let Err(error) = self

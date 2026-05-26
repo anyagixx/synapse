@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP
 // PURPOSE: MCP module declaration — exports lsp, persistent LSP manager, pipeline, and server sub-modules
-// SCOPE: Module declarations for MCP server facade, MCP stdio pipeline, LSP manager, and private server helper modules including budget and tool recommendation
+// SCOPE: Module declarations for MCP server facade, MCP stdio pipeline, LSP manager, and private server helper modules including budget, pressure, and tool recommendation
 // DEPENDS: M-MCP-PIPELINE, M-MCP-SERVER, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-MCP-LSP
 // LINKS: N/A
 
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.28.0 - Added budget MCP helper module]
+// LAST_CHANGE: [v2.29.0 - Added context pressure MCP helper module]
 // END_CHANGE_SUMMARY
 
 // START_CONTRACT_public_api
@@ -26,6 +26,7 @@ mod server_cascade_tools;
 mod server_code_tools;
 mod server_contract_tools;
 mod server_grace_tools;
+mod server_pressure;
 mod server_response;
 mod server_run_tools;
 mod server_tools;
