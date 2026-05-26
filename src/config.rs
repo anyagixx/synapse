@@ -1,18 +1,19 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CONFIG
 // PURPOSE: Config model and explicit load/default/init semantics for synapsec.toml
-// SCOPE: Config struct definitions including embedding provider settings, observability runtime bounds, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
+// SCOPE: Config struct definitions including embedding provider settings, budget settings, observability runtime bounds, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence
 // DEPENDS: N/A
 // LINKS: synapsec.toml
 
 // START_MODULE_MAP
-// Config — Top-level config struct (project, index, search, proxy, compress, tracking, observability, graphrag, embedding, lsp)
+// Config — Top-level config struct (project, index, search, proxy, compress, tracking, budget, observability, graphrag, embedding, lsp)
 // ProjectConfig — Project metadata (name, version, strictness)
 // IndexConfig — Indexer settings (chunk_size, chunk_overlap, require_git)
 // SearchConfig — Search settings (max_results, similarity_threshold, hybrid_enabled)
 // ProxyConfig — Proxy settings (enabled, passthrough_max_chars, capture caps, command timeout)
 // CompressConfig — Compress settings (output_level, input_enabled)
 // TrackingConfig — Tracking settings (enabled, history_days)
+// BudgetConfig — Per-session token budget settings (limit, warn/block percentages, reset behavior)
 // ObservabilityConfig — Dashboard/MCP observability settings and runtime bounds
 // GraphRagConfig — GraphRAG settings (enabled, use_llm)
 // EmbeddingConfig — Local semantic embedding settings (enabled, provider, model, cache_dir, batch_size)
@@ -22,7 +23,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.10.0 — Added typed observability and MCP runtime bounds]
+// LAST_CHANGE: [v3.11.0 - Added backward-compatible budget config]
 // END_CHANGE_SUMMARY
 
 use std::collections::HashMap;
@@ -42,6 +43,8 @@ pub struct Config {
     pub proxy: ProxyConfig,
     pub compress: CompressConfig,
     pub tracking: TrackingConfig,
+    #[serde(default)]
+    pub budget: BudgetConfig,
     #[serde(default)]
     pub observability: ObservabilityConfig,
     pub graphrag: GraphRagConfig,
@@ -109,6 +112,57 @@ impl TrackingConfig {
     pub fn enabled(&self) -> bool {
         self.enabled
     }
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
+pub struct BudgetConfig {
+    #[serde(default = "default_session_token_limit")]
+    pub session_token_limit: u64,
+    #[serde(default = "default_budget_warn_at_pct")]
+    pub warn_at_pct: u64,
+    #[serde(default = "default_budget_block_at_pct")]
+    pub block_at_pct: u64,
+    #[serde(default = "default_budget_reset_on_new_session")]
+    pub reset_on_new_session: bool,
+}
+
+impl Default for BudgetConfig {
+    fn default() -> Self {
+        Self {
+            session_token_limit: default_session_token_limit(),
+            warn_at_pct: default_budget_warn_at_pct(),
+            block_at_pct: default_budget_block_at_pct(),
+            reset_on_new_session: default_budget_reset_on_new_session(),
+        }
+    }
+}
+
+// START_CONTRACT_default_session_token_limit
+// PURPOSE: Provide serde/default per-session token limit, where zero means unlimited.
+// OUTPUTS: { u64 }
+fn default_session_token_limit() -> u64 {
+    0
+}
+
+// START_CONTRACT_default_budget_warn_at_pct
+// PURPOSE: Provide serde/default budget warning threshold percentage.
+// OUTPUTS: { u64 }
+fn default_budget_warn_at_pct() -> u64 {
+    80
+}
+
+// START_CONTRACT_default_budget_block_at_pct
+// PURPOSE: Provide serde/default budget blocking threshold percentage.
+// OUTPUTS: { u64 }
+fn default_budget_block_at_pct() -> u64 {
+    100
+}
+
+// START_CONTRACT_default_budget_reset_on_new_session
+// PURPOSE: Provide serde/default behavior for resetting budget accounting on new sessions.
+// OUTPUTS: { bool }
+fn default_budget_reset_on_new_session() -> bool {
+    true
 }
 
 // START_CONTRACT_default_proxy_capture_cap_bytes
@@ -278,6 +332,22 @@ const CONFIG_KEY_SPECS: &[ConfigKeySpec] = &[
         value_type: "u32",
     },
     ConfigKeySpec {
+        key: "budget.session_token_limit",
+        value_type: "u64",
+    },
+    ConfigKeySpec {
+        key: "budget.warn_at_pct",
+        value_type: "u64",
+    },
+    ConfigKeySpec {
+        key: "budget.block_at_pct",
+        value_type: "u64",
+    },
+    ConfigKeySpec {
+        key: "budget.reset_on_new_session",
+        value_type: "bool",
+    },
+    ConfigKeySpec {
         key: "observability.enabled",
         value_type: "bool",
     },
@@ -439,6 +509,10 @@ impl Config {
             "compress.input_enabled" => self.compress.input_enabled.to_string(),
             "tracking.enabled" => self.tracking.enabled.to_string(),
             "tracking.history_days" => self.tracking.history_days.to_string(),
+            "budget.session_token_limit" => self.budget.session_token_limit.to_string(),
+            "budget.warn_at_pct" => self.budget.warn_at_pct.to_string(),
+            "budget.block_at_pct" => self.budget.block_at_pct.to_string(),
+            "budget.reset_on_new_session" => self.budget.reset_on_new_session.to_string(),
             "observability.enabled" => self.observability.enabled.to_string(),
             "observability.mcp_metrics_enabled" => {
                 self.observability.mcp_metrics_enabled.to_string()
@@ -518,6 +592,18 @@ impl Config {
             }
             "tracking.enabled" => self.tracking.enabled = parse_bool(&canonical, value)?,
             "tracking.history_days" => self.tracking.history_days = parse_u32(&canonical, value)?,
+            "budget.session_token_limit" => {
+                self.budget.session_token_limit = parse_u64(&canonical, value)?
+            }
+            "budget.warn_at_pct" => {
+                self.budget.warn_at_pct = parse_u64_range(&canonical, value, 0, 100)?
+            }
+            "budget.block_at_pct" => {
+                self.budget.block_at_pct = parse_u64_range(&canonical, value, 1, 100)?
+            }
+            "budget.reset_on_new_session" => {
+                self.budget.reset_on_new_session = parse_bool(&canonical, value)?
+            }
             "observability.enabled" => self.observability.enabled = parse_bool(&canonical, value)?,
             "observability.mcp_metrics_enabled" => {
                 self.observability.mcp_metrics_enabled = parse_bool(&canonical, value)?
@@ -601,6 +687,14 @@ impl Config {
             }
             "tracking.enabled" => self.tracking.enabled = defaults.tracking.enabled,
             "tracking.history_days" => self.tracking.history_days = defaults.tracking.history_days,
+            "budget.session_token_limit" => {
+                self.budget.session_token_limit = defaults.budget.session_token_limit
+            }
+            "budget.warn_at_pct" => self.budget.warn_at_pct = defaults.budget.warn_at_pct,
+            "budget.block_at_pct" => self.budget.block_at_pct = defaults.budget.block_at_pct,
+            "budget.reset_on_new_session" => {
+                self.budget.reset_on_new_session = defaults.budget.reset_on_new_session
+            }
             "observability.enabled" => self.observability.enabled = defaults.observability.enabled,
             "observability.mcp_metrics_enabled" => {
                 self.observability.mcp_metrics_enabled = defaults.observability.mcp_metrics_enabled
@@ -690,6 +784,7 @@ impl Default for Config {
                 enabled: true,
                 history_days: 90,
             },
+            budget: BudgetConfig::default(),
             observability: ObservabilityConfig::default(),
             graphrag: GraphRagConfig {
                 enabled: false,
@@ -814,6 +909,22 @@ fn parse_u64(key: &str, value: &str) -> anyhow::Result<u64> {
         .map_err(|_| anyhow::anyhow!("{} must be an unsigned integer", key))
 }
 // END_parse_u64
+
+// START_CONTRACT_parse_u64_range
+// PURPOSE: Parse a bounded unsigned 64-bit config value.
+// INPUTS: { key: &str }, { value: &str }, { min: u64 }, { max: u64 }
+// OUTPUTS: { anyhow::Result<u64> }
+// LINKS:
+//   -> NFR-002 (traces_to) - user-supplied budget bounds are validated
+// START_parse_u64_range
+fn parse_u64_range(key: &str, value: &str, min: u64, max: u64) -> anyhow::Result<u64> {
+    let parsed = parse_u64(key, value)?;
+    if !(min..=max).contains(&parsed) {
+        anyhow::bail!("{} must be between {} and {}", key, min, max);
+    }
+    Ok(parsed)
+}
+// END_parse_u64_range
 
 // START_CONTRACT_parse_usize
 // PURPOSE: Parse a usize config value
@@ -949,6 +1060,10 @@ use_llm = false
         assert_eq!(config.embedding.provider, "fastembed");
         assert_eq!(config.embedding.model, "AllMiniLML6V2");
         assert_eq!(config.embedding.batch_size, 256);
+        assert_eq!(config.budget.session_token_limit, 0);
+        assert_eq!(config.budget.warn_at_pct, 80);
+        assert_eq!(config.budget.block_at_pct, 100);
+        assert!(config.budget.reset_on_new_session);
     }
 
     #[test]
@@ -971,6 +1086,16 @@ use_llm = false
         assert_eq!(config.observability.pipeline_response_queue_capacity(), 128);
         assert_eq!(config.observability.pipeline_max_concurrent_requests(), 16);
         assert_eq!(config.observability.pipeline_max_line_bytes(), 10_485_760);
+    }
+
+    #[test]
+    fn default_budget_runtime_limits_are_unlimited() {
+        let config = Config::default();
+
+        assert_eq!(config.budget.session_token_limit, 0);
+        assert_eq!(config.budget.warn_at_pct, 80);
+        assert_eq!(config.budget.block_at_pct, 100);
+        assert!(config.budget.reset_on_new_session);
     }
 
     #[test]
@@ -1017,6 +1142,31 @@ use_llm = false
         assert!(!config.observability.mcp_metrics_enabled());
 
         let entry = config
+            .set_config_key("budget.session-token-limit", "500000")
+            .expect("set budget limit");
+        assert_eq!(entry.key, "budget.session_token_limit");
+        assert_eq!(entry.value, "500000");
+        assert_eq!(config.budget.session_token_limit, 500_000);
+
+        let entry = config
+            .set_config_key("budget.warn-at-pct", "75")
+            .expect("set budget warning threshold");
+        assert_eq!(entry.value, "75");
+        assert_eq!(config.budget.warn_at_pct, 75);
+
+        let entry = config
+            .set_config_key("budget.block-at-pct", "95")
+            .expect("set budget block threshold");
+        assert_eq!(entry.value, "95");
+        assert_eq!(config.budget.block_at_pct, 95);
+
+        let entry = config
+            .set_config_key("budget.reset-on-new-session", "false")
+            .expect("set budget reset toggle");
+        assert_eq!(entry.value, "false");
+        assert!(!config.budget.reset_on_new_session);
+
+        let entry = config
             .unset_config_key("search.max_results")
             .expect("unset key");
         assert_eq!(
@@ -1055,6 +1205,8 @@ use_llm = false
         assert!(config
             .set_config_key("observability.pipeline_max_line_bytes", "512")
             .is_err());
+        assert!(config.set_config_key("budget.warn_at_pct", "101").is_err());
+        assert!(config.set_config_key("budget.block_at_pct", "0").is_err());
     }
 
     #[test]
@@ -1071,6 +1223,7 @@ use_llm = false
         let loaded: Config = toml::from_str(&persisted).expect("parse persisted config");
 
         assert!(!loaded.tracking.enabled);
+        assert_eq!(loaded.budget.session_token_limit, 0);
     }
 }
 // END_public_api

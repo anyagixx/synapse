@@ -4,6 +4,7 @@
     <COMMAND>cargo test --all-targets</COMMAND>
     <COMMAND>cargo test config::tests::proxy_config_deserializes_runtime_defaults_for_existing_files --lib</COMMAND>
     <COMMAND>cargo test config::tests::default_proxy_runtime_limits_are_release_defaults --lib</COMMAND>
+    <COMMAND>cargo test config::tests::default_budget_runtime_limits_are_unlimited --lib</COMMAND>
     <COMMAND>cargo test config::tests::config_key_helpers --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test config::tests::proxy_config_deserializes_runtime_defaults_for_existing_files --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test config::tests::default_observability_runtime_limits_are_release_defaults --lib -- --test-threads=8</COMMAND>
@@ -16,6 +17,7 @@
     <ASSERTION>Typed scalar config key helpers get, set, unset, reject invalid values, and persist TOML updates.</ASSERTION>
     <ASSERTION>Embedding config deserializes with release-safe disabled defaults for existing files and exposes typed enablement/provider/model/cache_dir/batch_size keys.</ASSERTION>
     <ASSERTION>Observability config deserializes with release-safe defaults for existing files and exposes typed enablement, MCP retention, stats limits, and pipeline bounds keys.</ASSERTION>
+    <ASSERTION>Budget config deserializes with unlimited session_token_limit=0 defaults for existing files and exposes typed session limit, warning, block, and reset keys.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-61,Phase-65,Phase-66,Phase-67</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-61,Phase-65,Phase-66,Phase-67,Phase-87</PHASE_GATE>
 </VERIFICATION>
