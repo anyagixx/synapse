@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-RUN-TOOLS
-// PURPOSE: MCP handlers for bounded run phase advancement and pre-commit verification tools.
-// SCOPE: advance_phase and pre_commit_check JSON-RPC handlers with project_root resolution and structured MCP responses.
+// PURPOSE: MCP handlers for bounded run phase advancement, evidence compaction, and pre-commit verification tools.
+// SCOPE: advance_phase, compact_evidence, and pre_commit_check JSON-RPC handlers with project_root resolution and structured MCP responses.
 // DEPENDS: M-RUNNER, M-RUNNER-PHASE-ENGINE, M-RUNNER-PRECOMMIT, M-MCP-SERVER-RESPONSE
 // LINKS:
 //   -> M-RUNNER (depends) - invokes RunManager runtime APIs
@@ -11,12 +11,13 @@
 
 // START_MODULE_MAP
 // handle_advance_phase - Runs dry-run or applied phase advancement
+// handle_compact_evidence - Compacts evidence refs for one persisted run
 // handle_pre_commit_check - Runs pre-commit verification for one persisted run
 // project_root_arg - Resolves optional MCP project_root argument
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.0.0 - Added run gate MCP handlers]
+// LAST_CHANGE: [v1.1.0 - Added compact_evidence MCP handler]
 // END_CHANGE_SUMMARY
 
 use super::server_response::{error, result};
@@ -90,6 +91,40 @@ pub(crate) async fn handle_pre_commit_check(
 }
 // END_handle_pre_commit_check
 
+// START_CONTRACT_handle_compact_evidence
+// PURPOSE: Compact evidence refs for one persisted bounded run.
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// LINKS:
+//   -> M-RUNNER (depends) - loads, compacts, and persists run evidence refs
+// START_handle_compact_evidence
+pub(crate) async fn handle_compact_evidence(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let run_id = args["run_id"].as_str().unwrap_or("");
+    if run_id.is_empty() {
+        return error(id, -32602, "Missing 'run_id' parameter");
+    }
+    let root = match project_root_arg(args) {
+        Ok(root) => root,
+        Err(message) => return error(id, -32602, message),
+    };
+    let manager = RunManager::new(root);
+    match manager.compact_run_evidence(run_id) {
+        Ok(report) => result(
+            id,
+            serde_json::json!({
+                "content": [{"type": "text", "text": serde_json::to_string_pretty(&report).unwrap_or_else(|_| "evidence compaction report".into())}],
+                "report": report,
+                "isError": false
+            }),
+        ),
+        Err(err) => error(id, -32603, format!("compact_evidence: {}", err)),
+    }
+}
+// END_handle_compact_evidence
+
 // END_public_api
 
 // START_CONTRACT_project_root_arg
@@ -114,6 +149,7 @@ fn project_root_arg(args: &serde_json::Value) -> Result<PathBuf, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::run::RunRecord;
 
     // START_CONTRACT_test_handle_pre_commit_check_requires_run_id
     // PURPOSE: Verify pre_commit_check rejects missing run_id before touching project state.
@@ -126,6 +162,54 @@ mod tests {
         assert_eq!(response["error"]["code"], -32602);
     }
     // END_test_handle_pre_commit_check_requires_run_id
+
+    // START_CONTRACT_test_handle_compact_evidence_requires_run_id
+    // PURPOSE: Verify compact_evidence rejects missing run_id before touching project state.
+    // START_test_handle_compact_evidence_requires_run_id
+    #[tokio::test]
+    async fn test_handle_compact_evidence_requires_run_id() {
+        let response =
+            handle_compact_evidence(Some(serde_json::json!(1)), &serde_json::json!({})).await;
+
+        assert_eq!(response["error"]["code"], -32602);
+    }
+    // END_test_handle_compact_evidence_requires_run_id
+
+    // START_CONTRACT_test_handle_compact_evidence_updates_persisted_run
+    // PURPOSE: Verify compact_evidence compacts and persists evidence refs for one run.
+    // START_test_handle_compact_evidence_updates_persisted_run
+    #[tokio::test]
+    async fn test_handle_compact_evidence_updates_persisted_run() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = RunManager::new(root.path());
+        let mut record = RunRecord::new(
+            "goal".into(),
+            "Phase-87".into(),
+            "M-RUNNER".into(),
+            "compact evidence".into(),
+        );
+        record.evidence_refs = vec![
+            "action://verify".into(),
+            "action://verify".into(),
+            "docs/runs/run-1/evidence.log".into(),
+        ];
+        let run_id = record.run_id.clone();
+        manager.save(&record).unwrap();
+
+        let response = handle_compact_evidence(
+            Some(serde_json::json!(1)),
+            &serde_json::json!({"run_id": run_id, "project_root": root.path()}),
+        )
+        .await;
+        let restored = manager.load(&record.run_id).unwrap();
+
+        assert_eq!(response["result"]["report"]["duplicates_removed"], 1);
+        assert_eq!(
+            restored.evidence_refs,
+            vec!["▶verify".to_string(), "📁run-1/evidence.log".to_string()]
+        );
+    }
+    // END_test_handle_compact_evidence_updates_persisted_run
 
     // START_CONTRACT_test_handle_advance_phase_rejects_invalid_project_root
     // PURPOSE: Verify advance_phase validates project_root type.

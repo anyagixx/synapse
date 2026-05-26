@@ -22,7 +22,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.4.0 - Updated tools/list registry count for tools/recommend]
+// LAST_CHANGE: [v1.5.0 - Updated tools/list registry count for compact_evidence]
 // END_CHANGE_SUMMARY
 
 use serde_json::{json, Value};
@@ -561,10 +561,10 @@ mod tests {
         let custom_names = tools_list_names(&custom);
         let verification_terse_names = tools_list_names(&verification_terse);
 
-        assert_eq!(all_names.len(), 45);
+        assert_eq!(all_names.len(), 46);
         assert_eq!(all["result"]["profile"], "all");
         assert_eq!(all["result"]["style"], "full");
-        assert_eq!(all["result"]["total_visible"], 45);
+        assert_eq!(all["result"]["total_visible"], 46);
         assert!(contains_schema_description_key(&all["result"]["tools"]));
 
         assert!(verification_names.len() <= 10, "{verification}");

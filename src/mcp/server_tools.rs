@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-TOOLS
 // PURPOSE: MCP tool definition registry for Synapse built-in and MyGRACE skill tools
-// SCOPE: Static JSON schema definitions for tools/list including tools/recommend, response economy parameters, cache validator hints, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
+// SCOPE: Static JSON schema definitions for tools/list including tools/recommend, compact_evidence, response economy parameters, cache validator hints, semantic_search filters, GraphRAG impact/Mermaid options, LSP content override options, progressive tool disclosure profiles, GRACE profiles, self_heal, advance_phase, pre_commit_check, diagnose_failure, repair_contract, requirements/technology/development-plan generation, traceability reporting, cascade updates, and agent-based testing
 // DEPENDS: M-SKILLS-REGISTRY
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -28,7 +28,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v4.9.0 - Added tools/recommend schema]
+// LAST_CHANGE: [v4.10.0 - Added compact_evidence schema]
 // END_CHANGE_SUMMARY
 
 use crate::skills::registry::SKILL_DEFS;
@@ -158,7 +158,6 @@ pub(crate) fn tool_profile_membership(tool_name: &str) -> &'static [ToolProfile]
         | "grace_lint" => &[Verification],
         "analyze_logs" => &[Verification, Debugging],
         "mental_test_run" => &[Verification, Planning, Implementation],
-
         "generate_requirements"
         | "generate_technology"
         | "generate_development_plan"
@@ -167,7 +166,6 @@ pub(crate) fn tool_profile_membership(tool_name: &str) -> &'static [ToolProfile]
         | "grace_verification" => &[Planning],
         "cascade_impact" => &[Planning, Implementation],
         "extract_belief_state" => &[Planning, Implementation],
-
         "semantic_search"
         | "graphrag_query"
         | "view_signatures"
@@ -186,12 +184,10 @@ pub(crate) fn tool_profile_membership(tool_name: &str) -> &'static [ToolProfile]
         "compress_text" | "token_savings" | "grace_refresh" | "grace_run_history" => {
             &[Implementation]
         }
-
         "run_test_guide" | "submit_test_report" | "self_heal" | "diagnose_failure"
         | "repair_contract" | "grace_fix" => &[Debugging, Implementation],
-        "advance_phase" => &[Implementation],
+        "advance_phase" | "compact_evidence" => &[Implementation],
         "tools/recommend" => &[Planning, Implementation, Debugging],
-
         _ => &[],
     }
 }
@@ -771,8 +767,8 @@ pub(crate) fn tool_definitions() -> Vec<serde_json::Value> {
             }
         }),
     ];
-
     tools.push(serde_json::json!({"name":"tools/recommend","description":"Recommend up to eight context-relevant tools before listing schemas.","inputSchema":{"type":"object","properties":{"context":{"type":"string","description":"Current task or surrounding agent context"},"run_id":{"type":"string","description":"Optional persisted run id for run-state-aware recommendations"},"max_tools":{"type":"number","default":8,"description":"Maximum tools to recommend; clamped to 1..8"}}}}));
+    tools.push(serde_json::json!({"name":"compact_evidence","description":"Deduplicate, alias, and truncate evidence refs for one persisted run.","inputSchema":{"type":"object","properties":{"run_id":{"type":"string","description":"Persisted run id"},"project_root":{"type":"string","description":"Optional project root; defaults to current directory"}},"required":["run_id"]}}));
     add_response_economy_schemas(&mut tools);
     for tool in &mut tools {
         if tool
@@ -1250,7 +1246,7 @@ mod tests {
     // END_test_self_heal_schema_exposes_run_id_and_profile
 
     // START_CONTRACT_test_phase_and_pre_commit_schemas_are_exposed
-    // PURPOSE: Verify tools/list declares advance_phase and pre_commit_check schemas.
+    // PURPOSE: Verify tools/list declares advance_phase, pre_commit_check, and compact_evidence schemas.
     // START_test_phase_and_pre_commit_schemas_are_exposed
     #[test]
     fn test_phase_and_pre_commit_schemas_are_exposed() {
@@ -1263,11 +1259,16 @@ mod tests {
             .iter()
             .find(|tool| tool["name"] == "pre_commit_check")
             .expect("pre_commit_check tool");
+        let compact_evidence = tools
+            .iter()
+            .find(|tool| tool["name"] == "compact_evidence")
+            .expect("compact_evidence tool");
 
         assert!(advance_phase["inputSchema"]["properties"]
             .as_object()
             .is_some_and(|properties| properties.contains_key("dry_run")));
         assert_eq!(pre_commit["inputSchema"]["required"][0], "run_id");
+        assert_eq!(compact_evidence["inputSchema"]["required"][0], "run_id");
     }
     // END_test_phase_and_pre_commit_schemas_are_exposed
 

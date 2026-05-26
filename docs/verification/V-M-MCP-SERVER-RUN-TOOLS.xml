@@ -8,8 +8,9 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>advance_phase validates project_root and returns structured phase reports.</ASSERTION>
     <ASSERTION>pre_commit_check validates run_id before touching project state and returns structured pre-commit reports.</ASSERTION>
+    <ASSERTION>compact_evidence validates run_id, persists compacted evidence refs, and returns an EvidenceCompactionReport.</ASSERTION>
     <ASSERTION>tools/recommend maps context and run-state signals to init, plan, implement, verify, debug, or general phases.</ASSERTION>
     <ASSERTION>tools/recommend returns no more than eight recommendations with name, relevance, reason, phase, and token-budgeted suggested custom profile.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-73,Phase-86</PHASE_GATE>
+  <PHASE_GATE>Phase-73,Phase-86,Phase-87</PHASE_GATE>
 </VERIFICATION>
