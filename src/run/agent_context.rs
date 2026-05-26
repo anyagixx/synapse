@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-RUNNER-AGENT-CONTEXT
 // PURPOSE: Compact resumable agent context for long-running bounded work.
-// SCOPE: AgentContext model, latest incomplete/latest run discovery, action queue summary, belief-state reference, latest handoff inclusion, and resume/status builders.
+// SCOPE: AgentContext and RunStateSignals models, latest incomplete/latest run discovery, action queue summary, belief-state reference, latest handoff inclusion, compact run-state signals, and resume/status builders.
 // DEPENDS: M-RUNNER, M-RUNNER-HANDOFF, M-GRACE-BELIEF-STATE
 // LINKS:
 //   -> M-RUNNER (depends) - reads persisted runs and action queues
@@ -12,17 +12,19 @@
 
 // START_MODULE_MAP
 // AgentContext - Compact run resume payload
+// RunStateSignals - Minimal run-state fields for recommendation and routing
 // RunManager::latest_incomplete_run - Locate most recently updated non-terminal run
 // RunManager::latest_run - Locate most recently updated run when no incomplete run exists
 // RunManager::build_agent_context - Build handoff-aware resume context
+// RunManager::run_state_signals - Build compact status/gate/module/next-action signals
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Added completed-run fallback for agent resume/status context]
+// LAST_CHANGE: [v1.2.0 - Added compact run-state signals for tool recommendation]
 // END_CHANGE_SUMMARY
 
 use super::handoff::AgentHandoff;
-use super::{RunManager, RunRecord, RunStatus};
+use super::{RunGateStatus, RunManager, RunRecord, RunStatus, RunStepStatus};
 use serde::{Deserialize, Serialize};
 
 // START_public_api
@@ -43,6 +45,16 @@ pub struct AgentContext {
     pub compact_summary: String,
 }
 // END_AgentContext
+
+// START_RunStateSignals
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RunStateSignals {
+    pub status: String,
+    pub current_gate: Option<String>,
+    pub module: String,
+    pub next_action: Option<String>,
+}
+// END_RunStateSignals
 
 impl RunManager {
     // START_CONTRACT_RunManager::latest_incomplete_run
@@ -111,11 +123,7 @@ impl RunManager {
         let Some(run) = run else {
             return Ok(None);
         };
-        let next_action = self.plan_run_actions(&run.run_id).ok().and_then(|plan| {
-            plan.actions
-                .first()
-                .map(|action| action.description.clone())
-        });
+        let next_action = self.next_action_signal(&run);
         let latest_handoff = self.latest_handoff(&run.run_id)?;
         let belief_state_ref = belief_state_ref(&self.root, &run.module_id);
         let compact_summary =
@@ -137,8 +145,67 @@ impl RunManager {
         }))
     }
     // END_run_manager_build_agent_context
+
+    // START_CONTRACT_RunManager::run_state_signals
+    // PURPOSE: Build compact run-state signals for predictive MCP tool recommendation.
+    // INPUTS: { run_id: &str }
+    // OUTPUTS: { anyhow::Result<RunStateSignals> }
+    // LINKS:
+    //   -> NFR-003 (traces_to) - recommendations use compact run state instead of full run history
+    // START_run_manager_run_state_signals
+    pub fn run_state_signals(&self, run_id: &str) -> anyhow::Result<RunStateSignals> {
+        let run = self.load(run_id)?;
+        Ok(RunStateSignals {
+            status: format!("{:?}", run.status),
+            current_gate: current_gate_signal(&run),
+            module: run.module_id.clone(),
+            next_action: self.next_action_signal(&run),
+        })
+    }
+    // END_run_manager_run_state_signals
+
+    // START_CONTRACT_RunManager::next_action_signal
+    // PURPOSE: Return the most compact next action from action planning, blocked reason, or active step.
+    // INPUTS: { run: &RunRecord }
+    // OUTPUTS: { Option<String> }
+    // START_run_manager_next_action_signal
+    fn next_action_signal(&self, run: &RunRecord) -> Option<String> {
+        self.plan_run_actions(&run.run_id)
+            .ok()
+            .and_then(|plan| {
+                plan.actions
+                    .first()
+                    .map(|action| action.description.clone())
+            })
+            .or_else(|| run.blocked_reason.clone())
+            .or_else(|| {
+                run.steps
+                    .iter()
+                    .find(|step| {
+                        matches!(
+                            step.status,
+                            RunStepStatus::Pending | RunStepStatus::Running | RunStepStatus::Failed
+                        )
+                    })
+                    .map(|step| step.description.clone())
+            })
+    }
+    // END_run_manager_next_action_signal
 }
 // END_public_api
+
+// START_CONTRACT_current_gate_signal
+// PURPOSE: Return the first non-passed required gate id for compact recommendation context.
+// INPUTS: { run: &RunRecord }
+// OUTPUTS: { Option<String> }
+// START_current_gate_signal
+fn current_gate_signal(run: &RunRecord) -> Option<String> {
+    run.required_gates
+        .iter()
+        .find(|gate| gate.required && !matches!(gate.status, RunGateStatus::Passed))
+        .map(|gate| gate.id.clone())
+}
+// END_current_gate_signal
 
 // START_CONTRACT_belief_state_ref
 // PURPOSE: Return a project-relative belief-state path when it exists.
@@ -264,4 +331,41 @@ mod tests {
         assert!(context.compact_summary.contains("handoff="));
     }
     // END_build_agent_context_includes_handoff_and_belief_state_ref
+
+    // START_CONTRACT_run_state_signals_include_gate_module_and_next_action
+    // PURPOSE: Verify compact run-state signals expose status, current gate, module, and next action.
+    // START_run_state_signals_include_gate_module_and_next_action
+    #[test]
+    fn run_state_signals_include_gate_module_and_next_action() {
+        let root = tempfile::tempdir().unwrap();
+        let manager = RunManager::new(root.path());
+        let mut record = RunRecord::new(
+            "goal".into(),
+            "Phase-86".into(),
+            "M-AUTH".into(),
+            "debug auth failure".into(),
+        );
+        record.status = RunStatus::Blocked;
+        record.blocked_reason = Some("verification gate blocked".into());
+        record.required_gates.push(crate::run::RunGate {
+            id: "gate-verification".into(),
+            name: "Verification".into(),
+            required: true,
+            status: RunGateStatus::Blocked,
+            reason: Some("cargo test failed".into()),
+            evidence_refs: vec!["verify.log".into()],
+        });
+        manager.save(&record).unwrap();
+
+        let signals = manager.run_state_signals(&record.run_id).unwrap();
+
+        assert_eq!(signals.status, "Blocked");
+        assert_eq!(signals.current_gate.as_deref(), Some("gate-verification"));
+        assert_eq!(signals.module, "M-AUTH");
+        assert!(signals
+            .next_action
+            .as_deref()
+            .is_some_and(|action| action.contains("verification")));
+    }
+    // END_run_state_signals_include_gate_module_and_next_action
 }

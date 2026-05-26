@@ -2,6 +2,7 @@
 <VERIFICATION id="V-M-RUNNER-AGENT-CONTEXT" module="M-RUNNER-AGENT-CONTEXT" priority="critical" status="active">
   <UNIT_TESTS>
     <COMMAND>cargo test run::agent_context --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test run::agent_context::tests::run_state_signals_include_gate_module_and_next_action --lib</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -9,6 +10,7 @@
     <ASSERTION>build_agent_context falls back to latest terminal run when no incomplete run exists.</ASSERTION>
     <ASSERTION>build_agent_context includes next action, evidence refs, belief-state path, latest handoff, and compact summary.</ASSERTION>
     <ASSERTION>AgentContext is serializable for JSON resume/status output.</ASSERTION>
+    <ASSERTION>RunStateSignals exposes status, current_gate, module, and next_action for a specific run id.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-74,Phase-75</PHASE_GATE>
+  <PHASE_GATE>Phase-74,Phase-75,Phase-86</PHASE_GATE>
 </VERIFICATION>
