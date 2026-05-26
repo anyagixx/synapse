@@ -480,6 +480,7 @@
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-SKILLS-ENGINE" type="DEPENDS" />
     <REL source="M-MCP-SERVER-GRACE-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />
     <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER" type="DEPENDS" />
+    <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER-AGENT-CONTEXT" type="DEPENDS" />
     <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER-PHASE-ENGINE" type="DEPENDS" />
     <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-RUNNER-PRECOMMIT" type="DEPENDS" />
     <REL source="M-MCP-SERVER-RUN-TOOLS" target="M-MCP-SERVER-RESPONSE" type="DEPENDS" />

@@ -16,7 +16,7 @@
 // cache_validator — Extracts _if_none_match from tool arguments
 // maybe_not_modified_response — Returns compact cached-validator response before expensive handlers
 // record_cache_metadata — Adds _meta.cache to tool results and records cacheable ETags
-// fallback_tool_recommendation — Returns general tools/recommend output until run-state recommendation is wired
+// tool_recommend — Delegates tools/recommend to the run-state-aware recommendation engine
 // tools_list_profile — Parses tools/list profile params
 // tools_list_profile_label — Returns stable tools/list profile metadata
 // tools_list_style — Parses tools/list schema style params
@@ -25,13 +25,13 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.24.0 - Routed tools/recommend through tools/call]
+// LAST_CHANGE: [v3.25.0 - Routed tools/recommend to the predictive recommendation engine]
 // END_CHANGE_SUMMARY
 
 use super::{
     pipeline::{self, McpPipelineConfig, PipelineHandler},
     server_cascade_tools, server_code_tools, server_contract_tools, server_grace_tools,
-    server_response, server_run_tools, server_tools,
+    server_response, server_run_tools, server_tools, tool_recommend,
 };
 use crate::config::Config;
 use crate::graphrag::GraphRag;
@@ -376,7 +376,7 @@ impl SynapseHandler {
                         "pre_commit_check" => {
                             server_run_tools::handle_pre_commit_check(id, args).await
                         }
-                        "tools/recommend" => fallback_tool_recommendation(id, args),
+                        "tools/recommend" => tool_recommend::handle_recommend(id, args).await,
                         "token_savings" => server_grace_tools::handle_gain(id, args).await,
                         "compress_text" => server_grace_tools::handle_compress(id, args).await,
                         "refresh_project" => server_grace_tools::handle_refresh(id, args).await,
@@ -697,58 +697,6 @@ fn schema_savings_pct(full_bytes: usize, visible_bytes: usize) -> f64 {
 }
 // END_schema_savings_pct
 
-// START_CONTRACT_fallback_tool_recommendation
-// PURPOSE: Return bounded general recommendations before run-state-aware recommendation is wired
-// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
-// OUTPUTS: { serde_json::Value }
-// START_fallback_tool_recommendation
-fn fallback_tool_recommendation(
-    id: Option<serde_json::Value>,
-    args: &serde_json::Value,
-) -> serde_json::Value {
-    let max_tools = args
-        .get("max_tools")
-        .and_then(serde_json::Value::as_u64)
-        .map(|value| value.clamp(1, 8) as usize)
-        .unwrap_or(8);
-    let candidates = [
-        ("semantic_search", 0.78, "Search code and contracts"),
-        ("graphrag_query", 0.74, "Inspect graph relationships"),
-        ("verify_project", 0.70, "Run project verification"),
-        ("review_code", 0.66, "Review current changes"),
-        ("project_status", 0.62, "Read health summary"),
-        ("tools/recommend", 0.58, "Refine tool preselection"),
-    ];
-    let recommended_tools = candidates
-        .iter()
-        .take(max_tools)
-        .map(|(name, relevance, reason)| {
-            serde_json::json!({
-                "name": name,
-                "relevance": relevance,
-                "reason": reason,
-                "phase": "general"
-            })
-        })
-        .collect::<Vec<_>>();
-    let names = recommended_tools
-        .iter()
-        .filter_map(|tool| tool["name"].as_str())
-        .collect::<Vec<_>>();
-
-    server_response::result(
-        id,
-        serde_json::json!({
-            "phase": "general",
-            "source": "general_fallback",
-            "recommended_tools": recommended_tools,
-            "suggested_profile": format!("custom:{}", names.join(",")),
-            "max_tools": max_tools
-        }),
-    )
-}
-// END_fallback_tool_recommendation
-
 // START_CONTRACT_classify_mcp_response
 // PURPOSE: Convert one JSON-RPC response into MCP metrics status and error text
 // INPUTS: { response: &serde_json::Value }
@@ -993,7 +941,7 @@ mod tests {
     }
 
     // START_CONTRACT_test_tools_recommend_routes_through_tools_call
-    // PURPOSE: Verify tools/recommend is routed as a tools/call tool and returns bounded fallback output
+    // PURPOSE: Verify tools/recommend is routed as a tools/call tool and returns bounded engine output
     // START_test_tools_recommend_routes_through_tools_call
     #[tokio::test]
     async fn test_tools_recommend_routes_through_tools_call() {

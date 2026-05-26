@@ -44,7 +44,7 @@
     <ASSERTION>Matching _if_none_match returns _not_modified before invoking expensive cacheable handlers.</ASSERTION>
     <ASSERTION>graphrag_query overview emits _meta.cache metadata when GraphRAG state is already cached.</ASSERTION>
     <ASSERTION>The in-memory ETag cache clears all entries when the next insert would exceed 100 validators.</ASSERTION>
-    <ASSERTION>tools/call routes tools/recommend and returns bounded fallback recommendations while the engine is wired.</ASSERTION>
+    <ASSERTION>tools/call routes tools/recommend and returns bounded run-state-aware recommendations.</ASSERTION>
   </TRACE_ASSERTIONS>
   <PHASE_GATE>Phase-59,Phase-62,Phase-67,Phase-73,Phase-85,Phase-86</PHASE_GATE>
 </VERIFICATION>

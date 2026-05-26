@@ -20,11 +20,11 @@
     <step-1 module="M-MCP-SERVER-TOOLS" status="done">Add tools/recommend tool schema.</step-1>
     <step-2 module="M-MCP-SERVER" status="done">Route tools/recommend through MCP tools/call and support a direct JSON-RPC method alias only if protocol tests allow it.</step-2>
     <step-3 module="M-RUNNER-AGENT-CONTEXT" status="done">Provide compact run-state signals needed for recommendation: status, current gate, module, and next action.</step-3>
-    <step-4 module="M-MCP-SERVER-RUN-TOOLS" status="planned">Map run state and context to init, plan, implement, verify, debug, or general work phases.</step-4>
+    <step-4 module="M-MCP-SERVER-RUN-TOOLS" status="done">Map run state and context to init, plan, implement, verify, debug, or general work phases.</step-4>
     <step-5 module="M-TESTS-MCP-PROTOCOL" status="planned">Test verify contracts, debug M-AUTH, no context, and run_id-aware recommendations.</step-5>
   </STEPS>
   <VERIFICATION>
-    <CHECK status="planned">cargo test mcp::tool_recommend::tests --lib</CHECK>
+    <CHECK status="passed">cargo test mcp::tool_recommend::tests --lib</CHECK>
     <CHECK status="planned">tools/recommend context='verify contracts' includes verify_project, review_code, and traceability_report.</CHECK>
     <CHECK status="planned">tools/recommend context='debug M-AUTH' includes diagnose_failure, self_heal, and analyze_logs.</CHECK>
     <CHECK status="planned">tools/recommend without context returns general essentials.</CHECK>

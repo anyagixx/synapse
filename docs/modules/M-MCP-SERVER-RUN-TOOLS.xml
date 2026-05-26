@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MODULE id="M-MCP-SERVER-RUN-TOOLS" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER-RUN-TOOLS</NAME>
-  <PURPOSE>MCP handlers for bounded run phase advancement and pre-commit verification tools.</PURPOSE>
-  <SCOPE>advance_phase and pre_commit_check JSON-RPC handlers with project_root resolution and structured MCP responses.</SCOPE>
+  <PURPOSE>MCP handlers for bounded run controls and run-state-aware tool recommendation.</PURPOSE>
+  <SCOPE>advance_phase, pre_commit_check, and tools/recommend JSON-RPC handlers with project_root resolution, compact run-state signals, phase classification, and structured MCP responses.</SCOPE>
   <FILES>
     <FILE>src/mcp/server_run_tools.rs</FILE>
+    <FILE>src/mcp/tool_recommend.rs</FILE>
   </FILES>
-  <DEPENDS>M-RUNNER,M-RUNNER-PHASE-ENGINE,M-RUNNER-PRECOMMIT,M-MCP-SERVER-RESPONSE</DEPENDS>
-  <LINKS>docs/phases/Phase-73.xml</LINKS>
+  <DEPENDS>M-RUNNER,M-RUNNER-AGENT-CONTEXT,M-RUNNER-PHASE-ENGINE,M-RUNNER-PRECOMMIT,M-MCP-SERVER-RESPONSE</DEPENDS>
+  <LINKS>docs/phases/Phase-73.xml,docs/phases/Phase-86.xml</LINKS>
   <VERIFICATION_REF>V-M-MCP-SERVER-RUN-TOOLS</VERIFICATION_REF>
 </MODULE>
