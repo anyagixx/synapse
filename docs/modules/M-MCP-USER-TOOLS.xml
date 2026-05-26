@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-USER-TOOLS" type="INTEGRATION" status="active">
+  <NAME>M-MCP-USER-TOOLS</NAME>
+  <PURPOSE>Local user-defined MCP command tools loaded from JSON definitions.</PURPOSE>
+  <SCOPE>UserToolDefinition/UserToolHandler models, ~/.synapse/tools discovery, validation, built-in override protection, tools/list source metadata rendering, profile-aware dynamic tool visibility, command interpolation, allowed-path enforcement, timeout-bounded shell execution, ANSI stripping, max-output token trimming, and syn tools list/validate/new CLI authoring support.</SCOPE>
+  <FILES>
+    <FILE>src/mcp/user_tools.rs</FILE>
+    <FILE>src/cli/tools_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-MCP-SERVER,M-MCP-SERVER-TOOLS,M-MCP-SERVER-RESPONSE,M-UTILS</DEPENDS>
+  <LINKS>docs/phases/Phase-92.xml</LINKS>
+  <VERIFICATION_REF>V-M-MCP-USER-TOOLS</VERIFICATION_REF>
+</MODULE>

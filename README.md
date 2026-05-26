@@ -258,6 +258,7 @@ my-project/
 | `syn gain --sessions --adapters` | Экономика по сессиям и command adapters |
 | `syn session` | Экономика по tracked RTK sessions |
 | `syn cc-economics --format json` | Локальная экономика токенов для Claude Code/Synapse sessions |
+| `syn tools list|validate|new` | Локальные user-defined MCP tools из `~/.synapse/tools` |
 | `syn skills list|show|run` | Локальный запуск и отладка 16 GRACE skills |
 | `syn ci verify|review|status` | CI-friendly strict outputs |
 

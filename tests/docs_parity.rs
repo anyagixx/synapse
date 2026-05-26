@@ -136,6 +136,7 @@ fn allowed_flags_for_command(command: &str) -> &'static [&'static str] {
         "json" => &["--depth", "--keys-only"],
         "learn" => &["--json"],
         "session" => &["--json"],
+        "tools" => &["--json", "--output", "--force"],
         "cc-economics" => &[
             "--daily",
             "--weekly",

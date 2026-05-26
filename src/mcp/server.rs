@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, context pressure metadata, pressure-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, context_pressure, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
-// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, session budget gates for expensive tools, context pressure metadata, pressure-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, user-defined command tools, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, context_pressure, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-MCP-USER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 // START_MODULE_MAP
 // McpServer — MCP stdio server entry point
@@ -21,11 +21,10 @@
 // tools_list_profile — Parses tools/list profile params
 // tools_list_profile_label — Returns stable tools/list profile metadata
 // tools_list_style — Parses tools/list schema style params
-// schema_savings_pct — Computes tools/list schema economy percent
 // classify_mcp_response — Converts JSON-RPC tool responses into tracking status metadata
 // END_MODULE_MAP
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.31.1 - Isolated tools/list metadata test session]
+// LAST_CHANGE: [v3.32.0 - Routed user-defined MCP command tools]
 // END_CHANGE_SUMMARY
 use super::server_budget_tools::handle_check_budget as budget;
 use super::server_budget_tools::handle_context_pressure as pressure;
@@ -34,7 +33,7 @@ use super::server_tools_pressure::effective_schema_style as eff_style;
 use super::{
     pipeline::{self, McpPipelineConfig, PipelineHandler},
     server_cascade_tools, server_code_tools, server_contract_tools, server_grace_tools,
-    server_response, server_run_tools, server_tools, tool_recommend,
+    server_response, server_run_tools, server_tools, tool_recommend, user_tools,
 };
 use crate::config::Config;
 use crate::graphrag::GraphRag;
@@ -172,7 +171,6 @@ pub struct SynapseHandler {
     initialized: AtomicBool,
 }
 // END_SynapseHandler
-
 const MCP_ETAG_CACHE_LIMIT: usize = 100;
 
 // START_McpEtagCache
@@ -301,8 +299,9 @@ impl SynapseHandler {
                 let params = &msg["params"];
                 let profile = tools_list_profile(params);
                 let style = eff_style(&self.config, &self.tracker, tools_list_style(params)).await;
-                let total_available = server_tools::tool_definitions().len();
-                let full_tools = server_tools::tool_definitions_for_profile(&profile);
+                let mut full_tools = server_tools::tool_definitions_for_profile(&profile);
+                let user_report = user_tools::merge_visible_definitions(&profile, &mut full_tools);
+                let total_available = user_report.total_available;
                 let full_schema_bytes = server_tools::tool_definitions_json_bytes(&full_tools);
                 let tools = server_tools::apply_tool_schema_style(full_tools, style);
                 let schema_bytes = server_tools::tool_definitions_json_bytes(&tools);
@@ -315,6 +314,7 @@ impl SynapseHandler {
                         "style": style.label(),
                         "total_available": total_available,
                         "total_visible": total_visible,
+                        "user_tool_warnings": user_report.warnings,
                         "schema_economy": {
                             "full_bytes": full_schema_bytes,
                             "visible_bytes": schema_bytes,
@@ -450,7 +450,7 @@ impl SynapseHandler {
                             )
                             .await
                         }
-                        _ => server_response::error(id, -32601, format!("Unknown tool: {}", name)),
+                        _ => user_tools::handle_call(id, name, args).await,
                     };
                     if let Some(status) = budget_status
                         .as_ref()

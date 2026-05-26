@@ -5,7 +5,7 @@
 // DEPENDS: M-MCP-SERVER, M-MCP-SERVER-TOOLS, M-RUNNER, M-RUNNER-AGENT-CONTEXT, M-SKILLS, M-CAPABILITIES
 
 // START_MODULE_MAP
-// test_initialize_then_list_tools — MCP handler lists all 48 tools after initialize
+// test_initialize_then_list_tools — MCP handler lists built-in and optional user tools after initialize
 // initialized_handler — Creates an initialized in-process MCP handler
 // initialized_tools_list — Creates a handler, initializes MCP, and returns tools/list
 // tools_call — Executes one initialized tools/call request against a handler
@@ -179,7 +179,7 @@ fn contains_schema_description_key_in_context(value: &Value, is_properties_map: 
 
 #[tokio::test]
 // START_CONTRACT_test_initialize_then_list_tools
-// PURPOSE: Verify MCP initialize followed by tools/list returns the full tool registry
+// PURPOSE: Verify MCP initialize followed by tools/list returns the built-in registry plus optional user tools
 // SIDE_EFFECTS: creates in-process MCP handler
 async fn test_initialize_then_list_tools() {
     ensure_protocol_test_session();
@@ -195,11 +195,11 @@ async fn test_initialize_then_list_tools() {
         .await
         .expect("tools/list request should produce a response");
     let tools = list["result"]["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 48);
+    assert!(tools.len() >= 48);
     assert_eq!(list["result"]["profile"], "all");
     assert_eq!(list["result"]["style"], "full");
-    assert_eq!(list["result"]["total_available"], 48);
-    assert_eq!(list["result"]["total_visible"], 48);
+    assert!(list["result"]["total_available"].as_u64().unwrap_or(0) >= 48);
+    assert!(list["result"]["total_visible"].as_u64().unwrap_or(0) >= 48);
 }
 
 #[tokio::test]
@@ -218,7 +218,7 @@ async fn test_tools_list_profiles_return_expected_counts() {
     let minimal_names = tool_names(&minimal);
     let custom_names = tool_names(&custom);
 
-    assert_eq!(all_names.len(), 48);
+    assert!(all_names.len() >= 48);
     assert!(verification_names.len() <= 10, "{verification:?}");
     assert!(verification_names.contains(&"verify_project".to_string()));
     assert!(verification_names.contains(&"review_code".to_string()));
@@ -236,7 +236,7 @@ async fn test_tools_list_profiles_return_expected_counts() {
     );
     assert_eq!(custom_names, vec!["semantic_search", "verify_project"]);
     assert_eq!(custom["result"]["profile"], "custom");
-    assert_eq!(custom["result"]["total_available"], 48);
+    assert!(custom["result"]["total_available"].as_u64().unwrap_or(0) >= 48);
     assert_eq!(custom["result"]["total_visible"], 2);
 }
 
@@ -252,7 +252,7 @@ async fn test_tools_list_full_and_terse_styles() {
     assert_eq!(terse["result"]["style"], "terse");
     assert!(contains_schema_description_key(&full["result"]["tools"]));
     assert!(!contains_schema_description_key(&terse["result"]["tools"]));
-    assert_eq!(terse["result"]["total_visible"], 48);
+    assert!(terse["result"]["total_visible"].as_u64().unwrap_or(0) >= 48);
     assert!(terse["result"]["schema_economy"]["savings_pct"]
         .as_f64()
         .is_some_and(|pct| pct >= 60.0));

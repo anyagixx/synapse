@@ -2,12 +2,12 @@
 <MODULE id="M-MCP-SERVER" type="INTEGRATION" status="active">
   <NAME>M-MCP-SERVER</NAME>
   <PURPOSE>MCP JSON-RPC server facade — serves Synapse tools over clean pipelined stdio with guarded runtime initialization</PURPOSE>
-  <SCOPE>McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, atomic initialization state, best-effort MCP metrics recording, session budget gates for expensive tools, context pressure response metadata, pressure-aware tools/list style, GraphRAG cache key storage/invalidation, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, context_pressure, pre_commit_check, config-aware LSP tools, guarded index and GraphRAG preload</SCOPE>
+  <SCOPE>McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, atomic initialization state, best-effort MCP metrics recording, session budget gates for expensive tools, context pressure response metadata, pressure-aware tools/list style, user-defined MCP command tool merge/dispatch, GraphRAG cache key storage/invalidation, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, compact_evidence, check_budget, context_pressure, pre_commit_check, config-aware LSP tools, guarded index and GraphRAG preload</SCOPE>
   <FILES>
     <FILE>src/mcp/server.rs</FILE>
     <FILE>src/mcp/server_pressure.rs</FILE>
   </FILES>
-  <DEPENDS>M-CONFIG,M-GRAPHRAG,M-INDEXER,M-MCP-PIPELINE,M-MCP-SERVER-CASCADE-TOOLS,M-MCP-SERVER-CODE-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-MCP-SERVER-RUN-TOOLS,M-MCP-SERVER-RESPONSE,M-MCP-SERVER-TOOLS,M-TRACKING,M-TRACKING-MCP-METRICS,M-UTILS</DEPENDS>
-  <LINKS>docs/phases/Phase-59.xml,docs/phases/Phase-62.xml,docs/phases/Phase-67.xml,docs/phases/Phase-73.xml,docs/phases/Phase-85.xml,docs/phases/Phase-86.xml,docs/phases/Phase-87.xml,docs/phases/Phase-88.xml</LINKS>
+  <DEPENDS>M-CONFIG,M-GRAPHRAG,M-INDEXER,M-MCP-PIPELINE,M-MCP-SERVER-CASCADE-TOOLS,M-MCP-SERVER-CODE-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-MCP-SERVER-RUN-TOOLS,M-MCP-SERVER-RESPONSE,M-MCP-SERVER-TOOLS,M-MCP-USER-TOOLS,M-TRACKING,M-TRACKING-MCP-METRICS,M-UTILS</DEPENDS>
+  <LINKS>docs/phases/Phase-59.xml,docs/phases/Phase-62.xml,docs/phases/Phase-67.xml,docs/phases/Phase-73.xml,docs/phases/Phase-85.xml,docs/phases/Phase-86.xml,docs/phases/Phase-87.xml,docs/phases/Phase-88.xml,docs/phases/Phase-92.xml</LINKS>
   <VERIFICATION_REF>V-M-MCP-SERVER</VERIFICATION_REF>
 </MODULE>

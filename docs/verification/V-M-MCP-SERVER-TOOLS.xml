@@ -13,6 +13,7 @@
     <COMMAND>cargo test mcp::server_tools::tests::test_cache_hint_schema_exposes_if_none_match --lib</COMMAND>
     <COMMAND>cargo test mcp::server_tools::tests::test_all_current_tools_have_profile_membership --lib</COMMAND>
     <COMMAND>cargo test mcp::server_tools_pressure::tests --lib</COMMAND>
+    <COMMAND>cargo test mcp::user_tools --lib -- --test-threads=8</COMMAND>
   </UNIT_TESTS>
   <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
   <TRACE_ASSERTIONS>
@@ -37,6 +38,7 @@
     <ASSERTION>tools/list does not advertise _if_none_match for volatile semantic_search.</ASSERTION>
     <ASSERTION>tools/list exposes tools/recommend with context, run_id, and max_tools schema fields.</ASSERTION>
     <ASSERTION>tools/list pressure policy forces terse schemas for high or critical context pressure and preserves requested style at low pressure.</ASSERTION>
+    <ASSERTION>tools/list remains compatible with dynamic user-tool schema merging and terse style stripping.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-13,Phase-65,Phase-68,Phase-70,Phase-71,Phase-72,Phase-73,Phase-83,Phase-84,Phase-85,Phase-86,Phase-87,Phase-88</PHASE_GATE>
+  <PHASE_GATE>Phase-13,Phase-65,Phase-68,Phase-70,Phase-71,Phase-72,Phase-73,Phase-83,Phase-84,Phase-85,Phase-86,Phase-87,Phase-88,Phase-92</PHASE_GATE>
 </VERIFICATION>

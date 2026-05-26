@@ -121,6 +121,9 @@ This page lists shipped CLI commands only.
 | `syn config` | Print current configuration |
 | `syn config path` | Print the config file path |
 | `syn config edit` | Open the config file in `$EDITOR` |
+| `syn tools list --json` | List valid local user-defined MCP tools from `~/.synapse/tools` |
+| `syn tools validate <path>` | Validate one user tool JSON file or directory |
+| `syn tools new <name> --output <path>` | Create a starter user tool JSON definition |
 | `syn serve` | Start the local dashboard with health, token, belief-state, MentalTest, traceability, and cascade views |
 
 ## Skills

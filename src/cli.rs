@@ -1,8 +1,8 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-CLI
 // PURPOSE: CLI schema facade — clap-powered top-level parser, command enum, command dispatch, and command argument structs
-// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs including verify --staged, workspace command schema, run scenario/action flags, agent resume/status flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, structured test command action schema, session/cc-economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, git pre-commit hook actions, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
-// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-CONFIG-COMMANDS, M-CLI-FILTER-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-AGENT-COMMANDS, M-CLI-RTK-COMMANDS, M-CLI-TEST-COMMANDS, M-RTK-FULL-PARITY
+// SCOPE: SynCli, Command enum, CLI-owned command dispatch, profile-aware command argument structs including verify --staged, workspace and user-tool command schemas, run scenario/action flags, agent resume/status flags, RTK route/economics flags, expanded first-class RTK shortcut commands including ecosystem, Graphite, and container shortcuts, local RTK adapters, local RTK system adapters, .NET artifact adapters, core RTK adapters, structured test command action schema, session/cc-economics analytics, discovery/learning diagnostics, hooks audit JSON flag, hook processor schemas, git pre-commit hook actions, rewrite hook decisions, parity inventory and full parity flags, proxy evidence flag, filter lifecycle and dry-run commands, CI action enum
+// DEPENDS: M-CLI-SETUP-COMMANDS, M-CLI-CODE-COMMANDS, M-CLI-CONFIG-COMMANDS, M-CLI-FILTER-COMMANDS, M-CLI-GRACE-COMMANDS, M-CLI-RUNTIME-COMMANDS, M-CLI-AGENT-COMMANDS, M-CLI-RTK-COMMANDS, M-CLI-TEST-COMMANDS, M-MCP-USER-TOOLS, M-RTK-FULL-PARITY
 // LINKS: Cargo.toml
 
 // START_MODULE_MAP
@@ -25,11 +25,12 @@
 // RtkParityCmd — Machine-checkable RTK parity inventory and full parity matrix report
 // RewriteCmd — Hook-facing command rewrite dry run
 // WorkspaceCmd — Multi-project workspace command schema
+// ToolsCmd — Local user-defined MCP tools command schema
 // FiltersDryRunCmd — Explains TOML filter stage decisions for sample output
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v6.4.0 - Added workspace command schema]
+// LAST_CHANGE: [v6.5.0 - Added user-defined MCP tools command schema]
 // END_CHANGE_SUMMARY
 
 mod agent_commands;
@@ -50,11 +51,13 @@ mod rtk_system_adapters;
 mod runtime_commands;
 mod setup_commands;
 mod test_commands;
+mod tools_commands;
 mod workspace_commands;
 
 use crate::config::Config;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+pub use tools_commands::ToolsCmd;
 pub use workspace_commands::WorkspaceCmd;
 
 // START_public_api
@@ -270,6 +273,7 @@ pub enum Command {
     Mcp(McpCmd),
     Config(ConfigCmd),
     Workspace(WorkspaceCmd),
+    Tools(ToolsCmd),
     #[command(name = "graphrag")]
     GraphRag(GraphRagCmd),
     Hooks(HooksCmd),
@@ -549,6 +553,7 @@ impl RunCommand for Command {
             Command::Mcp(cmd) => cmd.run(config).await,
             Command::Config(cmd) => cmd.run(config).await,
             Command::Workspace(cmd) => cmd.run(config).await,
+            Command::Tools(cmd) => cmd.run(config).await,
             Command::GraphRag(cmd) => cmd.run(config).await,
             Command::Hooks(cmd) => cmd.run(config).await,
             Command::Doctor(cmd) => cmd.run(config).await,

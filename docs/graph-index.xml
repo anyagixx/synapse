@@ -86,6 +86,7 @@
     <MODULE id="M-MCP-SERVER-RESPONSE" path="docs/modules/M-MCP-SERVER-RESPONSE.xml" status="active" />
     <MODULE id="M-MCP-SERVER-RUN-TOOLS" path="docs/modules/M-MCP-SERVER-RUN-TOOLS.xml" status="active" />
     <MODULE id="M-MCP-SERVER-TOOLS" path="docs/modules/M-MCP-SERVER-TOOLS.xml" status="active" />
+    <MODULE id="M-MCP-USER-TOOLS" path="docs/modules/M-MCP-USER-TOOLS.xml" status="active" />
     <MODULE id="M-MEMORY" path="docs/modules/M-MEMORY.xml" status="active" />
     <MODULE id="M-PLUGIN" path="docs/modules/M-PLUGIN.xml" status="active" />
     <MODULE id="M-PROXY" path="docs/modules/M-PROXY.xml" status="active" />

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MCP-USER-TOOLS" module="M-MCP-USER-TOOLS" priority="critical" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test mcp::user_tools --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test cli::tools_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol tools_list</COMMAND>
+    <COMMAND>cargo test --test docs_parity</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[UserTools][execute_default_tool][LOAD]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>User tool loader accepts valid command-tool JSON definitions from a configured tools directory.</ASSERTION>
+    <ASSERTION>User tool validation rejects names that override built-in MCP tools.</ASSERTION>
+    <ASSERTION>tools/list can merge user tools with _source=user metadata without changing built-in profile filtering.</ASSERTION>
+    <ASSERTION>tools/call dispatches unknown tool names to validated user tools after built-in dispatch misses.</ASSERTION>
+    <ASSERTION>Command execution applies required-argument checks, shell escaping, allowed_paths validation, timeout handling, ANSI stripping, and max_output_tokens trimming.</ASSERTION>
+    <ASSERTION>syn tools list, validate, and new support text and JSON-capable local authoring workflows.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-92</PHASE_GATE>
+</VERIFICATION>
