@@ -9,6 +9,7 @@
     <COMMAND>cargo test mcp::server::tests::test_invalidate_graph_cache_clears_graph_and_key --lib</COMMAND>
     <COMMAND>cargo test cache --lib</COMMAND>
     <COMMAND>cargo test mcp::server::tests::test_cache_metadata_attaches_to_graphrag_overview --lib</COMMAND>
+    <COMMAND>cargo test mcp::server::tests::test_tools_recommend_routes_through_tools_call --lib</COMMAND>
     <COMMAND>cargo test mcp::server_run_tools --lib -- --test-threads=8</COMMAND>
     <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
     <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
@@ -43,6 +44,7 @@
     <ASSERTION>Matching _if_none_match returns _not_modified before invoking expensive cacheable handlers.</ASSERTION>
     <ASSERTION>graphrag_query overview emits _meta.cache metadata when GraphRAG state is already cached.</ASSERTION>
     <ASSERTION>The in-memory ETag cache clears all entries when the next insert would exceed 100 validators.</ASSERTION>
+    <ASSERTION>tools/call routes tools/recommend and returns bounded fallback recommendations while the engine is wired.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-59,Phase-62,Phase-67,Phase-73,Phase-85</PHASE_GATE>
+  <PHASE_GATE>Phase-59,Phase-62,Phase-67,Phase-73,Phase-85,Phase-86</PHASE_GATE>
 </VERIFICATION>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER
 // PURPOSE: MCP JSON-RPC server facade — serves Synapse tools over clean stdio with guarded runtime initialization
-// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
+// SCOPE: McpServer, SynapseHandler, runtime Config retention, config-bounded pipelined stdio loop, best-effort MCP metrics recording, profile-aware tools/list disclosure, short-lived ETag cache hints, JSON-RPC request/notification routing including tools/recommend, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, advance_phase, pre_commit_check, suggest_contract, and config-aware LSP tools, guarded index preload and indexed GraphRAG cache state
 // DEPENDS: M-CONFIG, M-GRAPHRAG, M-INDEXER, M-MCP-PIPELINE, M-MCP-SERVER-CASCADE-TOOLS, M-MCP-SERVER-CODE-TOOLS, M-MCP-SERVER-GRACE-TOOLS, M-MCP-SERVER-RUN-TOOLS, M-MCP-SERVER-RESPONSE, M-MCP-SERVER-TOOLS, M-TRACKING, M-TRACKING-MCP-METRICS, M-UTILS
 // LINKS: N/A
 
@@ -16,6 +16,7 @@
 // cache_validator — Extracts _if_none_match from tool arguments
 // maybe_not_modified_response — Returns compact cached-validator response before expensive handlers
 // record_cache_metadata — Adds _meta.cache to tool results and records cacheable ETags
+// fallback_tool_recommendation — Returns general tools/recommend output until run-state recommendation is wired
 // tools_list_profile — Parses tools/list profile params
 // tools_list_profile_label — Returns stable tools/list profile metadata
 // tools_list_style — Parses tools/list schema style params
@@ -24,7 +25,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v3.23.0 - Added short-lived MCP ETag cache validators]
+// LAST_CHANGE: [v3.24.0 - Routed tools/recommend through tools/call]
 // END_CHANGE_SUMMARY
 
 use super::{
@@ -375,6 +376,7 @@ impl SynapseHandler {
                         "pre_commit_check" => {
                             server_run_tools::handle_pre_commit_check(id, args).await
                         }
+                        "tools/recommend" => fallback_tool_recommendation(id, args),
                         "token_savings" => server_grace_tools::handle_gain(id, args).await,
                         "compress_text" => server_grace_tools::handle_compress(id, args).await,
                         "refresh_project" => server_grace_tools::handle_refresh(id, args).await,
@@ -695,6 +697,58 @@ fn schema_savings_pct(full_bytes: usize, visible_bytes: usize) -> f64 {
 }
 // END_schema_savings_pct
 
+// START_CONTRACT_fallback_tool_recommendation
+// PURPOSE: Return bounded general recommendations before run-state-aware recommendation is wired
+// INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
+// OUTPUTS: { serde_json::Value }
+// START_fallback_tool_recommendation
+fn fallback_tool_recommendation(
+    id: Option<serde_json::Value>,
+    args: &serde_json::Value,
+) -> serde_json::Value {
+    let max_tools = args
+        .get("max_tools")
+        .and_then(serde_json::Value::as_u64)
+        .map(|value| value.clamp(1, 8) as usize)
+        .unwrap_or(8);
+    let candidates = [
+        ("semantic_search", 0.78, "Search code and contracts"),
+        ("graphrag_query", 0.74, "Inspect graph relationships"),
+        ("verify_project", 0.70, "Run project verification"),
+        ("review_code", 0.66, "Review current changes"),
+        ("project_status", 0.62, "Read health summary"),
+        ("tools/recommend", 0.58, "Refine tool preselection"),
+    ];
+    let recommended_tools = candidates
+        .iter()
+        .take(max_tools)
+        .map(|(name, relevance, reason)| {
+            serde_json::json!({
+                "name": name,
+                "relevance": relevance,
+                "reason": reason,
+                "phase": "general"
+            })
+        })
+        .collect::<Vec<_>>();
+    let names = recommended_tools
+        .iter()
+        .filter_map(|tool| tool["name"].as_str())
+        .collect::<Vec<_>>();
+
+    server_response::result(
+        id,
+        serde_json::json!({
+            "phase": "general",
+            "source": "general_fallback",
+            "recommended_tools": recommended_tools,
+            "suggested_profile": format!("custom:{}", names.join(",")),
+            "max_tools": max_tools
+        }),
+    )
+}
+// END_fallback_tool_recommendation
+
 // START_CONTRACT_classify_mcp_response
 // PURPOSE: Convert one JSON-RPC response into MCP metrics status and error text
 // INPUTS: { response: &serde_json::Value }
@@ -937,6 +991,38 @@ mod tests {
             .as_f64()
             .is_some_and(|pct| pct > 0.0));
     }
+
+    // START_CONTRACT_test_tools_recommend_routes_through_tools_call
+    // PURPOSE: Verify tools/recommend is routed as a tools/call tool and returns bounded fallback output
+    // START_test_tools_recommend_routes_through_tools_call
+    #[tokio::test]
+    async fn test_tools_recommend_routes_through_tools_call() {
+        let handler = SynapseHandler::new();
+        handler
+            .handle_message(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
+            .await
+            .expect("initialize response");
+
+        let response = handler
+            .handle_message(
+                r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"tools/recommend","arguments":{"max_tools":3}}}"#,
+            )
+            .await
+            .expect("tools/recommend response");
+
+        assert_eq!(response["result"]["phase"], "general");
+        assert_eq!(
+            response["result"]["recommended_tools"]
+                .as_array()
+                .expect("recommendations")
+                .len(),
+            3
+        );
+        assert!(response["result"]["suggested_profile"]
+            .as_str()
+            .is_some_and(|profile| profile.starts_with("custom:semantic_search")));
+    }
+    // END_test_tools_recommend_routes_through_tools_call
 
     // START_CONTRACT_test_cache_not_modified_response_for_project_status
     // PURPOSE: Verify project_status emits cache metadata and a matching _if_none_match returns _not_modified
