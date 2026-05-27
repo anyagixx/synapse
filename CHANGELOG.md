@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.8 (2026-05-27)
+
+- Fixed blank-project `syn init` so `docs/technology.xml` starts as `status="needs-decision"` instead of claiming a Rust/Axum/SQLite stack before requirements are known
+- Added detected-stack technology generation, planning guidance, MCP output, status/review/verify reporting, and regression tests for selected versus pending technology artifacts
+- Closed Phase-96 with full MyGRACE refresh/verify/review/status evidence, all-targets tests, clippy, docs parity, and real blank-project init smoke
+
 ## 2.6.4 (2026-05-25)
 
 - Completed the UPGRADE_2 autonomy line with bounded self-heal, failure diagnosis, dry-run contract repair, GraphRAG impact analysis, phase/pre-commit gates, compact agent resume context, and structured multi-agent handoffs

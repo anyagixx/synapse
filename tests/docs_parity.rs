@@ -60,7 +60,7 @@ const FAQ: &str = include_str!("../docs/FAQ.md");
 const WORKFLOW_DOC: &str = include_str!("../docs/WORKFLOW.md");
 const SUPPORT_DOC: &str = include_str!("../docs/SUPPORT.md");
 const INSTALL_COMMAND: &str =
-    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.7/install.sh | sh";
+    "curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.8/install.sh | sh";
 const EXPECTED_PREBUILT_ARTIFACTS: [&str; 4] = [
     "syn-x86_64-unknown-linux-gnu.tar.gz",
     "syn-aarch64-unknown-linux-gnu.tar.gz",
