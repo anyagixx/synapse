@@ -104,6 +104,7 @@
     <VERIFICATION id="V-M-SKILLS-REGISTRY" module="M-SKILLS-REGISTRY" path="docs/verification/V-M-SKILLS-REGISTRY.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-SKILLS-TYPES" module="M-SKILLS-TYPES" path="docs/verification/V-M-SKILLS-TYPES.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TELEMETRY" module="M-TELEMETRY" path="docs/verification/V-M-TELEMETRY.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TEST" module="M-TEST" path="docs/verification/V-M-TEST.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TEST-CONTRACT-DIFFERENTIAL" module="M-TEST-CONTRACT-DIFFERENTIAL" path="docs/verification/V-M-TEST-CONTRACT-DIFFERENTIAL.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-TEST-COVERAGE-MATRIX" module="M-TEST-COVERAGE-MATRIX" path="docs/verification/V-M-TEST-COVERAGE-MATRIX.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TEST-E2E-RUNNER" module="M-TEST-E2E-RUNNER" path="docs/verification/V-M-TEST-E2E-RUNNER.xml" priority="critical" status="active" />

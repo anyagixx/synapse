@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST</NAME>
+  <PURPOSE>Test module for pre-commit hook verification</PURPOSE>
+  <SCOPE></SCOPE>
+  <FILES>
+    <FILE>test-clean/src/main.rs</FILE>
+  </FILES>
+  <DEPENDS>none</DEPENDS>
+  <LINKS>none</LINKS>
+  <VERIFICATION_REF>V-M-TEST</VERIFICATION_REF>
+</MODULE>
