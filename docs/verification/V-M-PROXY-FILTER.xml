@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-PROXY-FILTER" module="M-PROXY-FILTER" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_apply_strip_ansi_without_panics --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_apply_truncate_lines_at_preserves_utf8_boundaries --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_match_command_regex_matches_explicit_regex_only --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_match_command_literal_does_not_require_valid_regex --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_legacy_regex_like_match_command_warns_and_matches --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_parse_named_rtk_filter_with_inline_test --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_rtk_builtin_filter_pack_loads_and_verifies --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_filter_dry_run_reports_stages --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_project_filters_require_trust --lib</COMMAND>
+    <COMMAND>cargo test proxy::toml_filter::tests::test_project_filters_require_trust --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test proxy::filter_trust::tests::test_trust_status_changes_after_file_update --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter dotnet-build</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter markdownlint</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter df</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter du</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ps</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ping</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter systemctl-status</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter rsync</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ssh</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter brew-install</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter uv-sync</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gcloud</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gradle</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter mvn-build</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gcc</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter task</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter turbo</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter terraform-plan</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter tofu-init</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter tofu-plan</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter tofu-validate</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter tofu-fmt</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ansible-playbook</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter poetry-install</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter composer-install</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter bundle-install</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter swift-build</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter mix-compile</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter mix-format</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter xcodebuild</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter spring-boot</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter pio-run</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter trunk-build</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter quarto-render</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter nx</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter sops</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter skopeo</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter iptables</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter fail2ban-client</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter liquibase</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter mise</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter yadm</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter jj</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter jira</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter shopify-theme</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ollama</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter stat</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter basedpyright</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter ty</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter helm</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter just</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter make</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gt-log</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gt-submit</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter gt-sync</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter container-ps</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter container-images</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter container-logs</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter kubectl-get</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter kubectl-logs</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter psql-table</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
+    <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>TOML filter ANSI stripping delegates to the shared M-UTILS strip_ansi implementation.</ASSERTION>
+    <ASSERTION>TOML filter line truncation preserves UTF-8 boundaries.</ASSERTION>
+    <ASSERTION>match_command is treated as literal command prefix matching and no longer requires regex validation.</ASSERTION>
+    <ASSERTION>match_command_regex is the explicit regex command matcher for RTK-style filters.</ASSERTION>
+    <ASSERTION>Legacy regex-like match_command values remain compatible and emit migration warnings.</ASSERTION>
+    <ASSERTION>Expanded built-in filters cover RTK-style Python, JS, VCS hosting, container, infrastructure, and search commands.</ASSERTION>
+    <ASSERTION>Project-local filters are skipped until the exact file hash is trusted or an explicit environment override is set.</ASSERTION>
+    <ASSERTION>Project filter trust tests serialize process environment overrides so trust-store paths remain isolated in parallel test runs.</ASSERTION>
+    <ASSERTION>RTK-style named filters can define guarded match_output rules and inline tests that syn filters verify executes.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack loads beside legacy built-ins and verifies dotnet-build and markdownlint inline tests through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies system command filters for df, du, ps, and ping through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies DevOps and package-management filters for systemctl-status, rsync, ssh, brew-install, uv-sync, and gcloud through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies build and compiler filters for gradle, mvn-build, gcc, task, and turbo through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies infrastructure/IaC filters for terraform-plan, tofu-init, tofu-plan, tofu-validate, tofu-fmt, and ansible-playbook through the CLI.</ASSERTION>
+    <ASSERTION>RTK built-in filters are loaded before legacy built-ins so overlapping terraform and tofu commands use RTK-specific filters at runtime.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies package-manager and language build filters for poetry-install, composer-install, bundle-install, swift-build, mix-compile, and mix-format through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies platform and tooling filters for xcodebuild, spring-boot, pio-run, trunk-build, quarto-render, and nx through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies operations/admin filters for sops, skopeo, iptables, fail2ban-client, liquibase, mise, and yadm through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies developer-service filters for jj, jira, shopify-theme, ollama, and stat through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies Python type-checker filters for basedpyright and ty through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies the final RTK parity filters for helm, just, and make through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies Phase-48 cloud/container filters for Docker/Podman listings, container logs, kubectl listings/logs, and psql tables through the CLI.</ASSERTION>
+    <ASSERTION>The RTK built-in filter pack verifies Graphite stacked-PR filters for gt log, gt submit, and gt sync/restack/create through the CLI.</ASSERTION>
+    <ASSERTION>FilterEngine dry-run reports each major TOML filter stage decision and returns the same output as apply without executing the command.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-58,Phase-60,Phase-68</PHASE_GATE>
+</VERIFICATION>

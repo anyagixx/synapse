@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-2" status="done">
+  <NAME>Maintainability Hardening</NAME>
+  <GOAL>Reduce oversized modules, make maintainability gates honest, and keep MyGRACE shards synchronized</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRACE-INVENTORY" />
+    <MODULE_REF id="M-GRACE-INVENTORY-ARTIFACTS" />
+    <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
+    <MODULE_REF id="M-GRACE-INVENTORY-TYPES" />
+    <MODULE_REF id="M-GRACE" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-GRACE-VERIFY-PHASE" />
+    <MODULE_REF id="M-GRACE-VERIFY-TYPES" />
+    <MODULE_REF id="M-INDEXER-STORAGE" />
+    <MODULE_REF id="M-INDEXER-STORAGE-SEARCH" />
+    <MODULE_REF id="M-INDEXER-STORAGE-TYPES" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-RESPONSE" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-CODE-COMMANDS" />
+    <MODULE_REF id="M-CLI-GRACE-COMMANDS" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-CLI-SETUP-COMMANDS" />
+    <MODULE_REF id="M-CI" />
+  </MODULE_REFS>
+  <ACCEPTANCE>
+    <CHECK>Inventory facade under 500-line maintainability target</CHECK>
+    <CHECK>New inventory shards represented in graph and verification indexes</CHECK>
+    <CHECK>Verification output distinguishes hard file limit from Phase 2 target backlog</CHECK>
+    <CHECK>Verification facade under 500-line maintainability target</CHECK>
+    <CHECK>Indexer storage facade under 500-line maintainability target without graph cycles</CHECK>
+    <CHECK>MCP server facade under 500-line maintainability target with tool handlers sharded</CHECK>
+    <CHECK>CLI schema facade and command handlers under 500-line maintainability target</CHECK>
+    <CHECK>Remediation plan sharded under 500-line maintainability target</CHECK>
+    <CHECK>refresh --fix preserves Phase-2 as the active phase</CHECK>
+    <CHECK>Full local CI gate passes</CHECK>
+    <CHECK>Phase 2 closed with all governed files under 500-line target</CHECK>
+  </ACCEPTANCE>
+</PHASE>

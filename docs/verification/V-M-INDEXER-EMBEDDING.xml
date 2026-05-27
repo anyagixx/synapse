@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-INDEXER-EMBEDDING" module="M-INDEXER-EMBEDDING" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test indexer::embedding --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Embedding provider selection pins fastembed 5.13.4, rustls-backed download features on non-Intel-macOS targets, ort-load-dynamic on macOS Intel, ONNX model format, AllMiniLML6V2 model identity, and 384-dimensional vectors.</ASSERTION>
+    <ASSERTION>Embedding batch size validation rejects zero and values above the configured upper bound before indexing.</ASSERTION>
+    <ASSERTION>Config-derived runtime settings keep embeddings disabled by default, validate provider/model compatibility, and attach fake-provider vectors in unit tests without downloading assets.</ASSERTION>
+    <ASSERTION>Fallback policy is lexical-only when embedding assets are disabled or unavailable, and ONNX Runtime initialization failures produce actionable errors instead of aborting release-safe defaults.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-66</PHASE_GATE>
+</VERIFICATION>

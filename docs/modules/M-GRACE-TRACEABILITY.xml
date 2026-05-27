@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-TRACEABILITY" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-TRACEABILITY</NAME>
+  <PURPOSE>End-to-end traceability engine from requirements and use cases through contracts, semantic blocks, verification, and LOG evidence</PURPOSE>
+  <SCOPE>TraceabilityChain, TraceabilityReport, project scan, gap detection, trace default integration, and renderer facade exports</SCOPE>
+  <FILES>
+    <FILE>src/grace/traceability.rs</FILE>
+    <FILE>src/grace/traceability_defaults.rs</FILE>
+    <FILE>src/grace/traceability_render.rs</FILE>
+    <FILE>syn-engine/src/grace/traceability.rs</FILE>
+    <FILE>syn-engine/src/grace/traceability_defaults.rs</FILE>
+    <FILE>syn-engine/src/grace/traceability_render.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-LAYOUT,M-GRACE-LOG,M-GRACE-REQUIREMENTS,M-GRACE-SEMANTIC,M-INDEXER-WALKER,M-GRACE-TRACEABILITY</DEPENDS>
+  <LINKS>V-M-GRACE-TRACEABILITY,UC-002,NFR-002</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-TRACEABILITY</VERIFICATION_REF>
+</MODULE>

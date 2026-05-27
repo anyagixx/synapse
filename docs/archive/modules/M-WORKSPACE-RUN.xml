@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-RUN" type="WORKSPACE_CRATE" status="planned">
+  <NAME>syn-run</NAME>
+  <PURPOSE>Run crate — autonomous bounded-run runtime with phase gates, pre-commit checks, self-heal cycles, agent context compaction, and structured handoffs</PURPOSE>
+  <SCOPE>Run state machine, step/gate/review models, action queue executor, phase gate engine, pre-commit verification, evidence compaction, self-heal metadata, scenario harness, durable JSON persistence</SCOPE>
+  <FILES>
+    <FILE>syn-run/src/lib.rs</FILE>
+    <FILE>syn-run/src/run/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-WORKSPACE-CORE,M-WORKSPACE-ENGINE</DEPENDS>
+  <LINKS>
+    <LINK type="depends">M-WORKSPACE-CORE</LINK>
+    <LINK type="depends">M-WORKSPACE-ENGINE</LINK>
+    <LINK type="verified_by">V-M-WORKSPACE-RUN</LINK>
+    <LINK type="implements">Phase-97</LINK>
+  </LINKS>
+  <VERIFICATION_REF>V-M-WORKSPACE-RUN</VERIFICATION_REF>
+</MODULE>

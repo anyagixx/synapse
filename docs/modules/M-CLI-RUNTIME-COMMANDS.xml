@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CLI-RUNTIME-COMMANDS" type="CORE_LOGIC" status="active">
+  <NAME>M-CLI-RUNTIME-COMMANDS</NAME>
+  <PURPOSE>CLI runtime, integration, and diagnostic command handlers with storage health, dependency, filter lifecycle, and clean-bootstrap reporting</PURPOSE>
+  <SCOPE>RunCmd autonomous scenario/action queue smoke, GainCmd with graph/session/adapter output, ProxyCmd with route preview, optional raw evidence hint, and wrapped exit-code propagation, FiltersCmd verify/trust/status controls and delegated dry-run diagnostics, CompressCmd, McpCmd, HooksCmd multi-agent install/status/audit, DoctorCmd, dependency diagnostics, clean config fallback diagnostics, index storage diagnostics, ServeCmd</SCOPE>
+  <FILES>
+    <FILE>src/cli/runtime_commands.rs</FILE>
+    <FILE>syn-cli/src/cli/runtime_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-RUNNER,M-GRACE-STATUS,M-TRACKING,M-PROXY,M-PROXY-ROUTER,M-PROXY-FILTER,M-CLI-FILTER-COMMANDS,M-COMPRESS,M-MCP,M-HOOKS,M-DASHBOARD,M-INDEXER-STORAGE,M-INDEXER-WALKER</DEPENDS>
+  <LINKS>M-PROXY-ROUTER,M-PROXY-FILTER,M-TRACKING,UC-002,NFR-003</LINKS>
+  <VERIFICATION_REF>V-M-CLI-RUNTIME-COMMANDS</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-RUNNER-PHASE-ENGINE" module="M-RUNNER-PHASE-ENGINE" priority="critical" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test run::phase --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Phase gate checks block advancement while active phase checks are planned, failed, or blocked.</ASSERTION>
+    <ASSERTION>advance_phase dry_run=true reports pass/fail without mutating plan-index or phase shards.</ASSERTION>
+    <ASSERTION>advance_phase dry_run=false updates active phase, current phase status, and next phase status only after gates pass.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-73</PHASE_GATE>
+</VERIFICATION>

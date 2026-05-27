@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MCP-PIPELINE" module="M-MCP-PIPELINE" priority="critical" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test mcp::pipeline --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol test_concurrent_requests_keep_response_ids</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[McpPipeline][run_stdio_pipeline][EOF]</MARKER>
+    <MARKER>[McpPipeline][spawn_handler][PANIC]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Initialize messages are handled before later requests are spawned concurrently.</ASSERTION>
+    <ASSERTION>Concurrent request responses preserve their original JSON-RPC IDs and are serialized through one writer.</ASSERTION>
+    <ASSERTION>Handler panics produce a JSON-RPC internal error response instead of terminating the pipeline.</ASSERTION>
+    <ASSERTION>EOF shuts down the read loop, drops the response sender, and lets the writer drain queued responses.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-67</PHASE_GATE>
+</VERIFICATION>

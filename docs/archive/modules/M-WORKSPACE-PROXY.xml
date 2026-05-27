@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-PROXY" type="WORKSPACE_CRATE" status="planned">
+  <NAME>syn-proxy</NAME>
+  <PURPOSE>Proxy crate — token-saving command proxy with 30+ TOML filter families, RTK-style command routing, and streaming command execution</PURPOSE>
+  <SCOPE>Command routing, TOML filter engine, built-in + RTK filter packs, streaming command runner with evidence capture, filter dry-run, and filter trust scoring</SCOPE>
+  <FILES>
+    <FILE>syn-proxy/src/lib.rs</FILE>
+    <FILE>syn-proxy/src/proxy/mod.rs</FILE>
+    <FILE>syn-proxy/src/proxy/router.rs</FILE>
+    <FILE>syn-proxy/src/proxy/runner.rs</FILE>
+    <FILE>syn-proxy/src/proxy/toml_filter.rs</FILE>
+  </FILES>
+  <DEPENDS>M-WORKSPACE-CORE</DEPENDS>
+  <LINKS>
+    <LINK type="depends">M-WORKSPACE-CORE</LINK>
+    <LINK type="verified_by">V-M-WORKSPACE-PROXY</LINK>
+    <LINK type="implements">Phase-97</LINK>
+  </LINKS>
+  <VERIFICATION_REF>V-M-WORKSPACE-PROXY</VERIFICATION_REF>
+</MODULE>

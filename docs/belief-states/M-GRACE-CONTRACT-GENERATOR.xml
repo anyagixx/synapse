@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-GRACE-CONTRACT-GENERATOR" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Language-aware GRACE contract generator and safe MODULE_CONTRACT repair engine
+    Key data flows:
+      - INPUT: source file path, optional module metadata, language override, dry_run flag, and missing-contract failure text
+      - PROCESSING: infer language/comment syntax, generate MODULE_CONTRACT/MODULE_MAP/CHANGE_SUMMARY, avoid duplicates, and optionally write the repaired file
+      - OUTPUT: ContractRepairResult with preview, evidence_ref, changed/applied flags, and generated contract text
+    Critical invariants:
+      - dry_run is the default behavior
+      - existing contracts are not duplicated
+      - write mode only prepends a generated header and does not rewrite unrelated source content
+  IMPLEMENTATION_STRATEGY:
+    Approach: keep contract generation deterministic and path-local, with dry-run previews shared by MCP and self-heal
+    Complexity_areas: language comment syntax, path-to-module-id normalization, duplicate detection, write safety
+    Patterns_applied: explicit flow, typed links, bounded blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - dry-run repair preserves source files and returns a preview
+    - write-mode repair prepends exactly one generated header
+    - missing-contract failure text creates bounded repair actions
+  RISKS_ACKNOWLEDGED:
+    - generated contracts are intentionally conservative and may require human refinement for rich module semantics
+</BELIEF_STATE>

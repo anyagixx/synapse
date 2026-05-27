@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-83" status="done">
+  <NAME>UPGRADE_4 Tool Schema Economy</NAME>
+  <GOAL>Implement T1 progressive tool disclosure and T7 terse tool schemas without breaking default MCP tools/list compatibility.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/README.md</SOURCE_PLAN>
+  <TASK_REFS>
+    <TASK_REF id="T1" path="/home/truffle/Загрузки/synapse-main/UPGRADE_4/T1-progressive-tool-disclosure.md" />
+    <TASK_REF id="T7" path="/home/truffle/Загрузки/synapse-main/UPGRADE_4/T7-tool-description-minification.md" />
+  </TASK_REFS>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-RESPONSE" />
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-TESTS-MCP-PROTOCOL" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-83-1">tools/list request arguments select profile all, verification, planning, implementation, debugging, minimal, or custom before schema serialization.</FLOW>
+    <FLOW id="DF-83-2">tools/list style full preserves existing schema descriptions; style terse removes descriptions recursively and reports schema economy metadata.</FLOW>
+    <FLOW id="DF-83-3">High or critical context pressure later forces terse schema output while explicit full remains backward-compatible below pressure thresholds.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-MCP-SERVER-TOOLS" status="done">Add profile classification for every existing MCP tool, including generated grace skill tools.</step-1>
+    <step-2 module="M-MCP-SERVER" status="done">Parse profile and style from tools/list params and return total_available and total_visible.</step-2>
+    <step-3 module="M-MCP-SERVER-TOOLS" status="done">Add terse schema transform that strips all description fields while preserving types, defaults, enums, required, items, and nested properties.</step-3>
+    <step-4 module="M-TESTS-MCP-PROTOCOL" status="done">Add protocol tests for all, verification, minimal, custom, full, terse, and profile+terse combinations.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="done">cargo test mcp::server_tools::tests --lib</CHECK>
+    <CHECK status="done">cargo test --test e2e_mcp tools_list</CHECK>
+    <CHECK status="done">tools/list without profile returns all tools.</CHECK>
+    <CHECK status="done">tools/list profile=verification returns no more than 10 tools.</CHECK>
+    <CHECK status="done">tools/list profile=minimal returns exactly 6 tools.</CHECK>
+    <CHECK status="done">tools/list profile=custom:semantic_search,verify_project returns exactly 2 tools.</CHECK>
+    <CHECK status="done">tools/list style=terse returns schemas without description fields and at least 60 percent smaller than full.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-83-1">Skill-provided dynamic tools may not have static profile metadata; default them to implementation plus all rather than hiding them.</RISK>
+    <RISK id="R-83-2">Over-aggressive terse transform can remove nested schema structure; recursive retention must keep machine-readable shape intact.</RISK>
+  </RISKS>
+</PHASE>

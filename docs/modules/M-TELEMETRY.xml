@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TELEMETRY" type="CORE_LOGIC" status="active">
+  <NAME>M-TELEMETRY</NAME>
+  <PURPOSE>Optional OpenTelemetry initialization for Synapse tracing.</PURPOSE>
+  <SCOPE>stderr JSON tracing setup, default-off OTLP export, sampling parsing, resource attribute mapping, and exporter shutdown guard.</SCOPE>
+  <FILES>
+    <FILE>src/telemetry.rs</FILE>
+    <FILE>syn-core/src/telemetry.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG</DEPENDS>
+  <LINKS>docs/phases/Phase-93.xml,NFR-002</LINKS>
+  <VERIFICATION_REF>V-M-TELEMETRY</VERIFICATION_REF>
+</MODULE>

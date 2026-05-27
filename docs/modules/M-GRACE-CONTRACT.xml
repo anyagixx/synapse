@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-CONTRACT" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-CONTRACT</NAME>
+  <PURPOSE>MODULE_CONTRACT validator — scans source files for language-aware GRACE contract blocks and validates contracts plus typed LINKS</PURPOSE>
+  <SCOPE>GraceProfile, TypedLink, ModuleContract, FunctionContract, ContractReport models, XML-like anchor normalization, ContractValidator scan/validate/link-validation APIs</SCOPE>
+  <FILES>
+    <FILE>src/grace/contract.rs</FILE>
+    <FILE>syn-engine/src/grace/contract.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-ANCHOR,M-INDEXER-WALKER</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-GRACE-CONTRACT</VERIFICATION_REF>
+</MODULE>

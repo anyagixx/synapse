@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-MCP" type="CORE_LOGIC" status="active">
+  <NAME>Workspace MCP Crate</NAME>
+  <PURPOSE>MCP crate root — JSON-RPC server with 48 tools for code search, GraphRAG, GRACE verification, autonomous runs, LSP hooks, and user-defined tools. Depends on all upstream workspace crates.</PURPOSE>
+  <FILES>
+    <FILE>syn-mcp/src/lib.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_code_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_grace_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/user_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/lsp.rs</FILE>
+    <FILE>syn-mcp/src/mcp/pipeline.rs</FILE>
+  </FILES>
+  <VERIFICATION_REF>V-M-WORKSPACE-MCP</VERIFICATION_REF>
+  <DEPENDS>
+    <DEP>M-WORKSPACE-CORE</DEP>
+    <DEP>M-WORKSPACE-ENGINE</DEP>
+    <DEP>M-WORKSPACE-RUN</DEP>
+    <DEP>M-WORKSPACE-SKILLS</DEP>
+  </DEPENDS>
+  <LINKS>
+    <LINK type="implements">Phase-97</LINK>
+  </LINKS>
+</MODULE>

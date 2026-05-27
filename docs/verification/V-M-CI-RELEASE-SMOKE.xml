@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CI-RELEASE-SMOKE" module="M-CI-RELEASE-SMOKE" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>SYN_RELEASE_TAG=v2.6.8 bash scripts/release_version_guard.sh</COMMAND>
+    <COMMAND>SYN_RELEASE_TAG=v2.6.8 bash scripts/release_freshness_guard.sh</COMMAND>
+    <COMMAND>bash scripts/release_install_smoke.sh</COMMAND>
+    <COMMAND>bash scripts/rtk_release_gate.sh</COMMAND>
+    <COMMAND>bash scripts/rtk_full_release_gate.sh</COMMAND>
+    <COMMAND>cargo test --test docs_parity</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[CI][release_version_guard][VALIDATE]</MARKER>
+    <MARKER>[CI][release_version_guard][PASS]</MARKER>
+    <MARKER>[CI][release_freshness_guard][CHECK]</MARKER>
+    <MARKER>[CI][release_freshness_guard][PASS]</MARKER>
+    <MARKER>[CI][release_install_smoke][BUILD]</MARKER>
+    <MARKER>[CI][release_install_smoke][PACKAGE]</MARKER>
+    <MARKER>[CI][release_install_smoke][CHECKSUM]</MARKER>
+    <MARKER>[CI][release_install_smoke][RUN]</MARKER>
+    <MARKER>[CI][rtk_release_gate][PARITY]</MARKER>
+    <MARKER>[CI][rtk_release_gate][HOOKS]</MARKER>
+    <MARKER>[CI][rtk_release_gate][ECONOMICS]</MARKER>
+    <MARKER>[CI][rtk_release_gate][PASS]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][FULL_PARITY]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][HOOKS]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][STREAMING]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][ECOSYSTEM]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][DISCOVER]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][ECONOMICS]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][CLIPPY]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][VERIFY]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][REVIEW]</MARKER>
+    <MARKER>[CI][rtk_full_release_gate][PASS]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Release version guard rejects tags that differ from v&lt;Cargo.toml package.version&gt; before release packaging.</ASSERTION>
+    <ASSERTION>Release freshness guard rejects stale already-published tags and requires exact tag checkout in release context.</ASSERTION>
+    <ASSERTION>Release smoke builds with locked dependencies, packages installer-facing supported Linux/macOS x86_64/aarch64 target tarballs including macOS Intel, verifies checksum sidecars, extracts artifacts, and asserts packaged syn --version equals Cargo.toml package.version on runnable host targets.</ASSERTION>
+    <ASSERTION>RTK release gate checks parity inventory, representative filters, rewrite outputs, isolated hook install/audit, discover/learn diagnostics, gain economics, verify, and full review.</ASSERTION>
+    <ASSERTION>Full RTK release gate requires source-derived full standalone parity from a local or pinned public RTK source, missing-total 0, all-agent hook install/audit trust, streaming route previews, ecosystem route previews, measured discover/learn/session/economics analytics, clippy, verify, and full review.</ASSERTION>
+    <ASSERTION>Phase-63 release gate runs after CLI dispatch cleanup and Dockerfile release-build cleanup complete.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-63,Phase-95</PHASE_GATE>
+</VERIFICATION>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-PARSER" type="CORE_LOGIC" status="active">
+  <NAME>M-INDEXER-PARSER</NAME>
+  <PURPOSE>Tree-sitter AST parser — extracts code blocks (functions, structs, classes, SQL DDL) with fallback</PURPOSE>
+  <SCOPE>ParserEngine, CodeBlock, tree-sitter parsing for Rust/Python/JS/TS/Go, SQL-aware fallback</SCOPE>
+  <FILES>
+    <FILE>src/indexer/parser.rs</FILE>
+    <FILE>syn-engine/src/indexer/parser.rs</FILE>
+  </FILES>
+  <DEPENDS>N/A (tree-sitter grammars loaded at runtime)</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-PARSER</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-WORKSPACE-ENGINE" module="M-WORKSPACE-ENGINE" priority="critical" status="complete">
+  <UNIT_TESTS>
+    <TEST>cargo test -p syn-engine</TEST>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[Engine][indexer][INDEX]</MARKER>
+    <MARKER>[Engine][graphrag][BUILD]</MARKER>
+    <MARKER>[Engine][grace][VERIFY]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>All 154 unit tests pass</ASSERTION>
+    <ASSERTION>No clippy warnings</ASSERTION>
+    <ASSERTION>3-node cycle (indexer↔graphrag↔grace) contained within single crate</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-97</PHASE_GATE>
+  <EVIDENCE>
+    <CHECK name="cargo test -p syn-engine" result="PASS" date="2025-07-17">154 passed; 0 failed</CHECK>
+    <CHECK name="cargo build --workspace" result="PASS" date="2025-07-17">Compiles successfully</CHECK>
+  </EVIDENCE>
+</VERIFICATION>

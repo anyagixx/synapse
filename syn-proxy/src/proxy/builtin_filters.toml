@@ -1,0 +1,333 @@
+# Synapse Built-in Filters
+# Priority: project > user > built-in
+
+[[filters]]
+match_command = "git status"
+strip_ansi = true
+strip_lines = ["^$"]
+head_lines = 20
+max_lines = 25
+on_empty = "Clean working tree"
+
+[[filters]]
+match_command = "git log"
+strip_ansi = true
+head_lines = 15
+tail_lines = 3
+max_lines = 20
+strip_lines = ["^$"]
+on_empty = "No commits"
+
+[[filters]]
+match_command = "git diff"
+strip_ansi = true
+max_lines = 50
+on_empty = "No changes"
+
+[[filters]]
+match_command = "git diff --cached"
+strip_ansi = true
+max_lines = 50
+on_empty = "No staged changes"
+
+[[filters]]
+match_command = "git show"
+strip_ansi = true
+max_lines = 40
+
+[[filters]]
+match_command = "git branch"
+strip_ansi = true
+max_lines = 20
+on_empty = "No branches"
+
+[[filters]]
+match_command = "git stash list"
+strip_ansi = true
+max_lines = 10
+on_empty = "No stashes"
+
+[[filters]]
+match_command = "ls"
+strip_ansi = true
+head_lines = 30
+max_lines = 35
+replace = [{ pattern = "^total \\d+$", replacement = "" }]
+strip_lines = ["^$"]
+
+[[filters]]
+match_command = "ls -la"
+strip_ansi = true
+head_lines = 30
+max_lines = 35
+strip_lines = ["^$"]
+replace = [{ pattern = "^total \\d+$", replacement = "" }]
+
+[[filters]]
+match_command = "cargo build"
+strip_ansi = true
+strip_lines = ["^\\s*$", "^Compiling ", "^Finished ", "^Fresh ", "^   Compiling"]
+head_lines = 5
+tail_lines = 3
+max_lines = 20
+on_empty = "Build successful"
+
+[[filters]]
+match_command = "cargo check"
+strip_ansi = true
+strip_lines = ["^\\s*$", "^Checking ", "^Finished "]
+head_lines = 5
+max_lines = 15
+on_empty = "Check passed"
+
+[[filters]]
+match_command = "cargo test"
+strip_ansi = true
+strip_lines = ["^\\s*$", "^Compiling ", "^   Compiling", "^running ", "^test ", "^Finished "]
+keep_lines = ["FAILED", "error", "^test result", "failures", "thread '"]
+head_lines = 10
+tail_lines = 10
+max_lines = 30
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "cargo clippy"
+strip_ansi = true
+keep_lines = ["warning", "error", "help:"]
+max_lines = 20
+on_empty = "No warnings"
+
+[[filters]]
+match_command = "npm test"
+strip_ansi = true
+keep_lines = ["FAIL", "Error", "error", "pass", "fail", "Test Suites", "Tests:"]
+head_lines = 10
+tail_lines = 5
+max_lines = 20
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "npm run build"
+strip_ansi = true
+strip_lines = ["^\\s*$"]
+head_lines = 5
+tail_lines = 5
+max_lines = 20
+on_empty = "Build complete"
+
+[[filters]]
+match_command = "npm install"
+strip_ansi = true
+strip_lines = ["^npm notice", "added ", "removed ", "changed "]
+max_lines = 10
+on_empty = "Dependencies up to date"
+
+[[filters]]
+match_command = "npx tsc"
+strip_ansi = true
+keep_lines = ["error", "TS\\d+"]
+max_lines = 20
+on_empty = "TypeScript check passed"
+
+[[filters]]
+match_command = "npx eslint"
+strip_ansi = true
+keep_lines = ["error", "warning"]
+max_lines = 20
+on_empty = "Lint passed"
+
+[[filters]]
+match_command = "tree"
+strip_ansi = true
+head_lines = 30
+max_lines = 35
+on_empty = "Empty directory"
+
+[[filters]]
+match_command = "find"
+strip_ansi = true
+head_lines = 30
+max_lines = 40
+on_empty = "No files found"
+
+[[filters]]
+match_command = "grep"
+strip_ansi = true
+max_lines = 30
+on_empty = "No matches"
+
+[[filters]]
+match_command = "cat"
+strip_ansi = true
+max_lines = 50
+
+[[filters]]
+match_command = "docker ps"
+strip_ansi = true
+max_lines = 25
+on_empty = "No running containers"
+
+[[filters]]
+match_command = "docker images"
+strip_ansi = true
+max_lines = 20
+on_empty = "No images"
+
+[[filters]]
+match_command = "pwd"
+strip_ansi = true
+max_lines = 1
+
+[[filters]]
+match_command = "which"
+strip_ansi = true
+max_lines = 2
+
+[[filters]]
+match_command = "go build"
+strip_ansi = true
+max_lines = 15
+on_empty = "Build successful"
+
+[[filters]]
+match_command = "go test"
+strip_ansi = true
+keep_lines = ["FAIL", "error", "ok", "PASS", "--- PASS", "--- FAIL"]
+max_lines = 20
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "cargo fmt"
+strip_ansi = true
+keep_lines = ["Diff", "error", "warning", "Check", "would be formatted"]
+max_lines = 25
+on_empty = "Format check passed"
+
+[[filters]]
+match_command = "pytest"
+strip_ansi = true
+keep_lines = ["FAILED", "ERROR", "FAILURES", "short test summary", "passed", "failed", "error", "E   "]
+head_lines = 12
+tail_lines = 12
+max_lines = 35
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "python -m pytest"
+strip_ansi = true
+keep_lines = ["FAILED", "ERROR", "FAILURES", "short test summary", "passed", "failed", "error", "E   "]
+head_lines = 12
+tail_lines = 12
+max_lines = 35
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "uv run pytest"
+strip_ansi = true
+keep_lines = ["FAILED", "ERROR", "FAILURES", "short test summary", "passed", "failed", "error", "E   "]
+head_lines = 12
+tail_lines = 12
+max_lines = 35
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "ruff"
+strip_ansi = true
+keep_lines = ["error", "warning", "Found", "Fixed", "^.+:[0-9]+:[0-9]+:"]
+max_lines = 30
+on_empty = "Ruff passed"
+
+[[filters]]
+match_command = "mypy"
+strip_ansi = true
+keep_lines = ["error:", "note:", "Success:", "Found "]
+max_lines = 35
+on_empty = "Mypy passed"
+
+[[filters]]
+match_command = "rg"
+strip_ansi = true
+head_lines = 40
+max_lines = 45
+on_empty = "No matches"
+
+[[filters]]
+match_command = "gh pr"
+strip_ansi = true
+keep_lines = ["title:", "state:", "author:", "url:", "checks", "fail", "pass", "error", "review", "mergeable"]
+max_lines = 35
+on_empty = "No PR output"
+
+[[filters]]
+match_command = "glab mr"
+strip_ansi = true
+keep_lines = ["title:", "state:", "author:", "web_url", "failed", "passed", "pipeline", "merge_status"]
+max_lines = 35
+on_empty = "No MR output"
+
+[[filters]]
+match_command = "docker compose"
+strip_ansi = true
+keep_lines = ["error", "failed", "unhealthy", "Exit", "Started", "Running", "Created", "Recreated", "WARN"]
+tail_lines = 30
+max_lines = 40
+on_empty = "Compose command completed"
+
+[[filters]]
+match_command = "docker logs"
+strip_ansi = true
+tail_lines = 50
+max_lines = 55
+on_empty = "No container logs"
+
+[[filters]]
+match_command = "kubectl"
+strip_ansi = true
+keep_lines = ["NAME", "STATUS", "READY", "RESTARTS", "Error", "Warning", "Failed", "CrashLoop", "BackOff", "Events:"]
+head_lines = 20
+tail_lines = 20
+max_lines = 45
+on_empty = "Kubectl command completed"
+
+[[filters]]
+match_command = "terraform plan"
+strip_ansi = true
+keep_lines = ["Plan:", "No changes", "Error:", "Warning:", "will be", "must be", "forces replacement", "^  # "]
+head_lines = 20
+tail_lines = 20
+max_lines = 45
+on_empty = "Terraform plan: no changes detected"
+
+[[filters]]
+match_command = "tofu plan"
+strip_ansi = true
+keep_lines = ["Plan:", "No changes", "Error:", "Warning:", "will be", "must be", "forces replacement", "^  # "]
+head_lines = 20
+tail_lines = 20
+max_lines = 45
+on_empty = "OpenTofu plan: no changes detected"
+
+[[filters]]
+match_command = "bun test"
+strip_ansi = true
+keep_lines = ["fail", "FAIL", "error", "Error", "pass", "passed", "tests"]
+head_lines = 10
+tail_lines = 10
+max_lines = 30
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "deno test"
+strip_ansi = true
+keep_lines = ["FAILED", "ok", "error", "fail", "pass", "test result"]
+head_lines = 10
+tail_lines = 10
+max_lines = 30
+on_empty = "All tests passed"
+
+[[filters]]
+match_command = "journalctl"
+strip_ansi = true
+tail_lines = 60
+max_lines = 65
+on_empty = "No journal output"

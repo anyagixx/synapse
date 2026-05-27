@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-STORAGE-TYPES" type="DATA_LAYER" status="active">
+  <NAME>M-INDEXER-STORAGE-TYPES</NAME>
+  <PURPOSE>Shared storage data types for indexed code blocks and semantic embedding metadata</PURPOSE>
+  <SCOPE>StoredBlock serialization shape, backward-compatible embedding metadata, SearchFilters metadata</SCOPE>
+  <FILES>
+    <FILE>src/indexer/storage_types.rs</FILE>
+    <FILE>syn-engine/src/indexer/storage_types.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>docs/modules/M-INDEXER-STORAGE.xml</LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-STORAGE-TYPES</VERIFICATION_REF>
+</MODULE>

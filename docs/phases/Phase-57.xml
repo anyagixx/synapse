@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-57" status="done">
+  <NAME>Full RTK Release Gate</NAME>
+  <GOAL>Make full standalone RTK parity a release-blocking Synapse 2.6 gate.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+    <MODULE_REF id="M-RTK-FULL-PARITY" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-HOOKS" />
+    <MODULE_REF id="M-PROXY-RUNNER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CI-RELEASE-SMOKE" status="done">Added scripts/rtk_full_release_gate.sh with --full --ci parity, all-agent hook, streaming, ecosystem, measured analytics, verify, review, and clippy gates.</step-1>
+    <step-2 module="M-RTK-FULL-PARITY" status="done">Required missing_commands=0, missing_hooks=0, missing_filters=0, and full_standalone_parity=true through the full release gate.</step-2>
+    <step-3 module="M-CI-RELEASE-SMOKE" status="done">Wired the full RTK gate into release candidate verification while keeping general CI explicitly skippable.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">bash scripts/rtk_full_release_gate.sh</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-CLI-AGENT-COMMANDS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Expose compact agent resume/status context through first-class CLI commands.
+    Key data flows:
+      - INPUT: syn agent resume/status flags, optional run id, current project root.
+      - PROCESSING: Build AgentContext through RunManager and render JSON or compact text.
+      - OUTPUT: terminal output suitable for human review or machine handoff.
+    Critical invariants:
+      - --json output is valid serialized AgentContext.
+      - Missing resumable run produces a clear error.
+      - CLI dispatch does not bypass the run context builder.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep command schema in src/cli.rs and command behavior in src/cli/agent_commands.rs.
+    Complexity_areas: current working directory isolation in tests, stable text output fields.
+    Patterns_applied: subcommand dispatch, compact printer, test cwd lock.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test cli::agent_commands --lib -- --test-threads=8 passes
+  RISKS_ACKNOWLEDGED:
+    - CLI status/resume text must stay compact as AgentContext grows.
+</BELIEF_STATE>

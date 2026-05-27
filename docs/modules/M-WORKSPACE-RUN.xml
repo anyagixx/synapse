@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-RUN" type="CORE_LOGIC" status="active">
+  <NAME>Workspace Run Crate</NAME>
+  <PURPOSE>Run crate root — autonomous bounded-run runtime with phase gates, pre-commit checks, self-heal cycles, and structured handoffs. Depends on syn-core + syn-engine.</PURPOSE>
+  <FILES>
+    <FILE>syn-run/src/lib.rs</FILE>
+    <FILE>syn-run/src/run/mod.rs</FILE>
+    <FILE>syn-run/src/run/actions.rs</FILE>
+    <FILE>syn-run/src/run/self_heal.rs</FILE>
+    <FILE>syn-run/src/run/phase.rs</FILE>
+    <FILE>syn-run/src/run/pre_commit.rs</FILE>
+    <FILE>syn-run/src/run/handoff.rs</FILE>
+    <FILE>syn-run/src/run/agent_context.rs</FILE>
+    <FILE>syn-run/src/run/scenario.rs</FILE>
+  </FILES>
+  <VERIFICATION_REF>V-M-WORKSPACE-RUN</VERIFICATION_REF>
+  <DEPENDS>
+    <DEP>M-WORKSPACE-CORE</DEP>
+    <DEP>M-WORKSPACE-ENGINE</DEP>
+  </DEPENDS>
+  <LINKS>
+    <LINK type="implements">Phase-97</LINK>
+  </LINKS>
+</MODULE>

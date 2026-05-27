@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TRACEABILITY_INDEX enforcement="strict">
+  <META>
+    <MODEL>mygrace-sharded</MODEL>
+    <PRIMARY>true</PRIMARY>
+    <GENERATED_BY>M-GRACE-TRACEABILITY</GENERATED_BY>
+  </META>
+  <SUMMARY requirements="3" use_cases="2" traced_modules="115" traced_functions="1845" traced_logs="23" score="0.996" />
+  <ENFORCEMENT mode="strict">Traceability gaps fail verification.</ENFORCEMENT>
+  <REQUIREMENTS>
+    <REQUIREMENT id="NFR-001">
+      <IMPLEMENTED_BY total="95" shown="10">
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE" type="module" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::run_rtk_release_gate" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::run_syn" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::run_syn_at" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::assert_contains" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::run_release_version_guard" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::read_cargo_version" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::run_release_install_smoke" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::checksum_generate" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-CI-RELEASE-SMOKE::checksum_verify" type="function" relationship="traced_by" />
+        <TRUNCATED remaining="85" />
+      </IMPLEMENTED_BY>
+    </REQUIREMENT>
+    <REQUIREMENT id="NFR-002">
+      <IMPLEMENTED_BY total="1081" shown="10">
+        <ARTIFACT ref="M-MEMORY::LessonsStore::ensure_lessons_dir" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MEMORY::LessonsStore::save" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-MEMORY::slug" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-TRACKING::current_project_key" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-TRACKING::ensure_schema" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-TRACKING::ensure_command_column" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-TRACKING::command_column_exists" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-TRACKING-MCP-METRICS::ensure_mcp_metrics_schema" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-TRACKING-MCP-METRICS::prune_mcp_metrics" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-TRACKING-MCP-METRICS::retention_modifier" type="function" relationship="traced_by" />
+        <TRUNCATED remaining="1071" />
+      </IMPLEMENTED_BY>
+    </REQUIREMENT>
+    <REQUIREMENT id="NFR-003">
+      <IMPLEMENTED_BY total="894" shown="10">
+        <ARTIFACT ref="M-DASHBOARD" type="module" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::page_shell" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::primary_nav" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::json_pre" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::status_badge" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::html_escape" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::url_component" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::mcp_stats_payload_with_tracker" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::runs_payload" type="function" relationship="traced_by" />
+        <ARTIFACT ref="M-DASHBOARD::render_runs_page" type="function" relationship="traced_by" />
+        <TRUNCATED remaining="884" />
+      </IMPLEMENTED_BY>
+    </REQUIREMENT>
+  </REQUIREMENTS>
+  <USE_CASES>
+    <USE_CASE id="UC-001">
+      <IMPLEMENTED_BY total="91" shown="10">
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::health" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::health_ready" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::api_mcp_stats" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::health_payload" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::readiness_payload_with_tracker" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::readiness_payload_with_config" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::mcp_stats_payload_with_config" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::disabled_mcp_stats_payload" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::readiness_status" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD-OBSERVABILITY::root_signal" type="function" relationship="implemented_by" />
+        <TRUNCATED remaining="81" />
+      </IMPLEMENTED_BY>
+    </USE_CASE>
+    <USE_CASE id="UC-002">
+      <IMPLEMENTED_BY total="901" shown="10">
+        <ARTIFACT ref="M-DASHBOARD::review_run_payload" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD::render_review_result_page" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD::runs_review_html" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-DASHBOARD::api_runs_review" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MEMORY" type="module" relationship="implemented_by" />
+        <ARTIFACT ref="M-MEMORY::LessonRecord::new" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MEMORY::LessonsStore::save" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-MEMORY::LessonsStore::list" type="function" relationship="implemented_by" />
+        <ARTIFACT ref="M-TRACKING" type="module" relationship="implemented_by" />
+        <ARTIFACT ref="M-TRACKING::Tracker::new" type="function" relationship="implemented_by" />
+        <TRUNCATED remaining="891" />
+      </IMPLEMENTED_BY>
+    </USE_CASE>
+  </USE_CASES>
+  <GAPS>
+  </GAPS>
+</TRACEABILITY_INDEX>

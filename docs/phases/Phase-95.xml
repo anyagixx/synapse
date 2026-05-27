@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-95" status="done">
+  <NAME>UPGRADE_5 Integration And Release Gate</NAME>
+  <GOAL>Run the combined UPGRADE_5 verification surface, synchronize docs parity, and prepare the next release candidate.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_5/README.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+    <MODULE_REF id="M-TEST-PERF-REGRESSION" />
+    <MODULE_REF id="M-HOOKS" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-TEST-COVERAGE-MATRIX" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-95-1">UPGRADE_5 feature surfaces update capability truth, docs parity, verification shards, and CI coverage.</FLOW>
+    <FLOW id="DF-95-2">Release gates run fmt, clippy, tests, targeted benches, tarpaulin smoke, MyGRACE verify, review, refresh, and status.</FLOW>
+    <FLOW id="DF-95-3">Hosted CI remains the external post-push/tag validation gate before treating GitHub release artifacts as final.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-CAPABILITIES" status="done">Updated command and MCP capability truth after UPGRADE_5 command surfaces landed.</step-1>
+    <step-2 module="M-TESTS-PARITY" status="done">Updated docs parity tests for workspace, tools, hook, telemetry, coverage, and benchmark claims.</step-2>
+    <step-3 module="M-CI" status="done">Added the UPGRADE_5 gate script and CI invocation for the new cross-cutting features.</step-3>
+    <step-4 module="M-CI" status="done">Ran full local release-candidate dry run; hosted CI remains the post-push/tag release gate.</step-4>
+    <step-5 module="M-CI" status="done">Refreshed MyGRACE indexes and closed Phase-89 through Phase-95 with verification evidence.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo test --all-targets --all-features</CHECK>
+    <CHECK status="passed">cargo bench --bench search</CHECK>
+    <CHECK status="passed">cargo bench --bench graph</CHECK>
+    <CHECK status="passed">cargo bench --bench cascade</CHECK>
+    <CHECK status="passed">syn test coverage --code --json</CHECK>
+    <CHECK status="passed">bash scripts/upgrade5_gate.sh</CHECK>
+    <CHECK status="passed">bash scripts/ci.sh</CHECK>
+    <CHECK status="passed">syn refresh --json reports no canonical drift.</CHECK>
+    <CHECK status="passed">syn verify passes under strict profile.</CHECK>
+    <CHECK status="passed">syn review --json passes.</CHECK>
+    <CHECK status="passed">syn status reports UPGRADE_5 complete state accurately.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-95-1">Cross-cutting changes touch CLI, MCP, CI, and config; integrate in small phase commits to keep regressions attributable.</RISK>
+    <RISK id="R-95-2">Optional telemetry and local user tools must remain disabled or harmless by default for release safety.</RISK>
+  </RISKS>
+</PHASE>

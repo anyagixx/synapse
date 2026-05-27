@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-RUNNER-AGENT-CONTEXT" type="CORE_LOGIC" status="active">
+  <NAME>M-RUNNER-AGENT-CONTEXT</NAME>
+  <PURPOSE>Compact resumable agent context for long-running bounded work.</PURPOSE>
+  <SCOPE>AgentContext and RunStateSignals models, latest incomplete/latest run discovery, action queue summary, belief-state reference, latest handoff inclusion, compact run-state signals, and resume/status builders.</SCOPE>
+  <FILES>
+    <FILE>src/run/agent_context.rs</FILE>
+    <FILE>syn-run/src/run/agent_context.rs</FILE>
+  </FILES>
+  <DEPENDS>M-RUNNER,M-RUNNER-HANDOFF,M-GRACE-BELIEF-STATE</DEPENDS>
+  <LINKS>M-RUNNER,M-RUNNER-HANDOFF,M-GRACE-BELIEF-STATE,UC-002,NFR-003</LINKS>
+  <VERIFICATION_REF>V-M-RUNNER-AGENT-CONTEXT</VERIFICATION_REF>
+</MODULE>

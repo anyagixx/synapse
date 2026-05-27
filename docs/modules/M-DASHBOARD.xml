@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-DASHBOARD" type="UI_COMPONENT" status="active">
+  <NAME>M-DASHBOARD</NAME>
+  <PURPOSE>Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, token-economy, cascade, and run cockpit views/APIs</PURPOSE>
+  <SCOPE>HTTP server with health/readiness/status/graph/tokens/MCP stats APIs, observability endpoints, token adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, graph-aware search explanation with explicit-root test helper, cascade previews, and cascade history</SCOPE>
+  <FILES>
+    <FILE>src/dashboard.rs</FILE>
+    <FILE>src/dashboard/render.rs</FILE>
+    <FILE>src/dashboard/runs.rs</FILE>
+    <FILE>syn-cli/src/dashboard.rs</FILE>
+    <FILE>syn-cli/src/dashboard/render.rs</FILE>
+    <FILE>syn-cli/src/dashboard/runs.rs</FILE>
+  </FILES>
+  <DEPENDS>M-DASHBOARD-OBSERVABILITY,M-GRACE-STATUS,M-GRACE-BELIEF-STATE,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-CASCADE,M-GRACE-CASCADE-CHANGE,M-GRAPHRAG,M-TRACKING,M-RUNNER,M-CONFIG,M-DASHBOARD</DEPENDS>
+  <LINKS>V-M-DASHBOARD,V-M-RUNNER</LINKS>
+  <VERIFICATION_REF>V-M-DASHBOARD</VERIFICATION_REF>
+</MODULE>

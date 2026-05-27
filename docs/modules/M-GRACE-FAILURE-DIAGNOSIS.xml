@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-FAILURE-DIAGNOSIS" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-FAILURE-DIAGNOSIS</NAME>
+  <PURPOSE>Structured test failure diagnosis for XML failure reports, exact identifier search, and repair suggestions</PURPOSE>
+  <SCOPE>FailureReport parser, FailureCase model, identifier extraction, exact source search, root-cause candidates, and EnhancedFixResult</SCOPE>
+  <FILES>
+    <FILE>src/grace/failure_diagnosis.rs</FILE>
+    <FILE>syn-engine/src/grace/failure_diagnosis.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER-WALKER</DEPENDS>
+  <LINKS>UC-002,NFR-002,V-M-GRACE-FAILURE-DIAGNOSIS</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-FAILURE-DIAGNOSIS</VERIFICATION_REF>
+</MODULE>

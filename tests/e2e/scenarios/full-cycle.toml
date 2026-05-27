@@ -1,0 +1,43 @@
+# MODULE_CONTRACT
+# MODULE_ID: M-TEST-E2E-RUNNER
+# PURPOSE: Passing full-cycle E2E scenario fixture for the UPGRADE_3 runner.
+# SCOPE: Minimal fixture smoke, file write, command assertion, and snapshot command step.
+# DEPENDS: M-TEST-FIXTURE, M-TEST-SNAPSHOT
+# LINKS:
+#   -> Phase-77 (implements) - full-cycle scenario fixture
+#   <- V-M-TEST-E2E-RUNNER (verified_by) - repository scenario coverage
+
+# START_MODULE_MAP
+# scenario - Full-cycle fixture smoke scenario metadata
+# steps - Ordered command, write_file, and snapshot checks
+# END_MODULE_MAP
+
+# START_CHANGE_SUMMARY
+# LAST_CHANGE: [v1.0.0 - Added UPGRADE_3 full-cycle scenario fixture]
+# END_CHANGE_SUMMARY
+
+[scenario]
+name = "Full-cycle fixture smoke"
+description = "Verify a Minimal fixture can execute command, write_file, and snapshot steps."
+fixture = "minimal"
+fail_fast = true
+
+[[steps]]
+command = "test -f synapsec.toml"
+expected = { exit_code = 0 }
+
+[[steps]]
+command = "test -f docs/graph-index.xml"
+expected = { exit_code = 0 }
+
+[[steps]]
+write_file = { path = "src/e2e_generated.txt", content = "generated\n" }
+
+[[steps]]
+command = "test -f src/e2e_generated.txt"
+expected = { exit_code = 0 }
+
+[[steps]]
+command = 'printf "fixture ok\n"'
+snapshot = "full-cycle-output"
+expected = { exit_code = 0, stdout_contains = "fixture ok" }

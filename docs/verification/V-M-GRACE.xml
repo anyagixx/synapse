@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE" module="M-GRACE" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test grace::failure_diagnosis --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test grace::contract_generator --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test grace::inventory_verification::tests::test_sync_preserves_custom_verification_shard_body --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Grace module graph includes the preservation-aware inventory verification writer.</ASSERTION>
+    <ASSERTION>GraceEngine exposes requirements_report for RequirementsAnalysis validation.</ASSERTION>
+    <ASSERTION>GraceEngine exposes technology_report for exact-version Technology validation.</ASSERTION>
+    <ASSERTION>GraceEngine exposes development_plan_report for DataFlow and GenerationOrder validation.</ASSERTION>
+    <ASSERTION>GraceEngine exposes mental_test_report and run_mental_test facade methods.</ASSERTION>
+    <ASSERTION>GraceEngine exposes cascade_impact, cascade_execute, run_test_guide, and submit_test_report facade methods.</ASSERTION>
+    <ASSERTION>Grace module graph registers failure_diagnosis and contract_generator helpers.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13,Phase-71</PHASE_GATE>
+</VERIFICATION>

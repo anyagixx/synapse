@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-HOOKS" type="CORE_LOGIC" status="active">
+  <NAME>M-HOOKS</NAME>
+  <PURPOSE>Hook manager for AI agents — installs/uninstalls/audits Synapse integration files for OpenCode, RTK-style multi-agent hook processors, and git pre-commit verification</PURPOSE>
+  <SCOPE>HookManager struct, install/uninstall/status/audit for opencode, claude, cursor, gemini, copilot, git pre-commit, and all targets; JSONC-aware MCP config merge, syn rewrite delegating plugin, shell hook generation, trusted processor manifests, and staged verification hook management</SCOPE>
+  <FILES>
+    <FILE>src/cli/rtk_hook_processors.rs</FILE>
+    <FILE>src/hooks/git_pre_commit.rs</FILE>
+    <FILE>src/hooks/mod.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_hook_processors.rs</FILE>
+    <FILE>syn-core/src/hooks/git_pre_commit.rs</FILE>
+    <FILE>syn-core/src/hooks/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-CLI-RTK-COMMANDS,M-HOOK-OPENCODE-REWRITE,M-HOOKS,M-GRACE-VERIFY,M-CONFIG</DEPENDS>
+  <LINKS>M-CLI,M-CLI-RTK-COMMANDS,M-HOOKS,Phase-90,Phase-55,NFR-002,NFR-003,M-GRACE-VERIFY,.opencode/,.synapse/hooks/,docs/phases/Phase-27.xml,docs/phases/Phase-55.xml</LINKS>
+  <VERIFICATION_REF>V-M-HOOKS</VERIFICATION_REF>
+</MODULE>

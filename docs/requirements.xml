@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RequirementsAnalysis project="Synapse" version="1.0">
+  <Goals>
+    <Goal id="G-001" priority="P0">
+      <Description>Provide an AI agent engineering platform for GRACE-governed development</Description>
+      <SuccessCriteria>Developer can initialize, plan, verify, review, and iterate on a project with traceable artifacts</SuccessCriteria>
+    </Goal>
+  </Goals>
+  <DomainModel>
+    <Entity name="Project">
+      <Description>Repository managed by Synapse and MyGRACE artifacts</Description>
+      <Attributes>
+        <Attribute name="rootPath" type="Path" required="true">Project root directory</Attribute>
+        <Attribute name="activePhase" type="String" required="true">Current sharded plan phase</Attribute>
+        <Attribute name="health" type="String" required="true">Current verification/review status</Attribute>
+      </Attributes>
+      <Relationships>
+        <Relationship target="Module" type="1:N" direction="contains" />
+        <Relationship target="Verification" type="1:N" direction="verified_by" />
+      </Relationships>
+    </Entity>
+    <Entity name="Module">
+      <Description>Contracted code or artifact unit with MODULE_ID</Description>
+      <Attributes>
+        <Attribute name="id" type="String" required="true">Canonical M-XXX identifier</Attribute>
+        <Attribute name="purpose" type="String" required="true">Module purpose statement</Attribute>
+        <Attribute name="status" type="String" required="true">planned, active, or done</Attribute>
+      </Attributes>
+      <Relationships>
+        <Relationship target="Verification" type="1:1" direction="verified_by" />
+      </Relationships>
+    </Entity>
+    <Entity name="Verification">
+      <Description>Executable proof associated with a module or phase</Description>
+      <Attributes>
+        <Attribute name="id" type="String" required="true">Canonical V-M-XXX identifier</Attribute>
+        <Attribute name="priority" type="String" required="true">Verification priority</Attribute>
+      </Attributes>
+      <Relationships>
+        <Relationship target="Module" type="1:1" direction="verifies" />
+      </Relationships>
+    </Entity>
+  </DomainModel>
+  <Actors>
+    <Actor name="Developer">
+      <Description>Human developer using Synapse through CLI or MCP-compatible agents</Description>
+      <Capabilities>Initialize projects, run verification, inspect status, install releases</Capabilities>
+    </Actor>
+    <Actor name="AIAgent">
+      <Description>LLM-based coding agent using Synapse MCP tools and MyGRACE rules</Description>
+      <Capabilities>Search code, query graph, generate artifacts, verify changes, review code</Capabilities>
+    </Actor>
+  </Actors>
+  <UseCases>
+    <UseCase id="UC-001" priority="P0">
+      <Actor>Developer</Actor>
+      <Action>Initialize a GRACE-governed project</Action>
+      <Goal>Create sharded architecture, verification, and MCP integration artifacts</Goal>
+      <Preconditions>
+        - Synapse binary is available
+        - Project directory is writable
+      </Preconditions>
+      <Postconditions>
+        - docs/graph-index.xml exists
+        - docs/plan-index.xml exists
+        - docs/verification-index.xml exists
+        - AGENTS.md and OpenCode integration exist
+      </Postconditions>
+      <MainFlow>
+        <Step n="1">Developer runs syn init</Step>
+        <Step n="2">System creates sharded MyGRACE layout</Step>
+        <Step n="3">System creates MCP configuration and rules</Step>
+        <Step n="4">System indexes source files when present</Step>
+        <Step n="5">System reports next action</Step>
+      </MainFlow>
+      <AlternativeFlows>
+        <Flow id="AF-001" trigger="Existing OpenCode config">
+          <Step n="1">System reads current config</Step>
+          <Step n="2">System merges synapse MCP entry without deleting existing servers</Step>
+        </Flow>
+      </AlternativeFlows>
+    </UseCase>
+    <UseCase id="UC-002" priority="P0">
+      <Actor>AIAgent</Actor>
+      <Action>Verify and review a bounded change</Action>
+      <Goal>Confirm code and artifacts remain synchronized after implementation</Goal>
+      <Preconditions>
+        - Project has sharded MyGRACE artifacts
+        - Source files contain MODULE_CONTRACT blocks
+      </Preconditions>
+      <Postconditions>
+        - verify_project reports pass/fail checks
+        - review_code reports integrity sections
+        - refresh_project reports canonical drift
+      </Postconditions>
+      <MainFlow>
+        <Step n="1">AIAgent reads graph-index and current phase shard</Step>
+        <Step n="2">AIAgent applies scoped code/artifact changes</Step>
+        <Step n="3">AIAgent runs verify_project</Step>
+        <Step n="4">AIAgent runs review_code</Step>
+        <Step n="5">AIAgent fixes blocking issues before continuing</Step>
+      </MainFlow>
+      <AlternativeFlows>
+        <Flow id="AF-002" trigger="Canonical drift detected">
+          <Step n="1">System reports missing graph or verification refs</Step>
+          <Step n="2">AIAgent updates source or sharded artifacts</Step>
+        </Flow>
+      </AlternativeFlows>
+    </UseCase>
+  </UseCases>
+  <NonFunctionalRequirements>
+    <Requirement id="NFR-001" category="portability">
+      <Description>Linux and macOS installation must work through release artifacts or source fallback</Description>
+    </Requirement>
+    <Requirement id="NFR-002" category="reliability">
+      <Description>Verification, review, and refresh commands must not panic on malformed local project state</Description>
+    </Requirement>
+    <Requirement id="NFR-003" category="performance">
+      <Description>Local project status should use sharded indexes to minimize token and context overhead</Description>
+    </Requirement>
+  </NonFunctionalRequirements>
+  <Constraints>
+    <Constraint id="CON-001" type="architecture">
+      <Description>Sharded MyGRACE indexes are the primary source of truth; monolithic compatibility docs are secondary</Description>
+    </Constraint>
+    <Constraint id="CON-002" type="release">
+      <Description>Windows packaging remains deferred until release artifacts and installer logic exist</Description>
+    </Constraint>
+  </Constraints>
+  <Glossary>
+    <Term name="Project">Repository managed by Synapse and MyGRACE artifacts</Term>
+    <Term name="Module">Contracted code or artifact unit with a MODULE_ID</Term>
+    <Term name="Verification">Executable proof associated with a module or phase</Term>
+    <Term name="MyGRACE">Sharded graph-RAG anchored code engineering methodology</Term>
+  </Glossary>
+</RequirementsAnalysis>

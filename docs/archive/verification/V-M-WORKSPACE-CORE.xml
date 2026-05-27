@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-WORKSPACE-CORE" module="M-WORKSPACE-CORE" priority="critical" status="planned">
+  <UNIT_TESTS>
+    <COMMAND>cargo test -p syn-core</COMMAND>
+    <COMMAND>cargo test -p syn-core --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>syn-core compiles as a standalone crate with zero workspace-internal dependencies.</ASSERTION>
+    <ASSERTION>All public types from config, utils, telemetry, tracking, memory, compress, hooks, agent_console are re-exported from syn-core/src/lib.rs.</ASSERTION>
+    <ASSERTION>No use crate:: imports remain — all cross-module references use syn_core:: prefix.</ASSERTION>
+    <ASSERTION>MODULE_ID headers in syn-core source files are updated to reflect crate membership.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-97</PHASE_GATE>
+</VERIFICATION>

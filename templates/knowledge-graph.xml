@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KNOWLEDGE-GRAPH>
+  <MODULES>
+    <M-AUTH>
+      <PATH>src/auth</PATH>
+      <EXPORTS>login, logout, refreshToken, resetPassword</EXPORTS>
+      <DEPENDS></DEPENDS>
+      <CROSSLINKS>M-CORE</CROSSLINKS>
+    </M-AUTH>
+    <M-CORE>
+      <PATH>src/core</PATH>
+      <EXPORTS>processRequest, handleAction</EXPORTS>
+      <DEPENDS>M-AUTH</DEPENDS>
+      <CROSSLINKS></CROSSLINKS>
+    </M-CORE>
+  </MODULES>
+</KNOWLEDGE-GRAPH>

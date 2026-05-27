@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TELEMETRY" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Initialize Synapse tracing with default stderr JSON output and optional OTLP span export.
+    Key data flows:
+      - INPUT: Runtime Config.telemetry settings and cargo feature state.
+      - PROCESSING: Parse sampling, build subscriber layers, configure optional OTLP exporter, and retain shutdown provider.
+      - OUTPUT: Installed tracing subscriber plus a guard that flushes telemetry on process exit.
+    Critical invariants:
+      - Telemetry remains optional, default-off, and does not change stdout behavior for MCP stdio.
+      - Raw command arguments and secrets are not added by the telemetry initializer.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep the feature-gated OTLP code isolated behind M-TELEMETRY while exposing a small init/shutdown facade.
+    Complexity_areas: opentelemetry crate API compatibility, subscriber layer ordering, shutdown behavior.
+    Patterns_applied: default-off feature flag, typed config, bounded span metadata.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test telemetry --lib passes.
+    - cargo test --all-targets and cargo test --all-targets --features telemetry pass.
+    - syn config get telemetry.enabled reports false from default config.
+  RISKS_ACKNOWLEDGED:
+    - OTLP collector availability is external and must not be required for normal Synapse execution.
+    - Telemetry dependencies can affect portability, so the feature is not enabled by default.
+</BELIEF_STATE>

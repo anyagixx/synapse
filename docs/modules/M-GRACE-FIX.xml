@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-FIX" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-FIX</NAME>
+  <PURPOSE>Debug/fix module — diagnoses issues via knowledge graph navigation, indexed search, and structured failure reports</PURPOSE>
+  <SCOPE>Debugger struct, FixResult, diagnose via semantic search, diagnose_failure_report via enhanced failure diagnosis, and Unicode-safe snippet previews</SCOPE>
+  <FILES>
+    <FILE>src/grace/fix.rs</FILE>
+    <FILE>syn-engine/src/grace/fix.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-FAILURE-DIAGNOSIS,M-INDEXER-STORAGE,M-UTILS</DEPENDS>
+  <LINKS>UC-002,NFR-002</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-FIX</VERIFICATION_REF>
+</MODULE>

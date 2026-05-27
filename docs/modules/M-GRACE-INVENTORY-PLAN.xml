@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-INVENTORY-PLAN" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-INVENTORY-PLAN</NAME>
+  <PURPOSE>MyGRACE plan artifact writer — preserves active phase metadata and completed phase history while refreshing generated shards</PURPOSE>
+  <SCOPE>plan-index.xml generation and Phase-1 shard synchronization/history preservation</SCOPE>
+  <FILES>
+    <FILE>src/grace/inventory_plan.rs</FILE>
+    <FILE>syn-engine/src/grace/inventory_plan.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-INVENTORY-TYPES,M-GRACE-LAYOUT</DEPENDS>
+  <LINKS>docs/plan-index.xml,docs/phases/</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-INVENTORY-PLAN</VERIFICATION_REF>
+</MODULE>

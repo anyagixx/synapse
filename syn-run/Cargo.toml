@@ -1,0 +1,26 @@
+[package]
+name = "syn-run"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Synapse run crate — autonomous bounded-run runtime"
+
+[dependencies]
+syn-core = { path = "../syn-core" }
+syn-engine = { path = "../syn-engine" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+dirs.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lib]
+name = "syn_run"
+path = "src/lib.rs"

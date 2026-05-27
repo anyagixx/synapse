@@ -1,0 +1,31 @@
+# MODULE_CONTRACT
+# MODULE_ID: M-TEST-E2E-RUNNER
+# PURPOSE: Negative E2E scenario fixture for fail-fast and failure reporting coverage.
+# SCOPE: Intentional command failure followed by a step that must not run under fail_fast.
+# DEPENDS: M-TEST-FIXTURE
+# LINKS:
+#   -> Phase-77 (implements) - failure scenario coverage
+#   <- V-M-TEST-E2E-RUNNER (verified_by) - fail-fast verification
+
+# START_MODULE_MAP
+# scenario - Negative fail-fast scenario metadata
+# steps - Failing command followed by skipped command
+# END_MODULE_MAP
+
+# START_CHANGE_SUMMARY
+# LAST_CHANGE: [v1.0.0 - Added UPGRADE_3 failure scenario fixture]
+# END_CHANGE_SUMMARY
+
+[scenario]
+name = "Intentional failure"
+description = "Ensure fail_fast stops after the first failed command step."
+fixture = "minimal"
+fail_fast = true
+
+[[steps]]
+command = "false"
+expected = { exit_code = 0 }
+
+[[steps]]
+command = "printf should-not-run"
+expected = { exit_code = 0 }

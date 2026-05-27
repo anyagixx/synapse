@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-SNAPSHOT" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST-SNAPSHOT</NAME>
+  <PURPOSE>Golden snapshot comparison engine for deterministic command-output regression tests.</PURPOSE>
+  <SCOPE>Snapshot creation, update, normalization, bounded diffing, summary reporting, and future E2E runner integration.</SCOPE>
+  <FILES>
+    <FILE>src/test/snapshot.rs</FILE>
+    <FILE>syn-cli/src/test/snapshot.rs</FILE>
+  </FILES>
+  <DEPENDS>M-UTILS</DEPENDS>
+  <LINKS>Phase-77,NFR-002,NFR-003,V-M-TEST-SNAPSHOT</LINKS>
+  <VERIFICATION_REF>V-M-TEST-SNAPSHOT</VERIFICATION_REF>
+</MODULE>

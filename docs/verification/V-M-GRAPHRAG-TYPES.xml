@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRAPHRAG-TYPES" module="M-GRAPHRAG-TYPES" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test graphrag::types::tests::test_typed_relationship_filter_and_path --lib</COMMAND>
+    <COMMAND>cargo test graphrag::types::tests::test_code_graph_clone_shares_arc_storage_until_mutated --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>TypedCodeRelationship supports link_type filtering, incoming relationship lookup, and type-filtered path traversal.</ASSERTION>
+    <ASSERTION>CodeGraph clones share Arc-backed storage until mutation so GraphRAG cache return paths do not duplicate graph vectors.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-1,Phase-62</PHASE_GATE>
+</VERIFICATION>

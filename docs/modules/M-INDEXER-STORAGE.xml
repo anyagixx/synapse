@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-STORAGE" type="DATA_LAYER" status="active">
+  <NAME>M-INDEXER-STORAGE</NAME>
+  <PURPOSE>JSON block storage facade with load-health reporting, snapshot and delta persistence, filtered BM25, and vector search APIs</PURPOSE>
+  <SCOPE>Storage struct, StoredBlock, SearchFilters, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, filtered search and embedding-vector API orchestration</SCOPE>
+  <FILES>
+    <FILE>src/indexer/storage.rs</FILE>
+    <FILE>syn-engine/src/indexer/storage.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER-STORAGE-SEARCH,M-INDEXER-STORAGE-TYPES</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-STORAGE</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-TESTING" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-TESTING</NAME>
+  <PURPOSE>Agent-based testing support — parses natural-language test guides, records test runs, failure XML reports, and developer report submissions</PURPOSE>
+  <SCOPE>TestGuide parser, run_test_guide, submit_test_report, docs/tests layout helpers, summary JSON, and TestFailureReport XML rendering</SCOPE>
+  <FILES>
+    <FILE>src/grace/testing.rs</FILE>
+    <FILE>syn-engine/src/grace/testing.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-LAYOUT,M-GRACE-LOG</DEPENDS>
+  <LINKS>V-M-GRACE-TESTING,M-AGENT-CONSOLE</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-TESTING</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP" type="INTEGRATION" status="active">
+  <NAME>M-MCP</NAME>
+  <PURPOSE>MCP module declaration — exports lsp, persistent LSP manager, pipeline, server sub-modules, telemetry helpers, and user tool support</PURPOSE>
+  <SCOPE>Module declarations for MCP server facade, MCP stdio pipeline, LSP manager, private server helper modules including budget, pressure, telemetry, and tool recommendation, plus local user-defined MCP tools</SCOPE>
+  <FILES>
+    <FILE>src/mcp/mod.rs</FILE>
+    <FILE>syn-mcp/src/mcp/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-MCP-PIPELINE,M-MCP-SERVER,M-MCP-SERVER-CASCADE-TOOLS,M-MCP-SERVER-CODE-TOOLS,M-MCP-SERVER-GRACE-TOOLS,M-MCP-SERVER-RUN-TOOLS,M-MCP-SERVER-RESPONSE,M-MCP-SERVER-TELEMETRY,M-MCP-SERVER-TOOLS,M-MCP-USER-TOOLS,M-MCP-LSP</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-MCP</VERIFICATION_REF>
+</MODULE>

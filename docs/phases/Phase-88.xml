@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-88" status="done">
+  <NAME>UPGRADE_4 Context Pressure Integration Gate</NAME>
+  <GOAL>Implement T6 context pressure monitoring and run the full UPGRADE_4 token economy verification gate.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T6-context-pressure-monitor.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-RUNNER-AGENT-CONTEXT" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-TESTS-MCP-PROTOCOL" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-88-1">Tracker estimates current session context pressure from input tokens, output tokens, and configured context_window_limit.</FLOW>
+    <FLOW id="DF-88-2">MCP responses include _context_pressure for critical state and _auto_recommendation for agent_resume above 90 percent pressure.</FLOW>
+    <FLOW id="DF-88-3">tools/list automatically switches to terse at high or critical pressure.</FLOW>
+    <FLOW id="DF-88-4">CI and parity tests prove the combined T1-T8 token economy layer remains backward-compatible.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-CONFIG" status="done">Add context_window_limit to budget config with a conservative default and config-key update support.</step-1>
+    <step-2 module="M-TRACKING" status="done">Add ContextPressure and PressureLevel with low, moderate, high, and critical thresholds.</step-2>
+    <step-3 module="M-MCP-SERVER-GRACE-TOOLS" status="done">Expose context_pressure MCP tool.</step-3>
+    <step-4 module="M-MCP-SERVER" status="done">Append critical pressure metadata and agent_resume recommendation to tool responses.</step-4>
+    <step-5 module="M-MCP-SERVER-TOOLS" status="done">Force terse tools/list output when pressure is high or critical.</step-5>
+    <step-6 module="M-CI" status="done">Add an UPGRADE_4 token economy gate covering profiles, terse schemas, response trimming, cache hints, recommendations, compaction, budget, and pressure.</step-6>
+    <step-7 module="M-TESTS-PARITY" status="done">Update docs parity so public token economy claims match implemented behavior.</step-7>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo test --all-targets</CHECK>
+    <CHECK status="passed">cargo test --test e2e_mcp token_economy</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity token_economy</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity</CHECK>
+    <CHECK status="passed">bash scripts/token_economy_gate.sh</CHECK>
+    <CHECK status="passed">target/debug/syn mcp stdio with tools/list profile=verification style=terse</CHECK>
+    <CHECK status="passed">budget.context_window_limit defaults to 200000 and is configurable through typed config keys.</CHECK>
+    <CHECK status="passed">context_pressure reports low, moderate, high, and critical thresholds correctly.</CHECK>
+    <CHECK status="passed">context_pressure MCP tool reports the configured context window limit and pressure state.</CHECK>
+    <CHECK status="passed">critical context pressure includes _context_pressure recommendation.</CHECK>
+    <CHECK status="passed">pressure above 90 percent includes agent_resume auto recommendation.</CHECK>
+    <CHECK status="passed">tools/list style is forced to terse when context pressure is high or critical.</CHECK>
+    <CHECK status="passed">syn refresh --json reports no canonical drift.</CHECK>
+    <CHECK status="passed">syn verify passes.</CHECK>
+    <CHECK status="passed">syn review --json passes.</CHECK>
+    <CHECK status="passed">syn status reports healthy token economy state.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-88-1">Pressure estimates are approximate because external chat context is not fully observable; report as estimate and make thresholds configurable.</RISK>
+    <RISK id="R-88-2">Automatic terse output can surprise clients; only force it under high/critical pressure and include explicit metadata.</RISK>
+    <RISK id="R-88-3">Combined T1-T8 changes touch MCP protocol surfaces; keep default requests backward-compatible throughout implementation.</RISK>
+  </RISKS>
+</PHASE>

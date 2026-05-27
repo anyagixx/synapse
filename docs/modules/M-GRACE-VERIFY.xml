@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-VERIFY" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-VERIFY</NAME>
+  <PURPOSE>3-level verification facade — module-local, wave, delegated phase, and staged git checks for profile-aware GRACE compliance</PURPOSE>
+  <SCOPE>Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology selected/pending decision checks, development-plan, mental-tests, traceability, cascade-no-drift, non-human patterns, anchor syntax validation, verify_all, verify_all_with_profile telemetry span, verify_staged_with_profile, verify_module_local, verify_wave, delegated verify_phase</SCOPE>
+  <FILES>
+    <FILE>src/grace/verify.rs</FILE>
+    <FILE>syn-engine/src/grace/verify.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-ANCHOR,M-GRACE-BELIEF-STATE,M-GRACE-CASCADE,M-GRACE-CONTRACT,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-NON-HUMAN-PATTERNS,M-GRACE-INVENTORY,M-GRACE-LOG,M-GRACE-REQUIREMENTS,M-GRACE-TECHNOLOGY,M-GRACE-SEMANTIC,M-GRACE-VERIFY-PHASE,M-GRACE-VERIFY-TYPES,M-INDEXER-WALKER</DEPENDS>
+  <LINKS>docs/requirements.xml,docs/technology.xml,docs/development-plan.xml,docs/verification-plan.xml,docs/knowledge-graph.xml</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-VERIFY</VERIFICATION_REF>
+</MODULE>

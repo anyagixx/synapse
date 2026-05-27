@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-GRAPHRAG-IMPACT" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Estimate the bounded blast radius for a changed graph node.
+    Key data flows:
+      - INPUT: CodeGraph, target node id, traversal depth, and include_tests flag.
+      - PROCESSING: Traverse incoming relationships for dependents, collect outgoing dependencies, extract verification/use-case artifacts, score advisory risk, and emit suggested actions.
+      - OUTPUT: ImpactAnalysis with deterministic target ordering and bounded traversal results.
+    Critical invariants:
+      - Traversal depth is clamped and never unbounded.
+      - Output is advisory; callers decide whether to gate on risk.
+      - Unknown nodes return no report rather than synthetic evidence.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep impact analysis pure over CodeGraph with sorted target lists and explicit risk scoring.
+    Complexity_areas: reverse traversal correctness, test target filtering, artifact targets without graph nodes.
+    Patterns_applied: bounded BFS, stable sorting, typed traceability target extraction.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test graphrag::impact --lib -- --test-threads=8 passes
+    - MCP graphrag_query operation=impact exposes the same analysis to clients
+    - verify --ci reports no graph or traceability drift
+  RISKS_ACKNOWLEDGED:
+    - Graph relationship direction must be interpreted consistently for dependents.
+    - Risk scores are heuristics and must remain advisory unless a caller explicitly gates on them.
+</BELIEF_STATE>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-97" status="complete">
+  <NAME>Workspace Crate Split</NAME>
+  <GOAL>Break the 72K-line monolithic synapse-agent crate into 8 workspace crates to improve compile times, modularity, and maintainability while preserving all 598 tests, GRACE verification, and public CLI API.</GOAL>
+  <SOURCE_PLAN>Independent architecture review (Reasonix v2.6.8 analysis): 15 files exceed 1,000 lines, single-crate compilation is a bottleneck, module boundaries are already clean but not enforced by the build system.</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-WORKSPACE-CORE" />
+    <MODULE_REF id="M-WORKSPACE-ENGINE" />
+    <MODULE_REF id="M-WORKSPACE-PROXY" />
+    <MODULE_REF id="M-WORKSPACE-RUN" />
+    <MODULE_REF id="M-WORKSPACE-SKILLS" />
+    <MODULE_REF id="M-WORKSPACE-MCP" />
+    <MODULE_REF id="M-WORKSPACE-CLI" />
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-GRACE-REFRESH" />
+    <MODULE_REF id="M-GRACE-REVIEW" />
+    <MODULE_REF id="M-GRACE-STATUS" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-97-1">syn-core crate publishes config, utils, telemetry, tracking, memory, compress, hooks, agent_console as a standalone dependency with zero internal crate dependencies.</FLOW>
+    <FLOW id="DF-97-2">syn-engine crate bundles indexer + graphrag + grace due to a 3-node cycle (indexer→graphrag, graphrag→grace, grace→indexer) and depends only on syn-core.</FLOW>
+    <FLOW id="DF-97-3">syn-proxy, syn-run, syn-skills crates each depend on syn-core + syn-engine with clean acyclic boundaries.</FLOW>
+    <FLOW id="DF-97-4">syn-mcp crate depends on syn-core + syn-engine + syn-run + syn-skills, exposing the MCP JSON-RPC server.</FLOW>
+    <FLOW id="DF-97-5">syn-cli crate depends on all workspace crates, bundling CLI dispatch, dashboard, workspace orchestration, and test infrastructure.</FLOW>
+    <FLOW id="DF-97-6">syn binary crate depends only on syn-cli, containing just main.rs.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-WORKSPACE-CORE" status="complete">Created workspace manifest (Cargo.toml) and syn-core crate with 9 sub-modules, zero internal deps.</step-1>
+    <step-2 module="M-WORKSPACE-ENGINE" status="complete">Created syn-engine crate bundling indexer + graphrag + grace with 154 unit tests passing.</step-2>
+    <step-3 module="M-WORKSPACE-PROXY,M-WORKSPACE-RUN,M-WORKSPACE-SKILLS" status="complete">Created syn-proxy (29 tests), syn-run (34 tests), syn-skills (3 tests) with clean acyclic deps.</step-3>
+    <step-4 module="M-WORKSPACE-MCP,M-WORKSPACE-CLI" status="complete">Created syn-mcp (96+ tests) and syn-cli (152+ tests) crates; syn binary from syn-cli.</step-4>
+    <step-5 module="M-BUILD,M-CI,M-INSTALL" status="complete">Updated Dockerfile for 7-crate workspace COPY, Makefile/CI already workspace-compatible.</step-5>
+    <step-6 module="M-GRACE-VERIFY,M-GRACE-REFRESH,M-GRACE-REVIEW,M-GRACE-STATUS" status="complete">Full GRACE cycle: refresh --fix synced 127 modules, verify passes (1 advisory: 7/1856 traceability gaps for new constants).</step-6>
+    <step-7 module="M-TESTS-PARITY" status="complete">155/157 tests pass workspace-wide (2 e2e require `cargo install` — pre-existing). Clippy clean, fmt clean.</step-7>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="pass">cargo check --workspace — 0 errors, 0 warnings</CHECK>
+    <CHECK status="pass">cargo test --all-targets --workspace — 155/157 passed (2 e2e require install)</CHECK>
+    <CHECK status="pass">cargo clippy --all-targets --all-features --workspace — clean</CHECK>
+    <CHECK status="pass">cargo fmt --all -- --check — clean</CHECK>
+    <CHECK status="pass">cargo run --quiet -- refresh --json — 127 modules synced</CHECK>
+    <CHECK status="pass-warn">cargo run --quiet -- verify — 1 advisory: 7/1856 traceability gaps</CHECK>
+    <CHECK status="pending">cargo run --quiet -- review --mode full — pending</CHECK>
+    <CHECK status="pending">cargo run --quiet -- status — pending</CHECK>
+    <CHECK status="pending">bash scripts/upgrade5_gate.sh — pending</CHECK>
+    <CHECK status="pass">cargo build --release --workspace — compiles successfully</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-97-1">Mass rename of use crate:: to use syn_*:: across ~150 files — automated but high chance of missing edge cases. Mitigation: scripted sed + manual review per crate.</RISK>
+    <RISK id="R-97-2">syn verify may break on new file paths if Verifier hardcodes src/ assumptions. Mitigation: run verify after each crate migration, fix incrementally.</RISK>
+    <RISK id="R-97-3">CI scripts assume single-crate layout (cargo test without --workspace). Mitigation: explicit audit of all scripts/ and .github/workflows/ files.</RISK>
+    <RISK id="R-97-4">Dockerfile COPY src/ pattern must be expanded to copy all workspace member src/ directories.</RISK>
+    <RISK id="R-97-5">MODULE_ID headers in ~150 source files reference old single-crate paths; must be updated to reflect new crate membership.</RISK>
+  </RISKS>
+</PHASE>

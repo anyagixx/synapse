@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-62" status="done">
+  <NAME>GraphRAG And MCP Robustness</NAME>
+  <GOAL>Resolve FIX/M4 and FIX/L5 by caching expensive graph builds and bounding MCP JSON-RPC message input.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/MEDIUM/M4-graph-rebuild.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L5-no-message-limit.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRAPHRAG-BUILDER" />
+    <MODULE_REF id="M-GRAPHRAG-TYPES" />
+    <MODULE_REF id="M-GRAPHRAG" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-INDEXER-STORAGE" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-62-1">MCP GraphRAG calls read a cached CodeGraph for the current root and invalidate/rebuild only when indexing state changes.</FLOW>
+    <FLOW id="DF-62-2">MCP stdio reads reject oversized JSON-RPC messages before allocating unbounded buffers.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-GRAPHRAG-TYPES" status="done">Made CodeGraph clone cheap with Arc-backed inner storage.</step-1>
+    <step-2 module="M-MCP-SERVER" status="done">Added graph cache key storage, root/index validation, and invalidation surface in SynapseHandler.</step-2>
+    <step-3 module="M-INDEXER" status="done">Coordinated index rebuilds with GraphBuilder cache invalidation and root/index metadata cache keys.</step-3>
+    <step-4 module="M-MCP-SERVER" status="done">Replaced unbounded stdin lines reading with a bounded JSON-RPC line reader.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo test graphrag::types::tests --lib — 2 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo test graphrag::builder::tests --lib — 4 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo test mcp::server::tests --lib — 3 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo test mcp::server_code_tools::tests --lib — passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo test indexer::storage::tests --lib — 9 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo test --test mcp_protocol — 4 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo test --all-targets -- --test-threads=8 — 323 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo clippy --all-targets --all-features -- -D warnings — no issues.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo run --quiet -- verify --ci — module, wave, and phase gates passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo run --quiet -- review --mode full --ci — full review passed with no issues.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase62-data cargo run --quiet -- refresh — 90 code modules synced; no drift detected.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-62-1">Graph cache invalidation must avoid stale results after syn index while still reducing repeated full rebuilds.</RISK>
+  </RISKS>
+</PHASE>

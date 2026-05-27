@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-INVENTORY-ARTIFACTS" module="M-GRACE-INVENTORY-ARTIFACTS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test grace::inventory_artifacts::tests::test_sync_inventory_artifacts_deduplicates_module_ids --lib</COMMAND>
+    <COMMAND>cargo test grace::inventory_verification::tests::test_sync_preserves_custom_verification_shard_body --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Inventory artifact sync delegates verification writes to preservation-aware verification artifact writer.</ASSERTION>
+    <ASSERTION>Inventory artifact sync writes one graph and verification entry per MODULE_ID even when multiple source files share the same contract module.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-3</PHASE_GATE>
+</VERIFICATION>

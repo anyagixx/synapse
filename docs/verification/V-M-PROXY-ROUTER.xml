@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-PROXY-ROUTER" module="M-PROXY-ROUTER" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test proxy::router::tests --lib</COMMAND>
+    <COMMAND>cargo test cli::rtk_parity::tests::router_family_section_covers_required_families --lib</COMMAND>
+    <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
+    <COMMAND>cargo run --quiet -- kubectl --route get pods</COMMAND>
+    <COMMAND>cargo run --quiet -- curl --route https://example.test</COMMAND>
+    <COMMAND>cargo run --quiet -- tsc --route --noEmit</COMMAND>
+    <COMMAND>cargo run --quiet -- vitest --route run</COMMAND>
+    <COMMAND>cargo run --quiet -- gt --route log</COMMAND>
+    <COMMAND>cargo run --quiet -- docker --route ps</COMMAND>
+    <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Router classifies RTK-like command families including cargo, pytest, ruff, mypy, pip, gh, gt, aws, curl, jq, go, golangci-lint, dotnet, rake, rspec, rubocop, make, just, gradle, gradlew, tsc, vitest, next, prettier, kubectl, helm, docker, docker compose, podman, podman compose, terraform, and rg.</ASSERTION>
+    <ASSERTION>Router supported_adapters exposes every RTK parity family required by syn rtk-parity.</ASSERTION>
+    <ASSERTION>Router refuses recursive proxying for commands already routed through syn proxy or rtk.</ASSERTION>
+    <ASSERTION>CLI route preview reports adapter and stable route key without executing the wrapped command.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-54</PHASE_GATE>
+</VERIFICATION>

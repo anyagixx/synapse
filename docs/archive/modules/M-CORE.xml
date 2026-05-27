@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CORE" type="CORE_LOGIC" status="planned">
+  <NAME>Core Module</NAME>
+  <PURPOSE>Core application logic</PURPOSE>
+  <FILES>
+    <FILE>src/core.rs</FILE>
+  </FILES>
+  <VERIFICATION_REF>V-M-CORE</VERIFICATION_REF>
+</MODULE>

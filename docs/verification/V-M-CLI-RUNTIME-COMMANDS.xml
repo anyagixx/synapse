@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CLI-RUNTIME-COMMANDS" module="M-CLI-RUNTIME-COMMANDS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_preserves_nonzero_exit_status</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_evidence_hint_writes_raw_output</COMMAND>
+    <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
+    <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_project_filter_requires_trust</COMMAND>
+    <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --filter dotnet-build</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --list</COMMAND>
+    <COMMAND>cargo run --quiet -- gain --sessions --adapters</COMMAND>
+    <COMMAND>cargo run --quiet -- hooks status all</COMMAND>
+    <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
+    <COMMAND>cargo test --test reliability_test test_clean_init_doctor_accepts_default_config</COMMAND>
+    <COMMAND>cargo test cli::runtime_commands::tests::test_parse_requirement_imports_skips_non_packages --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Doctor reports corrupted index storage as an index failure with a rebuild command.</ASSERTION>
+    <ASSERTION>Doctor reports missing user config as valid built-in defaults after clean init.</ASSERTION>
+    <ASSERTION>Doctor dependency diagnostics parse requirements.txt package names without following nested or remote specs.</ASSERTION>
+    <ASSERTION>ProxyCmd propagates wrapped command exit status after printing filtered output.</ASSERTION>
+    <ASSERTION>ProxyCmd supports --route and prints adapter decisions without command execution.</ASSERTION>
+    <ASSERTION>ProxyCmd supports --evidence and prints raw-output artifact location only when explicitly requested.</ASSERTION>
+    <ASSERTION>GainCmd supports --graph, --sessions, and --adapters and renders tracked savings bars plus economics summaries, adapter_groups, and session_groups.</ASSERTION>
+    <ASSERTION>FiltersCmd exposes verify, trust, untrust, and status controls for RTK-style filter lifecycle management, including built-in RTK pack inline tests.</ASSERTION>
+    <ASSERTION>FiltersCmd exposes verify --list and delegates dry-run diagnostics to M-CLI-FILTER-COMMANDS without running shell commands.</ASSERTION>
+    <ASSERTION>HooksCmd dispatches install, uninstall, status, audit, and check actions for opencode, claude, cursor, gemini, copilot, and all targets and can render hook audit JSON.</ASSERTION>
+    <ASSERTION>RunCmd creates a bounded scenario run from project gates and emits replay-capable JSON.</ASSERTION>
+    <ASSERTION>RunCmd action mode plans, steps, loops, retries, and replays persisted run queues.</ASSERTION>
+    <ASSERTION>McpCmd starts the stdio MCP server only; HTTP/LSP options are not public flags until implemented.</ASSERTION>
+    <ASSERTION>ConfigCmd handling is delegated to M-CLI-CONFIG-COMMANDS and no longer uses runtime trailing-arg parsing.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-50,Phase-65,Phase-68</PHASE_GATE>
+</VERIFICATION>

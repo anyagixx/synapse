@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-WORKSPACE-ENGINE" module="M-WORKSPACE-ENGINE" priority="critical" status="planned">
+  <UNIT_TESTS>
+    <COMMAND>cargo test -p syn-engine</COMMAND>
+    <COMMAND>cargo test -p syn-engine --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>syn-engine compiles with only syn-core as a workspace dependency.</ASSERTION>
+    <ASSERTION>All cross-module imports between indexer, graphrag, and grace use syn_engine:: prefix.</ASSERTION>
+    <ASSERTION>3-node cycle (indexer↔graphrag↔grace) is resolved within the crate boundary — no circular workspace dependencies.</ASSERTION>
+    <ASSERTION>GraceEngine, GraphRag, Indexer public APIs are re-exported from syn-engine/src/lib.rs.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-97</PHASE_GATE>
+</VERIFICATION>

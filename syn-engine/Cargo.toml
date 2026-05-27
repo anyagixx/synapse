@@ -1,0 +1,49 @@
+[package]
+name = "syn-engine"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Synapse engine crate — indexer, graphrag, and GRACE methodology"
+
+[dependencies]
+syn-core = { path = "../syn-core" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+regex.workspace = true
+chrono.workspace = true
+rayon.workspace = true
+walkdir.workspace = true
+ignore.workspace = true
+tree-sitter.workspace = true
+tree-sitter-rust.workspace = true
+tree-sitter-python.workspace = true
+tree-sitter-javascript.workspace = true
+tree-sitter-typescript.workspace = true
+tree-sitter-go.workspace = true
+rusqlite.workspace = true
+notify.workspace = true
+uuid.workspace = true
+dirs.workspace = true
+colored.workspace = true
+tempfile.workspace = true
+toml.workspace = true
+sha2.workspace = true
+globset.workspace = true
+
+[target.'cfg(all(target_os = "macos", target_arch = "x86_64"))'.dependencies]
+fastembed = { workspace = true, features = ["ort-load-dynamic", "hf-hub-rustls-tls"] }
+
+[target.'cfg(not(all(target_os = "macos", target_arch = "x86_64")))'.dependencies]
+fastembed = { workspace = true, features = ["ort-download-binaries-rustls-tls", "hf-hub-rustls-tls"] }
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lib]
+name = "syn_engine"
+path = "src/lib.rs"

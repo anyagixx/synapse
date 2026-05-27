@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRAPHRAG-TYPES" type="CORE_LOGIC" status="active">
+  <NAME>M-GRAPHRAG-TYPES</NAME>
+  <PURPOSE>Graph data types — CodeNode, CodeRelationship, TypedCodeRelationship, CodeGraph, RelationType, GraphOverview</PURPOSE>
+  <SCOPE>Graph type definitions, typed relationship storage, node search, type-filtered path finding, graph overview</SCOPE>
+  <FILES>
+    <FILE>src/graphrag/types.rs</FILE>
+    <FILE>syn-engine/src/graphrag/types.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-GRAPHRAG-TYPES</VERIFICATION_REF>
+</MODULE>

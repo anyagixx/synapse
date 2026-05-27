@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CLI-CONFIG-COMMANDS" type="CORE_LOGIC" status="active">
+  <NAME>M-CLI-CONFIG-COMMANDS</NAME>
+  <PURPOSE>Explicit CLI config get, set, list, unset, path, and edit command handlers</PURPOSE>
+  <SCOPE>ConfigCmd dispatch, scalar key rendering, persisted config mutation through M-CONFIG</SCOPE>
+  <FILES>
+    <FILE>src/cli/config_commands.rs</FILE>
+    <FILE>syn-cli/src/cli/config_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-CONFIG</DEPENDS>
+  <LINKS>M-CLI,M-CONFIG,UC-002</LINKS>
+  <VERIFICATION_REF>V-M-CLI-CONFIG-COMMANDS</VERIFICATION_REF>
+</MODULE>

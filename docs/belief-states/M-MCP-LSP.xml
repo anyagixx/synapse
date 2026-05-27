@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-MCP-LSP" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: LSP client bridge — sends guarded textDocument/hover, go-to-definition, and references to persistent language servers with current document content.
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
+      - PROCESSING: Resolve configured language-server commands, open documents once with disk or override content, issue requests, track opened URIs, and close opened documents before shutdown.
+      - OUTPUT: Hover, definition, and reference results based on the current buffer content plus clean LSP lifecycle notifications.
+    Critical invariants:
+      - Scope remains bounded to: LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, configurable LSP command detection, didOpen content override, opened-document tracking, didClose cleanup, and LSP protocol via stdio
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
+    Complexity_areas: artifact drift, backward compatibility, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - mcp::lsp and mcp::lsp_manager tests pass after implementation
+    - verify_project and review_code pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
+    - Incomplete module artifacts can make the first belief state too generic
+</BELIEF_STATE>

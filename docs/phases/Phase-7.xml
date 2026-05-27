@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-7" status="done">
+  <NAME>Protocol and Bootstrap Hardening</NAME>
+  <GOAL>Remove critical product defects in MCP stdio behavior, index lifecycle, clean-machine diagnostics, and OpenCode config merging</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MAIN" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-INDEXER-STORAGE" />
+    <MODULE_REF id="M-INDEXER-WALKER" />
+    <MODULE_REF id="M-CLI-SETUP-COMMANDS" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-HOOKS" />
+    <MODULE_REF id="M-TESTS-RELIABILITY" />
+    <MODULE_REF id="M-TESTS-MCP-PROTOCOL" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-MCP-SERVER" status="done">Keep MCP stdio stdout protocol-clean and suppress JSON-RPC notification responses.</step-1>
+    <step-2 module="M-INDEXER" status="done">Rebuild the index as a full snapshot so deleted files are removed from search results.</step-2>
+    <step-3 module="M-CLI-SETUP-COMMANDS" status="done">Wire real gitignore control for syn index --no-git.</step-3>
+    <step-4 module="M-CLI-RUNTIME-COMMANDS" status="done">Make doctor accept built-in defaults on clean machines after syn init.</step-4>
+    <step-5 module="M-HOOKS" status="done">Merge mcp.synapse into existing OpenCode JSON/JSONC config without dropping sibling keys.</step-5>
+  </STEPS>
+  <ACCEPTANCE>
+    <CHECK>syn mcp stdout contains only JSON-RPC responses and logs are emitted on stderr</CHECK>
+    <CHECK>JSON-RPC notifications produce no response object</CHECK>
+    <CHECK>Deleted files disappear from search after a full re-index</CHECK>
+    <CHECK>syn index --no-git indexes files excluded by .gitignore in git projects</CHECK>
+    <CHECK>syn init followed by syn doctor does not fail config on clean machines without synapsec.toml</CHECK>
+    <CHECK>Existing opencode.jsonc mcp siblings survive syn init and hooks install</CHECK>
+  </ACCEPTANCE>
+  <EVIDENCE>
+    <LOCAL_TARGETED>mcp_protocol and targeted integration regression tests pass</LOCAL_TARGETED>
+    <LOCAL_FULL_GATE>cargo fmt --all -- --check, cargo clippy --all-targets --all-features -- -D warnings, cargo test --all-targets, cargo run -- verify --ci, cargo run -- review --mode full, cargo run -- refresh --json, and bash scripts/ci.sh passed</LOCAL_FULL_GATE>
+    <METRICS>74 tests passed; 286 function contracts; 544 semantic blocks; 0 canonical drift; all files within 500-line Phase 2 target</METRICS>
+  </EVIDENCE>
+</PHASE>

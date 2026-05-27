@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-RUNNER-HANDOFF" type="CORE_LOGIC" status="active">
+  <NAME>M-RUNNER-HANDOFF</NAME>
+  <PURPOSE>Structured multi-agent handoff artifacts for bounded autonomous runs.</PURPOSE>
+  <SCOPE>AgentHandoff model, deterministic role sequencing, durable handoff storage paths, create/load/latest APIs, and run metadata updates.</SCOPE>
+  <FILES>
+    <FILE>src/run/handoff.rs</FILE>
+    <FILE>syn-run/src/run/handoff.rs</FILE>
+  </FILES>
+  <DEPENDS>M-RUNNER</DEPENDS>
+  <LINKS>M-RUNNER,UC-002,NFR-003</LINKS>
+  <VERIFICATION_REF>V-M-RUNNER-HANDOFF</VERIFICATION_REF>
+</MODULE>

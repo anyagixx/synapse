@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRAPHRAG" type="CORE_LOGIC" status="active">
+  <NAME>M-GRAPHRAG</NAME>
+  <PURPOSE>GraphRAG facade — knowledge graph navigation with search, typed relationships, path finding, Mermaid rendering, telemetry fields, and impact analysis exports</PURPOSE>
+  <SCOPE>GraphRag struct, build from storage with graphrag.build tracing fields, search_nodes, get_node, get_relationships, typed relationship filters, find_path, overview, Mermaid render module export, impact analysis facade</SCOPE>
+  <FILES>
+    <FILE>src/graphrag/mod.rs</FILE>
+    <FILE>syn-engine/src/graphrag/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRAPHRAG-TYPES,M-GRAPHRAG-BUILDER,M-GRAPHRAG-MERMAID,M-GRAPHRAG-IMPACT</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-GRAPHRAG</VERIFICATION_REF>
+</MODULE>

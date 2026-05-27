@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MAIN" module="M-MAIN" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
+    <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
+    <COMMAND>cargo run --quiet -- smart src/cli.rs</COMMAND>
+    <COMMAND>cargo run --quiet -- aws --route sts get-caller-identity</COMMAND>
+    <COMMAND>cargo run --quiet -- helm --route list</COMMAND>
+    <COMMAND>cargo run --quiet -- vitest --route run</COMMAND>
+    <COMMAND>cargo run --quiet -- docker --route ps</COMMAND>
+    <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
+    <COMMAND>cargo run --quiet -- discover docker ps</COMMAND>
+    <COMMAND>cargo run --quiet -- learn --json</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol test_stdio_keeps_logs_off_stdout_and_notifications_silent</COMMAND>
+    <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Telemetry-aware tracing writes to stderr so MCP stdio stdout remains a clean JSON-RPC channel.</ASSERTION>
+    <ASSERTION>Main delegates command execution to CLI RunCommand after parsing SynCli and loading Config.</ASSERTION>
+    <ASSERTION>Main keeps command ownership out of the binary entry point so RTK shortcut dispatch remains centralized in M-CLI.</ASSERTION>
+    <ASSERTION>Main creates and enters a Tokio runtime before OTLP telemetry initialization and shutdown.</ASSERTION>
+    <ASSERTION>Main remains a compact entry point focused on config loading, runtime creation, telemetry init, dispatch delegation, and exporter shutdown.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-63,Phase-93</PHASE_GATE>
+</VERIFICATION>

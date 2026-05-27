@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-LANGS" type="CORE_LOGIC" status="active">
+  <NAME>M-INDEXER-LANGS</NAME>
+  <PURPOSE>Language trait definitions and implementations for code parsing</PURPOSE>
+  <SCOPE>LanguageParser trait, 14 language structs (Rust, Python, TS, JS, Go, PHP, Cpp, Ruby, Java, Bash, Json, Css, Lua, Markdown), detect_language</SCOPE>
+  <FILES>
+    <FILE>src/indexer/languages/mod.rs</FILE>
+    <FILE>syn-engine/src/indexer/languages/languages/mod.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-LANGS</VERIFICATION_REF>
+</MODULE>

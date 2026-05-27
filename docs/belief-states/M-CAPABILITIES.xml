@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-CAPABILITIES" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Machine-readable capability registry — shipped commands, MCP tools, GRACE skill tools, verify checks, review modes, platforms
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-49 publishes bounded RTK discover/learn metadata.
+      - PROCESSING: Keep the machine-readable command registry aligned with shipped CLI commands and public docs while preserving dependencies: M-CLI, M-MCP, M-SKILLS-REGISTRY
+      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+    Critical invariants:
+      - Scope remains bounded to: Command list including RTK shortcuts, local adapters, discover/learn diagnostics, rewrite, and filters, core MCP tool list, GRACE skill tool list, requirements/technology/development-plan/mental-test/traceability/cascade/agent-testing/non-human pattern/typed LINKS/belief-state/anchor syntax/profile-aware verify/review check list, supported platforms
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Add only shipped command-surface entries and let docs_parity enforce public docs truth
+    Complexity_areas: artifact drift, command/docs mismatch, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - capabilities::RTK_DISCOVERY_CAPABILITIES exposes discover and learn metadata
+    - docs_parity command checks, verify_project, review_code, and relevant unit tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - Capability entries must represent actual CLI enum variants, not planned commands
+    - Public documentation additions should fail docs_parity unless this registry is kept current
+</BELIEF_STATE>

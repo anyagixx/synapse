@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-DASHBOARD-OBSERVABILITY" module="M-DASHBOARD-OBSERVABILITY" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test dashboard::observability --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test dashboard::tests::test_health_ready_reports_mcp_state --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>/health remains a cheap liveness response and /health/ready reports runtime readiness without weakening existing health behavior.</ASSERTION>
+    <ASSERTION>/api/mcp-stats serializes config-limited MCP metric aggregates without failing the dashboard when tracking storage is unavailable.</ASSERTION>
+    <ASSERTION>Dashboard observability honors configured enablement and MCP metric payload limits.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-67</PHASE_GATE>
+</VERIFICATION>

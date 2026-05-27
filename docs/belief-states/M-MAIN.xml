@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-MAIN" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Binary entry point — parses CLI, resolves runtime config, initializes stderr tracing, dispatches commands via tokio runtime
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-49 dispatches RTK discover/learn diagnostics through bounded advisory handlers.
+      - PROCESSING: Implement only the declared scope while preserving dependencies: M-LIB, M-CLI, M-CONFIG
+      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+    Critical invariants:
+      - Scope remains bounded to: CLI argument parsing, stderr tracing init, command dispatch including expanded RTK proxy shortcuts and container shortcuts, local RTK adapters, local RTK system adapters, RTK discover/learn diagnostics, RTK parity inventory, and hook rewrites
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
+    Complexity_areas: artifact drift, backward compatibility, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - syn rtk-parity --source ../GRACEme/rtk-develop --ci dispatches through main and passes
+    - expanded shortcuts dispatch through RtkProxyCmd::run_as instead of executing native commands directly
+    - pipe, log, and smart dispatch without bypassing adapter-level token tracking
+    - language ecosystem shortcuts dispatch through RtkProxyCmd::run_as rather than direct process execution
+    - Docker and Podman shortcuts dispatch through RtkProxyCmd::run_as rather than direct process execution
+    - discover and learn dispatch without reading private session history or mutating project rules
+    - verify_project, review_code, and relevant unit tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
+    - Incomplete module artifacts can make the first belief state too generic
+</BELIEF_STATE>

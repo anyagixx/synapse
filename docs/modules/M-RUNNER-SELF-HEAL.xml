@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-RUNNER-SELF-HEAL" type="CORE_LOGIC" status="active">
+  <NAME>M-RUNNER-SELF-HEAL</NAME>
+  <PURPOSE>Bounded self-heal runtime that verifies a run, diagnoses failures, persists repair context, creates fixer handoffs, delegates safe contract repairs, and escalates when retry budget is exhausted</PURPOSE>
+  <SCOPE>SelfHealPlan, SelfHealDiagnosis, SelfHealResult, metadata persistence helpers, periodic evidence compaction, verification execution, diagnosis capture, verifier-to-fixer handoff creation, dry-run repair action capture, and bounded escalation</SCOPE>
+  <FILES>
+    <FILE>src/run/self_heal.rs</FILE>
+    <FILE>syn-run/src/run/self_heal.rs</FILE>
+  </FILES>
+  <DEPENDS>M-RUNNER,M-RUNNER-HANDOFF,M-GRACE,M-GRACE-CONTRACT-GENERATOR,M-GRACE-FIX,M-GRACE-VERIFY-TYPES</DEPENDS>
+  <LINKS>M-RUNNER,M-GRACE,M-GRACE-CONTRACT-GENERATOR,M-GRACE-FIX,UC-002,NFR-002,V-M-RUNNER-SELF-HEAL</LINKS>
+  <VERIFICATION_REF>V-M-RUNNER-SELF-HEAL</VERIFICATION_REF>
+</MODULE>

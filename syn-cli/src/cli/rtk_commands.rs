@@ -1,0 +1,1018 @@
+// MODULE_CONTRACT
+// MODULE_ID: M-CLI-RTK-COMMANDS
+// PURPOSE: First-class RTK-style CLI shortcuts, local adapters, and shell-aware hook rewrite decisions
+// SCOPE: RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, gt, cargo, npm, pnpm, npx, pytest, jest, lint, format, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, kubectl, docker, and podman; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, expanded proxy shortcuts, .NET artifact adapters, session/economics analytics, and local system adapters treated as token-safe Synapse shortcuts
+// DEPENDS: M-CONFIG, M-CLI-RUNTIME-COMMANDS, M-PROXY, M-PROXY-ROUTER
+// LINKS:
+//   → M-CLI-RUNTIME-COMMANDS (depends) - delegates execution to ProxyCmd
+//   → M-PROXY (depends) - proxy execution, filtering, tracking, and evidence
+//   → UC-002 (implements) - token-saving command execution evidence
+//   → NFR-003 (traces_to) - shorter command surface increases proxy adoption
+
+// START_MODULE_MAP
+// RtkProxyCmd::run_as — Prefixes a native command and delegates to ProxyCmd
+// RewriteCmd::run — Prints a hook rewrite decision or exits 1 when unsupported
+// rewrite_command — Converts routeable shell commands or safe chains to syn proxy invocations
+// rewrite_shell_segments — Rewrites quote-aware shell command sequences segment by segment
+// rewrite_segment — Rewrites one routeable shell segment while preserving unsupported segments
+// split_shell_segments — Splits safe shell sequences on &&, ||, ;, and | without executing shell syntax
+// is_pipe_incompatible_segment — Guards pipeline sources that must keep native raw output
+// split_trailing_safe_redirects — Separates safe fd-merge redirects from route tokens
+// is_transparent_shell_prefix — Identifies shell modifiers preserved before syn proxy
+// is_already_token_safe — Detects Synapse/RTK commands that already save tokens
+// split_route_tokens — Separates transparent shell prefixes from routeable command tokens
+// END_MODULE_MAP
+
+// START_CHANGE_SUMMARY
+// LAST_CHANGE: [v2.2.0 — Added .NET artifact adapters to token-safe detection]
+// END_CHANGE_SUMMARY
+
+use super::{ProxyCmd, RewriteCmd, RtkProxyCmd};
+use syn_core::config::Config;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ShellSegment {
+    original: String,
+    tokens: Vec<String>,
+    operator_after: Option<&'static str>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct SegmentRewrite {
+    rendered: String,
+    changed: bool,
+}
+
+const SYN_TOKEN_SAFE_COMMANDS: &[&str] = &[
+    "proxy",
+    "read",
+    "ls",
+    "tree",
+    "find",
+    "rg",
+    "grep",
+    "git",
+    "gt",
+    "cargo",
+    "npm",
+    "pnpm",
+    "npx",
+    "pytest",
+    "gh",
+    "glab",
+    "aws",
+    "psql",
+    "curl",
+    "wget",
+    "jq",
+    "go",
+    "golangci",
+    "dotnet",
+    "rake",
+    "rspec",
+    "rubocop",
+    "gradle",
+    "gradlew",
+    "make",
+    "just",
+    "helm",
+    "kubectl",
+    "docker",
+    "podman",
+    "json",
+    "deps",
+    "env",
+    "wc",
+    "pipe",
+    "log",
+    "smart",
+    "ruff",
+    "mypy",
+    "basedpyright",
+    "pip",
+    "uv",
+    "next",
+    "playwright",
+    "prettier",
+    "prisma",
+    "tsc",
+    "vitest",
+    "jest",
+    "lint",
+    "format",
+    "binlog",
+    "dotnet-format-report",
+    "dotnet-trx",
+    "session",
+    "cc-economics",
+    "gain",
+    "compress",
+];
+
+// START_public_api
+
+impl RtkProxyCmd {
+    // START_CONTRACT_RtkProxyCmd::run_as
+    // PURPOSE: Execute a first-class RTK-style shortcut by prefixing the native executable and delegating to syn proxy
+    // INPUTS: { config: Config }, { executable: &str - native command to run }, { require_args: bool }, { usage: &str }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: may run external command through ProxyCmd
+    // LINKS:
+    //   → M-CLI-RUNTIME-COMMANDS (depends) - reuses ProxyCmd route/evidence/exit behavior
+    //   → M-PROXY (depends) - applies token-saving routing, filtering, tracking, and evidence capture
+    // START_rtk_proxy_cmd_run_as
+    pub async fn run_as(
+        &self,
+        config: Config,
+        executable: &str,
+        require_args: bool,
+        usage: &str,
+    ) -> anyhow::Result<()> {
+        if require_args && self.args.is_empty() {
+            anyhow::bail!(usage.to_string());
+        }
+
+        let mut args = Vec::with_capacity(self.args.len() + 1);
+        args.push(executable.to_string());
+        args.extend(self.args.iter().cloned());
+
+        ProxyCmd {
+            route: self.route,
+            evidence: self.evidence,
+            args,
+        }
+        .run(config)
+        .await
+    }
+    // END_rtk_proxy_cmd_run_as
+}
+
+impl RewriteCmd {
+    // START_CONTRACT_RewriteCmd::run
+    // PURPOSE: Print the Synapse proxy rewrite for a shell command, or exit 1 when no route is supported
+    // INPUTS: { config: Config }
+    // OUTPUTS: { anyhow::Result<()> }
+    // SIDE_EFFECTS: writes rewrite to stdout or exits 1 with no stdout for pass-through commands
+    // LINKS:
+    //   → M-PROXY-ROUTER (depends) - router is the single source of truth for hook rewrite decisions
+    //   → M-HOOK-OPENCODE-REWRITE (implements) - hooks delegate rewrite decisions to this command
+    // START_rewrite_cmd_run
+    pub async fn run(&self, _config: Config) -> anyhow::Result<()> {
+        match rewrite_command(&self.args) {
+            Some(rewritten) => {
+                println!("{rewritten}");
+                Ok(())
+            }
+            None => std::process::exit(1),
+        }
+    }
+    // END_rewrite_cmd_run
+}
+
+// START_CONTRACT_rewrite_command
+// PURPOSE: Convert a routeable raw shell command or safe shell chain into syn proxy invocations for thin agent hooks
+// INPUTS: { args: &[String] - raw command as one shell string or argv tokens }
+// OUTPUTS: { Option<String> - rewritten command when supported }
+// LINKS:
+//   → M-PROXY-ROUTER (depends) - route decisions define supported command families
+//   → NFR-003 (traces_to) - auto-rewrite increases token-saving proxy coverage
+// START_rewrite_command
+pub(crate) fn rewrite_command(args: &[String]) -> Option<String> {
+    let raw = raw_command(args)?;
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    if args.len() == 1 {
+        return rewrite_shell_segments(trimmed);
+    }
+
+    let tokens = command_tokens(args, trimmed)?;
+    let rewritten = rewrite_segment(&tokens, trimmed)?;
+    (rewritten.changed || is_already_token_safe(trimmed)).then_some(rewritten.rendered)
+}
+// END_rewrite_command
+
+// START_CONTRACT_rewrite_shell_segments
+// PURPOSE: Rewrite safe shell chain segments while preserving pipe filter segments and unsupported commands
+// INPUTS: { command: &str }
+// OUTPUTS: { Option<String> }
+// START_rewrite_shell_segments
+fn rewrite_shell_segments(command: &str) -> Option<String> {
+    let segments = split_shell_segments(command)?;
+    let has_chain = segments
+        .iter()
+        .any(|segment| segment.operator_after.is_some());
+    let mut rendered = String::new();
+    let mut changed = false;
+    let mut single_token_safe = false;
+    let mut previous_operator: Option<&str> = None;
+
+    for segment in &segments {
+        let rewrite = if previous_operator == Some("|") || is_pipe_incompatible_segment(segment) {
+            SegmentRewrite {
+                rendered: segment.original.clone(),
+                changed: false,
+            }
+        } else {
+            rewrite_segment(&segment.tokens, &segment.original)?
+        };
+        changed |= rewrite.changed;
+        single_token_safe |= !has_chain && is_already_token_safe(segment.original.as_str());
+        rendered.push_str(&rewrite.rendered);
+        if let Some(operator) = segment.operator_after {
+            render_shell_operator(&mut rendered, operator);
+        }
+        previous_operator = segment.operator_after;
+    }
+
+    (changed || single_token_safe).then_some(rendered.trim_end().to_string())
+}
+// END_rewrite_shell_segments
+
+// START_CONTRACT_is_pipe_incompatible_segment
+// PURPOSE: Keep pipeline sources raw when proxy filtering would change stream-oriented command semantics
+// INPUTS: { segment: &ShellSegment }
+// OUTPUTS: { bool }
+// START_is_pipe_incompatible_segment
+fn is_pipe_incompatible_segment(segment: &ShellSegment) -> bool {
+    if segment.operator_after != Some("|") {
+        return false;
+    }
+    let (_prefix_tokens, route_tokens) = split_route_tokens(&segment.tokens);
+    matches!(
+        route_tokens.first().map(String::as_str),
+        Some("find" | "fd")
+    )
+}
+// END_is_pipe_incompatible_segment
+
+// START_CONTRACT_rewrite_segment
+// PURPOSE: Rewrite a single routeable shell segment and return unchanged text for unsupported safe segments
+// INPUTS: { tokens: &[String] }, { original: &str }
+// OUTPUTS: { Option<SegmentRewrite> }
+// LINKS:
+//   → M-PROXY-ROUTER (depends) - route decisions define whether a segment should proxy
+// START_rewrite_segment
+fn rewrite_segment(tokens: &[String], original: &str) -> Option<SegmentRewrite> {
+    let original = original.trim();
+    if tokens.is_empty() {
+        return None;
+    }
+    if is_already_token_safe(original) {
+        return Some(SegmentRewrite {
+            rendered: original.to_string(),
+            changed: false,
+        });
+    }
+
+    let (prefix_tokens, route_tokens) = split_route_tokens(tokens);
+    if route_tokens.is_empty() {
+        return Some(SegmentRewrite {
+            rendered: original.to_string(),
+            changed: false,
+        });
+    }
+    let (route_tokens, redirect_tokens) = split_trailing_safe_redirects(&route_tokens);
+    if route_tokens.is_empty()
+        || route_tokens
+            .iter()
+            .any(|token| is_safe_fd_merge_redirect_token(token))
+    {
+        return Some(SegmentRewrite {
+            rendered: original.to_string(),
+            changed: false,
+        });
+    }
+    let router = syn_proxy::proxy::router::CommandRouter::new();
+    let decision = router.route(&route_tokens);
+    if decision.should_proxy {
+        Some(SegmentRewrite {
+            rendered: format_rewritten_command(&prefix_tokens, &route_tokens, &redirect_tokens),
+            changed: true,
+        })
+    } else {
+        Some(SegmentRewrite {
+            rendered: original.to_string(),
+            changed: false,
+        })
+    }
+}
+// END_rewrite_segment
+
+// END_public_api
+
+// START_CONTRACT_raw_command
+// PURPOSE: Build a shell-safe raw command from clap args while preserving single-string hook input
+// INPUTS: { args: &[String] }
+// OUTPUTS: { Option<String> }
+// START_raw_command
+fn raw_command(args: &[String]) -> Option<String> {
+    match args {
+        [] => None,
+        [single] => Some(single.trim().to_string()),
+        many => Some(
+            many.iter()
+                .map(|arg| shell_quote(arg))
+                .collect::<Vec<_>>()
+                .join(" "),
+        ),
+    }
+}
+// END_raw_command
+
+// START_CONTRACT_command_tokens
+// PURPOSE: Parse hook input into tokens for router classification
+// INPUTS: { args: &[String] }, { raw: &str }
+// OUTPUTS: { Option<Vec<String>> }
+// START_command_tokens
+fn command_tokens(args: &[String], raw: &str) -> Option<Vec<String>> {
+    if args.len() == 1 {
+        split_shell_words(raw)
+    } else {
+        Some(args.to_vec())
+    }
+}
+// END_command_tokens
+
+// START_CONTRACT_split_route_tokens
+// PURPOSE: Separate simple environment assignments and transparent prefixes from router classification tokens
+// INPUTS: { tokens: &[String] }
+// OUTPUTS: { (Vec<String>, Vec<String>) }
+// START_split_route_tokens
+fn split_route_tokens(tokens: &[String]) -> (Vec<String>, Vec<String>) {
+    let mut index = 0;
+    while index < tokens.len() {
+        let token = tokens[index].as_str();
+        if is_env_assignment(token) || is_transparent_shell_prefix(token) {
+            index += 1;
+            continue;
+        }
+        if token == "env" {
+            index += 1;
+            continue;
+        }
+        break;
+    }
+    (tokens[..index].to_vec(), tokens[index..].to_vec())
+}
+// END_split_route_tokens
+
+// START_CONTRACT_is_transparent_shell_prefix
+// PURPOSE: Identify shell modifiers that should be preserved before a proxied route command
+// INPUTS: { token: &str }
+// OUTPUTS: { bool }
+// START_is_transparent_shell_prefix
+fn is_transparent_shell_prefix(token: &str) -> bool {
+    matches!(
+        token,
+        "sudo" | "command" | "noglob" | "exec" | "builtin" | "nocorrect"
+    )
+}
+// END_is_transparent_shell_prefix
+
+// START_CONTRACT_split_trailing_safe_redirects
+// PURPOSE: Remove safe trailing fd-merge redirect tokens before router classification while preserving them for rendering
+// INPUTS: { tokens: &[String] }
+// OUTPUTS: { (Vec<String>, Vec<String>) }
+// START_split_trailing_safe_redirects
+fn split_trailing_safe_redirects(tokens: &[String]) -> (Vec<String>, Vec<String>) {
+    let mut command_end = tokens.len();
+    while command_end > 0 && is_safe_fd_merge_redirect_token(&tokens[command_end - 1]) {
+        command_end -= 1;
+    }
+    (
+        tokens[..command_end].to_vec(),
+        tokens[command_end..].to_vec(),
+    )
+}
+// END_split_trailing_safe_redirects
+
+// START_CONTRACT_format_rewritten_command
+// PURPOSE: Render a shell-safe rewrite while preserving env/transparent prefixes before syn proxy and safe redirects after it
+// INPUTS: { prefix_tokens: &[String] }, { route_tokens: &[String] }, { redirect_tokens: &[String] }
+// OUTPUTS: { String }
+// START_format_rewritten_command
+fn format_rewritten_command(
+    prefix_tokens: &[String],
+    route_tokens: &[String],
+    redirect_tokens: &[String],
+) -> String {
+    let command = route_tokens
+        .iter()
+        .map(|token| shell_quote(token))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut rendered = if prefix_tokens.is_empty() {
+        format!("syn proxy -- {command}")
+    } else {
+        let prefix = prefix_tokens
+            .iter()
+            .map(|token| shell_quote(token))
+            .collect::<Vec<_>>()
+            .join(" ");
+        format!("{prefix} syn proxy -- {command}")
+    };
+    if !redirect_tokens.is_empty() {
+        rendered.push(' ');
+        rendered.push_str(&redirect_tokens.join(" "));
+    }
+    rendered
+}
+// END_format_rewritten_command
+
+// START_CONTRACT_is_already_token_safe
+// PURPOSE: Detect commands that are already routed through a token-saving Synapse or RTK entry point
+// INPUTS: { command: &str }
+// OUTPUTS: { bool }
+// START_is_already_token_safe
+fn is_already_token_safe(command: &str) -> bool {
+    if command == "rtk" || command.starts_with("rtk ") {
+        return true;
+    }
+    let Some(rest) = command.strip_prefix("syn ") else {
+        return false;
+    };
+    let Some(command_name) = rest.split_whitespace().next() else {
+        return false;
+    };
+    SYN_TOKEN_SAFE_COMMANDS.contains(&command_name)
+}
+// END_is_already_token_safe
+
+// START_CONTRACT_is_env_assignment
+// PURPOSE: Identify simple shell environment assignment tokens
+// INPUTS: { token: &str }
+// OUTPUTS: { bool }
+// START_is_env_assignment
+fn is_env_assignment(token: &str) -> bool {
+    let Some((name, _value)) = token.split_once('=') else {
+        return false;
+    };
+    let mut chars = name.chars();
+    matches!(chars.next(), Some('_') | Some('a'..='z') | Some('A'..='Z'))
+        && chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
+}
+// END_is_env_assignment
+
+// START_CONTRACT_shell_quote
+// PURPOSE: Quote argv tokens so syn rewrite multi-arg invocations remain shell-safe
+// INPUTS: { value: &str }
+// OUTPUTS: { String }
+// START_shell_quote
+fn shell_quote(value: &str) -> String {
+    if value.is_empty() {
+        return "''".into();
+    }
+    if value.chars().all(|ch| {
+        ch.is_ascii_alphanumeric()
+            || matches!(ch, '-' | '_' | '/' | '.' | ':' | '=' | '@' | '%' | '+')
+    }) {
+        return value.to_string();
+    }
+    format!("'{}'", value.replace('\'', "'\\''"))
+}
+// END_shell_quote
+
+// START_CONTRACT_is_safe_fd_merge_redirect_token
+// PURPOSE: Identify fd-merge redirect tokens that can be preserved without file path side effects
+// INPUTS: { token: &str }
+// OUTPUTS: { bool }
+// START_is_safe_fd_merge_redirect_token
+fn is_safe_fd_merge_redirect_token(token: &str) -> bool {
+    let Some((fd, target)) = token.split_once(">&") else {
+        return false;
+    };
+    !fd.is_empty()
+        && fd.chars().all(|ch| ch.is_ascii_digit())
+        && (target == "-" || (!target.is_empty() && target.chars().all(|ch| ch.is_ascii_digit())))
+}
+// END_is_safe_fd_merge_redirect_token
+
+// START_CONTRACT_is_safe_fd_merge_redirect_at
+// PURPOSE: Validate a safe fd-merge redirect beginning at a greater-than character in raw shell text
+// INPUTS: { input: &str }, { gt_index: usize }
+// OUTPUTS: { bool }
+// START_is_safe_fd_merge_redirect_at
+fn is_safe_fd_merge_redirect_at(input: &str, gt_index: usize) -> bool {
+    let bytes = input.as_bytes();
+    if gt_index == 0 || bytes.get(gt_index + 1) != Some(&b'&') {
+        return false;
+    }
+
+    let mut fd_start = gt_index;
+    while fd_start > 0 && bytes[fd_start - 1].is_ascii_digit() {
+        fd_start -= 1;
+    }
+    if fd_start == gt_index || !is_token_boundary_before(input, fd_start) {
+        return false;
+    }
+
+    let mut target_end = gt_index + 2;
+    if bytes.get(target_end) == Some(&b'-') {
+        target_end += 1;
+    } else {
+        let target_start = target_end;
+        while target_end < bytes.len() && bytes[target_end].is_ascii_digit() {
+            target_end += 1;
+        }
+        if target_start == target_end {
+            return false;
+        }
+    }
+
+    is_token_boundary_after(input, target_end)
+}
+// END_is_safe_fd_merge_redirect_at
+
+// START_CONTRACT_is_ampersand_in_safe_fd_redirect
+// PURPOSE: Allow the ampersand character only when it belongs to an already-validated fd-merge redirect
+// INPUTS: { input: &str }, { amp_index: usize }
+// OUTPUTS: { bool }
+// START_is_ampersand_in_safe_fd_redirect
+fn is_ampersand_in_safe_fd_redirect(input: &str, amp_index: usize) -> bool {
+    amp_index > 0
+        && input.as_bytes().get(amp_index - 1) == Some(&b'>')
+        && is_safe_fd_merge_redirect_at(input, amp_index - 1)
+}
+// END_is_ampersand_in_safe_fd_redirect
+
+// START_CONTRACT_is_token_boundary_before
+// PURPOSE: Check whether a byte index starts a shell token for the supported rewrite subset
+// INPUTS: { input: &str }, { index: usize }
+// OUTPUTS: { bool }
+// START_is_token_boundary_before
+fn is_token_boundary_before(input: &str, index: usize) -> bool {
+    if index == 0 {
+        return true;
+    }
+    input[..index]
+        .chars()
+        .next_back()
+        .is_some_and(|ch| ch.is_whitespace() || matches!(ch, '&' | '|' | ';'))
+}
+// END_is_token_boundary_before
+
+// START_CONTRACT_is_token_boundary_after
+// PURPOSE: Check whether a byte index ends a shell token for the supported rewrite subset
+// INPUTS: { input: &str }, { index: usize }
+// OUTPUTS: { bool }
+// START_is_token_boundary_after
+fn is_token_boundary_after(input: &str, index: usize) -> bool {
+    if index >= input.len() {
+        return true;
+    }
+    input[index..]
+        .chars()
+        .next()
+        .is_some_and(|ch| ch.is_whitespace() || matches!(ch, '&' | '|' | ';'))
+}
+// END_is_token_boundary_after
+
+// START_CONTRACT_split_shell_segments
+// PURPOSE: Split a raw shell string into safe command segments without executing or accepting complex shell syntax
+// INPUTS: { input: &str }
+// OUTPUTS: { Option<Vec<ShellSegment>> }
+// START_split_shell_segments
+fn split_shell_segments(input: &str) -> Option<Vec<ShellSegment>> {
+    let mut segments = Vec::new();
+    let mut chars = input.char_indices().peekable();
+    let mut segment_start = 0;
+    let mut in_single = false;
+    let mut in_double = false;
+
+    while let Some((index, ch)) = chars.next() {
+        match ch {
+            '\'' if !in_double => in_single = !in_single,
+            '"' if !in_single => in_double = !in_double,
+            '\\' if !in_single => {
+                chars.next();
+            }
+            '$' if !in_single => {
+                if matches!(chars.peek(), Some((_, '('))) {
+                    return None;
+                }
+            }
+            '`' if !in_single => return None,
+            '<' if !in_single && !in_double => return None,
+            '>' if !in_single && !in_double && !is_safe_fd_merge_redirect_at(input, index) => {
+                return None;
+            }
+            '&' if !in_single && !in_double => {
+                if is_ampersand_in_safe_fd_redirect(input, index) {
+                    continue;
+                }
+                let Some((next_index, '&')) = chars.peek().copied() else {
+                    return None;
+                };
+                push_shell_segment(&mut segments, input, segment_start, index, Some("&&"))?;
+                chars.next();
+                segment_start = next_index + 1;
+            }
+            '|' if !in_single && !in_double => {
+                if let Some((next_index, '|')) = chars.peek().copied() {
+                    push_shell_segment(&mut segments, input, segment_start, index, Some("||"))?;
+                    chars.next();
+                    segment_start = next_index + 1;
+                } else {
+                    push_shell_segment(&mut segments, input, segment_start, index, Some("|"))?;
+                    segment_start = index + 1;
+                }
+            }
+            ';' if !in_single && !in_double => {
+                push_shell_segment(&mut segments, input, segment_start, index, Some(";"))?;
+                segment_start = index + 1;
+            }
+            _ => {}
+        }
+    }
+
+    if in_single || in_double {
+        return None;
+    }
+
+    push_shell_segment(&mut segments, input, segment_start, input.len(), None)?;
+    Some(segments)
+}
+// END_split_shell_segments
+
+// START_CONTRACT_push_shell_segment
+// PURPOSE: Convert one raw segment slice into tokens and attach the following shell operator
+// INPUTS: { segments: &mut Vec<ShellSegment> }, { input: &str }, { start: usize }, { end: usize }, { operator_after: Option<&'static str> }
+// OUTPUTS: { Option<()> }
+// START_push_shell_segment
+fn push_shell_segment(
+    segments: &mut Vec<ShellSegment>,
+    input: &str,
+    start: usize,
+    end: usize,
+    operator_after: Option<&'static str>,
+) -> Option<()> {
+    let original = input.get(start..end)?.trim();
+    if original.is_empty() {
+        return None;
+    }
+    let tokens = split_shell_words(original)?;
+    if tokens.is_empty() {
+        return None;
+    }
+    segments.push(ShellSegment {
+        original: original.to_string(),
+        tokens,
+        operator_after,
+    });
+    Some(())
+}
+// END_push_shell_segment
+
+// START_CONTRACT_render_shell_operator
+// PURPOSE: Append normalized shell chain operator spacing to a rendered rewrite string
+// INPUTS: { output: &mut String }, { operator: &str }
+// OUTPUTS: { () }
+// START_render_shell_operator
+fn render_shell_operator(output: &mut String, operator: &str) {
+    match operator {
+        ";" => output.push_str("; "),
+        _ => {
+            output.push(' ');
+            output.push_str(operator);
+            output.push(' ');
+        }
+    }
+}
+// END_render_shell_operator
+
+// START_CONTRACT_split_shell_words
+// PURPOSE: Parse a minimal POSIX-like shell string for router classification without executing it
+// INPUTS: { input: &str }
+// OUTPUTS: { Option<Vec<String>> }
+// START_split_shell_words
+fn split_shell_words(input: &str) -> Option<Vec<String>> {
+    let mut words = Vec::new();
+    let mut current = String::new();
+    let mut chars = input.chars().peekable();
+    let mut in_single = false;
+    let mut in_double = false;
+
+    while let Some(ch) = chars.next() {
+        match ch {
+            '\'' if !in_double => in_single = !in_single,
+            '"' if !in_single => in_double = !in_double,
+            '\\' if !in_single => {
+                if let Some(next) = chars.next() {
+                    current.push(next);
+                }
+            }
+            ch if ch.is_whitespace() && !in_single && !in_double => {
+                if !current.is_empty() {
+                    words.push(std::mem::take(&mut current));
+                }
+            }
+            _ => current.push(ch),
+        }
+    }
+
+    if in_single || in_double {
+        return None;
+    }
+    if !current.is_empty() {
+        words.push(current);
+    }
+    Some(words)
+}
+// END_split_shell_words
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rewrite_command_routes_simple_command() {
+        let args = vec!["git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_quotes_multi_arg_input() {
+        let args = vec![
+            "git".to_string(),
+            "commit".to_string(),
+            "-m".to_string(),
+            "it's fixed".to_string(),
+        ];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git commit -m 'it'\\''s fixed'".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_skips_unknown_command() {
+        let args = vec!["htop".to_string()];
+        assert_eq!(rewrite_command(&args), None);
+    }
+
+    #[test]
+    fn rewrite_command_preserves_env_prefix_before_proxy() {
+        let args = vec!["FOO=1 git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("FOO=1 syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_builtin_prefix_before_proxy() {
+        let args = vec!["builtin git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("builtin syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_nocorrect_prefix_before_proxy() {
+        let args = vec!["nocorrect git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("nocorrect syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_composed_shell_prefixes() {
+        let args = vec!["sudo nocorrect git status && builtin cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some(
+                "sudo nocorrect syn proxy -- git status && builtin syn proxy -- cargo test"
+                    .to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_shell_sequence() {
+        let args = vec!["git status && cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status && syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_unknown_segment_in_sequence() {
+        let args = vec!["cargo test && htop".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- cargo test && htop".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_skips_sequence_without_routeable_segments() {
+        let args = vec!["htop && top".to_string()];
+        assert_eq!(rewrite_command(&args), None);
+    }
+
+    #[test]
+    fn rewrite_command_preserves_token_safe_segment_in_sequence() {
+        let args = vec!["syn proxy -- git status && cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status && syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn token_safe_detection_covers_expanded_synapse_shortcuts() {
+        for command in [
+            "syn gh pr checks",
+            "syn glab mr list",
+            "syn aws sts get-caller-identity",
+            "syn psql -c select",
+            "syn curl https://example.test",
+            "syn wget https://example.test",
+            "syn jq .",
+            "syn go test ./...",
+            "syn golangci run",
+            "syn dotnet test",
+            "syn rake test",
+            "syn rspec",
+            "syn rubocop",
+            "syn gradle test",
+            "syn make test",
+            "syn just check",
+            "syn helm list",
+            "syn kubectl get pods",
+            "syn docker ps",
+            "syn podman ps",
+            "syn pipe --filter make",
+            "syn log app.log",
+            "syn smart src/main.rs",
+            "syn ruff check",
+            "syn mypy src",
+            "syn basedpyright",
+            "syn pip list",
+            "syn uv run pytest",
+            "syn next build",
+            "syn playwright test",
+            "syn prettier --check .",
+            "syn prisma generate",
+            "syn tsc --noEmit",
+            "syn vitest run",
+            "syn gradlew test",
+        ] {
+            assert!(is_already_token_safe(command), "{command}");
+        }
+        assert!(!is_already_token_safe("syn ghfake pr checks"));
+    }
+
+    #[test]
+    fn rewrite_command_preserves_expanded_token_safe_segment_in_sequence() {
+        let args = vec!["syn gh pr checks && aws sts get-caller-identity".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn gh pr checks && syn proxy -- aws sts get-caller-identity".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_container_segments() {
+        let args = vec!["docker ps && podman ps".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- docker ps && syn proxy -- podman ps".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_or_sequence() {
+        let args = vec!["git status||cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status || syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_semicolon_sequence() {
+        let args = vec!["git status;cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status; syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_does_not_split_quoted_operator() {
+        let args = vec!["git commit -m 'a && b' && cargo test".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git commit -m 'a && b' && syn proxy -- cargo test".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_pipeline_left_edge() {
+        let args = vec!["cargo test | grep FAILED".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- cargo test | grep FAILED".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_after_pipeline_group() {
+        let args = vec!["git log | head -5 && git stash".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git log | head -5 && syn proxy -- git stash".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_routes_pipe_after_chain_operator() {
+        let args = vec!["git status && cargo test | grep FAIL".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git status && syn proxy -- cargo test | grep FAIL".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_multi_pipe_targets() {
+        let args = vec!["git log | head | tail && git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- git log | head | tail && syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_keeps_find_pipeline_source_raw() {
+        let args = vec!["find . -name '*.rs' | xargs grep run && git status".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("find . -name '*.rs' | xargs grep run && syn proxy -- git status".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_skips_pipeline_without_routeable_segments() {
+        assert_eq!(rewrite_command(&["htop | head".to_string()]), None);
+    }
+
+    #[test]
+    fn rewrite_command_preserves_fd_merge_redirect() {
+        let args = vec!["cargo test 2>&1".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some("syn proxy -- cargo test 2>&1".to_string())
+        );
+    }
+
+    #[test]
+    fn rewrite_command_preserves_fd_redirect_pipeline() {
+        let args = vec!["RUST_BACKTRACE=1 cargo test 2>&1 | grep FAILED && git stash".to_string()];
+        assert_eq!(
+            rewrite_command(&args),
+            Some(
+                "RUST_BACKTRACE=1 syn proxy -- cargo test 2>&1 | grep FAILED && syn proxy -- git stash"
+                    .to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn rewrite_command_skips_non_trailing_fd_redirect() {
+        let args = vec!["cargo 2>&1 test".to_string()];
+        assert_eq!(rewrite_command(&args), None);
+    }
+
+    #[test]
+    fn rewrite_command_skips_unsupported_shell_constructs() {
+        assert_eq!(rewrite_command(&["git status > out.txt".to_string()]), None);
+        assert_eq!(rewrite_command(&["git status >&2".to_string()]), None);
+        assert_eq!(
+            rewrite_command(&["git status $(printf branch)".to_string()]),
+            None
+        );
+        assert_eq!(
+            rewrite_command(&["git status `printf branch`".to_string()]),
+            None
+        );
+    }
+
+    #[test]
+    fn split_shell_words_handles_quotes() {
+        assert_eq!(
+            split_shell_words("git commit -m \"hello world\"").unwrap(),
+            vec!["git", "commit", "-m", "hello world"]
+        );
+    }
+}

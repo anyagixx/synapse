@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-E2E-RUNNER" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned TOML-driven full-cycle E2E scenario runner.
+    Key data flows:
+      - INPUT: scenario TOML and selected fixture template
+      - PROCESSING: run ordered command, write_file, and snapshot steps with bounded checks
+      - OUTPUT: pass or fail result with failed step evidence
+    Critical invariants:
+      - Commands run inside fixture roots
+      - fail_fast behavior is deterministic
+  IMPLEMENTATION_STRATEGY:
+    Approach: parse typed scenario specs and execute one step at a time with clear failure records
+    Complexity_areas: command parsing, output assertions, fixture isolation, snapshot integration
+    Patterns_applied: typed TOML model, bounded output, early failure reporting
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - full-cycle scenario passes on Minimal fixture
+    - failing scenario reports exact step and reason
+  RISKS_ACKNOWLEDGED:
+    - Shell-like command strings can be parsed incorrectly if whitespace and quoting are handled too naively
+</BELIEF_STATE>

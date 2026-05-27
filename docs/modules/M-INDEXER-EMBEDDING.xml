@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-EMBEDDING" type="CORE_LOGIC" status="active">
+  <NAME>M-INDEXER-EMBEDDING</NAME>
+  <PURPOSE>Embedding provider specification and helpers for local semantic code search</PURPOSE>
+  <SCOPE>provider dependency selection, model identity, cache path, batch limits, block/query embedding, fallback policy</SCOPE>
+  <FILES>
+    <FILE>src/indexer/embedding.rs</FILE>
+    <FILE>syn-engine/src/indexer/embedding.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-INDEXER-STORAGE-TYPES</DEPENDS>
+  <LINKS>M-CONFIG,M-INDEXER-STORAGE-TYPES,M-INDEXER-STORAGE-SEARCH</LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-EMBEDDING</VERIFICATION_REF>
+</MODULE>

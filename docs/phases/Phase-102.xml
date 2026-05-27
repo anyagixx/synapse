@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-102" status="planned">
+  <NAME>E2E Test Fix + Tarpaulin Coverage Baseline</NAME>
+  <GOAL>Fix 2 broken e2e tests (full-cycle + failure scenarios), run cargo-tarpaulin workspace-wide to establish the first real line-coverage baseline, and document the coverage gap map per crate.</GOAL>
+  <PRIORITY>high</PRIORITY>
+  <EFFORT>4 hours</EFFORT>
+  <DEPENDS_ON>Phase-101</DEPENDS_ON>
+
+  <SOURCE>Honest assessment gaps #2 and #3: e2e tests broken since Phase-97 (require `syn` binary), tarpaulin blocked by e2e panics, real coverage percentage UNKNOWN.</SOURCE>
+
+  <DELIVERABLES>
+    <DELIVERABLE id="D-102-1">Fix e2e_test_repository_full_cycle_scenario_passes — build syn binary before test or use cargo run fallback</DELIVERABLE>
+    <DELIVERABLE id="D-102-2">Fix e2e_test_repository_failure_scenario_reports_failure — same root cause</DELIVERABLE>
+    <DELIVERABLE id="D-102-3">Run `cargo tarpaulin --workspace --out Html --output-dir coverage` → first real coverage report</DELIVERABLE>
+    <DELIVERABLE id="D-102-4">Coverage gap map: per-crate line coverage %, uncovered functions, critical gaps</DELIVERABLE>
+    <DELIVERABLE id="D-102-5">If coverage &lt;65%, add targeted tests to weakest files (max +10 tests)</DELIVERABLE>
+  </DELIVERABLES>
+
+  <DATA_FLOWS>
+    <FLOW id="DF-102-1">Fix e2e runner → resolve syn binary path → e2e tests pass → tarpaulin unblocked</FLOW>
+    <FLOW id="DF-102-2">tarpaulin --workspace → per-crate coverage JSON → coverage gap analysis → targeted test additions</FLOW>
+  </DATA_FLOWS>
+
+  <VERIFICATION>
+    <CHECK>Both e2e tests pass: cargo test -p syn-cli -- e2e</CHECK>
+    <CHECK>cargo tarpaulin --workspace completes without error</CHECK>
+    <CHECK>Coverage report generated: coverage/tarpaulin-report.html</CHECK>
+    <CHECK>Per-crate coverage documented in docs/coverage-baseline.xml</CHECK>
+    <CHECK>Overall coverage ≥65% (current estimate) confirmed or improved</CHECK>
+  </VERIFICATION>
+
+  <RISKS>
+    <RISK id="R-102-1">E2e deep-root issue — test was designed for installed binary, not cargo-test. Mitigation: add #[ignore] with reason, fix in separate PR.</RISK>
+    <RISK id="R-102-2">tarpaulin on large workspace may hit memory limit. Mitigation: run per-crate with --packages.</RISK>
+    <RISK id="R-102-3">Coverage &lt;50% — demoralizing but honest. Mitigation: document gap map, plan Phase-10X for coverage hardening.</RISK>
+  </RISKS>
+</PHASE>

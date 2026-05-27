@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-71" status="done">
+  <NAME>UPGRADE_2 A2 And A5 Diagnosis And Contract Repair</NAME>
+  <GOAL>Implement structured test failure diagnosis and safe automatic GRACE contract repair.</GOAL>
+  <SOURCE_PLAN>UPGRADE_2/A2-test-to-fix-pipeline.md,UPGRADE_2/A5-auto-contract-repair.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRACE-FAILURE-DIAGNOSIS" />
+    <MODULE_REF id="M-GRACE-CONTRACT-GENERATOR" />
+    <MODULE_REF id="M-GRACE-FIX" />
+    <MODULE_REF id="M-RUNNER-SELF-HEAL" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-71-1">Failure XML is parsed into assertions, LOG evidence, identifiers, exact matches, and root-cause candidates.</FLOW>
+    <FLOW id="DF-71-2">Missing contract failures are converted into dry-run or write-mode contract repair actions and then re-verified.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-GRACE-FAILURE-DIAGNOSIS" status="done">Created FailureReport parser, identifier extraction, exact search, and EnhancedFixResult.</step-1>
+    <step-2 module="M-GRACE-CONTRACT-GENERATOR" status="done">Created ContractGenerator with language-aware MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and function contract generation.</step-2>
+    <step-3 module="M-RUNNER-SELF-HEAL" status="done">Delegated missing contract failures to dry-run RepairContract actions and attached diagnosis evidence.</step-3>
+    <step-4 module="M-MCP-SERVER-GRACE-TOOLS" status="done">Exposed diagnose_failure and repair_contract handlers with dry_run support.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test grace::failure_diagnosis --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test grace::contract_generator --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test mcp::server_grace_tools::tests::test_handle_repair_contract --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test mcp::server_contract_tools::tests --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test --all-targets -- --test-threads=8</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-71-1">Contract repair must not duplicate existing contracts or overwrite unrelated source content.</RISK>
+    <RISK id="R-71-2">Failure diagnosis must fall back gracefully when XML contains weak or missing location hints.</RISK>
+  </RISKS>
+</PHASE>

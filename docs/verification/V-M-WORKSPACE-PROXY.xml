@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-WORKSPACE-PROXY" module="M-WORKSPACE-PROXY" priority="high" status="complete">
+  <UNIT_TESTS>
+    <TEST>cargo test -p syn-proxy</TEST>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[Proxy][filter][APPLY]</MARKER>
+    <MARKER>[Proxy][router][DISPATCH]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>All 29 unit tests pass</ASSERTION>
+    <ASSERTION>30+ filter families operational</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-97</PHASE_GATE>
+  <EVIDENCE>
+    <CHECK name="cargo test -p syn-proxy" result="PASS" date="2025-07-17">29 passed; 0 failed</CHECK>
+  </EVIDENCE>
+</VERIFICATION>

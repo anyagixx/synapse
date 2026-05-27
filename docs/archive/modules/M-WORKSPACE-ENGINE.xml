@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-ENGINE" type="WORKSPACE_CRATE" status="planned">
+  <NAME>syn-engine</NAME>
+  <PURPOSE>Engine crate — bundles indexer, graphrag, and grace modules together due to a 3-node dependency cycle (indexer→graphrag, graphrag→grace, grace→indexer)</PURPOSE>
+  <SCOPE>Code indexing (14 languages), knowledge graph construction and querying, GRACE methodology engine (verify, review, contracts, semantic, traceability, cascade, requirements, technology, development-plan, mental-tests, non-human patterns, agent-based testing, failure diagnosis, contract generation)</SCOPE>
+  <FILES>
+    <FILE>syn-engine/src/lib.rs</FILE>
+    <FILE>syn-engine/src/indexer/mod.rs</FILE>
+    <FILE>syn-engine/src/graphrag/mod.rs</FILE>
+    <FILE>syn-engine/src/grace/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-WORKSPACE-CORE</DEPENDS>
+  <LINKS>
+    <LINK type="depends">M-WORKSPACE-CORE</LINK>
+    <LINK type="verified_by">V-M-WORKSPACE-ENGINE</LINK>
+    <LINK type="implements">Phase-97</LINK>
+  </LINKS>
+  <VERIFICATION_REF>V-M-WORKSPACE-ENGINE</VERIFICATION_REF>
+</MODULE>

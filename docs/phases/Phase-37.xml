@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-37" status="done">
+  <NAME>RTK Infra Filter Runtime Expansion</NAME>
+  <GOAL>Expand the RTK built-in filter pack with infrastructure filters and make RTK filters win runtime routing for overlapping built-ins.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-FILTER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-FILTER" status="done">Add RTK-style named filters and inline tests for terraform-plan, tofu-init, tofu-plan, tofu-validate, tofu-fmt, and ansible-playbook.</step-1>
+    <step-2 module="M-PROXY-FILTER" status="done">Load RTK built-ins before legacy built-ins so overlapping terraform/tofu commands use the stronger RTK filters.</step-2>
+    <step-3 module="M-PROXY-FILTER" status="done">Verify runtime routing for Gradle and overlapping infrastructure commands.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter terraform-plan</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter tofu-init</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter tofu-plan</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter tofu-validate</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter tofu-fmt</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter ansible-playbook</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify</CHECK>
+    <CHECK status="passed">cargo test proxy::toml_filter::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

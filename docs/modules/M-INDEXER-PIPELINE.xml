@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-PIPELINE" type="CORE_LOGIC" status="active">
+  <NAME>M-INDEXER-PIPELINE</NAME>
+  <PURPOSE>Indexing pipeline helpers — convert discovered files into deterministic parallel StoredBlock updates</PURPOSE>
+  <SCOPE>Rayon-backed collect_index_blocks, process_index_file, build_stored_blocks, size-bounded source reads</SCOPE>
+  <FILES>
+    <FILE>src/indexer/pipeline.rs</FILE>
+    <FILE>syn-engine/src/indexer/pipeline.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER-WALKER,M-INDEXER-PARSER,M-INDEXER-STORAGE-TYPES</DEPENDS>
+  <LINKS>M-INDEXER-WALKER,M-INDEXER-PARSER,M-INDEXER-STORAGE-TYPES,Phase-64</LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-PIPELINE</VERIFICATION_REF>
+</MODULE>

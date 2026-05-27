@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-RESILIENCE-CHAOS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned corrupted-state tests for graceful Synapse failure and recovery behavior.
+    Key data flows:
+      - INPUT: resilience TOML spec and fresh fixture template
+      - PROCESSING: apply fixture-local corruption, run recovery command, validate exit code, output, and optional recovery command
+      - OUTPUT: per-case resilience result with failure reason
+    Critical invariants:
+      - Every case uses a fresh fixture
+      - Corruption never escapes fixture root or isolated XDG directories
+  IMPLEMENTATION_STRATEGY:
+    Approach: implement corruption actions as explicit path-local operations and wrap recovery commands with bounded output checks
+    Complexity_areas: platform-specific locks, safe path handling, command exit semantics
+    Patterns_applied: chaos testing, fixture isolation, graceful failure assertions
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - missing index, bad config, missing docs, empty graph, and missing module shard cases are covered
+    - commands fail gracefully without panic
+  RISKS_ACKNOWLEDGED:
+    - Unsafe path joins could mutate real project files instead of fixtures
+</BELIEF_STATE>

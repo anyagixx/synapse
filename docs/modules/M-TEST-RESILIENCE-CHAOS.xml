@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-RESILIENCE-CHAOS" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST-RESILIENCE-CHAOS</NAME>
+  <PURPOSE>Corrupted-state resilience harness for Synapse recovery behavior.</PURPOSE>
+  <SCOPE>Fixture-local corruption actions, command execution, output checks, recovery state checks, spec discovery support, and bounded reports.</SCOPE>
+  <FILES>
+    <FILE>src/test/resilience.rs</FILE>
+    <FILE>syn-cli/src/test/resilience.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-INDEXER-STORAGE,M-GRACE-STATUS,M-TEST-FIXTURE</DEPENDS>
+  <LINKS>Phase-81,M-TEST-FIXTURE,NFR-002,NFR-003,V-M-TEST-RESILIENCE-CHAOS</LINKS>
+  <VERIFICATION_REF>V-M-TEST-RESILIENCE-CHAOS</VERIFICATION_REF>
+</MODULE>

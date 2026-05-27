@@ -1,0 +1,96 @@
+# MODULE_CONTRACT
+# MODULE_ID: M-CI-RELEASE-SMOKE
+# PURPOSE: GitHub Actions release workflow — on tag v*, build release binaries, package tarballs, generate SHA256 checksums, and publish to GitHub Releases
+# SCOPE: Linux x86_64 binary build, tarball packaging, SHA256 checksums, GitHub Release upload
+# DEPENDS: M-BUILD, M-INSTALL
+# LINKS:
+#   → Phase-101 (implements) — CI/CD pipeline
+#   ← V-M-CI-RELEASE-SMOKE (verified_by) — release smoke verification
+
+# START_MODULE_MAP
+# release — Build, package, checksum, and publish release artifacts
+# END_MODULE_MAP
+
+# START_CHANGE_SUMMARY
+# LAST_CHANGE: [v1.0.0 — Phase-101 release workflow for workspace builds]
+# END_CHANGE_SUMMARY
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ── Build + Package + Publish ──
+  release:
+    name: Release ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: syn
+            archive: syn-linux-x86_64.tar.gz
+
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+          targets: ${{ matrix.target }}
+
+      - name: Build release binary
+        run: cargo build --release --locked --target ${{ matrix.target }}
+
+      - name: Package tarball
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar -czf ../../../${{ matrix.archive }} ${{ matrix.artifact }}
+          cd ../../..
+
+      - name: Generate SHA256 checksum
+        run: sha256sum ${{ matrix.archive }} > ${{ matrix.archive }}.sha256
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ matrix.archive }}
+            ${{ matrix.archive }}.sha256
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Coverage (tarpaulin) ──
+  coverage:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+
+      - name: Install tarpaulin
+        run: cargo install cargo-tarpaulin
+
+      - name: Run tarpaulin (workspace)
+        run: cargo tarpaulin --workspace --out Html --out Json --output-dir coverage --exclude-files 'tests/*' --exclude-files 'benches/*'
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/

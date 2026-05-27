@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-PROXY" type="CORE_LOGIC" status="active">
+  <NAME>Workspace Proxy Crate</NAME>
+  <PURPOSE>Proxy crate root — token-saving command proxy with 30+ filter families, router, and runner. Depends on syn-core.</PURPOSE>
+  <FILES>
+    <FILE>syn-proxy/src/lib.rs</FILE>
+    <FILE>syn-proxy/src/proxy/router.rs</FILE>
+    <FILE>syn-proxy/src/proxy/runner.rs</FILE>
+    <FILE>syn-proxy/src/proxy/toml_filter.rs</FILE>
+    <FILE>syn-proxy/src/proxy/filter_trust.rs</FILE>
+  </FILES>
+  <VERIFICATION_REF>V-M-WORKSPACE-PROXY</VERIFICATION_REF>
+  <DEPENDS>
+    <DEP>M-WORKSPACE-CORE</DEP>
+  </DEPENDS>
+  <LINKS>
+    <LINK type="implements">Phase-97</LINK>
+    <LINK type="depends">M-PROXY-FILTER</LINK>
+  </LINKS>
+</MODULE>

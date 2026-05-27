@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-VERIFY-PHASE" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-VERIFY-PHASE</NAME>
+  <PURPOSE>Phase-level MyGRACE verification checks for architecture completeness and maintainability limits</PURPOSE>
+  <SCOPE>phase sharded artifact gate, TODO/FIXME scan, hard file-size and Phase 2 target reporting</SCOPE>
+  <FILES>
+    <FILE>src/grace/verify_phase.rs</FILE>
+    <FILE>syn-engine/src/grace/verify_phase.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-LAYOUT,M-GRACE-VERIFY-TYPES,M-INDEXER-WALKER</DEPENDS>
+  <LINKS>docs/plan-index.xml,docs/phases/Phase-2.xml</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-VERIFY-PHASE</VERIFICATION_REF>
+</MODULE>

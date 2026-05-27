@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER-CODE-TOOLS" type="INTEGRATION" status="active">
+  <NAME>M-MCP-SERVER-CODE-TOOLS</NAME>
+  <PURPOSE>MCP handlers for code search, GraphRAG typed queries, impact analysis, signature views, and guarded LSP lookups</PURPOSE>
+  <SCOPE>semantic_search with optional language/path filters and response economy, graphrag_query with indexed GraphRAG cache key validation, impact analysis, Mermaid output, type filters, and response economy, GraphRAG lock health, view_signatures response economy, config-aware lsp_hover/lsp_references handlers with optional content override and response economy</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server_code_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_code_tools.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-GRACE-CONTRACT,M-INDEXER,M-GRAPHRAG,M-GRAPHRAG-IMPACT,M-GRAPHRAG-MERMAID,M-MCP-LSP,M-MCP-SERVER-RESPONSE,M-UTILS</DEPENDS>
+  <LINKS>docs/modules/M-MCP-SERVER.xml</LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER-CODE-TOOLS</VERIFICATION_REF>
+</MODULE>

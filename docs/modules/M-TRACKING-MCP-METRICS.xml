@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TRACKING-MCP-METRICS" type="DATA_LAYER" status="active">
+  <NAME>M-TRACKING-MCP-METRICS</NAME>
+  <PURPOSE>SQLite-backed MCP runtime metrics for request counts, active request snapshots, latency summaries, tool errors, and last-seen timestamps</PURPOSE>
+  <SCOPE>MCP metrics schema, best-effort tool-call recording, aggregate stats queries, retention-aware cleanup, project identity reuse without token-savings analytics bloat</SCOPE>
+  <FILES>
+    <FILE>src/tracking/mcp_metrics.rs</FILE>
+    <FILE>syn-core/src/tracking/mcp_metrics.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-TRACKING</DEPENDS>
+  <LINKS>M-TRACKING,M-CONFIG</LINKS>
+  <VERIFICATION_REF>V-M-TRACKING-MCP-METRICS</VERIFICATION_REF>
+</MODULE>

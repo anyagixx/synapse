@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-103" status="planned">
+  <NAME>Test Hardening: Isolation + Traceability + Stress</NAME>
+  <GOAL>Fix 4 test isolation failures in syn-mcp, close 7 traceability gaps (99.6%→100%), add 3 MCP server stress tests (concurrent connections, large payload, timeout cascades), and fix 7 deferred syn-run tests from Phase-98.</GOAL>
+  <PRIORITY>high</PRIORITY>
+  <EFFORT>3 days</EFFORT>
+  <DEPENDS_ON>Phase-102</DEPENDS_ON>
+
+  <SOURCE>Honest assessment gaps: test isolation in syn-mcp (4 tests), traceability gaps (7 untraced functions), missing stress tests for MCP server, 7 syn-run tests abandoned in Phase-98.</SOURCE>
+
+  <DELIVERABLES>
+    <DELIVERABLE id="D-103-1">Fix syn-mcp isolation: 4 tests pass in `cargo test --workspace` (not just individually). Root cause: shared global state (Tracker singleton, temp dir collisions). Fix: per-test temp dirs, explicit Tracker::new_for_test.</DELIVERABLE>
+    <DELIVERABLE id="D-103-2">Close 7 traceability gaps: add LINKS → NFR-002 or NFR-003 to START_CONTRACT_public_api blocks in all 7 lib.rs files.</DELIVERABLE>
+    <DELIVERABLE id="D-103-3">Fix 7 syn-run tests from Phase-98: correct API assumptions (phase gates, self_heal, pre_commit). Replace with properly-researched tests.</DELIVERABLE>
+    <DELIVERABLE id="D-103-4">Add 3 MCP stress tests: (a) 50 concurrent tool calls, (b) 1MB+ response payload, (c) timeout cascade when 5 slow tools run simultaneously.</DELIVERABLE>
+    <DELIVERABLE id="D-103-5">`cargo test --workspace` → ≥520 tests, 0 failures.</DELIVERABLE>
+  </DELIVERABLES>
+
+  <DATA_FLOWS>
+    <FLOW id="DF-103-1">syn-mcp: identify shared state → inject per-test isolation → re-run --workspace → 0 isolation failures</FLOW>
+    <FLOW id="DF-103-2">traceability: identify 7 untraced functions → add LINKS to NFR → re-verify → 100% traced</FLOW>
+    <FLOW id="DF-103-3">syn-run: review failing test APIs → correct assertions → all 7 pass</FLOW>
+    <FLOW id="DF-103-4">MCP stress: tokio::spawn 50 concurrent → measure latency P50/P99 → assert no panics</FLOW>
+  </DATA_FLOWS>
+
+  <VERIFICATION>
+    <CHECK>cargo test --workspace: 0 isolation failures, all tests pass individually AND together</CHECK>
+    <CHECK>traceability-code-traced: 1866/1866 (100%) under strict enforcement</CHECK>
+    <CHECK>syn-run: 47 tests (40 + 7 fixed), 0 failures</CHECK>
+    <CHECK>MCP stress tests pass: 50 concurrent ≤5s P99, 1MB payload ≤100ms, timeout cascade recovers</CHECK>
+    <CHECK>syn verify: module-local PASS (0 advisories), wave PASS, phase PASS</CHECK>
+  </VERIFICATION>
+
+  <RISKS>
+    <RISK id="R-103-1">Isolation root cause is deep (global OnceLock, process-level state). Mitigation: accept test isolation as known limitation, document in BELIEF_STATE, skip if >4h.</RISK>
+    <RISK id="R-103-2">MCP stress tests require realistic fixtures — may be expensive to set up. Mitigation: use minimal MultiModule fixture from existing test infra.</RISK>
+    <RISK id="R-103-3">Traceability fix may be rejected by verifier if LINKS format doesn't match expected pattern. Mitigation: copy exact format from already-traced functions.</RISK>
+  </RISKS>
+</PHASE>

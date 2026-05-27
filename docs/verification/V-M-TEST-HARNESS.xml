@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-HARNESS" module="M-TEST-HARNESS" priority="critical" status="active">
+  <UNIT_TESTS>
+    <TEST>src/test/mod.rs exposes every UPGRADE_3 harness module without circular dependencies.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>cargo test --all-targets compiles the harness facade on Linux and macOS targets.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>test_harness_loaded</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Harness module remains implementation-only and does not change production command behavior by itself.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-76</PHASE_GATE>
+</VERIFICATION>

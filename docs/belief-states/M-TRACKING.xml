@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TRACKING" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: SQLite token tracker — records route-aware command token usage by canonical project identity and provides stats plus RTK adapter/session coverage counts
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-46 reuses tracking for local RTK system adapters.
+      - PROCESSING: migrate schema if needed, persist proxy and local adapter token counts with adapter/route/session metadata, aggregate command/adapter/session savings, and count distinct RTK adapter/session groups
+      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+    Critical invariants:
+      - Scope remains bounded to: Tracker struct, canonical project identity, migration-safe SQLite schema, token recording with adapter/route/session metadata for proxy and local adapters, RTK adapter/session coverage counts, session/adapter stats querying, TrackingStats model
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
+    Complexity_areas: artifact drift, backward compatibility, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - local pipe/log/smart adapters record savings through record_routed with adapter names rtk-pipe, rtk-log, and rtk-smart
+    - gain --sessions --adapters can report adapter_groups and session_groups for RTK release audits
+    - verify_project, review_code, and relevant unit tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
+    - Incomplete module artifacts can make the first belief state too generic
+</BELIEF_STATE>

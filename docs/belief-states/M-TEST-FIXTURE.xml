@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-FIXTURE" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned isolated project fixture factory for all UPGRADE_3 tests.
+    Key data flows:
+      - INPUT: selected fixture template and custom file overrides
+      - PROCESSING: create temp project, write sharded MyGRACE docs, source files, and isolated config/data homes
+      - OUTPUT: a cleanup-on-drop project root used by scenario and regression tests
+    Critical invariants:
+      - Fixtures never write into the developer checkout
+      - Broken fixtures contain intentional failures that are deterministic
+  IMPLEMENTATION_STRATEGY:
+    Approach: implement builder pattern with reusable template file lists
+    Complexity_areas: cross-platform paths, XDG isolation, deterministic corrupted fixtures
+    Patterns_applied: tempdir ownership, template composition, explicit overrides
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - Minimal, MultiModule, Broken, and override tests pass
+    - every consumer can create an isolated fixture without duplicating setup
+  RISKS_ACKNOWLEDGED:
+    - Poor isolation can pollute local Synapse tracking or config state
+</BELIEF_STATE>

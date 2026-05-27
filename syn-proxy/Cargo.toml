@@ -1,0 +1,29 @@
+[package]
+name = "syn-proxy"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Synapse proxy crate — token-saving command proxy with 30+ TOML filter families"
+
+[dependencies]
+syn-core = { path = "../syn-core" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+tracing.workspace = true
+regex.workspace = true
+chrono.workspace = true
+dirs.workspace = true
+colored.workspace = true
+uuid.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lib]
+name = "syn_proxy"
+path = "src/lib.rs"

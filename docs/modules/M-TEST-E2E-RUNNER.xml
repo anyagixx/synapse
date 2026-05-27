@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-E2E-RUNNER" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST-E2E-RUNNER</NAME>
+  <PURPOSE>TOML scenario runner for full-cycle Synapse E2E tests against isolated fixtures.</PURPOSE>
+  <SCOPE>Scenario parsing, command steps, write_file steps, snapshot steps, fail_fast, and result reporting.</SCOPE>
+  <FILES>
+    <FILE>src/test/e2e.rs</FILE>
+    <FILE>syn-cli/src/test/e2e.rs</FILE>
+  </FILES>
+  <DEPENDS>M-TEST-FIXTURE,M-TEST-SNAPSHOT,M-CLI</DEPENDS>
+  <LINKS>Phase-77,NFR-002,NFR-003,V-M-TEST-E2E-RUNNER</LINKS>
+  <VERIFICATION_REF>V-M-TEST-E2E-RUNNER</VERIFICATION_REF>
+</MODULE>

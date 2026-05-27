@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-20" status="done">
+  <NAME>Durable Lessons Memory</NAME>
+  <GOAL>Close Phase 5 minimum scope by adding reusable project memory for lessons learned from bounded agent work.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MEMORY" />
+    <MODULE_REF id="M-LIB" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-MEMORY" status="done">Added LessonRecord schema and project-local docs/memory/lessons JSON store.</step-1>
+    <step-2 module="M-MEMORY" status="done">Added deterministic save, load, and list helpers with filename-safe lesson ids.</step-2>
+    <step-3 module="M-LIB" status="done">Exposed memory module for future CLI, MCP, and dashboard integrations.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">rtk cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-close-plan cargo test memory::tests::lessons_store_persists_and_lists_lessons --lib</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-close-plan cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-close-plan cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-close-plan cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-close-plan cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

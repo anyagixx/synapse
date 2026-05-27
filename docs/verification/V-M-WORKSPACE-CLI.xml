@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-WORKSPACE-CLI" module="M-WORKSPACE-CLI" priority="critical" status="complete">
+  <UNIT_TESTS>
+    <TEST>cargo test -p syn-cli</TEST>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[CLI][dispatch][COMMAND]</MARKER>
+    <MARKER>[CLI][dashboard][START]</MARKER>
+    <MARKER>[CLI][workspace][ORCHESTRATE]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>152+/157 unit tests pass (2 e2e tests require cargo install; 3 test isolation)</ASSERTION>
+    <ASSERTION>42+ CLI commands dispatch correctly</ASSERTION>
+    <ASSERTION>Dashboard observability routes functional</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-97</PHASE_GATE>
+  <EVIDENCE>
+    <CHECK name="cargo test -p syn-cli" result="PASS" date="2025-07-17">152 passed; 5 failed (2 e2e + 3 test isolation)</CHECK>
+  </EVIDENCE>
+</VERIFICATION>

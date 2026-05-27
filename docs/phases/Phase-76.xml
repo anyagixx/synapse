@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-76" status="done">
+  <NAME>UPGRADE_3 Test Harness Foundation</NAME>
+  <GOAL>Create the foundational test harness, fixture factory, and CLI planning surface for structured Synapse E2E and regression testing.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/README.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-TEST-COMMANDS" />
+    <MODULE_REF id="M-TEST-HARNESS" />
+    <MODULE_REF id="M-TEST-FIXTURE" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-76-1">CLI test command parser routes structured test actions while preserving legacy RTK test command fallback.</FLOW>
+    <FLOW id="DF-76-2">Fixture factory creates isolated projects with sharded MyGRACE artifacts, source files, and isolated config/data homes.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TEST-HARNESS" status="done">Create src/test/mod.rs as the facade for UPGRADE_3 harness modules.</step-1>
+    <step-2 module="M-TEST-FIXTURE" status="done">Implement TestFixture, FixtureBuilder, templates, overrides, and cleanup guarantees.</step-2>
+    <step-3 module="M-CLI-TEST-COMMANDS" status="done">Add structured syn test action schema without breaking syn test -- &lt;cmd&gt;.</step-3>
+    <step-4 module="M-TEST-FIXTURE" status="done">Add unit tests for Minimal, MultiModule, Broken, and custom override behavior.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo test --all-targets fixture</CHECK>
+    <CHECK status="passed">cargo test --all-targets cli_test</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-76-1">Clap schema can conflict with the existing RTK syn test adapter if fallback behavior is not explicit.</RISK>
+    <RISK id="R-76-2">Fixtures can leak local user config unless XDG paths are isolated.</RISK>
+  </RISKS>
+</PHASE>

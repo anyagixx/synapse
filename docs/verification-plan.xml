@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION_PLAN>
+  <META><PRIMARY_MODEL>docs/verification-index.xml</PRIMARY_MODEL></META>
+  <ModuleVerification><VERIFICATION ref="docs/verification/V-M-CORE.xml" /></ModuleVerification>
+</VERIFICATION_PLAN>

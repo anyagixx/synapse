@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-CASCADE" module="M-GRACE-CASCADE" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test grace::cascade::tests::test_requirement_impact_analysis_finds_module_and_function --lib</COMMAND>
+    <COMMAND>cargo test grace::cascade::tests::test_unrelated_artifact_has_no_spurious_impact --lib</COMMAND>
+    <COMMAND>cargo test grace::cascade::tests::test_preview_chain_formatting --lib</COMMAND>
+    <COMMAND>cargo test grace::cascade::tests::test_execute_cascade_creates_changelog --lib</COMMAND>
+    <COMMAND>cargo test grace::cascade::tests::test_cascade_no_drift_detects_pending_marker --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>cascade_impact identifies downstream modules/functions from requirement/use-case traceability links.</ASSERTION>
+    <ASSERTION>cascade_execute writes proposal and changelog artifacts without regenerating code unless explicitly allowed.</ASSERTION>
+    <ASSERTION>cascade-no-drift fails when explicit pending cascade markers remain.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

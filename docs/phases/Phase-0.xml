@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-0" status="done">
+  <NAME>Architecture</NAME>
+  <GOAL>Create project requirements, stack, plan, graph, verification artifacts before code</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CORE" />
+  </MODULE_REFS>
+</PHASE>

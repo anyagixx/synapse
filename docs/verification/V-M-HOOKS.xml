@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-HOOKS" module="M-HOOKS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test hooks::tests::test_merge_synapse_mcp_config_preserves_existing_mcp_sibling --lib</COMMAND>
+    <COMMAND>cargo test hooks::tests::test_merge_synapse_mcp_config_accepts_jsonc_comments_and_trailing_commas --lib</COMMAND>
+    <COMMAND>cargo test hooks::tests::test_hook_audit_reports_missing_opencode_assets --lib</COMMAND>
+    <COMMAND>cargo test hooks::tests::test_hook_audit_trusts_generated_opencode_assets --lib</COMMAND>
+    <COMMAND>cargo test hooks::tests::test_hook_audit_trusts_generated_agent_manifest --lib</COMMAND>
+    <COMMAND>cargo test hooks::tests::test_hook_audit_all_trusts_opencode_and_processor_manifests --lib</COMMAND>
+    <COMMAND>cargo test cli::rtk_hook_processors::tests --lib</COMMAND>
+    <COMMAND>cargo test hooks::git_pre_commit --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
+    <COMMAND>cargo test --test integration_test test_hook_pre_commit_cli_round_trip</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>OpenCode config merge preserves existing mcp siblings and unrelated root keys.</ASSERTION>
+    <ASSERTION>OpenCode config merge accepts JSONC comments and trailing commas before writing normalized JSON.</ASSERTION>
+    <ASSERTION>OpenCode plugin and shell hook delegate command-family decisions to syn rewrite and propagate SYNAPSE_SESSION_ID.</ASSERTION>
+    <ASSERTION>Hook audit reports missing/stale OpenCode trust markers and passes for generated install assets including MCP config, syn rewrite delegation, SYNAPSE_SESSION_ID propagation, and container aliases.</ASSERTION>
+    <ASSERTION>Hook install, status, audit, and uninstall target opencode, claude, cursor, gemini, copilot, and all without requiring private agent history access.</ASSERTION>
+    <ASSERTION>Non-OpenCode hook manifests delegate to syn hook processors and declare syn rewrite as the routing source of truth.</ASSERTION>
+    <ASSERTION>syn hook claude, cursor, gemini, copilot, and check reuse syn rewrite as the single source of truth for token-saving command rewrites.</ASSERTION>
+    <ASSERTION>syn hook install, status, and uninstall manage git pre-commit verification hooks without breaking existing agent hook processors.</ASSERTION>
+    <ASSERTION>Foreign pre-commit hooks are backed up before replacement and restored during uninstall.</ASSERTION>
+    <ASSERTION>Git commit is blocked when staged verification fails while git --no-verify remains the standard bypass.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-55,Phase-90</PHASE_GATE>
+</VERIFICATION>

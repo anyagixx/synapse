@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-VERIFY" module="M-GRACE-VERIFY" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test staged --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Verification regex initialization returns explicit anyhow errors instead of panicking.</ASSERTION>
+    <ASSERTION>Verification reports function-contract strictness according to the selected GRACE profile.</ASSERTION>
+    <ASSERTION>Verification reports links-valid-types, links-targets-exist, links-no-dangling, and links-format checks.</ASSERTION>
+    <ASSERTION>Verification reports structured-log-format while keeping LDD adoption optional until LOG markers exist.</ASSERTION>
+    <ASSERTION>Verification reports belief-state-exists while keeping existing legacy projects migratable during adoption.</ASSERTION>
+    <ASSERTION>Verification reports anchor-syntax-consistent and treats mixed syntax as a warning-level compatibility detail.</ASSERTION>
+    <ASSERTION>Verification reports requirements-entities-defined, requirements-use-cases, requirements-glossary, and requirements-no-empty-sections.</ASSERTION>
+    <ASSERTION>Verification reports technology-language-defined, technology-dependencies-compatible, technology-no-version-guessing, and technology-known-issues with explicit details for selected versus needs-decision artifacts.</ASSERTION>
+    <ASSERTION>Verification reports dataflow-* and genorder-* checks for DevelopmentPlan.</ASSERTION>
+    <ASSERTION>Verification reports mental-tests-defined, mental-tests-passed, and mental-test-no-drift checks.</ASSERTION>
+    <ASSERTION>Verification reports all five non-human pattern checks with profile-aware severity and migration-friendly details.</ASSERTION>
+    <ASSERTION>verify --staged inspects git staged files and skips full verification when no Synapse-tracked files are staged.</ASSERTION>
+    <ASSERTION>verify --staged runs existing profile-aware verification when staged Rust, Markdown, TOML, or XML files are present.</ASSERTION>
+    <ASSERTION>verify_all_with_profile records a grace.verify span with root, profile, check count, and passed level count.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13,Phase-90,Phase-93,Phase-96</PHASE_GATE>
+</VERIFICATION>

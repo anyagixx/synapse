@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-93" status="done">
+  <NAME>UPGRADE_5 OpenTelemetry OTLP Export</NAME>
+  <GOAL>Add optional OpenTelemetry export for tracing hot paths to OTLP-compatible collectors while preserving default stderr-only tracing.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_5/V5-opentelemetry-export.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-TELEMETRY" />
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-LIB" />
+    <MODULE_REF id="M-MAIN" />
+    <MODULE_REF id="M-PROXY" />
+    <MODULE_REF id="M-MCP" />
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-TELEMETRY" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-GRAPHRAG" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-TRACKING" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-93-1">Telemetry config controls enabled state, endpoint, service name, sampling, export interval, and resource attributes.</FLOW>
+    <FLOW id="DF-93-2">When disabled, tracing remains JSON stderr only and keeps existing runtime behavior.</FLOW>
+    <FLOW id="DF-93-3">When enabled with the telemetry feature, spans export through OTLP and include tool names, adapter routes, token metrics, durations, and error status.</FLOW>
+    <FLOW id="DF-93-4">docker-compose.telemetry.yml provides a local Jaeger collector for manual smoke testing.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-MAIN" status="done">Add feature-gated OpenTelemetry dependencies and telemetry initialization module.</step-1>
+    <step-2 module="M-CONFIG" status="done">Add backward-compatible [telemetry] config defaults and typed config key support.</step-2>
+    <step-3 module="M-MAIN" status="done">Initialize telemetry once at startup and shut down exporters cleanly when enabled.</step-3>
+    <step-4 module="M-PROXY" status="done">Instrument proxy execution with command, adapter, route, input tokens, output tokens, and savings fields.</step-4>
+    <step-5 module="M-MCP-SERVER" status="done">Instrument tools/call and tools/list paths with tool, session, budget, and context-pressure metadata.</step-5>
+    <step-6 module="M-INDEXER" status="done">Instrument index and graph hot paths with bounded span fields.</step-6>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test --all-targets</CHECK>
+    <CHECK status="passed">cargo test --all-targets --features telemetry</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">syn config get telemetry.enabled reports false by default.</CHECK>
+    <CHECK status="passed">With telemetry disabled, syn verify keeps stderr-only tracing.</CHECK>
+    <CHECK status="passed">With telemetry enabled and local Jaeger running, spans reach the OTLP endpoint.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-93-1">Telemetry dependencies can disturb release portability; keep the feature optional and default-off.</RISK>
+    <RISK id="R-93-2">Span fields can leak command arguments; record bounded route metadata and avoid secrets.</RISK>
+  </RISKS>
+</PHASE>

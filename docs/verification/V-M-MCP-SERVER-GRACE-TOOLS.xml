@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MCP-SERVER-GRACE-TOOLS" module="M-MCP-SERVER-GRACE-TOOLS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test mcp::server_contract_tools::tests::test_comment_prefix_for_python_and_sql --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_contract_tools::tests::test_module_id_from_name_removes_commas --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_analyze_logs_returns_report --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_response::tests::test_text_result_applies_terse_and_tokens --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_extract_belief_state_writes_artifact --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_requirements_writes_valid_artifact --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_technology_writes_valid_artifact --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_generate_development_plan_writes_artifact --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_mental_test_run_writes_trace --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_traceability_report_writes_index --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_run_test_guide_writes_summary --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_submit_test_report_highlights_log_refs --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_self_heal --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::server_grace_tools::tests::test_handle_repair_contract --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::server_contract_tools::tests::test_handle_diagnose_failure --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::server_budget_tools::tests --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>MCP suggest_contract emits # for Python, -- for SQL, and one canonical MODULE_ID for comma-separated input through the focused server_contract_tools helper.</ASSERTION>
+    <ASSERTION>MCP verify_project and review_code accept lite, balanced, and strict profile arguments.</ASSERTION>
+    <ASSERTION>MCP analyze_logs reads a structured LOG file and returns an XML LogAnalysisReport.</ASSERTION>
+    <ASSERTION>MCP extract_belief_state writes a validated docs/belief-states artifact.</ASSERTION>
+    <ASSERTION>MCP generate_requirements writes a validated docs/requirements.xml RequirementsAnalysis artifact.</ASSERTION>
+    <ASSERTION>MCP generate_technology writes a validated docs/technology.xml Technology artifact and reports selected versus needs-decision status explicitly.</ASSERTION>
+    <ASSERTION>MCP generate_development_plan writes a validated docs/development-plan.xml DevelopmentPlan artifact with DataFlows and GenerationOrder.</ASSERTION>
+    <ASSERTION>MCP mental_test_run writes docs/mental-tests trace output and returns a MentalTestRun report.</ASSERTION>
+    <ASSERTION>MCP traceability_report writes docs/traceability-index.xml and returns a scoped TraceabilityReport.</ASSERTION>
+    <ASSERTION>MCP run_test_guide writes docs/tests result summaries and returns a tester-agent run report.</ASSERTION>
+    <ASSERTION>MCP submit_test_report highlights LOG evidence refs for developer-agent handoff.</ASSERTION>
+    <ASSERTION>MCP self_heal validates run_id, executes the bounded self-heal runtime, and returns a JSON SelfHealResult.</ASSERTION>
+    <ASSERTION>MCP diagnose_failure returns EnhancedFixResult JSON from tester-agent failure evidence.</ASSERTION>
+    <ASSERTION>MCP repair_contract defaults to dry_run and returns preview evidence without writing source content.</ASSERTION>
+    <ASSERTION>MCP token_savings reports command, adapter, and recent session economics from M-TRACKING.</ASSERTION>
+    <ASSERTION>MCP check_budget reports current session budget state and optional estimated-token affordability from M-TRACKING.</ASSERTION>
+    <ASSERTION>MCP context_pressure reports current session context-window pressure and recommendation from M-TRACKING.</ASSERTION>
+    <ASSERTION>MCP verify_project, review_code, project_status, analyze_logs, mental_test_run, traceability_report, token_savings, and refresh_project return shared response economy metadata.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-21,Phase-70,Phase-71,Phase-84,Phase-87,Phase-88</PHASE_GATE>
+</VERIFICATION>

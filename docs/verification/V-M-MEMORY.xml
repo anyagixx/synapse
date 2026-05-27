@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MEMORY" module="M-MEMORY" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test memory::tests::lessons_store_persists_and_lists_lessons --lib</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Lesson records persist under docs/memory/lessons as pretty JSON with stable ids.</ASSERTION>
+    <ASSERTION>Lesson listing is deterministic and preserves module, tag, source, and evidence metadata.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-20</PHASE_GATE>
+</VERIFICATION>

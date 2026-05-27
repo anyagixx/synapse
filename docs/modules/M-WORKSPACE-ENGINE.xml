@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-ENGINE" type="CORE_LOGIC" status="active">
+  <NAME>Workspace Engine Crate</NAME>
+  <PURPOSE>Engine crate root — bundles indexer, graphrag, and GRACE methodology due to 3-node dependency cycle (indexer→graphrag, graphrag→grace, grace→indexer). Depends only on syn-core.</PURPOSE>
+  <FILES>
+    <FILE>syn-engine/src/lib.rs</FILE>
+    <FILE>syn-engine/src/indexer/mod.rs</FILE>
+    <FILE>syn-engine/src/graphrag/mod.rs</FILE>
+    <FILE>syn-engine/src/grace/mod.rs</FILE>
+  </FILES>
+  <VERIFICATION_REF>V-M-WORKSPACE-ENGINE</VERIFICATION_REF>
+  <DEPENDS>
+    <DEP>M-WORKSPACE-CORE</DEP>
+  </DEPENDS>
+  <LINKS>
+    <LINK type="implements">Phase-97</LINK>
+    <LINK type="depends">M-INDEXER</LINK>
+    <LINK type="depends">M-GRAPHRAG</LINK>
+    <LINK type="depends">M-GRACE-CASCADE</LINK>
+    <LINK type="depends">M-GRACE-VERIFY</LINK>
+    <LINK type="depends">M-GRACE-REVIEW</LINK>
+    <LINK type="depends">M-GRACE-REFRESH</LINK>
+  </LINKS>
+</MODULE>

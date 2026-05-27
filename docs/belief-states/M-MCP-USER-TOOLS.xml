@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-MCP-USER-TOOLS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Add local user-defined command tools to the MCP surface without allowing them to replace built-in tools or produce unbounded output.
+    Key data flows:
+      - INPUT: JSON files under ~/.synapse/tools or SYNAPSE_TOOLS_DIR, MCP tools/list and tools/call requests, and syn tools CLI commands.
+      - PROCESSING: Validate definitions, reject built-in override names, expose profile-visible schemas with _source metadata, interpolate scalar arguments into shell-escaped commands, enforce allowed_paths, run commands with timeout, and trim output by token budget.
+      - OUTPUT: MCP tool definitions, MCP text results or JSON-RPC errors, CLI validation reports, and starter JSON templates.
+    Critical invariants:
+      - Built-in MCP names are protected from user override.
+      - Dynamic tools are local-only command tools with timeout and output caps.
+      - User tools appear after built-ins and do not weaken existing tools/list profiles.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep dynamic tool loading in a separate MCP helper module and expose a narrow CLI authoring layer.
+    Complexity_areas: safe command interpolation, path allowlist matching, test isolation for home-directory tools, and preserving tools/list token economy.
+    Patterns_applied: explicit validation reports, source metadata, profile-aware filtering, bounded subprocess execution, and reuse of existing response trimming.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test mcp::user_tools and cli::tools_commands pass.
+    - syn tools validate rejects built-in override names.
+    - MCP tools/list can include user tools with _source=user metadata.
+    - MCP tools/call can execute a user command tool with timeout and max output controls.
+  RISKS_ACKNOWLEDGED:
+    - User command tools intentionally execute local shell commands, so validation must stay conservative.
+    - Dynamic tool schemas can increase tools/list size; existing terse/profile controls must remain effective.
+</BELIEF_STATE>

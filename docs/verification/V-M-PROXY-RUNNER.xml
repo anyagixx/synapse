@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-PROXY-RUNNER" module="M-PROXY-RUNNER" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test proxy::runner::tests --lib</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_preserves_nonzero_exit_status</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_evidence_hint_writes_raw_output</COMMAND>
+    <COMMAND>cargo test proxy::runner::tests::test_spawn_capture_caps_large_stream_without_losing_raw_count --lib</COMMAND>
+    <COMMAND>cargo test proxy::runner::tests::test_spawn_capture_uses_configured_cap --lib</COMMAND>
+    <COMMAND>cargo test proxy::runner::tests::test_runner_from_config_uses_capture_cap_and_timeout --lib</COMMAND>
+    <COMMAND>cargo test proxy::runner::tests::test_runner_from_config_zero_capture_cap_is_unlimited --lib</COMMAND>
+    <COMMAND>cargo test proxy::runner::tests::test_execute_times_out_long_running_command --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>CommandRunner returns captured output together with success and exit status for proxy propagation.</ASSERTION>
+    <ASSERTION>CommandRunner executes blocking process I/O inside a tokio spawn_blocking task so async callers do not block runtime worker threads.</ASSERTION>
+    <ASSERTION>CommandRunner writes full raw stdout/stderr evidence to an XDG data artifact while preserving compact captured output.</ASSERTION>
+    <ASSERTION>CommandRunner caps captured stdout/stderr and evidence payloads using Config.proxy.capture_cap_bytes while preserving raw byte accounting for token economics and diagnostics.</ASSERTION>
+    <ASSERTION>CommandRunner enforces Config.proxy.command_timeout_secs and kills timed-out child processes.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-52,Phase-61</PHASE_GATE>
+</VERIFICATION>

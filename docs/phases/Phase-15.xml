@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-15" status="done">
+  <NAME>Maintainability Split Execution</NAME>
+  <GOAL>Execute the Phase-14 split plan after the v2.5.1 public release while keeping release freshness, strict MyGRACE gates, and public APIs stable.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+    <MODULE_REF id="M-GRACE-TRACEABILITY" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 status="done" priority="P0">
+      <TITLE>Post-Release Dev-Line Version Bump</TITLE>
+      <INTENT>Keep main branch release freshness gates valid after publishing v2.5.1.</INTENT>
+      <IMPLEMENTATION>Bump Cargo.toml, Cargo.lock, installer default version, and release smoke verification refs to the next development patch line.</IMPLEMENTATION>
+      <VERIFY status="passed">SYN_RELEASE_TAG=v2.5.2 release_version_guard and release_freshness_guard pass locally; Cargo.toml, Cargo.lock, install.sh, and release-smoke verification refs now target the v2.5.2 development line.</VERIFY>
+    </step-1>
+    <step-2 status="done" priority="P1">
+      <TITLE>Traceability Helper Split</TITLE>
+      <INTENT>Move stable traceability defaults and rendering helpers out of src/grace/traceability.rs to reduce hard-limit pressure without changing public APIs.</INTENT>
+      <IMPLEMENTATION>Create focused traceability_defaults and traceability_render helpers, re-export the existing traceability public functions, and keep module-local tests green.</IMPLEMENTATION>
+      <VERIFY status="passed">Traceability core is reduced to 961 lines, defaults are isolated in traceability_defaults.rs, rendering is isolated in traceability_render.rs, public traceability APIs are re-exported unchanged, cargo test traceability --all-targets passes, and verify --ci passes.</VERIFY>
+    </step-2>
+  </STEPS>
+  <RESUME_POINTER>
+    <NEXT_ACTION>Phase-15 complete. Next read plan-index.xml, then continue Phase-16 with another split-plan boundary or LDD adoption.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-15.xml, docs/maintainability-split-plan.xml, docs/modules/M-GRACE-TRACEABILITY.xml</READ_FIRST>
+  </RESUME_POINTER>
+  <LOCAL_GATE>
+    bash scripts/ci.sh; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci
+  </LOCAL_GATE>
+</PHASE>

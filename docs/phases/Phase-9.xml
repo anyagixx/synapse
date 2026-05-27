@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-9" status="done">
+  <NAME>Platform Expansion and Adoption Polish</NAME>
+  <GOAL>Extend distribution confidence beyond the current Linux/macOS release truth baseline without introducing unsupported Windows claims</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <PLANNED_WORK>
+    <step-1 module="M-INSTALL" status="done">Kept Windows packaging deferred while preserving Linux/macOS installer dry-run truth as the release-candidate baseline.</step-1>
+    <step-2 module="M-CI" status="done">Added release-candidate dry-run automation for tag/version policy, generated release notes, checksum aggregation, installer mapping, and release smoke before publishing.</step-2>
+    <step-3 module="M-TESTS-PARITY" status="done">Added release-candidate parity tests so manual RC workflows remain read-only and platform claims stay synchronized with shipped Linux/macOS artifacts.</step-3>
+  </PLANNED_WORK>
+  <ACCEPTANCE>
+    <CHECK>Linux/macOS release path remains green before adding Windows packaging</CHECK>
+    <CHECK>New platform claims are blocked by parity tests until release artifacts and installer mapping exist</CHECK>
+    <CHECK>Release publishing path runs the release-candidate dry-run gate before artifact builds and release upload</CHECK>
+  </ACCEPTANCE>
+  <EVIDENCE>
+    <LOCAL_TESTS>cargo test --test release_candidate; cargo test --test docs_parity; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings</LOCAL_TESTS>
+    <RELEASE_CANDIDATE>SYN_RC_SKIP_SMOKE=1 bash scripts/release_candidate_dry_run.sh; SYN_RELEASE_TAG=v2.3.5 SYN_RC_SKIP_SMOKE=1 bash scripts/release_candidate_dry_run.sh</RELEASE_CANDIDATE>
+    <RELEASE_SMOKE>bash scripts/release_install_smoke.sh passed for local x86_64-unknown-linux-gnu package, checksum, extraction, and syn --version smoke</RELEASE_SMOKE>
+    <MYGRACE>scripts/ci.sh passed with verify --ci and review --mode full --ci; 73 contracted files, 302 function contracts, and 558 semantic blocks</MYGRACE>
+  </EVIDENCE>
+</PHASE>

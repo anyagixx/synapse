@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-BUILD" module="M-BUILD" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo audit --deny warnings --ignore RUSTSEC-2024-0436</COMMAND>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
+    <COMMAND>cargo clippy --all-targets --all-features -- -D warnings</COMMAND>
+    <COMMAND>make -n coverage</COMMAND>
+    <COMMAND>bash scripts/release_freshness_guard.sh</COMMAND>
+    <COMMAND>cargo build --release</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Cargo.toml uses notify 8.x so Cargo.lock no longer includes the unmaintained instant transitive dependency.</ASSERTION>
+    <ASSERTION>build.rs tracks both Synapse legacy built-in filters and the RTK built-in filter pack for Cargo rebuilds.</ASSERTION>
+    <ASSERTION>Cargo.toml and Cargo.lock advance to a fresh patch version when the current package version already has a published tag that does not point at HEAD.</ASSERTION>
+    <ASSERTION>Dockerfile builds the release binary with cargo build --release --locked and does not use a no-op --no-default-features flag.</ASSERTION>
+    <ASSERTION>Dockerfile builder image is aligned with the documented Rust 1.95.0 toolchain so Cargo.lock dependencies requiring edition 2024 metadata can build.</ASSERTION>
+    <ASSERTION>Dockerfile copies the embedded OpenCode rules and plugin assets required by include_str! during release compilation.</ASSERTION>
+    <ASSERTION>Dockerfile runtime image provides a GLIBC version compatible with the Rust 1.95.0 builder output.</ASSERTION>
+    <ASSERTION>Dockerfile builder stage avoids unused protobuf/OpenSSL system packages after dependency-tree audit.</ASSERTION>
+    <ASSERTION>Cargo.toml keeps OpenTelemetry dependencies behind the optional telemetry feature and default features remain empty.</ASSERTION>
+    <ASSERTION>Makefile exposes telemetry-up, telemetry-down, and telemetry-ui targets backed by docker-compose.telemetry.yml.</ASSERTION>
+    <ASSERTION>Makefile exposes coverage, coverage-watch, and coverage-open targets backed by cargo-tarpaulin.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-63,Phase-93,Phase-94</PHASE_GATE>
+</VERIFICATION>

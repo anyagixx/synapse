@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-EXPLAIN" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-EXPLAIN</NAME>
+  <PURPOSE>Code explainer (simple) — searches indexed code for a query and returns relevant sections</PURPOSE>
+  <SCOPE>Explainer struct, ExplainResult, explain via indexed search</SCOPE>
+  <FILES>
+    <FILE>src/grace/explain.rs</FILE>
+    <FILE>syn-engine/src/grace/explain.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER-STORAGE</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-GRACE-EXPLAIN</VERIFICATION_REF>
+</MODULE>

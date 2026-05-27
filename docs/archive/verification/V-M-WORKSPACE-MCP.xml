@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-WORKSPACE-MCP" module="M-WORKSPACE-MCP" priority="critical" status="planned">
+  <UNIT_TESTS>
+    <COMMAND>cargo test -p syn-mcp</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>syn-mcp depends on syn-core, syn-engine, syn-run, and syn-skills.</ASSERTION>
+    <ASSERTION>McpServer, tool_definitions, all 48 MCP tool handlers are functional.</ASSERTION>
+    <ASSERTION>tools/list returns the same JSON schema as before the split.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-97</PHASE_GATE>
+</VERIFICATION>

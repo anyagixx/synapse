@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-61" status="done">
+  <NAME>Token Economics And Proxy Runtime</NAME>
+  <GOAL>Resolve FIX/M1, FIX/M2, FIX/M5, FIX/L4, and FIX/L1 by improving token accounting, tracker I/O, and proxy runner async behavior.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/FIX/MEDIUM/M1-naive-tokens.md,/home/truffle/Загрузки/synapse-main/FIX/MEDIUM/M2-sqlite-per-op.md,/home/truffle/Загрузки/synapse-main/FIX/MEDIUM/M5-blocking-in-async.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L4-hardcoded-capture.md,/home/truffle/Загрузки/synapse-main/FIX/LOW/L1-dead-code.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-UTILS" />
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-PROXY" />
+    <MODULE_REF id="M-PROXY-RUNNER" />
+    <MODULE_REF id="M-CONFIG" />
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-61-1">Command output token estimates flow through M-UTILS into M-TRACKING and gain/session analytics with improved accuracy.</FLOW>
+    <FLOW id="DF-61-2">Proxy execution moves blocking process wait and capture into a bounded blocking task while async callers remain responsive.</FLOW>
+    <FLOW id="DF-61-3">Proxy capture cap and timeout settings flow from M-CONFIG into M-PROXY-RUNNER.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-UTILS" status="done">Replaced chars/4 token estimation with a deterministic Unicode/code-aware lexical estimator after dependency audit.</step-1>
+    <step-2 module="M-TRACKING" status="done">Cached SQLite connection setup with WAL and busy timeout while preserving current tracker API behavior.</step-2>
+    <step-3 module="M-PROXY-RUNNER" status="done">Made command execution async-friendly through spawn_blocking with configurable capture caps/timeouts.</step-3>
+    <step-4 module="M-PROXY" status="done">Threaded proxy runtime config into CommandRunner and preserved existing token tracking behavior.</step-4>
+    <step-5 module="M-TRACKING" status="done">Removed unused project_db_path dead code.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo test utils::tests --lib — 4 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo test tracking::tests --lib — 3 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo test proxy::runner::tests --lib — 6 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo test config::tests --lib — 2 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo test cli::rtk_core_adapters::tests --lib — 3 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph — passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo run --quiet -- session --json — passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo test --all-targets -- --test-threads=8 — 316 passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo clippy --all-targets --all-features -- -D warnings — no issues.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo run --quiet -- verify --ci — passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo run --quiet -- review --mode full --ci — passed.</CHECK>
+    <CHECK status="passed">XDG_DATA_HOME=/tmp/synapse-phase61-data cargo run --quiet -- refresh — no drift.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-61-1">Tokenizer crates can add build weight or runtime data assumptions; dependency choice must keep release artifacts deterministic.</RISK>
+    <RISK id="R-61-2">SQLite connection caching must not hold non-Send values across await points in unsafe ways.</RISK>
+  </RISKS>
+</PHASE>

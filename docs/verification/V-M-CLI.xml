@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CLI" module="M-CLI" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
+    <COMMAND>cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --ci</COMMAND>
+    <COMMAND>cargo test cli::rtk_system_adapters::tests --lib</COMMAND>
+    <COMMAND>cargo test --test rtk_system_adapters_test</COMMAND>
+    <COMMAND>cargo run --quiet -- gh --route pr checks</COMMAND>
+    <COMMAND>cargo run --quiet -- kubectl --route get pods</COMMAND>
+    <COMMAND>cargo run --quiet -- golangci --route run</COMMAND>
+    <COMMAND>cargo run --quiet -- gt --route log</COMMAND>
+    <COMMAND>cargo run --quiet -- ruff --route check .</COMMAND>
+    <COMMAND>cargo run --quiet -- tsc --route --noEmit</COMMAND>
+    <COMMAND>cargo run --quiet -- docker --route ps</COMMAND>
+    <COMMAND>cargo run --quiet -- podman --route ps</COMMAND>
+    <COMMAND>cargo run --quiet -- discover docker ps</COMMAND>
+    <COMMAND>cargo run --quiet -- learn --json</COMMAND>
+    <COMMAND>cargo test cli::rtk_dotnet_artifacts::tests --lib</COMMAND>
+    <COMMAND>cargo run --quiet -- session --json</COMMAND>
+    <COMMAND>cargo run --quiet -- cc-economics --format json</COMMAND>
+    <COMMAND>cargo test hooks::tests::test_hook_audit_trusts_generated_opencode_assets --lib</COMMAND>
+    <COMMAND>cargo test hooks::git_pre_commit --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test integration_test test_hook_pre_commit_cli_round_trip</COMMAND>
+    <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
+    <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
+    <COMMAND>cargo test cli::workspace_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test workspace_cli -- --test-threads=1</COMMAND>
+    <COMMAND>cargo test cli::tools_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test cli::agent_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test cli::config_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test cli::filter_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --list</COMMAND>
+    <COMMAND>cargo check</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>CLI schema accepts gain --graph as a supported documented flag.</ASSERTION>
+    <ASSERTION>CLI schema accepts gain --sessions, gain --adapters, and proxy --route as supported documented flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts first-class RTK shortcuts including read, ls, tree, find, rg, grep, git, gt, cargo, npm, pnpm, npx, pytest, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, kubectl, docker, and podman.</ASSERTION>
+    <ASSERTION>CLI schema accepts RTK language ecosystem shortcuts including ruff, mypy, basedpyright, pip, uv, next, playwright, prettier, prisma, tsc, vitest, and gradlew.</ASSERTION>
+    <ASSERTION>CLI schema accepts local RTK adapters json, deps, env, and wc with documented flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts local RTK system adapters pipe, log, and smart with documented flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts .NET artifact adapters binlog, dotnet-format-report, and dotnet-trx.</ASSERTION>
+    <ASSERTION>CLI schema accepts bounded RTK discover and learn diagnostics with documented JSON/limit flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts session --json and cc-economics --format json/csv/text analytics flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts hooks audit/check with --json for trusted OpenCode hook diagnostics.</ASSERTION>
+    <ASSERTION>CLI schema accepts syn hook install, status, and uninstall while preserving existing syn hook processor subcommands.</ASSERTION>
+    <ASSERTION>CLI schema accepts verify --staged for git pre-commit verification.</ASSERTION>
+    <ASSERTION>CLI schema accepts rtk-parity with --source, --json, and --ci flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts rewrite as a hook-facing dry-run command.</ASSERTION>
+    <ASSERTION>CLI schema accepts syn run --scenario happy|blocked-review with phase/module/objective/json flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts syn run --action plan|next|loop|retry|replay with --run-id and --max-actions.</ASSERTION>
+    <ASSERTION>CLI schema accepts syn agent resume/status with compact text and JSON output.</ASSERTION>
+    <ASSERTION>CLI schema accepts verify/review --profile and doctor --deps as documented flags.</ASSERTION>
+    <ASSERTION>CLI schema accepts workspace init, list, verify, status, index, and coverage commands.</ASSERTION>
+    <ASSERTION>CLI schema accepts syn tools list, validate, and new for local user-defined MCP tools.</ASSERTION>
+    <ASSERTION>CLI schema accepts explicit config path, edit, list, get, set, and unset subcommands.</ASSERTION>
+    <ASSERTION>CLI schema accepts filters verify --list and filters dry-run with --filter, --input, --show-input, and --format json flags.</ASSERTION>
+    <ASSERTION>CLI schema exposes syn mcp as stdio-only until HTTP/LSP transport flags are implemented.</ASSERTION>
+    <ASSERTION>CLI RunCommand owns top-level command dispatch so adding a Command variant no longer requires editing main.rs.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-63,Phase-65,Phase-68,Phase-74,Phase-90,Phase-91,Phase-92</PHASE_GATE>
+</VERIFICATION>

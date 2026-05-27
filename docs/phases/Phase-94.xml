@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-94" status="done">
+  <NAME>UPGRADE_5 Code Coverage Gate</NAME>
+  <GOAL>Add cargo-tarpaulin code coverage reporting and integrate it with Synapse test coverage output and CI evidence.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_5/V6-code-coverage.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TEST-COVERAGE-MATRIX" />
+    <MODULE_REF id="M-CLI-TEST-COMMANDS" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-TEST-E2E-RUNNER" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-94-1">make coverage runs cargo-tarpaulin with HTML and JSON reports under coverage/ and excludes tests and benches.</FLOW>
+    <FLOW id="DF-94-2">syn test coverage --code invokes or reads tarpaulin JSON, maps files to MyGRACE module IDs, and renders compact module-level coverage.</FLOW>
+    <FLOW id="DF-94-3">CI uploads coverage artifacts and fails when overall coverage is below the configured baseline threshold.</FLOW>
+    <FLOW id="DF-94-4">Workspace coverage can aggregate member coverage after single-project code coverage is stable.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TEST-COVERAGE-MATRIX" status="done">Implement CodeCoverageReport, ModuleCodeCoverage, tarpaulin command execution, and JSON parsing.</step-1>
+    <step-2 module="M-TEST-COVERAGE-MATRIX" status="done">Map tarpaulin source files to MyGRACE module IDs using graph-index-first metadata and source paths.</step-2>
+    <step-3 module="M-CLI-TEST-COMMANDS" status="done">Add syn test coverage --code output alongside the existing evidence coverage matrix.</step-3>
+    <step-4 module="M-CI" status="done">Add Makefile coverage targets and a GitHub Actions coverage job with artifact upload.</step-4>
+    <step-5 module="M-TEST-COVERAGE-MATRIX" status="done">Mark modules below the code coverage threshold in compact text and JSON output.</step-5>
+    <step-6 module="M-TEST-E2E-RUNNER" status="done">Resolve repository scenario paths correctly under cargo-tarpaulin test runner cwd changes.</step-6>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test test::coverage --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test code_coverage --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">syn test coverage --code renders evidence and code coverage sections.</CHECK>
+    <CHECK status="passed">make coverage produces coverage/tarpaulin-report.html and coverage/tarpaulin-report.json.</CHECK>
+    <CHECK status="passed">CI coverage job uploads the coverage report artifact.</CHECK>
+    <CHECK status="passed">Coverage threshold failure produces a clear message instead of a panic.</CHECK>
+    <CHECK status="passed">Repository E2E scenario tests pass under cargo-tarpaulin.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-94-1">Initial measured coverage is 67.34 percent locally; start with a 65 percent gate and ratchet upward after targeted tests.</RISK>
+    <RISK id="R-94-2">cargo-tarpaulin may be unavailable locally; CLI should print an actionable install message.</RISK>
+  </RISKS>
+</PHASE>

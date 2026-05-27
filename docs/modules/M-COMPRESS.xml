@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-COMPRESS" type="CORE_LOGIC" status="active">
+  <NAME>M-COMPRESS</NAME>
+  <PURPOSE>Caveman text compressor — multi-level compression (lite, full, ultra) for AI context efficiency</PURPOSE>
+  <SCOPE>Compressor struct, compress_output, compress_file, restore_file, lite/full/ultra levels</SCOPE>
+  <FILES>
+    <FILE>src/compress/mod.rs</FILE>
+    <FILE>syn-core/src/compress/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-COMPRESS</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-FIXTURE" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST-FIXTURE</NAME>
+  <PURPOSE>Fixture factory for isolated temporary Synapse projects.</PURPOSE>
+  <SCOPE>TestFixture, FixtureBuilder, project templates, custom overrides, isolated config/data homes, and cleanup.</SCOPE>
+  <FILES>
+    <FILE>src/test/fixture.rs</FILE>
+    <FILE>syn-cli/src/test/fixture.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-GRACE-LAYOUT</DEPENDS>
+  <LINKS>Phase-76,V-M-TEST-FIXTURE</LINKS>
+  <VERIFICATION_REF>V-M-TEST-FIXTURE</VERIFICATION_REF>
+</MODULE>

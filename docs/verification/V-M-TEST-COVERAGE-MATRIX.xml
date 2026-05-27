@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-COVERAGE-MATRIX" module="M-TEST-COVERAGE-MATRIX" priority="normal" status="active">
+  <UNIT_TESTS>
+    <TEST>Module discovery reads docs/graph-index.xml before per-module shards.</TEST>
+    <TEST>Coverage status is covered when at least three evidence types are present.</TEST>
+    <TEST>JSON output includes summary and per-module evidence counts.</TEST>
+    <TEST>Table output includes compact evidence columns.</TEST>
+    <TEST>Structured LOG markers count as module evidence.</TEST>
+    <COMMAND>cargo test test::coverage --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test code_coverage --lib -- --test-threads=8</COMMAND>
+    <COMMAND>syn test coverage --code --json</COMMAND>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>syn test coverage renders a table on MultiModule fixture.</TEST>
+    <TEST>syn test coverage --json emits valid JSON.</TEST>
+    <TEST>syn test coverage --code renders evidence and code coverage sections.</TEST>
+    <TEST>syn workspace coverage reuses the coverage matrix for each member.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>coverage_matrix_built</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Coverage scan remains index-first and avoids monolithic GRACE artifact assumptions.</ASSERTION>
+    <ASSERTION>Code coverage parsing maps tarpaulin source files to modules through graph-index-first source metadata.</ASSERTION>
+    <ASSERTION>Code coverage rows mark modules below the configured threshold without panicking when tarpaulin is missing.</ASSERTION>
+    <ASSERTION>Workspace coverage aggregation reuses member coverage matrix summaries without changing coverage thresholds.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-79,Phase-91,Phase-94</PHASE_GATE>
+</VERIFICATION>

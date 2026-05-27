@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CLI-CONFIG-COMMANDS" module="M-CLI-CONFIG-COMMANDS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test cli::config_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>XDG_CONFIG_HOME=$(mktemp -d) cargo run --quiet -- config set tracking.enabled false</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>config list renders only supported scalar keys in stable order.</ASSERTION>
+    <ASSERTION>config get prints only the requested value.</ASSERTION>
+    <ASSERTION>config set and unset persist through M-CONFIG typed key helpers.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-65</PHASE_GATE>
+</VERIFICATION>

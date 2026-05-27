@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-CLI-CONFIG-COMMANDS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Explicit CLI config get, set, list, unset, path, and edit command handlers
+    Key data flows:
+      - INPUT: ConfigCmd action plus the runtime Config loaded by main.
+      - PROCESSING: Dispatch explicit config actions, validate scalar keys through M-CONFIG, persist set/unset atomically, and render bounded output.
+      - OUTPUT: TOML, path, single config values, stable config key lists, or persisted config changes.
+    Critical invariants:
+      - get, set, and unset do not print unrelated config state.
+      - Unsupported keys and invalid value types fail before persistence.
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep clap schema in M-CLI, keep typed config mutation in M-CONFIG, and keep CLI rendering in this module.
+    Complexity_areas: preserving clean bootstrap behavior, avoiding stringly typed persistence, and keeping command output scriptable.
+    Patterns_applied: explicit subcommands, typed key helpers, bounded semantic blocks.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cli::config_commands tests pass
+    - config set/get/unset persists through an isolated XDG_CONFIG_HOME
+    - verify_project and review_code pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - Writing full TOML can remove user comments; this release chooses correctness and typed persistence over comment-preserving editing.
+</BELIEF_STATE>

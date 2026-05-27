@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-CORE" type="CORE_LOGIC" status="active">
+  <NAME>Workspace Core Crate</NAME>
+  <PURPOSE>Foundation crate root — publishes config, utils, telemetry, tracking, memory, compress, hooks, and agent_console as a standalone dependency with zero internal crate dependencies.</PURPOSE>
+  <FILES>
+    <FILE>syn-core/src/lib.rs</FILE>
+    <FILE>syn-core/src/config.rs</FILE>
+    <FILE>syn-core/src/utils/mod.rs</FILE>
+    <FILE>syn-core/src/telemetry/mod.rs</FILE>
+    <FILE>syn-core/src/tracking/mod.rs</FILE>
+    <FILE>syn-core/src/memory/mod.rs</FILE>
+    <FILE>syn-core/src/compress/mod.rs</FILE>
+    <FILE>syn-core/src/hooks/mod.rs</FILE>
+    <FILE>syn-core/src/agent_console/mod.rs</FILE>
+  </FILES>
+  <VERIFICATION_REF>V-M-WORKSPACE-CORE</VERIFICATION_REF>
+  <DEPENDS />
+  <LINKS>
+    <LINK type="implements">Phase-97</LINK>
+    <LINK type="depends">M-CONFIG</LINK>
+    <LINK type="depends">M-COMPRESS</LINK>
+    <LINK type="depends">M-TRACKING</LINK>
+    <LINK type="depends">M-HOOKS</LINK>
+    <LINK type="depends">M-MEMORY</LINK>
+    <LINK type="depends">M-AGENT-CONSOLE</LINK>
+  </LINKS>
+</MODULE>

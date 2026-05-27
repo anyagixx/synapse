@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-USER-TOOLS" type="CORE_LOGIC" status="active">
+  <NAME>M-MCP-USER-TOOLS</NAME>
+  <PURPOSE>CLI authoring and validation commands for local user-defined MCP tools.</PURPOSE>
+  <SCOPE>~/.synapse/tools discovery, JSON schema validation, built-in override protection, MCP tool metadata rendering, command interpolation, allowed path checks, timeout-bounded execution, ANSI stripping, and output token trimming.</SCOPE>
+  <FILES>
+    <FILE>src/cli/tools_commands.rs</FILE>
+    <FILE>src/mcp/user_tools.rs</FILE>
+    <FILE>syn-cli/src/cli/tools_commands.rs</FILE>
+    <FILE>syn-mcp/src/mcp/user_tools.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-MCP-USER-TOOLS,M-CONFIG,M-MCP-SERVER,M-MCP-SERVER-TOOLS,M-MCP-SERVER-RESPONSE,M-UTILS</DEPENDS>
+  <LINKS>docs/phases/Phase-92.xml,NFR-002,V-M-MCP-USER-TOOLS,NFR-003</LINKS>
+  <VERIFICATION_REF>V-M-MCP-USER-TOOLS</VERIFICATION_REF>
+</MODULE>

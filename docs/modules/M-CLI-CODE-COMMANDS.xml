@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CLI-CODE-COMMANDS" type="CORE_LOGIC" status="active">
+  <NAME>M-CLI-CODE-COMMANDS</NAME>
+  <PURPOSE>CLI code navigation command handlers</PURPOSE>
+  <SCOPE>SearchCmd, ViewCmd, GrepCmd, GraphRagCmd, HistoryCmd</SCOPE>
+  <FILES>
+    <FILE>src/cli/code_commands.rs</FILE>
+    <FILE>syn-cli/src/cli/code_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-INDEXER,M-GRAPHRAG,M-UTILS</DEPENDS>
+  <LINKS>docs/modules/M-CLI.xml</LINKS>
+  <VERIFICATION_REF>V-M-CLI-CODE-COMMANDS</VERIFICATION_REF>
+</MODULE>

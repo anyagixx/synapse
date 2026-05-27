@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-HOOK-CLAUDE" type="INTEGRATION" status="active">
+  <NAME>M-HOOK-CLAUDE</NAME>
+  <PURPOSE>Claude Code shell hook — routes common development commands through syn proxy</PURPOSE>
+  <SCOPE>syn_claude_proxy wrapper and Claude Code hook example</SCOPE>
+  <FILES>
+    <FILE>hooks/adapters/claude-code.sh</FILE>
+  </FILES>
+  <DEPENDS>M-PROXY</DEPENDS>
+  <LINKS>hooks/adapters/README.md</LINKS>
+  <VERIFICATION_REF>V-M-HOOK-CLAUDE</VERIFICATION_REF>
+</MODULE>

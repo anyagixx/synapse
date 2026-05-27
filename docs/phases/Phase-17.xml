@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-17" status="done">
+  <NAME>Autonomous Run Runtime</NAME>
+  <GOAL>Introduce durable bounded-run state and persistence scaffold for autonomous agent execution</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-RUNNER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-RUNNER" status="done">Implemented durable run records, gate policies, recovery decisions, JSON persistence, dashboard run views, and grace_run_history skill exposure.</step-1>
+    <step-2 module="M-TESTS-MCP" status="done">Synchronized capability truth to 16 GRACE skills and 39 MCP tools.</step-2>
+    <step-3 module="M-MCP-SERVER" status="done">Made GraphRAG lazy for MCP initialize/tools-list responsiveness and fixed stdio shutdown tests.</step-3>
+    <step-4 module="M-DASHBOARD" status="done">Split shared render helpers below the phase file-size gate while preserving dashboard routes.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">rtk cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-release cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">rtk env XDG_DATA_HOME=/tmp/synapse-release cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">rtk bash scripts/ci.sh completed release guards, release/install smoke, refresh, verify, review, and status for v2.6.0</CHECK>
+  </VERIFICATION>
+</PHASE>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CLI-GRACE-COMMANDS" module="M-CLI-GRACE-COMMANDS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test staged --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo run --quiet -- verify --staged</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>VerifyCmd dispatches --staged to Verifier::verify_staged_with_profile before rendering normal verification output.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-1,Phase-90</PHASE_GATE>
+</VERIFICATION>

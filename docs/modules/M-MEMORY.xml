@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MEMORY" type="CORE_LOGIC" status="active">
+  <NAME>M-MEMORY</NAME>
+  <PURPOSE>Durable project memory — persists reusable lessons learned from bounded agent work</PURPOSE>
+  <SCOPE>Lesson record schema, project-local JSON persistence, deterministic list/load/save helpers</SCOPE>
+  <FILES>
+    <FILE>src/memory/mod.rs</FILE>
+    <FILE>syn-core/src/memory/mod.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>UC-002,NFR-003,V-M-MEMORY</LINKS>
+  <VERIFICATION_REF>V-M-MEMORY</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-LSP" type="INTEGRATION" status="active">
+  <NAME>M-MCP-LSP</NAME>
+  <PURPOSE>LSP client bridge — sends guarded hover, go-to-definition, and references requests through persistent configurable language-server connections</PURPOSE>
+  <SCOPE>LspClient, LspHoverResult, LspDefinitionResult, LspReferenceResult, safe LSP positions, configurable LSP command detection, didOpen preparation with content override, persistent LSP manager integration</SCOPE>
+  <FILES>
+    <FILE>src/mcp/lsp.rs</FILE>
+    <FILE>src/mcp/lsp_manager.rs</FILE>
+    <FILE>syn-mcp/src/mcp/lsp.rs</FILE>
+    <FILE>syn-mcp/src/mcp/lsp_manager.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-UTILS</DEPENDS>
+  <LINKS>M-MCP-LSP,Phase-59</LINKS>
+  <VERIFICATION_REF>V-M-MCP-LSP</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-89" status="done">
+  <NAME>UPGRADE_5 Criterion Benchmark Harness</NAME>
+  <GOAL>Introduce Criterion benchmark groups for search, graph, and cascade performance evidence without changing runtime behavior.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_5/V1-criterion-benchmarks.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TEST-PERF-REGRESSION" />
+    <MODULE_REF id="M-TEST-FIXTURE" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-GRAPHRAG" />
+    <MODULE_REF id="M-GRACE-CASCADE" />
+    <MODULE_REF id="M-CI" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-89-1">Criterion benches create isolated MultiModule fixtures and invoke the built Synapse binary for index, search, graph, and cascade paths.</FLOW>
+    <FLOW id="DF-89-2">Benchmark groups emit local HTML reports under target/criterion and compact machine-readable CI evidence.</FLOW>
+    <FLOW id="DF-89-3">Existing syn test perf remains the non-flaky regression gate, while Criterion provides developer-visible latency profiling.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TEST-PERF-REGRESSION" status="done">Add criterion dev dependency, explicit search, graph, and cascade bench targets, and shared fixture helpers.</step-1>
+    <step-2 module="M-TEST-PERF-REGRESSION" status="done">Implement search benchmarks for index_multimodule, search_cold, and search_warm.</step-2>
+    <step-3 module="M-TEST-PERF-REGRESSION" status="done">Implement graph benchmarks for graph build, traceability scan, and reachable cascade traversal.</step-3>
+    <step-4 module="M-TEST-PERF-REGRESSION" status="done">Implement cascade benchmarks for impact preview and execute path using safe isolated fixtures.</step-4>
+    <step-5 module="M-CI" status="done">Add Makefile targets and CI benchmark collection without making noisy benches a release blocker.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo test --all-targets</CHECK>
+    <CHECK status="passed">cargo bench --bench search</CHECK>
+    <CHECK status="passed">cargo bench --bench graph</CHECK>
+    <CHECK status="passed">cargo bench --bench cascade</CHECK>
+    <CHECK status="passed">make bench runs all three Criterion groups.</CHECK>
+    <CHECK status="passed">target/criterion contains HTML report output.</CHECK>
+    <CHECK status="passed">syn test perf --baseline and syn test perf --check remain green after Criterion integration.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-89-1">Benchmark timings are environment-sensitive; keep release gates based on stable perf regression logic and use Criterion for trend evidence.</RISK>
+    <RISK id="R-89-2">Invoking cargo from benches can be slow; prefer a built binary path and shared fixture helpers where practical.</RISK>
+  </RISKS>
+</PHASE>

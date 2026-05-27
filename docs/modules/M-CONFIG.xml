@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CONFIG" type="CORE_LOGIC" status="active">
+  <NAME>M-CONFIG</NAME>
+  <PURPOSE>Observability config model and bounded runtime defaults for dashboard and MCP metrics</PURPOSE>
+  <SCOPE>Config struct definitions including embedding provider settings, budget and context-window settings, observability runtime bounds, telemetry defaults, LSP server overrides, read-only TOML load, default fallback, explicit default config generation, typed key lookup/update, path resolution, persistence</SCOPE>
+  <FILES>
+    <FILE>src/config.rs</FILE>
+    <FILE>src/config/observability.rs</FILE>
+    <FILE>src/config/telemetry.rs</FILE>
+    <FILE>syn-core/src/config.rs</FILE>
+    <FILE>syn-core/src/config/observability.rs</FILE>
+    <FILE>syn-core/src/config/telemetry.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>synapsec.toml,M-CONFIG,NFR-002,NFR-003,docs/phases/Phase-93.xml,M-TELEMETRY</LINKS>
+  <VERIFICATION_REF>V-M-CONFIG</VERIFICATION_REF>
+</MODULE>

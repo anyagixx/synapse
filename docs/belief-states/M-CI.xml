@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-CI" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: CI quality gate — runs Rust checks, release truth gates, security audit, release-candidate dry-runs, and MyGRACE truth gates in reproducible entrypoints
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
+      - PROCESSING: Implement only the declared scope while preserving dependencies: M-CI-RUNTIME-GUARD, M-CI-RELEASE-SMOKE, M-GRACE-VERIFY, M-GRACE-REVIEW, M-GRACE-REFRESH, M-GRACE-STATUS, M-INSTALL, M-TESTS-PARITY
+      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+    Critical invariants:
+      - Scope remains bounded to: Formatting, linting, runtime panic guard, tests with isolated XDG data path, Linux/macOS hosted platform tests, push-time public fresh-install smoke pinned to the workflow commit, release tag/version guard, release-context freshness guard, release-candidate dry-run policy and GitHub Step Summary evidence, public fresh-install smoke, Linux/macOS release/install smoke matrix, strict cargo audit warning policy, Node 24-ready workflow actions, shell-based Rust toolchain setup, canonical MyGRACE verification, review, refresh, and status checks
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
+    Complexity_areas: artifact drift, backward compatibility, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - verify_project, review_code, and relevant unit tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
+    - Incomplete module artifacts can make the first belief state too generic
+</BELIEF_STATE>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-24" status="done">
+  <NAME>RTK Filter Trust and Verification Parity</NAME>
+  <GOAL>Upgrade Synapse proxy filters to RTK-grade TOML schema compatibility, project-local trust gating, inline filter verification, and CLI controls so larger RTK filter corpus imports are safe and measurable.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-FILTER" />
+    <MODULE_REF id="M-PROXY" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-FILTER" status="done">Added backwards-compatible RTK-style TOML schema parsing, inline filter tests, match-output rule guards, and trust-before-load for project filters.</step-1>
+    <step-2 module="M-CLI" status="done">Exposed syn filters verify|trust|untrust|status command schemas.</step-2>
+    <step-3 module="M-CLI-RUNTIME-COMMANDS" status="done">Implemented filter verification and trust command handlers.</step-3>
+    <step-4 module="M-PROXY" status="done">Kept proxy execution compatible with trusted project filters and built-in/user filters.</step-4>
+    <step-5 module="M-TESTS-INTEGRATION" status="done">Added CLI coverage for trust-gated project filters and filter verification.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo test proxy::toml_filter::tests --lib</CHECK>
+    <CHECK status="passed">cargo test proxy::filter_trust::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_proxy_project_filter_requires_trust</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-11" status="done">
+  <NAME>Product Truth Hardening</NAME>
+  <GOAL>Close proxy transparency, Unicode safety, public claim parity, fresh installer evidence automation, release-candidate traceability, and support diagnostic gaps before the next public release</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY" />
+    <MODULE_REF id="M-PROXY-RUNNER" />
+    <MODULE_REF id="M-PROXY-FILTER" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-UTILS" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-TRACKING" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <PLANNED_WORK>
+    <step-1 module="M-PROXY" status="done">Preserve wrapped command exit status through syn proxy and cover nonzero exits with integration tests.</step-1>
+    <step-2 module="M-UTILS" status="done">Add Unicode-safe truncation and replace unsafe preview slicing across proxy, filters, fix, search, MCP, and LSP paths.</step-2>
+    <step-3 module="M-CLI-RUNTIME-COMMANDS" status="done">Implement syn gain --graph and verify positive savings evidence through project-local proxy filters.</step-3>
+    <step-4 module="M-TESTS-PARITY" status="done">Expand public docs parity to SUPPORT.md and validate documented command flags, not only command names.</step-4>
+    <step-5 module="M-CI" status="done">Add fresh-install smoke automation for Linux/macOS release-candidate evidence using the public installer URL and temporary SYN_INSTALL_DIR.</step-5>
+    <step-6 module="M-CI" status="done">Pin release-candidate checkout to the requested candidate tag and include checked-out commit SHA in summaries.</step-6>
+    <step-7 module="M-INSTALL" status="done">Report independent OS and architecture diagnostic statuses without overwriting unsupported-platform causes.</step-7>
+    <step-8 module="M-TESTS-PARITY" status="done">Update verification shards, support docs, and product readiness assessment to reflect the hardened behavior and remaining hosted-evidence risk.</step-8>
+  </PLANNED_WORK>
+  <ACCEPTANCE>
+    <CHECK status="passed">syn proxy preserves wrapped command exit codes and no longer masks failed commands</CHECK>
+    <CHECK status="passed">UTF-8 truncation paths avoid byte-boundary panics</CHECK>
+    <CHECK status="passed">syn gain --graph is implemented and public docs parity validates supported flags</CHECK>
+    <CHECK status="passed">Installer diagnostics report OS and architecture support independently</CHECK>
+    <CHECK status="passed">Release-candidate workflow checks out the requested candidate ref and records commit evidence</CHECK>
+    <CHECK status="passed">Fresh-install Linux/macOS evidence workflow exists before the next public release</CHECK>
+    <CHECK status="passed">Hosted fresh-install workflow evidence captured in GitHub CI run 26143369696: linux job 76893339171 and macos job 76893339148 completed successfully</CHECK>
+  </ACCEPTANCE>
+  <LOCAL_GATE>
+    cargo fmt --all; cargo test --all-targets with writable XDG_DATA_HOME; cargo clippy --all-targets --all-features -- -D warnings; scripts/ci.sh; refresh --json drift=0; verify --ci; review --mode full --ci
+  </LOCAL_GATE>
+  <HOSTED_GATE>
+    GitHub CI run 26143369696 at commit bc2ec39267670317e1c3a6f8e9bca4462dc8b728 captured push-time public fresh-install smoke evidence for Linux ubuntu-latest job 76893339171 and macOS macos-latest job 76893339148.
+  </HOSTED_GATE>
+</PHASE>

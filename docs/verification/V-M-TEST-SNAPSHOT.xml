@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-SNAPSHOT" module="M-TEST-SNAPSHOT" priority="normal" status="active">
+  <UNIT_TESTS>
+    <TEST>Missing snapshot creates a baseline on first run.</TEST>
+    <TEST>Existing matching snapshot returns matched true.</TEST>
+    <TEST>Mismatched snapshot returns matched false with bounded line diff.</TEST>
+    <TEST>update mode overwrites the stored snapshot.</TEST>
+    <TEST>Normalization removes temp paths, timings, versions, UUIDs, and ANSI escapes where configured.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>syn test snapshot --update refreshes registered snapshots.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>snapshot_checked</LOG>
+    <LOG>snapshot_updated</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Snapshots are deterministic in CI and do not include local absolute temp paths.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-77</PHASE_GATE>
+</VERIFICATION>

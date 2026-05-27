@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CASCADE_CHANGE id="CC-20250717-PHASE100" status="completed" date="2025-07-17">
+  <NAME>Phase-100: Benchmark Infrastructure Restoration — All 9 Benchmarks Operational</NAME>
+  <PHASE_REF>Phase-100</PHASE_REF>
+
+  <WHAT_CHANGED>
+    <CHANGE type="fix">benches/common/mod.rs: syn::test::fixture → syn_cli::test::fixture (workspace split path update)</CHANGE>
+    <CHANGE type="fix">benches/cascade.rs: syn::grace::cascade → syn_engine::grace::cascade</CHANGE>
+    <CHANGE type="fix">benches/graph.rs: 3 syn:: references → syn_engine:: (graphrag, traceability, cascade)</CHANGE>
+    <CHANGE type="config">syn-cli/Cargo.toml: added 3 [[bench]] targets (search, graph, cascade) with harness=false + criterion dev-dependency</CHANGE>
+  </WHAT_CHANGED>
+
+  <WHY>
+    <REASON>Phase-97 workspace split renamed crates from `syn` to `syn_engine`, `syn_cli`, etc. The benches still referenced the old `syn::` paths. Additionally, bench targets were never registered in Cargo.toml — they existed as files in benches/ but weren't wired into the build system.</REASON>
+  </WHY>
+
+  <IMPACT>
+    <POSITIVE>9 Criterion benchmarks now operational: search (3: index_multimodule ~4.5ms, search_cold ~4.6ms, search_warm ~4.6ms), graph (3: graph_build ~2.1ms, traceability_scan ~1.2ms, cascade_reachable ~3.5ms), cascade (2: cascade_impact_small ~3.5ms, cascade_execute ~180µs). All measured against MultiModule fixtures.</POSITIVE>
+  </IMPACT>
+
+  <VERIFICATION_EVIDENCE>
+    <CHECK name="cargo bench --bench search">3/3 benchmarks pass</CHECK>
+    <CHECK name="cargo bench --bench graph">3/3 benchmarks pass</CHECK>
+    <CHECK name="cargo bench --bench cascade">2/2 benchmarks pass</CHECK>
+    <CHECK name="cargo run --quiet -- verify">wave PASS, phase PASS</CHECK>
+  </VERIFICATION_EVIDENCE>
+</CASCADE_CHANGE>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-56" status="done">
+  <NAME>RTK Session Learn Economics Parity</NAME>
+  <GOAL>Move Synapse discover, learn, session, and economics from static guidance to measured RTK-style adoption analytics with explicit privacy boundaries.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-TRACKING" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-TRACKING" status="done">Added session adoption and missed-route candidate query surfaces backed by the tracking database.</step-1>
+    <step-2 module="M-CLI-RTK-COMMANDS" status="done">Added tracking-backed session, discover history, learn signals, and economics command surfaces.</step-2>
+    <step-3 module="M-CLI-RTK-COMMANDS" status="done">Kept private agent history out of scope; learn/discover use local tracking aggregates and cc-economics reports local-only telemetry-free analytics.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test tracking::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_discovery::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_economics::tests --lib</CHECK>
+    <CHECK status="passed">cargo run --quiet -- session --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- discover --json --limit 3</CHECK>
+    <CHECK status="passed">cargo run --quiet -- learn --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- cc-economics --format json</CHECK>
+  </VERIFICATION>
+</PHASE>

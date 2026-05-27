@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-ANCHOR" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-ANCHOR</NAME>
+  <PURPOSE>XML-like GRACE anchor normalization and syntax consistency reporting</PURPOSE>
+  <SCOPE>normalize_anchor_syntax, XML-like tag parsing, syntax style detection, project-level consistency report</SCOPE>
+  <FILES>
+    <FILE>src/grace/anchor.rs</FILE>
+    <FILE>syn-engine/src/grace/anchor.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER-WALKER</DEPENDS>
+  <LINKS>V-M-GRACE-ANCHOR</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-ANCHOR</VERIFICATION_REF>
+</MODULE>

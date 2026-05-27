@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-PROXY-FILTER" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: TOML filter engine — applies regex-based output transformations from TOML filter definitions
+    Key data flows:
+      - INPUT: Synapse legacy built-in filters, the RTK named filter pack, user filters, and trusted project filters
+      - PROCESSING: Load sources in priority order, parse legacy/named TOML schemas, apply the 8-stage filter pipeline, execute inline filter tests, list filter names, and produce dry-run stage reports
+      - OUTPUT: Filtered command output plus verification results and dry-run reports for project/user/built-in filters
+    Critical invariants:
+      - Scope remains bounded to: FilterDef, ReplaceRule, FilterFile, FilterEngine with find_filter/apply/verify/list/dry-run, split Synapse/RTK built-in filter packs including full RTK named-filter parity, lint, build, compiler, developer-service, language ecosystem, Python type-checker, operations/admin, platform tooling, system, DevOps, infrastructure/IaC, package-management, container runtime, Kubernetes, and psql table filters, RTK-first built-in precedence, Unicode-safe truncation, 8-stage pipeline
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep the existing legacy built-in file stable and add RTK parity through a separate named filter pack that loads before legacy built-ins for overlapping command patterns
+    Complexity_areas: TOML schema compatibility, filter priority, inline verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks, side-by-side built-in packs
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - proxy::toml_filter tests, filter dry-run stage tests, syn filters verify/list/dry-run commands, verify_project, and review_code pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - Loading RTK filters before legacy built-ins improves RTK parity but needs runtime routing tests for overlapping command patterns
+    - Large filter-pack expansion should remain verified by inline tests to avoid silent output loss
+</BELIEF_STATE>

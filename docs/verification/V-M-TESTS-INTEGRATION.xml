@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TESTS-INTEGRATION" module="M-TESTS-INTEGRATION" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_preserves_nonzero_exit_status</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_unicode_passthrough_truncates_without_panic</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_tracking_records_positive_savings_and_gain_graph</COMMAND>
+    <COMMAND>cargo test --test integration_test test_proxy_route_preview_for_rtk_like_command</COMMAND>
+    <COMMAND>cargo test --test integration_test test_filters_verify_cli_runs_inline_tests</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rtk_read_shortcut_filters_and_preserves_evidence</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
+    <COMMAND>cargo test --test rtk_system_adapters_test</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rewrite_cli_delegates_to_router</COMMAND>
+    <COMMAND>cargo test --test integration_test test_run_scenario_cli_reports_gate_and_replay_json</COMMAND>
+    <COMMAND>cargo test --test integration_test test_run_action_cli_plans_and_replays_run</COMMAND>
+    <COMMAND>cargo test --test integration_test test_hook_pre_commit_cli_round_trip</COMMAND>
+    <COMMAND>cargo test --test workspace_cli -- --test-threads=1</COMMAND>
+    <COMMAND>cargo test --test integration_test test_tracking_is_scoped_by_canonical_project_path</COMMAND>
+    <COMMAND>rg -n "std::env::set_var|std::env::remove_var" src tests -g "!src/utils/mod.rs"</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Integration tests cover clean config bootstrap, canonical tracking identity, bounded run scenario/action queue JSON, proxy exit-code propagation, RTK shortcuts, local RTK adapters and system adapters, RTK built-in filter verification, rewrite hook decisions including safe command chains, pipelines, fd redirects, and shell prefixes, route preview, Unicode truncation, and gain graph/session/adapter regressions.</ASSERTION>
+    <ASSERTION>Integration tests cover syn hook install, status, and uninstall for git pre-commit verification.</ASSERTION>
+    <ASSERTION>Integration tests cover workspace init, list, and sequential verify CLI flow.</ASSERTION>
+    <ASSERTION>Integration tests avoid unguarded process environment mutation and use per-command environment injection where possible.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-58,Phase-90,Phase-91</PHASE_GATE>
+</VERIFICATION>

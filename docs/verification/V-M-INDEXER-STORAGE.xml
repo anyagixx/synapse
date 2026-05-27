@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-INDEXER-STORAGE" module="M-INDEXER-STORAGE" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_corrupted_index_reports_load_error --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_replace_all_blocks_removes_stale_files --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_upsert_file_blocks_replaces_empty_file --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_remove_file_blocks_removes_deleted_file_only --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_db_path_for_root_matches_storage_instance_path --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_language --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_search_filters_by_path_prefix --lib</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_semantic_vector_search_ranks_related_code --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::storage::tests::test_semantic_search_falls_back_without_embeddings --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[Storage][load_blocks][PARSE]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Corrupted blocks.json is reported through Storage::load_error instead of being silently treated as an empty index.</ASSERTION>
+    <ASSERTION>Full snapshot replacement removes stale file blocks and preserves searchable current blocks.</ASSERTION>
+    <ASSERTION>Per-file upsert can replace a file with zero blocks while preserving unrelated files.</ASSERTION>
+    <ASSERTION>Deleted-file removal removes only matching file paths and persists the delta.</ASSERTION>
+    <ASSERTION>Storage::db_path_for_root returns the same deterministic persisted index path used by Storage::new for GraphRAG cache signatures.</ASSERTION>
+    <ASSERTION>Filtered search applies language and path-prefix constraints before scoring/ranking.</ASSERTION>
+    <ASSERTION>Dense semantic vector search ranks compatible persisted embeddings and ignores incompatible model metadata.</ASSERTION>
+    <ASSERTION>N-gram vector fallback remains available when no compatible embeddings are present.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-7,Phase-62,Phase-64,Phase-65,Phase-66</PHASE_GATE>
+</VERIFICATION>

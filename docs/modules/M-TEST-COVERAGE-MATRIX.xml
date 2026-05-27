@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-COVERAGE-MATRIX" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST-COVERAGE-MATRIX</NAME>
+  <PURPOSE>Build index-first evidence and code coverage reports for Synapse test visibility.</PURPOSE>
+  <SCOPE>Index-based module discovery, evidence counting, cargo-tarpaulin JSON execution/parsing, module source mapping, table output, JSON output, threshold reporting, and uncovered module reporting.</SCOPE>
+  <FILES>
+    <FILE>src/test/coverage.rs</FILE>
+    <FILE>syn-cli/src/test/coverage.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-LOG,M-GRACE-MENTAL-TEST,M-GRACE-VERIFY,M-GRACE-LAYOUT</DEPENDS>
+  <LINKS>Phase-79,NFR-003,V-M-TEST-COVERAGE-MATRIX</LINKS>
+  <VERIFICATION_REF>V-M-TEST-COVERAGE-MATRIX</VERIFICATION_REF>
+</MODULE>

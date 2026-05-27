@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-5" status="done">
+  <NAME>Platform Release Expansion</NAME>
+  <GOAL>Expand prebuilt release coverage beyond Linux x86_64 while preserving installer, checksum, and documentation truth</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <ACCEPTANCE>
+    <CHECK>Phase-4 and Phase-5 marked done in plan-index</CHECK>
+    <CHECK>Release workflow publishes syn-x86_64-unknown-linux-gnu.tar.gz, syn-aarch64-unknown-linux-gnu.tar.gz, and syn-aarch64-apple-darwin.tar.gz with SHA256SUMS</CHECK>
+    <CHECK>Installer dry-run maps supported Linux x86_64/aarch64 and macOS x86_64/arm64 hosts to platform-specific artifacts and verifies checksums before extraction</CHECK>
+    <CHECK>Docs platform claims match the release matrix and source fallback reality</CHECK>
+    <CHECK>Local and hosted smoke gates validate artifact layout for each practical CI target</CHECK>
+    <CHECK>Full local CI gate passes</CHECK>
+  </ACCEPTANCE>
+  <EVIDENCE>
+    <RELEASE_RUN>https://github.com/anyagixx/synapse/actions/runs/26116615816</RELEASE_RUN>
+    <RELEASE_URL>https://github.com/anyagixx/synapse/releases/tag/v2.3.2</RELEASE_URL>
+    <LIVE_INSTALL>Public main installer installed v2.3.2 from release artifact with SHA256 verification on Linux x86_64</LIVE_INSTALL>
+  </EVIDENCE>
+</PHASE>

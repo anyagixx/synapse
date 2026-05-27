@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-MCP-SERVER-TELEMETRY" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Provide small helper functions that keep MCP telemetry spans bounded and argument-safe.
+    Key data flows:
+      - INPUT: MCP profile/style counts, tool name, optional BudgetStatus, JSON-RPC response metadata, and McpCallStatus.
+      - PROCESSING: Create tracing spans and record only bounded status metadata.
+      - OUTPUT: Span metadata consumed by M-TELEMETRY when OTLP export is enabled.
+    Critical invariants:
+      - Raw tool arguments are never recorded in spans.
+      - Helper code remains separate from src/mcp/server.rs to keep the server facade within line limits.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Build spans in small functions and let the server facade record lifecycle fields after existing budget and pressure checks.
+    Complexity_areas: keeping response metadata extraction safe for all JSON-RPC response shapes.
+    Patterns_applied: bounded metadata, optional fields, no argument capture.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - MCP protocol tests keep stdout JSON-RPC behavior unchanged.
+    - cargo test --all-targets --features telemetry compiles the spans with the OTLP feature enabled.
+  RISKS_ACKNOWLEDGED:
+    - Too much MCP metadata can leak sensitive inputs, so only tool names and aggregate statuses are recorded.
+</BELIEF_STATE>

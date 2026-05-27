@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CLI-RTK-COMMANDS" type="CORE_LOGIC" status="active">
+  <NAME>M-CLI-RTK-COMMANDS</NAME>
+  <PURPOSE>RTK parity inventory gate — compares Synapse RTK coverage against source and release-gated parity domains</PURPOSE>
+  <SCOPE>RtkProxyCmd shortcut dispatch for read, ls, tree, find, rg, grep, git, gt, cargo, npm, pnpm, npx, pytest, jest, lint, format, gh, glab, aws, psql, curl, wget, jq, go, golangci, dotnet, rake, rspec, rubocop, gradle, make, just, helm, kubectl, docker, and podman; RewriteCmd dry-run rewriting for simple commands, safe shell command chains, pipeline left edges, fd-merge redirects, transparent shell prefix builtins, expanded proxy shortcuts, .NET artifact adapters, session/economics analytics, and local system adapters treated as token-safe Synapse shortcuts</SCOPE>
+  <FILES>
+    <FILE>src/cli/rtk_adapters.rs</FILE>
+    <FILE>src/cli/rtk_commands.rs</FILE>
+    <FILE>src/cli/rtk_core_adapters.rs</FILE>
+    <FILE>src/cli/rtk_discovery.rs</FILE>
+    <FILE>src/cli/rtk_dotnet_artifacts.rs</FILE>
+    <FILE>src/cli/rtk_economics.rs</FILE>
+    <FILE>src/cli/rtk_parity.rs</FILE>
+    <FILE>src/cli/rtk_system_adapters.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_adapters.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_commands.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_core_adapters.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_discovery.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_dotnet_artifacts.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_economics.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_parity.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_system_adapters.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-TRACKING,M-UTILS,M-CLI-RUNTIME-COMMANDS,M-PROXY,M-PROXY-ROUTER,M-PROXY-RUNNER,M-CAPABILITIES,M-CLI,M-PROXY-FILTER,M-HOOKS,M-RTK-FULL-PARITY</DEPENDS>
+  <LINKS>M-CLI,M-TRACKING,UC-002,NFR-003,M-CLI-RUNTIME-COMMANDS,M-PROXY,M-PROXY-RUNNER,Phase-53,M-PROXY-ROUTER,M-CAPABILITIES,Phase-49,Phase-56,Phase-54,M-PROXY-FILTER,M-HOOKS,M-RTK-FULL-PARITY,Phase-44,Phase-45,Phase-46,Phase-48,Phase-50</LINKS>
+  <VERIFICATION_REF>V-M-CLI-RTK-COMMANDS</VERIFICATION_REF>
+</MODULE>

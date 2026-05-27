@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-SKILLS" type="CORE_LOGIC" status="active">
+  <NAME>Workspace Skills Crate</NAME>
+  <PURPOSE>Skills crate root — GRACE workflow skill engine (16 skills), capabilities registry, and skill type definitions. Depends on syn-core + syn-engine + syn-run.</PURPOSE>
+  <FILES>
+    <FILE>syn-skills/src/lib.rs</FILE>
+    <FILE>syn-skills/src/skills/engine.rs</FILE>
+    <FILE>syn-skills/src/capabilities.rs</FILE>
+  </FILES>
+  <VERIFICATION_REF>V-M-WORKSPACE-SKILLS</VERIFICATION_REF>
+  <DEPENDS>
+    <DEP>M-WORKSPACE-CORE</DEP>
+    <DEP>M-WORKSPACE-ENGINE</DEP>
+    <DEP>M-WORKSPACE-RUN</DEP>
+  </DEPENDS>
+  <LINKS>
+    <LINK type="implements">Phase-97</LINK>
+    <LINK type="depends">M-CAPABILITIES</LINK>
+  </LINKS>
+</MODULE>

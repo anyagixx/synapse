@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-HARNESS" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST-HARNESS</NAME>
+  <PURPOSE>Planned facade for Synapse E2E and regression test infrastructure.</PURPOSE>
+  <SCOPE>Contract stub for fixture, e2e, snapshot, coverage, perf, contract differential, and resilience harness modules.</SCOPE>
+  <FILES>
+    <FILE>src/test/mod.rs</FILE>
+    <FILE>syn-cli/src/test/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-TEST-FIXTURE,M-TEST-E2E-RUNNER,M-TEST-SNAPSHOT,M-TEST-COVERAGE-MATRIX,M-TEST-PERF-REGRESSION,M-TEST-CONTRACT-DIFFERENTIAL,M-TEST-RESILIENCE-CHAOS</DEPENDS>
+  <LINKS>Phase-76,V-M-TEST-HARNESS</LINKS>
+  <VERIFICATION_REF>V-M-TEST-HARNESS</VERIFICATION_REF>
+</MODULE>

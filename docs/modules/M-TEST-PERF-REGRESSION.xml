@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-PERF-REGRESSION" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST-PERF-REGRESSION</NAME>
+  <PURPOSE>Criterion benchmarks for graph construction, traceability scanning, and cascade reachability.</PURPOSE>
+  <SCOPE>MultiModule fixture construction, Synapse binary command execution, index priming, assertion helpers, and compact Criterion configuration.</SCOPE>
+  <FILES>
+    <FILE>benches/cascade.rs</FILE>
+    <FILE>benches/common/mod.rs</FILE>
+    <FILE>benches/graph.rs</FILE>
+    <FILE>benches/search.rs</FILE>
+    <FILE>src/test/perf.rs</FILE>
+    <FILE>syn-cli/src/test/perf.rs</FILE>
+  </FILES>
+  <DEPENDS>M-TEST-PERF-REGRESSION,M-TEST-FIXTURE,M-GRACE-CASCADE,M-GRAPHRAG,M-INDEXER,M-GRACE-VERIFY</DEPENDS>
+  <LINKS>Phase-89,V-M-TEST-PERF-REGRESSION,M-TEST-FIXTURE,Phase-80,NFR-002,NFR-003</LINKS>
+  <VERIFICATION_REF>V-M-TEST-PERF-REGRESSION</VERIFICATION_REF>
+</MODULE>

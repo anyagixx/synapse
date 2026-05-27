@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-RTK-FULL-PARITY" type="CORE_LOGIC" status="active">
+  <NAME>M-RTK-FULL-PARITY</NAME>
+  <PURPOSE>Full RTK parity matrix — classifies source-derived rtk-develop command, hook, and command-module coverage in Synapse</PURPOSE>
+  <SCOPE>FullRtkParityReport models, rtk-develop enum parsing, command-module inventory, Synapse CLI inventory parsing, hook processor/install target coverage, coverage classification, and text/JSON rendering</SCOPE>
+  <FILES>
+    <FILE>src/cli/rtk_full_parity.rs</FILE>
+    <FILE>syn-cli/src/cli/rtk_full_parity.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-CLI-RTK-COMMANDS,M-PROXY-FILTER,M-PROXY-ROUTER,M-HOOKS</DEPENDS>
+  <LINKS>M-CLI,M-CLI-RTK-COMMANDS,M-HOOKS,Phase-51,NFR-003</LINKS>
+  <VERIFICATION_REF>V-M-RTK-FULL-PARITY</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-MCP-REGRESSION" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned real stdio JSON-RPC regression suite for the Synapse MCP server.
+    Key data flows:
+      - INPUT: fixture root and JSON-RPC requests
+      - PROCESSING: spawn syn mcp stdio, send requests, skip notifications, validate response IDs and envelopes
+      - OUTPUT: protocol regression assertions and failure evidence
+    Critical invariants:
+      - stdout remains JSON-RPC only
+      - child server is always killed and waited on
+  IMPLEMENTATION_STRATEGY:
+    Approach: wrap the child process in a helper with request, notify, timeout, and cleanup controls
+    Complexity_areas: process lifecycle, blocking IO, malformed JSON, protocol version stability
+    Patterns_applied: black-box integration test, timeout guard, fixture-driven setup
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - initialize and tools/list pass against real stdio
+    - malformed JSON returns a JSON-RPC error instead of panic
+  RISKS_ACKNOWLEDGED:
+    - Missing timeout can hang local and CI test runs
+</BELIEF_STATE>

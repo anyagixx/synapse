@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MAINTAINABILITY_SPLIT_PLAN phase="Phase-14" status="accepted">
+  <PURPOSE>Document safe post-release split boundaries for files above the 500-line maintainability target while keeping the public release candidate stable.</PURPOSE>
+  <POLICY>
+    <RULE id="R-001">The 1300-line hard gate remains blocking and must pass before release.</RULE>
+    <RULE id="R-002">The 500-line target is a maintainability warning for mature modules, not a release blocker when tests, clippy, verify, review, and refresh pass.</RULE>
+    <RULE id="R-003">Large files should be split only along stable module boundaries with tests moved in the same change.</RULE>
+  </POLICY>
+  <BOUNDARIES>
+    <FILE path="src/dashboard.rs" priority="P1">
+      <SPLIT>Move HTML rendering helpers and page payload tests to dashboard_views/dashboard_payload modules after release.</SPLIT>
+      <RISK>Low runtime risk, moderate docs/test churn.</RISK>
+    </FILE>
+    <FILE path="src/grace/traceability.rs" priority="P1">
+      <SPLIT>Move module default trace mappings and report rendering into traceability_defaults and traceability_render modules.</SPLIT>
+      <RISK>Moderate because strict traceability gates depend on this module.</RISK>
+    </FILE>
+    <FILE path="src/grace/cascade.rs" priority="P1">
+      <SPLIT>Move graph construction and preview rendering into cascade_graph and cascade_render modules.</SPLIT>
+      <RISK>Moderate because preview execution writes artifacts.</RISK>
+    </FILE>
+    <FILE path="src/grace/contract.rs" priority="P1">
+      <SPLIT>Move typed LINKS parsing/validation into contract_links module.</SPLIT>
+      <RISK>Moderate because all MyGRACE gates use contract scanning.</RISK>
+    </FILE>
+    <FILE path="src/mcp/server_grace_tools.rs" priority="P1">
+      <SPLIT>Shard artifact-generation, traceability, testing, and status handlers into focused MCP helper modules.</SPLIT>
+      <RISK>Moderate because MCP tools/list parity must remain exact.</RISK>
+    </FILE>
+    <FILE path="src/grace/verify.rs" priority="P2">
+      <SPLIT>Move requirements, technology, development-plan, traceability, and non-human checks into verify_* helpers.</SPLIT>
+      <RISK>Low to moderate if check names stay stable.</RISK>
+    </FILE>
+  </BOUNDARIES>
+  <RELEASE_DECISION>
+    <ACCEPTED>Do not split large files inside Phase-14 unless a hard gate fails. The safer release path is to ship after full gates and schedule module splits as Phase-15.</ACCEPTED>
+  </RELEASE_DECISION>
+</MAINTAINABILITY_SPLIT_PLAN>

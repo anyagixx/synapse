@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-E2E-RUNNER" module="M-TEST-E2E-RUNNER" priority="critical" status="active">
+  <UNIT_TESTS>
+    <TEST>TOML scenarios parse scenario metadata, command steps, write_file steps, expectations, and snapshot steps.</TEST>
+    <TEST>Exit code, stdout_contains, stdout_not_contains, and stderr_contains checks fail with actionable reasons.</TEST>
+    <TEST>Repository full-cycle and failure scenario fixtures run through run_e2e_scenario.</TEST>
+    <TEST>Repository scenario paths resolve from the crate manifest root when coverage tooling changes the test runner working directory.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>syn test e2e --scenario tests/e2e/scenarios/full-cycle.toml passes on a Minimal fixture.</TEST>
+    <TEST>fail_fast stops after the first failed step.</TEST>
+    <TEST>tests/e2e/scenarios/failure.toml reports one bounded failure.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>e2e_scenario_started</LOG>
+    <LOG>e2e_step_completed</LOG>
+    <LOG>e2e_scenario_completed</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Scenario runner never runs against the developer checkout when a fixture was requested.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-77,Phase-94</PHASE_GATE>
+</VERIFICATION>

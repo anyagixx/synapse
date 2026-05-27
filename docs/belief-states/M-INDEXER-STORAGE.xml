@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-INDEXER-STORAGE" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: JSON block storage facade with load-health reporting, snapshot and delta persistence, filter metadata, filtered BM25, n-gram fallback, and dense embedding vector search APIs
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
+      - PROCESSING: Implement only the declared scope while preserving dependencies: M-INDEXER-STORAGE-SEARCH, M-INDEXER-STORAGE-TYPES
+      - OUTPUT: Updated storage APIs, including StoredBlock/SearchFilters re-exports, filtered search entrypoints, and compatible embedding vector ranking, that verify against MyGRACE gates
+    Critical invariants:
+      - Scope remains bounded to: Storage struct, StoredBlock/SearchFilters re-exports, JSON persistence, full snapshot replacement, per-file upsert/removal, load-health reporting, filtered search API orchestration, and embedding vector search over compatible persisted metadata
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
+    Complexity_areas: artifact drift, backward compatibility, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - verify_project, review_code, and relevant unit tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
+    - Incomplete module artifacts can make the first belief state too generic
+</BELIEF_STATE>

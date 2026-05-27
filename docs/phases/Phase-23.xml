@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-23" status="done">
+  <NAME>Bounded Run Action Queue</NAME>
+  <GOAL>Move the autonomous runtime beyond a scenario harness by adding durable next-action planning, one-step execution, bounded loops, retry handoff, and replay commands for persisted runs.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-RUNNER" />
+    <MODULE_REF id="M-CLI" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-RUNNER" status="done">Added durable run action plans under docs/runs/*.actions.json.</step-1>
+    <step-2 module="M-RUNNER" status="done">Added plan, next, bounded loop, retry, and replay action execution APIs.</step-2>
+    <step-3 module="M-CLI" status="done">Extended syn run with --action plan|next|loop|retry|replay, --run-id, and --max-actions.</step-3>
+    <step-4 module="M-CLI-RUNTIME-COMMANDS" status="done">Connected action commands to RunManager with JSON and compact text output.</step-4>
+    <step-5 module="M-TESTS-INTEGRATION" status="done">Added CLI plan/replay smoke coverage for persisted runs.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-actions cargo test run::actions::tests --lib</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-actions cargo test --test integration_test test_run_action_cli_plans_and_replays_run</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-actions cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-actions cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-actions cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">env XDG_DATA_HOME=/tmp/synapse-run-actions cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

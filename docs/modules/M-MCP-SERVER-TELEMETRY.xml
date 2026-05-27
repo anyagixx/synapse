@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER-TELEMETRY" type="INTEGRATION" status="active">
+  <NAME>M-MCP-SERVER-TELEMETRY</NAME>
+  <PURPOSE>Build bounded OpenTelemetry span metadata for MCP tools/list and tools/call paths.</PURPOSE>
+  <SCOPE>MCP tools/list span creation, tools/call span creation, budget/context/status/duration field recording.</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server_telemetry.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_telemetry.rs</FILE>
+  </FILES>
+  <DEPENDS>M-MCP-SERVER,M-TRACKING</DEPENDS>
+  <LINKS>docs/phases/Phase-93.xml,M-TELEMETRY</LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER-TELEMETRY</VERIFICATION_REF>
+</MODULE>

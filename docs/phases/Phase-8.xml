@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-8" status="done">
+  <NAME>Product Truth and Release Discipline</NAME>
+  <GOAL>Align public documentation, release metadata, version guards, and supply-chain checks with shipped Linux/macOS behavior</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <PLANNED_WORK>
+    <step-1 module="M-TESTS-PARITY" status="done">Blocked ghost CLI commands and unsupported install URLs across README, INSTALL, COMMANDS, FAQ, QUICKSTART, and WORKFLOW through docs parity tests.</step-1>
+    <step-2 module="M-CI-RELEASE-SMOKE" status="done">Added release tag versus Cargo.toml version guard and packaged syn --version assertion.</step-2>
+    <step-3 module="M-INSTALL" status="done">Hardened source fallback with cargo install --locked and updated installer verification coverage.</step-3>
+    <step-4 module="M-CI" status="done">Updated notify to 8.2.0 and enforced cargo audit --deny warnings in hosted security CI.</step-4>
+  </PLANNED_WORK>
+  <ACCEPTANCE>
+    <CHECK>No public docs mention unsupported commands, unsupported Windows install path, obsolete synapse-ai URLs, or synapse.dev/install.sh as a shell installer</CHECK>
+    <CHECK>Release workflow rejects tag/version mismatches</CHECK>
+    <CHECK>Release artifacts carry non-empty release notes or generated release notes</CHECK>
+    <CHECK>Security audit warning policy is explicit and enforced in CI</CHECK>
+  </ACCEPTANCE>
+  <EVIDENCE>
+    <LOCAL_TESTS>cargo test --test docs_parity; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings</LOCAL_TESTS>
+    <RELEASE_GATES>SYN_RELEASE_TAG=v2.3.5 bash scripts/release_version_guard.sh; bash scripts/release_install_smoke.sh</RELEASE_GATES>
+    <SECURITY>cargo audit --deny warnings passed with notify 8.2.0 and no instant dependency in Cargo.lock</SECURITY>
+    <MYGRACE>refresh --json drift=0; verify --ci and review --mode full --ci passed with 71 contracted files and 292 function contracts; scripts/ci.sh passed</MYGRACE>
+  </EVIDENCE>
+</PHASE>

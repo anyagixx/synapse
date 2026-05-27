@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-HARNESS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned facade for shared UPGRADE_3 test infrastructure.
+    Key data flows:
+      - INPUT: calls from CLI test commands and integration tests
+      - PROCESSING: expose fixture, e2e, snapshot, coverage, perf, contract, and resilience modules
+      - OUTPUT: stable harness APIs for phase implementations
+    Critical invariants:
+      - Harness modules remain test infrastructure and do not alter normal runtime behavior
+      - Module boundaries stay small enough to avoid another monolithic test utility
+  IMPLEMENTATION_STRATEGY:
+    Approach: create a thin facade first, then fill modules phase by phase
+    Complexity_areas: dependency direction, compile visibility, test-only versus runtime APIs
+    Patterns_applied: facade module, explicit dependencies, phased implementation
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - all planned harness modules compile and are reachable by command handlers
+    - MyGRACE canonical inventory has no drift
+  RISKS_ACKNOWLEDGED:
+    - Exposing too much test infrastructure publicly can make later refactors harder
+</BELIEF_STATE>

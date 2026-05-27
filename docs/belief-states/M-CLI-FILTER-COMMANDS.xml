@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-CLI-FILTER-COMMANDS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: CLI filter diagnostics for explaining token-saving TOML filters without executing shell commands.
+    Key data flows:
+      - INPUT: FiltersDryRunCmd arguments, sample output from --input file/stdin or hidden --sample, and loaded FilterEngine filters.
+      - PROCESSING: Select a filter by exact name or command match, run the pure dry-run pipeline, then render text or JSON with stage decisions and token metrics.
+      - OUTPUT: Agent-readable dry-run report showing before/after content when requested, filtered output, stage changes, and machine-readable metrics.
+    Critical invariants:
+      - Dry-run never executes the user command.
+      - Unknown filters or missing command/filter selectors fail with actionable errors.
+      - JSON output stays machine-readable for agents and shell scripts.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Keep CLI I/O separate from M-PROXY-FILTER pipeline logic and delegate all filter behavior to FilterEngine dry-run APIs.
+    Complexity_areas: stdin handling, exact filter selection, text versus JSON output compatibility.
+    Patterns_applied: explicit data flow, typed module links, bounded CLI helper functions.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test cli::filter_commands --lib -- --test-threads=8 passes
+    - filters dry-run supports --filter, --input -, --show-input, and --format json
+    - filters verify --list lists available filters
+  RISKS_ACKNOWLEDGED:
+    - Reading stdin can block in interactive shells if no input is provided.
+    - Filter names and command match mode need clear errors so users do not confuse dry-run with command execution.
+</BELIEF_STATE>

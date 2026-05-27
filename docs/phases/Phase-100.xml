@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-100" status="complete">
+  <NAME>Benchmark Infrastructure Restoration</NAME>
+  <GOAL>Restore broken Criterion benchmarks after workspace split, add bench targets to Cargo.toml, and verify all 9 benchmarks execute successfully. The workspace split (Phase-97) broke bench imports (syn:: → syn_engine::) and bench targets were never registered in Cargo.toml.</GOAL>
+  <SOURCE_PLAN>Reasonix v2.6.8 analysis recommendation #6: add more benchmarks. Audit revealed 3 existing benchmark suites (search, graph, cascade — 9 total benchmarks) were non-functional after Phase-97 due to broken crate imports and missing [[bench]] targets in Cargo.toml.</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TEST-PERF-REGRESSION" />
+    <MODULE_REF id="M-BUILD" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-100-1">Fix broken imports in benches/common/mod.rs: syn::test::fixture → syn_cli::test::fixture</FLOW>
+    <FLOW id="DF-100-2">Fix broken imports in benches/cascade.rs: syn::grace::cascade → syn_engine::grace::cascade</FLOW>
+    <FLOW id="DF-100-3">Fix broken imports in benches/graph.rs: syn::graphrag → syn_engine::graphrag, syn::grace → syn_engine::grace</FLOW>
+    <FLOW id="DF-100-4">Add [[bench]] targets to syn-cli/Cargo.toml (search, graph, cascade) with harness=false</FLOW>
+    <FLOW id="DF-100-5">Add criterion to syn-cli dev-dependencies</FLOW>
+    <FLOW id="DF-100-6">Run cargo bench --bench search --bench graph --bench cascade → verify all 9 pass</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TEST-PERF-REGRESSION" status="complete">Fixed benches/common/mod.rs: syn:: → syn_cli::</step-1>
+    <step-2 module="M-TEST-PERF-REGRESSION" status="complete">Fixed benches/cascade.rs: syn::grace::cascade → syn_engine::grace::cascade</step-2>
+    <step-3 module="M-TEST-PERF-REGRESSION" status="complete">Fixed benches/graph.rs: all syn:: → syn_engine:: references (3 sites)</step-3>
+    <step-4 module="M-BUILD" status="complete">Added [[bench]] targets to syn-cli/Cargo.toml + criterion dev-dependency</step-4>
+    <step-5 module="M-GRACE-VERIFY" status="complete">All 9 benchmarks execute: search (3), graph (3), cascade (2 + 1 impact_small)</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="pass">cargo bench --bench search — 3 benchmarks: index, search_cold, search_warm</CHECK>
+    <CHECK status="pass">cargo bench --bench graph — 3 benchmarks: graph_build, traceability_scan, cascade_reachable</CHECK>
+    <CHECK status="pass">cargo bench --bench cascade — 2 benchmarks: cascade_impact_small, cascade_execute</CHECK>
+    <CHECK status="pass">cargo run --quiet -- verify — wave PASS, phase PASS</CHECK>
+  </VERIFICATION>
+  <BENCHMARK_RESULTS>
+    <RESULT name="index_multimodule" time="~4.5ms" unit="per iteration" />
+    <RESULT name="search_cold" time="~4.6ms" unit="per search" />
+    <RESULT name="search_warm" time="~4.6ms" unit="per search" />
+    <RESULT name="graph_build" time="~2.1ms" unit="per build" />
+    <RESULT name="traceability_scan" time="~1.2ms" unit="per scan" />
+    <RESULT name="cascade_reachable" time="~3.5ms" unit="per scan" />
+    <RESULT name="cascade_impact_small" time="~3.5ms" unit="per analysis" />
+    <RESULT name="cascade_execute" time="~180µs" unit="per execution" />
+  </BENCHMARK_RESULTS>
+  <RISKS>
+    <RISK id="R-100-1">Storage-level benchmarks (upsert, search, delete) deferred — require deeper StoredBlock API knowledge. Mitigation: existing search/index benchmarks cover similar paths.</RISK>
+    <RISK id="R-100-2">Benchmarks run against MultiModule fixtures, not real-world large codebases. Mitigation: fixtures are representative of the target use case.</RISK>
+  </RISKS>
+</PHASE>

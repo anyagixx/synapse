@@ -1,0 +1,74 @@
+# Configuration — `synapsec.toml`
+
+[project]
+name = "my-project"
+version = "0.1.0"
+strictness = false
+
+[index]
+chunk_size = 2000
+chunk_overlap = 100
+require_git = true
+
+[search]
+max_results = 20
+similarity_threshold = 0.65
+hybrid_enabled = false
+
+[proxy]
+enabled = true
+passthrough_max_chars = 2000
+capture_cap_bytes = 10485760
+command_timeout_secs = 300
+
+[compress]
+output_level = "full"
+input_enabled = true
+
+[tracking]
+enabled = true
+history_days = 90
+
+[budget]
+session_token_limit = 0
+context_window_limit = 200000
+warn_at_pct = 80
+block_at_pct = 100
+reset_on_new_session = true
+
+[observability]
+enabled = true
+mcp_metrics_enabled = true
+mcp_metrics_retention_days = 30
+mcp_stats_limit = 12
+readiness_mcp_stats_limit = 5
+pipeline_response_queue_capacity = 128
+pipeline_max_concurrent_requests = 16
+pipeline_max_line_bytes = 10485760
+
+[telemetry]
+enabled = false
+endpoint = "http://localhost:4317"
+service_name = "synapse"
+sampling = "always_on"
+batch_interval_ms = 2000
+
+[telemetry.resource]
+
+[graphrag]
+enabled = false
+use_llm = false
+
+[embedding]
+enabled = false
+provider = "fastembed"
+model = "AllMiniLML6V2"
+cache_dir = ""
+batch_size = 256
+
+# [lsp.servers]
+# rs = ["rust-analyzer"]
+# py = ["pylsp"]
+# ts = ["typescript-language-server", "--stdio"]
+# js = ["typescript-language-server", "--stdio"]
+# go = ["gopls"]

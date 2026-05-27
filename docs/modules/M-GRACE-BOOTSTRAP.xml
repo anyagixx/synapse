@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-BOOTSTRAP" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-BOOTSTRAP</NAME>
+  <PURPOSE>Existing-repository bootstrap helpers — create canonical MyGRACE artifacts from current source files</PURPOSE>
+  <SCOPE>module scope resolution, init --from-existing artifact generation, path-derived module IDs</SCOPE>
+  <FILES>
+    <FILE>src/grace/bootstrap.rs</FILE>
+    <FILE>syn-engine/src/grace/bootstrap.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-LAYOUT,M-INDEXER-WALKER</DEPENDS>
+  <LINKS>docs/graph-index.xml,docs/modules/,docs/verification/</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-BOOTSTRAP</VERIFICATION_REF>
+</MODULE>

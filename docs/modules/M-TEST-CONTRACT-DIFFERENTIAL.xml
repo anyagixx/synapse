@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-CONTRACT-DIFFERENTIAL" type="CORE_LOGIC" status="active">
+  <NAME>M-TEST-CONTRACT-DIFFERENTIAL</NAME>
+  <PURPOSE>Run TOML-defined cascade differential tests against expected affected modules.</PURPOSE>
+  <SCOPE>TOML specs, fixture selection, trigger filtering, missing and unexpected affected modules, allow_extra, bounded reporting, and cascade preview cleanup.</SCOPE>
+  <FILES>
+    <FILE>src/test/contract_test.rs</FILE>
+    <FILE>syn-cli/src/test/contract_test.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CASCADE,M-TEST-FIXTURE</DEPENDS>
+  <LINKS>Phase-79,V-M-TEST-CONTRACT-DIFFERENTIAL</LINKS>
+  <VERIFICATION_REF>V-M-TEST-CONTRACT-DIFFERENTIAL</VERIFICATION_REF>
+</MODULE>

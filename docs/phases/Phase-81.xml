@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-81" status="done">
+  <NAME>UPGRADE_3 Resilience Chaos</NAME>
+  <GOAL>Prove Synapse handles corrupted project state with graceful errors and recoverable workflows.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_3/E8-resilience-chaos.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-TEST-RESILIENCE-CHAOS" />
+    <MODULE_REF id="M-TEST-FIXTURE" />
+    <MODULE_REF id="M-CLI-TEST-COMMANDS" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-81-1">Resilience spec creates a fresh fixture, applies corruption, runs recovery command, and checks output and recovery state.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-TEST-RESILIENCE-CHAOS" status="done">Implement corruption actions and fixture-local safety checks.</step-1>
+    <step-2 module="M-TEST-RESILIENCE-CHAOS" status="done">Implement recovery command runner, expected output checks, and verify command checks.</step-2>
+    <step-3 module="M-CLI-TEST-COMMANDS" status="done">Wire syn test resilience with directory/file spec discovery and fail_fast.</step-3>
+    <step-4 module="M-TEST-RESILIENCE-CHAOS" status="done">Add corruption specs for missing blocks.json, bad config, missing docs, empty graph, and missing module shard.</step-4>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test --all-targets resilience</CHECK>
+    <CHECK status="passed">cargo run --quiet -- test resilience</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-81-1">Chaos commands must be constrained to fixture roots and isolated XDG paths.</RISK>
+  </RISKS>
+</PHASE>

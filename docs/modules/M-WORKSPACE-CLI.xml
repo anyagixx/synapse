@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-CLI" type="CORE_LOGIC" status="active">
+  <NAME>Workspace CLI Crate</NAME>
+  <PURPOSE>CLI crate root — command dispatch (42+ commands), web dashboard with observability, multi-project workspace orchestration, and test infrastructure (e2e, coverage, performance, resilience). Depends on all workspace crates.</PURPOSE>
+  <FILES>
+    <FILE>syn-cli/src/lib.rs</FILE>
+    <FILE>syn-cli/src/main.rs</FILE>
+    <FILE>syn-cli/src/cli.rs</FILE>
+    <FILE>syn-cli/src/dashboard.rs</FILE>
+    <FILE>syn-cli/src/workspace/mod.rs</FILE>
+    <FILE>syn-cli/src/test/e2e.rs</FILE>
+    <FILE>syn-cli/src/test/coverage.rs</FILE>
+    <FILE>syn-cli/src/test/perf.rs</FILE>
+    <FILE>syn-cli/src/test/resilience.rs</FILE>
+  </FILES>
+  <VERIFICATION_REF>V-M-WORKSPACE-CLI</VERIFICATION_REF>
+  <DEPENDS>
+    <DEP>M-WORKSPACE-CORE</DEP>
+    <DEP>M-WORKSPACE-ENGINE</DEP>
+    <DEP>M-WORKSPACE-PROXY</DEP>
+    <DEP>M-WORKSPACE-RUN</DEP>
+    <DEP>M-WORKSPACE-SKILLS</DEP>
+    <DEP>M-WORKSPACE-MCP</DEP>
+  </DEPENDS>
+  <LINKS>
+    <LINK type="implements">Phase-97</LINK>
+    <LINK type="depends">M-CLI</LINK>
+    <LINK type="depends">M-DASHBOARD-OBSERVABILITY</LINK>
+  </LINKS>
+</MODULE>

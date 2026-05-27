@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-CASCADE-CHANGE" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-CASCADE-CHANGE</NAME>
+  <PURPOSE>Cascade changelog model and XML writer for recorded GRACE cascade executions</PURPOSE>
+  <SCOPE>CascadeChangeLog, trigger/change entries, XML rendering, changelog persistence, and history scanning</SCOPE>
+  <FILES>
+    <FILE>src/grace/cascade_change.rs</FILE>
+    <FILE>syn-engine/src/grace/cascade_change.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-LAYOUT</DEPENDS>
+  <LINKS>V-M-GRACE-CASCADE-CHANGE</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-CASCADE-CHANGE</VERIFICATION_REF>
+</MODULE>

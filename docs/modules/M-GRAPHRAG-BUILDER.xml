@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRAPHRAG-BUILDER" type="CORE_LOGIC" status="active">
+  <NAME>M-GRAPHRAG-BUILDER</NAME>
+  <PURPOSE>Graph builder — constructs CodeGraph from indexed storage, imports, hierarchy, and typed GRACE LINKS</PURPOSE>
+  <SCOPE>GraphBuilder struct, root/index-keyed cached build from storage blocks/files/contracts, root-scoped full/delta cache invalidation, typed LINKS extraction, extract_imports for multi-language</SCOPE>
+  <FILES>
+    <FILE>src/graphrag/builder.rs</FILE>
+    <FILE>syn-engine/src/graphrag/builder.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRAPHRAG-TYPES,M-GRACE-CONTRACT,M-INDEXER-STORAGE,M-INDEXER-WALKER</DEPENDS>
+  <LINKS></LINKS>
+  <VERIFICATION_REF>V-M-GRAPHRAG-BUILDER</VERIFICATION_REF>
+</MODULE>

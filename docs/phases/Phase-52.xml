@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-52" status="done">
+  <NAME>RTK Streaming Runner Parity</NAME>
+  <GOAL>Port RTK-style raw capture caps and streaming-safe output handling into Synapse proxy execution.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-RUNNER" />
+    <MODULE_REF id="M-PROXY" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-RUNNER" status="done">Add RAW_CAP-equivalent bounded capture for stdout and stderr.</step-1>
+    <step-2 module="M-PROXY-RUNNER" status="done">Write evidence streamingly while preserving filtered stdout semantics.</step-2>
+    <step-3 module="M-PROXY" status="done">Report truncation warnings and token accounting for capped output.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test proxy::runner::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_proxy_unicode_passthrough_truncates_without_panic</CHECK>
+  </VERIFICATION>
+</PHASE>

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-105" status="planned">
+  <NAME>GRACE Enforcement — Mandatory Methodology for LLM Agents</NAME>
+  <GOAL>Eliminate the systemic failure where LLM agents ignore GRACE methodology by implementing 5-layer enforcement: (1) Constitutional prompt injection via opencode rules, (2) Gate tools that BLOCK progress without GRACE steps, (3) Pre-commit hooks that reject non-compliant code, (4) Audit trail showing compliance gaps, (5) Onboarding education for every new agent session.</GOAL>
+  <PRIORITY>critical</PRIORITY>
+  <EFFORT>5 days</EFFORT>
+  <DEPENDS_ON>Phase-97 Phase-98</DEPENDS_ON>
+
+  <ROOT_CAUSE>
+    <OBSERVATION>LLM agent using Synapse via opencode CLI wrote code directly, skipped all 48 GRACE MCP tools, ignored MODULE_CONTRACT headers, and admitted: "Я выбрал скорость вместо процесса... Все GRACE-инструменты были доступны мне, но я их проигнорировал."</OBSERVATION>
+    <DIAGNOSIS>GRACE is self-governed — it relies on the agent VOLUNTARILY following the methodology. There is NO enforcement, NO detection, and NO feedback loop. The agent sees tools as optional. This is a systemic architectural gap, not an agent mistake.</DIAGNOSIS>
+  </ROOT_CAUSE>
+
+  <SOURCE>User field test: `syn init` → opencode CLI → Plan mode → agent executed plan → skipped ALL GRACE tools. Agent's own confession: "syn proxy — это просто обходной путь для записи файлов. Это НЕ замена GRACE-инструментам."</SOURCE>
+
+  <DELIVERABLES>
+    <DELIVERABLE id="D-105-1" layer="1-constitution">
+      <NAME>GRACE Constitution — Agent System Prompt Injection</NAME>
+      <FILES>
+        <FILE>opencode.jsonc — add grace-constitution rules reference</FILE>
+        <FILE>.opencode/rules/grace-constitution.md — mandatory GRACE workflow rules</FILE>
+      </FILES>
+      <CONTENT>
+        Rule 1: "You are a GRACE-governed agent. Every code change MUST follow the GRACE workflow. This is NON-NEGOTIABLE."
+        Rule 2: "Before writing ANY code: (a) call grace_execute for the target module, (b) call extract_belief_state, (c) read the module shard."
+        Rule 3: "After writing code: (a) verify MODULE_CONTRACT header is PRESENT, (b) call verify_project, (c) call review_code, (d) call grace_refresh."
+        Rule 4: "You are FORBIDDEN to use syn proxy as a shortcut to skip GRACE steps. Proxy is for command execution, not GRACE bypass."
+        Rule 5: "Violation of GRACE workflow will be detected by gate tools and your changes will be REJECTED."
+      </CONTENT>
+    </DELIVERABLE>
+
+    <DELIVERABLE id="D-105-2" layer="2-gates">
+      <NAME>Gate Tools — MCP Enforcement of GRACE Workflow</NAME>
+      <FILES>
+        <FILE>syn-mcp/src/mcp/server_grace_gates.rs — 3 new MCP tools</FILE>
+      </FILES>
+      <TOOLS>
+        <TOOL name="grace_gate_start" args="module_id, phase">
+          Marks module as "in_progress" in GRACE tracking. Returns MANDATORY checklist:
+          1. [ ] Read docs/modules/{module_id}.xml
+          2. [ ] Read docs/verification/V-{module_id}.xml
+          3. [ ] Call extract_belief_state({module_id})
+          4. [ ] Write code with MODULE_CONTRACT header
+          5. [ ] Call verify_project(level="module-local")
+          6. [ ] Call review_code(scope="module")
+          7. [ ] Call grace_gate_check({module_id})
+        </TOOL>
+        <TOOL name="grace_gate_check" args="module_id">
+          Verifies all GRACE steps completed for module. Returns PASS or FAIL with missing steps listed.
+          FAIL response: "BLOCKED: 3 of 7 required GRACE steps incomplete for M-WORKSPACE-CORE. Missing: extract_belief_state, verify_project, review_code. You are FORBIDDEN to continue until these steps pass."
+          Persists gate status in Tracker DB.
+        </TOOL>
+        <TOOL name="grace_gate_complete" args="module_id">
+          Final gate: marks module as "complete" in GRACE tracking. Updates belief_state, triggers grace_refresh, records cascade changelog entry.
+        </TOOL>
+      </TOOLS>
+    </DELIVERABLE>
+
+    <DELIVERABLE id="D-105-3" layer="3-hooks">
+      <NAME>Pre-Commit Hooks — File-Level GRACE Enforcement</NAME>
+      <FILES>
+        <FILE>syn-core/src/hooks/grace_pre_commit.rs — 2 new hook rules</FILE>
+      </FILES>
+      <HOOKS>
+        <HOOK name="grace_contract_hook">
+          Trigger: before any .rs file write via syn proxy.
+          Check: file must contain MODULE_CONTRACT header with valid MODULE_ID, PURPOSE, DEPENDS.
+          On failure: BLOCK write, return error: "REJECTED: missing MODULE_CONTRACT header. Call grace_execute first."
+          Exception: test files, build.rs, benches, generated code.
+        </HOOK>
+        <HOOK name="grace_verify_hook">
+          Trigger: after file write, before "commit-like" operation.
+          Check: runs verify_project(level="module-local") on the affected module.
+          On failure: WARN but don't block (verify may be slow). Log to Tracker.
+        </HOOK>
+      </HOOKS>
+    </DELIVERABLE>
+
+    <DELIVERABLE id="D-105-4" layer="4-audit">
+      <NAME>GRACE Audit Trail — Compliance Detection</NAME>
+      <FILES>
+        <FILE>syn-core/src/tracking/grace_audit.rs — audit trail storage and query</FILE>
+        <FILE>syn-mcp/src/mcp/server_grace_tools.rs — add grace_audit tool</FILE>
+      </FILES>
+      <TOOL name="grace_audit" args="module_id?, phase?, since?">
+        Returns audit report:
+        - Total modules touched: N
+        - GRACE-compliant: X (Y%)
+        - Skipped steps: list of module_id + missing step
+        - Recent violations: last 10 skipped steps
+        - Overall compliance score: X/100
+        This makes skipping GRACE VISIBLE to the agent and the user.
+      </TOOL>
+    </DELIVERABLE>
+
+    <DELIVERABLE id="D-105-5" layer="5-onboard">
+      <NAME>GRACE Onboarding — Agent Education</NAME>
+      <FILES>
+        <FILE>syn-skills/src/skills/engine.rs — extend grace_init skill</FILE>
+        <FILE>.opencode/rules/grace-onboard.md — onboarding document for agents</FILE>
+      </FILES>
+      <CONTENT>
+        grace_init extended to:
+        (1) Write GRACE constitution rules to .opencode/rules/
+        (2) Print onboarding message: "You are now operating in a GRACE-governed project. Every code change requires the GRACE workflow. Tools available: grace_execute, verify_project, review_code, grace_refresh, grace_status, grace_audit."
+        (3) First-time project open → agent MUST call grace_execute before any code.
+        grace_onboard skill: 5-minute education for agents on HOW to use GRACE tools, with examples of correct workflow vs incorrect (speed-only) workflow.
+      </CONTENT>
+    </DELIVERABLE>
+  </DELIVERABLES>
+
+  <DATA_FLOWS>
+    <FLOW id="DF-105-1">Agent starts → opencode loads grace-constitution.md rules → agent prompt includes GRACE mandate</FLOW>
+    <FLOW id="DF-105-2">Agent wants to write code → calls grace_gate_start(module) → receives checklist → follows steps</FLOW>
+    <FLOW id="DF-105-3">Agent writes file via syn proxy → grace_contract_hook checks MODULE_CONTRACT → blocks if missing</FLOW>
+    <FLOW id="DF-105-4">Agent completes code → calls grace_gate_check(module) → PASS/FAIL → if FAIL, lists missing steps</FLOW>
+    <FLOW id="DF-105-5">Agent/user queries compliance → grace_audit → sees all skipped steps → accountability</FLOW>
+    <FLOW id="DF-105-6">syn init → writes grace-constitution rules → agent onboarded from first session</FLOW>
+  </DATA_FLOWS>
+
+  <STEPS>
+    <step-1 id="step-105-1" module="M-GRACE-CONTRACT" status="planned">
+      Create .opencode/rules/grace-constitution.md — 5 non-negotiable rules for LLM agents.
+    </step-1>
+    <step-2 id="step-105-2" module="M-MCP-SERVER-GRACE-TOOLS" status="planned">
+      Implement 3 new MCP gate tools: grace_gate_start, grace_gate_check, grace_gate_complete in syn-mcp.
+    </step-2>
+    <step-3 id="step-105-3" module="M-HOOKS" status="planned">
+      Implement 2 pre-commit hooks: grace_contract_hook (blocks non-compliant writes), grace_verify_hook (warns on verify failure).
+    </step-3>
+    <step-4 id="step-105-4" module="M-TRACKING" status="planned">
+      Implement grace_audit trail: Tracker records every GRACE tool call + gap detection.
+    </step-4>
+    <step-5 id="step-105-5" module="M-SKILLS-ENGINE" status="planned">
+      Extend grace_init skill: auto-write constitution rules, trigger onboarding on first project open.
+    </step-5>
+    <step-6 id="step-105-6" module="M-CAPABILITIES" status="planned">
+      Update capabilities registry: 3 new gate tools + 1 audit tool + grace_onboard skill.
+    </step-6>
+    <step-7 id="step-105-7" module="M-GRACE-VERIFY" status="planned">
+      Verify: run field test — opencode agent in new project → agent MUST use GRACE tools → verify compliance via grace_audit.
+    </step-7>
+  </STEPS>
+
+  <VERIFICATION>
+    <CHECK status="target">Field test: LLM agent in new project calls grace_gate_start before writing any code</CHECK>
+    <CHECK status="target">Agent tries to write .rs file without MODULE_CONTRACT → grace_contract_hook BLOCKS with clear error</CHECK>
+    <CHECK status="target">grace_gate_check returns FAIL with specific missing steps when agent skips GRACE</CHECK>
+    <CHECK status="target">grace_audit shows 100% compliance after correct workflow, &lt;50% after speed-only workflow</CHECK>
+    <CHECK status="target">grace_init writes constitution rules → agent's first message references GRACE mandate</CHECK>
+    <CHECK status="target">Agent CANNOT complete a coding session without at least 1 GRACE tool call</CHECK>
+  </VERIFICATION>
+
+  <RISKS>
+    <RISK id="R-105-1" severity="high">
+      Over-enforcement may frustrate agents → they find workarounds (edit files outside syn proxy).
+      Mitigation: make blocking configurable (strict/balanced/lite). Lite mode warns but doesn't block. Strict mode enforced in CI.
+    </RISK>
+    <RISK id="R-105-2" severity="high">
+      Agent may call grace_gate_check but still write bad code — GRACE doesn't guarantee correctness.
+      Mitigation: gate tools are process enforcement, not quality enforcement. verify_project + review_code remain the quality gates.
+    </RISK>
+    <RISK id="R-105-3" severity="medium">
+      grace_contract_hook adds latency to every file write → agents may complain.
+      Mitigation: hook runs regex-only check (MODULE_CONTRACT header presence), not full verify. &lt;5ms overhead.
+    </RISK>
+    <RISK id="R-105-4" severity="medium">
+      Existing codebase has 177 files with MODULE_CONTRACT — hook must not break on compliant files.
+      Mitigation: hook only checks NEW or MODIFIED files; existing files grandfathered.
+    </RISK>
+    <RISK id="R-105-5" severity="low">
+      opencode may not support rules/ directory injection natively.
+      Mitigation: fall back to system prompt in opencode.jsonc; document manual injection path.
+    </RISK>
+  </RISKS>
+
+  <SUCCESS_METRIC>
+    <METRIC name="agent_compliance">After Phase-105, LLM agent in new project follows GRACE workflow ≥90% of coding sessions (measured by grace_audit tool calls per session).</METRIC>
+    <METRIC name="zero_skip">0 sessions where agent writes &gt;50 lines of code with 0 GRACE tool calls.</METRIC>
+    <METRIC name="user_trust">User no longer needs to manually verify GRACE compliance — system enforces it automatically.</METRIC>
+  </SUCCESS_METRIC>
+</PHASE>

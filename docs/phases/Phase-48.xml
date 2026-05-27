@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-48" status="done">
+  <NAME>RTK Cloud And VCS Adapter Parity</NAME>
+  <GOAL>Port or wrap RTK cloud, container, VCS hosting, and data-client adapters with compact outputs and route-aware verification.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-PROXY-ROUTER" />
+    <MODULE_REF id="M-PROXY-FILTER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="done">Added Docker and Podman first-class RTK shortcuts, token-safe rewrite detection, and rtk-parity shortcut inventory updates while preserving existing cloud/VCS shortcut behavior.</step-1>
+    <step-2 module="M-PROXY-ROUTER" status="done">Routed Docker, Docker Compose, Podman, and Podman Compose consistently through the infrastructure adapter family from raw shell, route previews, and rewrite hooks.</step-2>
+    <step-3 module="M-PROXY-FILTER" status="done">Added inline-tested compact filters for Docker/Podman listings, container logs, kubectl listings/logs, and psql table output.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test cli::rtk_commands::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_parity::tests --lib</CHECK>
+    <CHECK status="passed">cargo test proxy::router::tests --lib</CHECK>
+    <CHECK status="passed">cargo run --quiet -- docker --route ps</CHECK>
+    <CHECK status="passed">cargo run --quiet -- podman --route ps</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter container-ps</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter container-images</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter container-logs</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter kubectl-get</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter kubectl-logs</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter psql-table</CHECK>
+    <CHECK status="passed">cargo run --quiet -- rtk-parity --source ../GRACEme/rtk-develop --json --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

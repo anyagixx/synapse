@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-13" status="done">
+  <NAME>Professional GRACE Framework Upgrade</NAME>
+  <GOAL>Implement the grace-upgrade-guide roadmap as a persistent MyGRACE execution plan, starting with Sprint 1 P0 Foundation and continuing through all 13 feature sections without losing order across context compaction.</GOAL>
+  <SOURCE_GUIDE>
+    <README>/home/truffle/Загрузки/grace-upgrade-guide/README.md</README>
+    <section-1 id="1.5" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.5-links-format-upgrade.md" />
+    <section-2 id="1.4" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.4-log-driven-development.md" />
+    <section-3 id="1.1" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.1-belief-state.md" />
+    <section-4 id="4.1" path="/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.1-xml-anchor-syntax.md" />
+    <section-5 id="2.1" path="/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.1-requirements-analysis.md" />
+    <section-6 id="2.2" path="/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.2-technology-stack.md" />
+    <section-7 id="2.3" path="/home/truffle/Загрузки/grace-upgrade-guide/part-2-artifacts/2.3-development-plan.md" />
+    <section-8 id="1.2" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.2-mental-tests.md" />
+    <section-9 id="1.6" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.6-end-to-end-traceability.md" />
+    <section-10 id="1.3" path="/home/truffle/Загрузки/grace-upgrade-guide/part-1-core-gaps/1.3-non-human-patterns.md" />
+    <section-11 id="3.1" path="/home/truffle/Загрузки/grace-upgrade-guide/part-3-advanced-mechanics/3.1-agent-based-testing.md" />
+    <section-12 id="3.2" path="/home/truffle/Загрузки/grace-upgrade-guide/part-3-advanced-mechanics/3.2-cascade-update-engine.md" />
+    <section-13 id="4.2" path="/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.2-belief-state-dashboard.md" />
+    <roadmap path="/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.3-roadmap.md" />
+  </SOURCE_GUIDE>
+  <MODULE_REFS>
+    <MODULE_REF id="M-AGENT-CONSOLE" />
+    <MODULE_REF id="M-AGENT-CONSOLE-TOOLS" />
+    <MODULE_REF id="M-GRACE" />
+    <MODULE_REF id="M-GRACE-ANCHOR" />
+    <MODULE_REF id="M-GRACE-BELIEF-STATE" />
+    <MODULE_REF id="M-GRACE-CASCADE" />
+    <MODULE_REF id="M-GRACE-CASCADE-CHANGE" />
+    <MODULE_REF id="M-GRACE-CONTRACT" />
+    <MODULE_REF id="M-GRACE-SEMANTIC" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-GRACE-REVIEW" />
+    <MODULE_REF id="M-GRACE-STATUS" />
+    <MODULE_REF id="M-GRACE-REFRESH" />
+    <MODULE_REF id="M-GRACE-LAYOUT" />
+    <MODULE_REF id="M-GRACE-REQUIREMENTS" />
+    <MODULE_REF id="M-GRACE-TECHNOLOGY" />
+    <MODULE_REF id="M-GRACE-DEVELOPMENT-PLAN" />
+    <MODULE_REF id="M-GRACE-MENTAL-TEST" />
+    <MODULE_REF id="M-GRACE-TRACEABILITY" />
+    <MODULE_REF id="M-GRACE-NON-HUMAN-PATTERNS" />
+    <MODULE_REF id="M-GRACE-TESTING" />
+    <MODULE_REF id="M-GRACE-INVENTORY" />
+    <MODULE_REF id="M-GRACE-INVENTORY-PLAN" />
+    <MODULE_REF id="M-GRAPHRAG" />
+    <MODULE_REF id="M-GRAPHRAG-BUILDER" />
+    <MODULE_REF id="M-GRAPHRAG-TYPES" />
+    <MODULE_REF id="M-MCP-SERVER-CASCADE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-CAPABILITIES" />
+    <MODULE_REF id="M-SKILLS-REGISTRY" />
+    <MODULE_REF id="M-SKILLS-ENGINE" />
+    <MODULE_REF id="M-DASHBOARD" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <EXECUTION_POLICY>
+    <rule-1>Always resume from docs/plan-index.xml, then this Phase-13 shard, then the current section source guide.</rule-1>
+    <rule-2>Implement sections strictly in roadmap order: Sprint 1 section-1 through section-4, Sprint 2 section-5 through section-8, Sprint 3 section-9 through section-11, Sprint 4 section-12 through section-13.</rule-2>
+    <rule-3>For every new runtime module, add a source MODULE_CONTRACT, update docs/graph-index.xml, create docs/modules/M-*.xml, update docs/verification-index.xml, and create docs/verification/V-M-*.xml before or in the same patch.</rule-3>
+    <rule-4>Each section must add focused tests before moving to the next section; after each sprint run cargo fmt, cargo test, cargo clippy, refresh, verify --ci, and review --mode full --ci.</rule-4>
+    <rule-5>Keep legacy behavior compatible unless the guide explicitly makes a new check strict. Old LINKS and START/END anchors must keep working during migration.</rule-5>
+  </EXECUTION_POLICY>
+  <SPRINTS>
+    <sprint-1 name="P0 Foundation" status="done">
+      <step-1 section="1.5" status="done" priority="P0">
+        <TITLE>Typed LINKS Format Upgrade</TITLE>
+        <INTENT>Introduce typed, directional semantic links while preserving old comma-separated LINKS as backward-compatible warnings.</INTENT>
+        <IMPLEMENTATION>Extend M-GRACE-CONTRACT with TypedLink, LinkDirection, LinkType parsing; update GraphRAG relationship types and builder extraction; add links-valid-types, links-targets-exist, links-no-dangling, and links-format checks; extend graphrag_query type filters; update AGENTS.md.</IMPLEMENTATION>
+        <VERIFY status="passed">Unit tests for new and old LINKS formats, invalid type, dangling target, GraphRAG typed relationships, and type-filtered query support.</VERIFY>
+      </step-1>
+      <step-2 section="1.4" status="done" priority="P0">
+        <TITLE>Log Driven Development Structured LOG Format</TITLE>
+        <INTENT>Add structured LOG entries with EVENT, CONTEXT, STATE, DECISION, EXPECTATION, RESULT, and TRACEABILITY so runtime behavior can be semantically analyzed.</INTENT>
+        <IMPLEMENTATION>Create grace log model/formatter; add structured-log-format verification; add analyze_logs MCP handler with trajectory, anomaly, and compare modes; document the new logging contract in AGENTS.md.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for GraceLog emission/parsing, missing EXPECTATION detection, anomaly reports, analyze_logs MCP output, and structured-log-format verify/review checks.</VERIFY>
+      </step-2>
+      <step-3 section="1.1" status="done" priority="P0">
+        <TITLE>Observable AI Belief State</TITLE>
+        <INTENT>Require explicit AI understanding, strategy, verification intent, and acknowledged risks before code generation.</INTENT>
+        <IMPLEMENTATION>Create M-GRACE-BELIEF-STATE module, docs/belief-states directory support, parser/validator, belief-state-exists verify check, status/review coverage, and extract_belief_state MCP handler.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for valid belief state parsing, missing required field validation, storage artifact generation, MCP storage path, skills/MCP count parity, and belief-state verify/review/status coverage.</VERIFY>
+      </step-3>
+      <step-4 section="4.1" status="done" priority="P0">
+        <TITLE>XML-like Anchor Syntax</TITLE>
+        <INTENT>Support GRACE XML-like anchors alongside legacy START/END anchors through normalization and parser support.</INTENT>
+        <IMPLEMENTATION>Extend semantic extractor and contract parser to recognize MODULE, BLOCK, METHOD, FUNCTION_CONTRACT, LOG, BELIEF_STATE, and LINKS XML-like anchors; add normalize_anchor_syntax; add anchor-syntax-consistent warning; update AGENTS.md.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for XML-like blocks, nested anchors, XML-like function contracts, mixed syntax warning, normalization, markdown-example skip, and legacy regression.</VERIFY>
+      </step-4>
+    </sprint-1>
+    <sprint-2 name="P1 Core Artifacts" status="done">
+      <step-5 section="2.1" status="done" priority="P1">
+        <TITLE>RequirementsAnalysis with AAG Notation</TITLE>
+        <INTENT>Replace stub requirements with a complete requirements artifact model: goals, domain entities, actors, use cases, NFRs, constraints, and glossary.</INTENT>
+        <IMPLEMENTATION>Create requirements parser/validator, full init template, generate_requirements MCP handler, requirements-* verify checks, and status/review coverage.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for RequirementsAnalysis template completeness, generated artifact validation, incomplete section failures, section-scoped AAG extraction, glossary/entity matching, MCP generation, verify checks, review/status coverage, and capability count parity.</VERIFY>
+      </step-5>
+      <step-6 section="2.2" status="done" priority="P1">
+        <TITLE>Technology Stack Version Pinning</TITLE>
+        <INTENT>Make technology.xml exact, version-pinned, compatibility-aware, and detectable from project dependency files.</INTENT>
+        <IMPLEMENTATION>Create technology parser, dependency detector, compatibility checks, full init template, generate_technology MCP handler, and technology-* verify checks.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for Technology template completeness, legacy stub failure, Cargo lock exact-version detection, generated artifact validation, generate_technology MCP output, technology-* verify checks, and review/status coverage.</VERIFY>
+      </step-6>
+      <step-7 section="2.3" status="done" priority="P1">
+        <TITLE>DevelopmentPlan DataFlows and GenerationOrder</TITLE>
+        <INTENT>Upgrade the plan artifact into a real generation blueprint with architecture graph, DataFlows, GenerationOrder, NonHumanPatterns, and contract guidelines.</INTENT>
+        <IMPLEMENTATION>Create development_plan module, validate DataFlows and GenerationOrder against graph/contracts, add dataflow-* and genorder-* checks, add generate_development_plan MCP handler, and update grace_plan/grace_execute/status/review behavior.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for complete DevelopmentPlan templates, incomplete artifact failures, invalid GenerationOrder topology, generated artifact writes, generate_development_plan MCP output, MCP parity, and full verify/review gates.</VERIFY>
+      </step-7>
+      <step-8 section="1.2" status="done" priority="P1">
+        <TITLE>Mental Tests</TITLE>
+        <INTENT>Add pre-code algorithm simulation and make failed mental tests block code generation for complex or critical modules.</INTENT>
+        <IMPLEMENTATION>Create mental_test parser/runner, add MentalTests to DevelopmentPlan templates, add mental-tests-defined, mental-tests-passed, and mental-test-no-drift checks, add mental_test_run MCP handler, and integrate plan/execute/review/status/fix guidance.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for MentalTest parsing, pass/fail blocking, missing critical target coverage, trace persistence, mental_test_run MCP output, MCP parity, and full verify/review gates.</VERIFY>
+      </step-8>
+    </sprint-2>
+    <sprint-3 name="P2 Advanced Core" status="done">
+      <step-9 section="1.6" status="done" priority="P2">
+        <TITLE>End-to-End Traceability</TITLE>
+        <INTENT>Build bidirectional traceability from requirement and use case through module, function, code block, verification, and LOG entry.</INTENT>
+        <IMPLEMENTATION>Create M-GRACE-TRACEABILITY with TraceabilityChain/TraceabilityReport, docs/traceability-index.xml skeleton/generator, traceability_report MCP handler, traceability-* verify checks, review/status scoring, and traceability guidance in skills/capabilities/docs.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for complete chain coverage, untraced function gap, dangling trace link, index writing, traceability_report MCP output, MCP parity, refresh drift, verify --ci, and review --mode full --ci.</VERIFY>
+      </step-9>
+      <step-10 section="1.3" status="done" priority="P2">
+        <TITLE>Non-Human Programming Patterns</TITLE>
+        <INTENT>Enforce AI-deterministic coding patterns: explicit typing, explicit flow, explicit null handling, no magic values, and deterministic iteration.</INTENT>
+        <IMPLEMENTATION>Create M-GRACE-NON-HUMAN-PATTERNS with cached regex detectors, string-literal-safe explicit-flow analysis, profile-aware severity, verify/review/status/capabilities integration, and DevelopmentPlan NonHumanPatterns templates for all five rules.</IMPLEMENTATION>
+        <VERIFY status="passed">Eight unit tests for anti-pattern detection, lite/balanced/strict profile behavior, clean examples, detector string-literal safety, full verify --ci, review --mode full --ci, refresh, clippy, and full cargo test suite.</VERIFY>
+      </step-10>
+      <step-11 section="3.1" status="done" priority="P2">
+        <TITLE>Agent-Based Testing</TITLE>
+        <INTENT>Add natural-language testing guides, tester-agent failure reports, and an embedded agent console for tool-based application testing.</INTENT>
+        <IMPLEMENTATION>Create M-AGENT-CONSOLE and M-GRACE-TESTING; add docs/tests/guides/results layout, Markdown TestGuide parser, deterministic run_test_guide summary/failure XML workflow, submit_test_report LOG-ref handoff, MCP handlers/schemas, capabilities parity, tester subagent skill guidance, and AGENTS/OpenCode protocol documentation.</IMPLEMENTATION>
+        <VERIFY status="passed">Tests for Markdown guide parsing, pass summary, failure XML with LOG evidence, submit report handoff, custom and built-in console tool registration, MCP run_test_guide/submit_test_report handlers, tester agent configuration output, 36-tool MCP parity, refresh, verify --ci, review --mode full --ci, clippy, and 167-test suite.</VERIFY>
+      </step-11>
+    </sprint-3>
+    <sprint-4 name="P3 Integration and Polish" status="done">
+      <step-12 section="3.2" status="done" priority="P3">
+        <TITLE>Cascade Update Engine</TITLE>
+        <INTENT>Detect downstream impact of artifact changes, preview cascades, apply safe contract updates, and record cascade changelogs.</INTENT>
+        <IMPLEMENTATION>Create M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, and M-MCP-SERVER-CASCADE-TOOLS; add docs/cascade layout, cascade_impact/cascade_execute schemas and routing, cascade-no-drift verify check, cascade-aware refresh/status/review, capability parity, and docs updates.</IMPLEMENTATION>
+        <VERIFY status="passed">Eight cascade/MCP tests for requirement impact analysis, unrelated artifact no-op, preview chain formatting, changelog creation, post-cascade drift detection, MCP preview/execute handlers; cargo test --all-targets 175 passed, clippy clean, refresh clean, verify --ci passed, review --mode full --ci passed.</VERIFY>
+      </step-12>
+      <step-13 section="4.2" status="done" priority="P3">
+        <TITLE>Belief State Dashboard</TITLE>
+        <INTENT>Expose belief states, mental tests, traceability chains, cascade preview, and cascade history in the existing dashboard.</INTENT>
+        <IMPLEMENTATION>Extend M-DASHBOARD with pages and JSON APIs for belief-states, module belief-state detail, mental-tests, traceability, cascade-impact preview, and cascade history using M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, and M-GRACE-CASCADE-CHANGE as data sources.</IMPLEMENTATION>
+        <VERIFY status="passed">Six dashboard/belief-state tests cover persisted state collection, belief-state API/detail rendering, MentalTest JSON, traceability artifact filtering, cascade preview JSON, and cascade history rendering; cargo test --all-targets 181 passed.</VERIFY>
+      </step-13>
+    </sprint-4>
+  </SPRINTS>
+  <GLOBAL_ACCEPTANCE>
+    <CHECK status="passed">syn verify reports the new checks: belief-state-exists, mental-tests-passed, non-human-*, structured-log-format, links-*, traceability-*, dataflow-*, genorder-*, cascade-no-drift, and anchor-syntax-consistent.</CHECK>
+    <CHECK status="passed">syn init generates complete requirements.xml, technology.xml, DevelopmentPlan-compatible sharded artifacts, graph-index.xml, and verification-index.xml.</CHECK>
+    <CHECK status="passed">MCP tools exist and are listed in capabilities: extract_belief_state, mental_test_run, analyze_logs, traceability_report, generate_requirements, generate_technology, generate_development_plan, cascade_impact, cascade_execute, run_test_guide, and submit_test_report.</CHECK>
+    <CHECK status="passed">Synapse self-verifies against the new checks without regressing legacy projects that use comma-separated LINKS or START/END anchors.</CHECK>
+    <CHECK status="passed">AGENTS.md, README/GUIDE where relevant, skills registry, and parity tests document the new behavior and do not mention obsolete monolithic artifacts as primary truth.</CHECK>
+  </GLOBAL_ACCEPTANCE>
+  <ROADMAP_IMPROVEMENTS>
+    <improvement-1 id="TRACEABILITY-ADOPTION" status="planned" priority="P1">
+      <TITLE>Raise Traceability From Advisory To Strict</TITLE>
+      <OBSERVED>After section 1.6, traceability enforcement is advisory and the self-report shows low initial coverage because most existing function contracts predate requirement/use-case links.</OBSERVED>
+      <TARGET>Move from measured advisory gaps to strict traceability: key modules and public functions link to UC-* or NFR/REQ-* targets, structured LOG entries carry TRACEABILITY fields, and docs/traceability-index.xml can run with enforcement="strict".</TARGET>
+      <IMPLEMENTATION>Map UC-001, UC-002, and NFR-* to CLI/MCP/GRACE modules; add typed LINKS to public function contracts in high-value modules first; add LOG TRACEABILITY evidence for critical flows; then switch traceability-index enforcement to strict after verify/review remain green.</IMPLEMENTATION>
+      <VERIFY>traceability_report score rises materially, untraced public API gaps trend down, traceability-requirements-implemented and traceability-code-traced pass under strict mode, and review_code no longer treats traceability as adoption-only debt.</VERIFY>
+    </improvement-1>
+  </ROADMAP_IMPROVEMENTS>
+  <RESUME_POINTER>
+    <NEXT_ACTION>Phase-13 complete. Next read plan-index.xml, then run release readiness review or prepare a public release candidate.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-13.xml, docs/product-readiness-assessment.xml, README.md, docs/COMMANDS.md</READ_FIRST>
+    <SOURCE_SPEC>/home/truffle/Загрузки/grace-upgrade-guide/part-4-tooling/4.2-belief-state-dashboard.md</SOURCE_SPEC>
+  </RESUME_POINTER>
+  <LOCAL_GATE>
+    cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci
+  </LOCAL_GATE>
+</PHASE>

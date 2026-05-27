@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-46" status="done">
+  <NAME>RTK Structured System Adapter Expansion</NAME>
+  <GOAL>Port high-value standalone RTK system adapters where local processing is materially better than proxying raw shell output.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-TRACKING" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="done">Evaluated summary, smart/read, log, pipe, and format flows; ported pipe, log, and smart as compact local system adapters where they fit Synapse boundaries.</step-1>
+    <step-2 module="M-TRACKING" status="done">Recorded adapter-level savings consistently for new local adapters through the shared record_routed path.</step-2>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test cli::rtk_adapters::tests --lib</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_system_adapters::tests --lib</CHECK>
+    <CHECK status="passed">cargo test tracking --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</CHECK>
+    <CHECK status="passed">cargo test --test rtk_system_adapters_test</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

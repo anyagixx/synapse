@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-29" status="done">
+  <NAME>RTK Shell-Aware Rewrite Registry</NAME>
+  <GOAL>Extend Synapse hook rewriting from single commands to safe RTK-style shell command sequences so agent shell hooks can proxy more token-heavy commands automatically.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-HOOK-OPENCODE-REWRITE" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="done">Implemented quote-aware rewrite for safe command chains joined by &amp;&amp;, ||, and ; while preserving unknown segments.</step-1>
+    <step-2 module="M-HOOK-OPENCODE-REWRITE" status="done">Kept OpenCode hook delegation unchanged and verified it benefits from the expanded syn rewrite behavior.</step-2>
+    <step-3 module="M-TESTS-INTEGRATION" status="done">Added regression coverage for compound rewrite output and unsupported unsafe shell constructs.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo check --all-targets</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_commands::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_rewrite_cli_delegates_to_router</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

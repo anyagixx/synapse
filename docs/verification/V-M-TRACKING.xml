@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TRACKING" module="M-TRACKING" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test tracking::tests::tracker_records_and_reads_run_events --lib</COMMAND>
+    <COMMAND>cargo test tracking::tests::tracker_records_routed_adapter_and_session_stats --lib</COMMAND>
+    <COMMAND>cargo test tracking::session_budget::tests --lib</COMMAND>
+    <COMMAND>cargo test tracking::context_pressure::tests --lib</COMMAND>
+    <COMMAND>cargo test tracking::tests::tracker_reuses_cached_connection_after_first_operation --lib</COMMAND>
+    <COMMAND>cargo test tracking::tests::tracker_records_and_reads_run_events --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test tracking::tests::tracker_records_routed_adapter_and_session_stats --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo run --quiet -- session --json</COMMAND>
+    <COMMAND>cargo test --test integration_test test_tracking_is_scoped_by_canonical_project_path</COMMAND>
+    <COMMAND>cargo test --test integration_test test_rtk_local_adapters_compact_structured_outputs</COMMAND>
+    <COMMAND>cargo test --test rtk_system_adapters_test</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Tracking stats are scoped by canonical project path, not directory basename.</ASSERTION>
+    <ASSERTION>SQLite open, schema, insert, and query errors are returned to callers.</ASSERTION>
+    <ASSERTION>Run-event reads and writes use the same canonical project identity under isolated cwd test execution.</ASSERTION>
+    <ASSERTION>Route-aware tracking stores adapter, route_key, and session_id and reports adapter/session aggregate savings.</ASSERTION>
+    <ASSERTION>Token economics include adapter_groups and session_groups so RTK coverage can be audited in gain output.</ASSERTION>
+    <ASSERTION>Session budget checks use current-session input tokens as the spend metric and return normal, warning, and blocked states.</ASSERTION>
+    <ASSERTION>Session budget limit 0 remains unlimited and can_afford respects remaining tokens for bounded budgets.</ASSERTION>
+    <ASSERTION>Context pressure estimates current-session input/output tokens plus context overhead and reports low, moderate, high, and critical states.</ASSERTION>
+    <ASSERTION>Tracking reports route_adoption_pct, routed_commands, passthrough_commands, and bounded missed_route_candidates from local SQLite data.</ASSERTION>
+    <ASSERTION>Local RTK adapters and system adapters record adapter-level savings through the shared tracking path.</ASSERTION>
+    <ASSERTION>Tracking tests serialize process environment overrides so XDG_DATA_HOME and SYNAPSE_SESSION_ID cannot cross-contaminate parallel test runs.</ASSERTION>
+    <ASSERTION>Tracker opens SQLite once per Tracker instance, enables WAL and busy_timeout, and reuses the cached connection across read/write operations.</ASSERTION>
+    <ASSERTION>Unused project_db_path dead code is removed; canonical project identity remains row-scoped in the shared tracking database.</ASSERTION>
+    <ASSERTION>MCP metrics use separate tables and do not change token-savings command totals.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-58,Phase-61,Phase-67,Phase-87,Phase-88</PHASE_GATE>
+</VERIFICATION>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-TRACEABILITY" module="M-GRACE-TRACEABILITY" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test traceability --all-targets</COMMAND>
+    <COMMAND>cargo test grace::traceability::tests::test_module_trace_defaults_cover_grace_verify --lib</COMMAND>
+    <COMMAND>cargo test grace::traceability::tests::test_duplicate_function_names_count_as_one_trace_artifact --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[Traceability][scan_project_traceability][GAP]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>TraceabilityReport counts requirements, use cases, modules, functions, LOG evidence, score, and gaps.</ASSERTION>
+    <ASSERTION>Strict enforcement fails untraced requirements or functions while advisory mode reports gaps without blocking migration.</ASSERTION>
+    <ASSERTION>Synapse module-family defaults map modules to UC/NFR product intent and functions inherit module traces unless direct function LINKS override them.</ASSERTION>
+    <ASSERTION>Duplicate helper names under one module count as one trace artifact so traced_functions uses stable chain identity instead of raw duplicate marker count.</ASSERTION>
+    <ASSERTION>traceability_report MCP output persists compact docs/traceability-index.xml with capped samples and returns full scoped module/requirement matrices through split render helpers.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-16</PHASE_GATE>
+</VERIFICATION>

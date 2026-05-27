@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-RUNNER-HANDOFF" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Preserve compact role-to-role transfer state for bounded autonomous runs.
+    Key data flows:
+      - INPUT: run id, source role, target role, summary, evidence refs, and next actions.
+      - PROCESSING: Build deterministic handoff id, write JSON artifact atomically, update run metadata.
+      - OUTPUT: AgentHandoff artifact and latest handoff pointers on the RunRecord.
+    Critical invariants:
+      - Handoff files are durable and reloadable.
+      - Run metadata points at the latest handoff after creation.
+      - Handoff payloads remain structured instead of free-form logs.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Store one JSON handoff per role transition under the run state directory.
+    Complexity_areas: atomic writes, fallback latest lookup, keeping schema compact.
+    Patterns_applied: explicit role enum, provenance event, metadata pointer.
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - cargo test run::handoff --lib -- --test-threads=8 passes
+  RISKS_ACKNOWLEDGED:
+    - Free-form summaries must not replace structured evidence_refs and next_actions.
+</BELIEF_STATE>

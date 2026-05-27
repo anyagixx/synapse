@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-PERF-REGRESSION" module="M-TEST-PERF-REGRESSION" priority="normal" status="active">
+  <UNIT_TESTS>
+    <TEST>Benchmark statistics compute min, max, average, and median deterministically.</TEST>
+    <TEST>Baseline comparison fails only when delta exceeds configured threshold.</TEST>
+    <TEST>Missing baseline produces an actionable message.</TEST>
+    <TEST>Baseline JSON round-trips OS, architecture, profile, and Synapse version metadata.</TEST>
+    <TEST>Platform metadata mismatch blocks check mode even when benchmark deltas pass.</TEST>
+    <TEST>Sub-100ms benchmark deltas use a minimum denominator to avoid CI noise failures.</TEST>
+    <TEST>Benchmark reports record process success and exit code for measured workflows.</TEST>
+    <COMMAND>cargo bench --bench search</COMMAND>
+    <COMMAND>cargo bench --bench graph</COMMAND>
+    <COMMAND>cargo bench --bench cascade</COMMAND>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>syn test perf --baseline writes tests/baselines/perf.json.</TEST>
+    <TEST>syn test perf --check compares index, search_cold, search_warm, verify, and graphrag benchmarks.</TEST>
+    <TEST>make bench runs search, graph, and cascade Criterion benchmark groups.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>perf_benchmark_completed</LOG>
+    <LOG>perf_baseline_compared</LOG>
+    <LOG>criterion_benchmark_started</LOG>
+    <LOG>criterion_benchmark_completed</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION status="covered">Perf gate records OS, architecture, profile, and Synapse version in baseline metadata.</ASSERTION>
+    <ASSERTION status="covered">Criterion benchmark targets use isolated MultiModule fixtures.</ASSERTION>
+    <ASSERTION status="covered">Criterion benchmark targets cover search, graph, and cascade workflows.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-80,Phase-89</PHASE_GATE>
+</VERIFICATION>

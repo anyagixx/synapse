@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-CLI" type="WORKSPACE_CRATE" status="planned">
+  <NAME>syn-cli</NAME>
+  <PURPOSE>CLI crate — bundles CLI dispatch (42+ commands), web dashboard, workspace orchestration, and test infrastructure</PURPOSE>
+  <SCOPE>Clap CLI schema and dispatch, all command handlers (init, index, search, view, verify, review, status, proxy, RTK commands, agent commands, config commands, test commands, tools commands, workspace commands), Axum web dashboard with observability routes, multi-project workspace orchestration, and test harness (contract tests, coverage matrix, e2e runner, snapshots, MCP regression, perf regression, resilience chaos)</SCOPE>
+  <FILES>
+    <FILE>syn-cli/src/lib.rs</FILE>
+    <FILE>syn-cli/src/cli/mod.rs</FILE>
+    <FILE>syn-cli/src/cli.rs</FILE>
+    <FILE>syn-cli/src/dashboard.rs</FILE>
+    <FILE>syn-cli/src/workspace/mod.rs</FILE>
+    <FILE>syn-cli/src/test/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-WORKSPACE-CORE,M-WORKSPACE-ENGINE,M-WORKSPACE-PROXY,M-WORKSPACE-RUN,M-WORKSPACE-SKILLS,M-WORKSPACE-MCP</DEPENDS>
+  <LINKS>
+    <LINK type="depends">M-WORKSPACE-CORE</LINK>
+    <LINK type="depends">M-WORKSPACE-ENGINE</LINK>
+    <LINK type="depends">M-WORKSPACE-PROXY</LINK>
+    <LINK type="depends">M-WORKSPACE-RUN</LINK>
+    <LINK type="depends">M-WORKSPACE-SKILLS</LINK>
+    <LINK type="depends">M-WORKSPACE-MCP</LINK>
+    <LINK type="verified_by">V-M-WORKSPACE-CLI</LINK>
+    <LINK type="implements">Phase-97</LINK>
+  </LINKS>
+  <VERIFICATION_REF>V-M-WORKSPACE-CLI</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MCP-SERVER" module="M-MCP-SERVER" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol</COMMAND>
+    <COMMAND>cargo test mcp::pipeline --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol test_concurrent_requests_keep_response_ids</COMMAND>
+    <COMMAND>cargo test mcp::server::tests::test_classify_mcp_response_detects_error_status --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::server::tests::test_invalidate_graph_cache_clears_graph_and_key --lib</COMMAND>
+    <COMMAND>cargo test cache --lib</COMMAND>
+    <COMMAND>cargo test mcp::server::tests::test_cache_metadata_attaches_to_graphrag_overview --lib</COMMAND>
+    <COMMAND>cargo test mcp::server::tests::test_tools_recommend_routes_through_tools_call --lib</COMMAND>
+    <COMMAND>cargo test --test mcp_protocol test_tools_call_check_budget_reports_unlimited_default</COMMAND>
+    <COMMAND>cargo test mcp::server_pressure::tests --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_run_tools --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::user_tools --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
+    <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
+    <COMMAND>cargo test mcp::server_code_tools::tests::test_handle_graphrag_reports_poisoned_lock --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[SynapseHandler][new][INDEX]</MARKER>
+    <MARKER>[SynapseHandler][new][GRAPHRAG]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>MCP runtime preload converts lock and GraphRAG build failures into warnings instead of panics.</ASSERTION>
+    <ASSERTION>syn mcp stdout contains only JSON-RPC responses while tracing logs are emitted on stderr.</ASSERTION>
+    <ASSERTION>syn mcp public help remains stdio-only and does not expose HTTP or LSP flags before those transports are implemented.</ASSERTION>
+    <ASSERTION>MCP stdio reads JSON-RPC messages with a bounded line reader and returns a JSON-RPC error for oversized messages.</ASSERTION>
+    <ASSERTION>SynapseHandler stores and can invalidate GraphRAG cache keys for root/index-aware graph rebuilds.</ASSERTION>
+    <ASSERTION>JSON-RPC notifications do not produce response objects.</ASSERTION>
+    <ASSERTION>McpServer::start_stdio routes through the bounded MCP pipeline while SynapseHandler uses atomic initialization state for concurrent request handling.</ASSERTION>
+    <ASSERTION>McpServer::start_stdio applies observability pipeline queue, concurrency, and message-size bounds from Config.</ASSERTION>
+    <ASSERTION>Pipelined stdio requests preserve JSON-RPC response IDs and keep stdout response serialization single-writer.</ASSERTION>
+    <ASSERTION>tools/call records best-effort MCP active request and completed call metrics without changing JSON-RPC responses when tracking fails.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes analyze_logs to the GRACE structured LOG analyzer.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes extract_belief_state to the GRACE belief-state artifact writer.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes generate_requirements to the GRACE RequirementsAnalysis writer.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes generate_technology to the GRACE Technology writer.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes generate_development_plan to the GRACE DevelopmentPlan writer.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes mental_test_run to the GRACE MentalTest runner.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes traceability_report to the GRACE Traceability reporter.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes cascade_impact and cascade_execute to the GRACE cascade update engine.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes run_test_guide and submit_test_report to the GRACE agent-based testing workflow.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes advance_phase and pre_commit_check to bounded run gate handlers.</ASSERTION>
+    <ASSERTION>JSON-RPC tool dispatch routes lsp_hover and lsp_references through runtime Config so configured LSP server commands are honored.</ASSERTION>
+    <ASSERTION>Cacheable tools emit _meta.cache and store short-lived ETag validators under deterministic keys.</ASSERTION>
+    <ASSERTION>Matching _if_none_match returns _not_modified before invoking expensive cacheable handlers.</ASSERTION>
+    <ASSERTION>graphrag_query overview emits _meta.cache metadata when GraphRAG state is already cached.</ASSERTION>
+    <ASSERTION>The in-memory ETag cache clears all entries when the next insert would exceed 100 validators.</ASSERTION>
+    <ASSERTION>tools/call routes tools/recommend and returns bounded run-state-aware recommendations.</ASSERTION>
+    <ASSERTION>tools/call routes compact_evidence through run tools and returns persisted evidence compaction reports.</ASSERTION>
+    <ASSERTION>tools/call routes check_budget through budget tools and reports current session budget state.</ASSERTION>
+    <ASSERTION>tools/call routes context_pressure through budget tools and reports current context pressure state.</ASSERTION>
+    <ASSERTION>tools/call responses include _context_pressure at critical pressure and _auto_recommendation above 90 percent pressure.</ASSERTION>
+    <ASSERTION>tools/list uses pressure-aware style selection so high and critical pressure force terse schemas.</ASSERTION>
+    <ASSERTION>tools/list merges profile-visible user-defined tools with _source=user metadata and warning metadata.</ASSERTION>
+    <ASSERTION>tools/call routes unknown names to validated user-defined tools after built-in dispatch misses.</ASSERTION>
+    <ASSERTION>tools/list and tools/call create bounded telemetry spans without recording raw arguments.</ASSERTION>
+    <ASSERTION>Session budget gates block expensive tools with budget_exhausted=true, attach warning metadata near the limit, and allow light tools such as project_status and verify_project.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-59,Phase-62,Phase-67,Phase-73,Phase-85,Phase-86,Phase-87,Phase-88,Phase-92,Phase-93</PHASE_GATE>
+</VERIFICATION>

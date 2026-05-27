@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MCP-SERVER-TELEMETRY" module="M-MCP-SERVER-TELEMETRY" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --test mcp_protocol</COMMAND>
+    <COMMAND>cargo test mcp::server::tests --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>tools/list creates a bounded mcp.tools_list span with profile, style, total_available, and total_visible metadata.</ASSERTION>
+    <ASSERTION>tools/call creates a bounded mcp.tools_call span with tool name, budget level, context pressure level, status, and duration metadata.</ASSERTION>
+    <ASSERTION>MCP telemetry helpers do not record raw tool arguments.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-93</PHASE_GATE>
+</VERIFICATION>

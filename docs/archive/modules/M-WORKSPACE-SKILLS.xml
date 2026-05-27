@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-SKILLS" type="WORKSPACE_CRATE" status="planned">
+  <NAME>syn-skills</NAME>
+  <PURPOSE>Skills crate — GRACE workflow skill engine (16 skills), skill registry, capabilities declaration, and skill type definitions</PURPOSE>
+  <SCOPE>SkillEngine dispatch, 16 GRACE workflow skills (init, plan, verify, execute, multiagent_execute, reviewer, refresh, refactor, fix, status, run_history, ask, explainer, cli, setup_subagents, lint), capabilities registry, skill type system</SCOPE>
+  <FILES>
+    <FILE>syn-skills/src/lib.rs</FILE>
+    <FILE>syn-skills/src/skills/engine.rs</FILE>
+    <FILE>syn-skills/src/skills/registry.rs</FILE>
+    <FILE>syn-skills/src/skills/types.rs</FILE>
+    <FILE>syn-skills/src/capabilities.rs</FILE>
+  </FILES>
+  <DEPENDS>M-WORKSPACE-CORE,M-WORKSPACE-ENGINE,M-WORKSPACE-RUN</DEPENDS>
+  <LINKS>
+    <LINK type="depends">M-WORKSPACE-CORE</LINK>
+    <LINK type="depends">M-WORKSPACE-ENGINE</LINK>
+    <LINK type="depends">M-WORKSPACE-RUN</LINK>
+    <LINK type="verified_by">V-M-WORKSPACE-SKILLS</LINK>
+    <LINK type="implements">Phase-97</LINK>
+  </LINKS>
+  <VERIFICATION_REF>V-M-WORKSPACE-SKILLS</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-INVENTORY-VERIFICATION" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-INVENTORY-VERIFICATION</NAME>
+  <PURPOSE>MyGRACE verification artifact writer — rewrites verification index and shards while preserving custom shard content</PURPOSE>
+  <SCOPE>sync_verification_artifacts, write_verification_index, write_verification_shard, preserve_existing_verification_body</SCOPE>
+  <FILES>
+    <FILE>src/grace/inventory_verification.rs</FILE>
+    <FILE>syn-engine/src/grace/inventory_verification.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-INVENTORY-TYPES,M-GRACE-LAYOUT</DEPENDS>
+  <LINKS>docs/verification-index.xml,docs/verification/</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-INVENTORY-VERIFICATION</VERIFICATION_REF>
+</MODULE>

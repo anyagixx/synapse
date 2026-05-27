@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-96" status="done">
+  <NAME>Technology Decision Bootstrap Fix</NAME>
+  <GOAL>Prevent new-project planning from inheriting a fake Rust/Axum/SQLite stack and require an explicit technology decision before implementation.</GOAL>
+  <SOURCE_PLAN>MyGRACE reviewer finding after v2.6.7: syn init creates a misleading technology.xml for blank projects.</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRACE-TECHNOLOGY" />
+    <MODULE_REF id="M-GRACE-LAYOUT" />
+    <MODULE_REF id="M-SKILLS-ENGINE" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-GRACE-STATUS" />
+    <MODULE_REF id="M-GRACE-REVIEW" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+    <MODULE_REF id="M-CI" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-96-1">Blank project init writes a Technology artifact with status needs-decision and no selected language, framework, database, or test runner.</FLOW>
+    <FLOW id="DF-96-2">Existing repository technology generation detects manifests and lockfiles before writing concrete exact-version technology choices.</FLOW>
+    <FLOW id="DF-96-3">Planning guidance treats needs-decision as an instruction for the LLM to recommend a stack from requirements instead of confirming a bootstrap default.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-GRACE-TECHNOLOGY" status="done">Split pending decision artifacts from detected exact-version technology generation.</step-1>
+    <step-2 module="M-GRACE-LAYOUT" status="done">Change syn init bootstrap to write the pending decision artifact for blank projects.</step-2>
+    <step-3 module="M-SKILLS-ENGINE" status="done">Update grace_plan guidance for pending technology decisions.</step-3>
+    <step-4 module="M-GRACE-VERIFY" status="done">Clarify verify/status/review output for selected versus needs-decision technology artifacts.</step-4>
+    <step-5 module="M-TESTS-PARITY" status="done">Add regression tests that block ghost Rust/Axum/SQLite stack claims in blank project init.</step-5>
+    <step-6 module="M-CI" status="done">Clarify quick declaration gates versus real hosted coverage and benchmark execution.</step-6>
+    <step-7 module="M-MCP-SERVER-GRACE-TOOLS" status="done">Expose selected versus needs-decision technology status in MCP generate_technology output.</step-7>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test grace::technology --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test grace::layout --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test skills::engine --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test mcp::server_grace_tools::tests::test_handle_generate_technology_writes_valid_artifact --lib -- --test-threads=8</CHECK>
+    <CHECK status="passed">cargo test --test docs_parity technology -- --test-threads=1</CHECK>
+    <CHECK status="passed">bash scripts/upgrade5_gate.sh</CHECK>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo test --all-targets</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- status</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-96-1">Technology validation currently expects concrete exact-version stack sections; pending-decision artifacts must remain valid without weakening validation for generated concrete stacks.</RISK>
+    <RISK id="R-96-2">Existing Synapse repository technology.xml must remain concrete and release-valid while new blank projects avoid fake defaults.</RISK>
+  </RISKS>
+</PHASE>

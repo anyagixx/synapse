@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-MENTAL-TEST" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-MENTAL-TEST</NAME>
+  <PURPOSE>Mental test parser, validator, and runner for pre-code GRACE algorithm simulation</PURPOSE>
+  <SCOPE>MentalTestSpec, MentalTestReport, parse_mental_tests, scan_project_mental_tests, run_mental_test, XML trace persistence</SCOPE>
+  <FILES>
+    <FILE>src/grace/mental_test.rs</FILE>
+    <FILE>syn-engine/src/grace/mental_test.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRACE-CONTRACT,M-GRACE-DEVELOPMENT-PLAN</DEPENDS>
+  <LINKS>V-M-GRACE-MENTAL-TEST</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-MENTAL-TEST</VERIFICATION_REF>
+</MODULE>

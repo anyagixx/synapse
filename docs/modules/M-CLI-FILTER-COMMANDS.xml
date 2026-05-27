@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CLI-FILTER-COMMANDS" type="CORE_LOGIC" status="active">
+  <NAME>M-CLI-FILTER-COMMANDS</NAME>
+  <PURPOSE>CLI filter diagnostics — explains token-saving TOML filter behavior without command execution</PURPOSE>
+  <SCOPE>filters dry-run command execution, sample input loading from --input/--sample/stdin, before/after text rendering, JSON metrics rendering</SCOPE>
+  <FILES>
+    <FILE>src/cli/filter_commands.rs</FILE>
+    <FILE>syn-cli/src/cli/filter_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-PROXY-FILTER</DEPENDS>
+  <LINKS>M-CLI,M-PROXY-FILTER,Phase-68,V-M-CLI-FILTER-COMMANDS</LINKS>
+  <VERIFICATION_REF>V-M-CLI-FILTER-COMMANDS</VERIFICATION_REF>
+</MODULE>

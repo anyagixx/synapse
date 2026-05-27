@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-14" status="done">
+  <NAME>Post-Roadmap Debt Closure</NAME>
+  <GOAL>Close the release-blocking and release-quality debts left after the professional GRACE roadmap: strict-ready traceability, belief-state baseline coverage, legacy LINKS migration pressure, non-human advisory warnings, and large-file maintainability risk.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-GRACE-TRACEABILITY" />
+    <MODULE_REF id="M-GRACE-BELIEF-STATE" />
+    <MODULE_REF id="M-GRACE-CONTRACT" />
+    <MODULE_REF id="M-GRACE-NON-HUMAN-PATTERNS" />
+    <MODULE_REF id="M-GRACE-REQUIREMENTS" />
+    <MODULE_REF id="M-GRACE-TECHNOLOGY" />
+    <MODULE_REF id="M-GRACE-VERIFY" />
+    <MODULE_REF id="M-GRACE-REVIEW" />
+    <MODULE_REF id="M-GRACE-STATUS" />
+    <MODULE_REF id="M-COMPRESS" />
+    <MODULE_REF id="M-CLI-CODE-COMMANDS" />
+    <MODULE_REF id="M-CLI-RUNTIME-COMMANDS" />
+    <MODULE_REF id="M-CLI-SETUP-COMMANDS" />
+    <MODULE_REF id="M-INDEXER" />
+    <MODULE_REF id="M-INDEXER-STORAGE-SEARCH" />
+    <MODULE_REF id="M-CI-RUNTIME-GUARD" />
+    <MODULE_REF id="M-INSTALL" />
+    <MODULE_REF id="M-DASHBOARD" />
+    <MODULE_REF id="M-TESTS-PARITY" />
+  </MODULE_REFS>
+  <DEBT_BASELINE observed="2026-05-21">
+    <ITEM id="D-TRACEABILITY" priority="P0">Traceability is advisory; self-report shows low score because old function contracts lack direct requirement/use-case links.</ITEM>
+    <ITEM id="D-BELIEF-STATE" priority="P0">Belief-state mechanism exists, but current project coverage is near zero.</ITEM>
+    <ITEM id="D-LEGACY-LINKS" priority="P1">Legacy comma/path LINKS are still accepted and reported as migration debt.</ITEM>
+    <ITEM id="D-NON-HUMAN-WARNINGS" priority="P1">Strict non-human pattern scan has advisory magic-value warnings.</ITEM>
+    <ITEM id="D-FILE-SIZE" priority="P2">Several mature modules exceed the 500-line maintainability target while staying below the hard 1300-line gate.</ITEM>
+  </DEBT_BASELINE>
+  <STEPS>
+    <step-1 status="done" priority="P0" debt="D-TRACEABILITY">
+      <TITLE>Strict-Ready Traceability Defaults</TITLE>
+      <INTENT>Reduce traceability gaps without hand-editing hundreds of function contracts by allowing functions to inherit explicit module/product intent where the module is mapped to a known requirement or use case.</INTENT>
+      <IMPLEMENTATION>Add deterministic module intent defaults for Synapse module families, propagate module business trace links to contained functions, keep direct function LINKS authoritative, and cover strict-mode inheritance with tests.</IMPLEMENTATION>
+      <VERIFY status="passed">traceability-index now runs strict and remains compact at 91 lines, all 85 modules have product intent defaults, requirements are traced 3/3, traceability score is 99.1%, and no dangling traceability links are reported.</VERIFY>
+    </step-1>
+    <step-2 status="done" priority="P0" debt="D-BELIEF-STATE">
+      <TITLE>Belief-State Baseline Coverage</TITLE>
+      <INTENT>Create persisted docs/belief-states artifacts for current modules so the project has an observable AI belief baseline before release.</INTENT>
+      <IMPLEMENTATION>Generate/refine BELIEF_STATE artifacts from module shards or source contracts, preserving valid INPUT/PROCESSING/OUTPUT flows, invariants, strategy, verification intent, and risks.</IMPLEMENTATION>
+      <VERIFY status="passed">Generated 85 persisted docs/belief-states/M-*.xml artifacts through extract_belief_state; belief-state-exists reports full 85/85 module coverage.</VERIFY>
+    </step-2>
+    <step-3 status="done" priority="P1" debt="D-LEGACY-LINKS,D-NON-HUMAN-WARNINGS">
+      <TITLE>Advisory Warning Reduction</TITLE>
+      <INTENT>Reduce migration noise before public release without destabilizing legacy compatibility.</INTENT>
+      <IMPLEMENTATION>Migrate high-value legacy LINKS to directional typed LINKS, suppress false-positive rendering/template noise, and replace remaining high-signal magic values with named constants/messages where they improve clarity.</IMPLEMENTATION>
+      <VERIFY status="passed">Semantic legacy LINKS warnings are reduced to zero; strict non-human pattern review reports score=100.0%, errors=0, warnings=0; verify/review remain green.</VERIFY>
+    </step-3>
+    <step-4 status="done" priority="P2" debt="D-FILE-SIZE">
+      <TITLE>Maintainability Split Plan</TITLE>
+      <INTENT>Keep large modules from becoming future release blockers.</INTENT>
+      <IMPLEMENTATION>Document safe split boundaries for dashboard, traceability, cascade, contract, verify, and MCP helper files; implement only low-risk splits that do not churn public APIs before release.</IMPLEMENTATION>
+      <VERIFY status="passed">docs/maintainability-split-plan.xml records safe split boundaries and accepts the 500-line warnings for the release candidate while the 1300-line hard gate passes.</VERIFY>
+    </step-4>
+  </STEPS>
+  <RESUME_POINTER>
+    <NEXT_ACTION>Phase-14 complete. Next read plan-index.xml, then run release readiness review or prepare release candidate.</NEXT_ACTION>
+    <READ_FIRST>docs/plan-index.xml, docs/phases/Phase-14.xml, docs/maintainability-split-plan.xml, docs/traceability-index.xml</READ_FIRST>
+  </RESUME_POINTER>
+  <LOCAL_GATE>
+    cargo fmt --all; cargo test --all-targets; cargo clippy --all-targets --all-features -- -D warnings; cargo run --quiet -- refresh --json; cargo run --quiet -- verify --ci; cargo run --quiet -- review --mode full --ci
+  </LOCAL_GATE>
+</PHASE>

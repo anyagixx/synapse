@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-RUNNER" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Autonomous run runtime — persists bounded agent runs, steps, gates, reviews, replays, action queues, scenarios, and outcomes for controlled execution
+    Key data flows:
+      - INPUT: goal, phase, module_id, objective, and gate definitions from agent workflow and GRACE artifacts
+      - PROCESSING: create durable run state, track steps/gates/reviews/outcomes, plan explicit next actions, drive deterministic scenario paths, assemble replay timelines, serialize and restore JSON records
+      - OUTPUT: run ledger files, action plan files, review decisions, scenario evidence refs, replay events, and machine-readable lifecycle state for future autonomous execution
+    Critical invariants:
+      - run records remain durable, serializable, and resumable
+      - runs keep bounded scope, explicit status transitions, and review-gated blocked resume behavior
+      - action loops must stop at review gates or explicit action budgets
+      - persistence must not silently drop fields
+      - blocked scenario paths must require persisted approval before resume
+  IMPLEMENTATION_STRATEGY:
+    Approach: keep the core state model stable, add action/scenario orchestration in separate submodules, and drive them through existing gates/review/replay APIs
+    Complexity_areas: serialization compatibility, lifecycle transitions, atomic persistence, action-plan drift, gate snapshots, blocked review replay
+    Patterns_applied: explicit flow, typed links, bounded blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - run records serialize and deserialize without loss
+    - save/load/list behavior is deterministic
+    - future autonomous workflow code can build on this state model
+    - an action queue can plan, execute one step, loop boundedly, retry, and replay a persisted run
+    - a bounded objective can be replayed from persisted evidence after happy-path or blocked-review execution
+  RISKS_ACKNOWLEDGED:
+    - scenario harness proves lifecycle behavior but is still not a general autonomous planner
+    - src/run/mod.rs remains near the 1300-line hard limit and should be split in a future maintainability phase
+</BELIEF_STATE>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-INDEXER-STORAGE-SEARCH" type="DATA_LAYER" status="active">
+  <NAME>M-INDEXER-STORAGE-SEARCH</NAME>
+  <PURPOSE>Search scoring helpers for indexer block storage</PURPOSE>
+  <SCOPE>BM25-style scoring, tokenization, n-gram vectorization, dense embedding cosine similarity</SCOPE>
+  <FILES>
+    <FILE>src/indexer/storage_search.rs</FILE>
+    <FILE>syn-engine/src/indexer/storage_search.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER-STORAGE-TYPES</DEPENDS>
+  <LINKS>docs/modules/M-INDEXER-STORAGE.xml,docs/modules/M-INDEXER-STORAGE-TYPES.xml</LINKS>
+  <VERIFICATION_REF>V-M-INDEXER-STORAGE-SEARCH</VERIFICATION_REF>
+</MODULE>

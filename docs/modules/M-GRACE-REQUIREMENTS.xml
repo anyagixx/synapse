@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-REQUIREMENTS" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-REQUIREMENTS</NAME>
+  <PURPOSE>RequirementsAnalysis parser, validator, and generator for GRACE Stage 1 AAG artifacts</PURPOSE>
+  <SCOPE>RequirementsReport, RequirementsEntity, RequirementsUseCase, template generation, file validation, docs/requirements.xml writer</SCOPE>
+  <FILES>
+    <FILE>src/grace/requirements.rs</FILE>
+    <FILE>syn-engine/src/grace/requirements.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>V-M-GRACE-REQUIREMENTS</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-REQUIREMENTS</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-REVIEW" module="M-GRACE-REVIEW" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Full integrity review reports built-in shard regex construction errors through anyhow instead of unwrap panics.</ASSERTION>
+    <ASSERTION>Scoped and full review include typed LINKS issues without failing on legacy comma-separated LINKS warnings.</ASSERTION>
+    <ASSERTION>Scoped and full review include structured LOG format issues when LOG markers are malformed.</ASSERTION>
+    <ASSERTION>Scoped and full review include belief state coverage and malformed BELIEF_STATE issues.</ASSERTION>
+    <ASSERTION>Scoped and full review include anchor syntax consistency warnings for mixed XML-like and START/END files.</ASSERTION>
+    <ASSERTION>Scoped and full review include RequirementsAnalysis completeness counts and errors.</ASSERTION>
+    <ASSERTION>Scoped and full review include Technology selected-or-pending status, completeness counts, and errors.</ASSERTION>
+    <ASSERTION>Scoped and full review include DevelopmentPlan DataFlow and GenerationOrder completeness counts and errors.</ASSERTION>
+    <ASSERTION>Scoped and full review include MentalTests pass/fail, missing critical target, and drift issues.</ASSERTION>
+    <ASSERTION>Scoped and full review include non-human pattern score, blocking errors, advisory warnings, and representative source locations.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13,Phase-96</PHASE_GATE>
+</VERIFICATION>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TRACKING-MCP-METRICS" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Persist cheap MCP runtime metrics separate from token-savings command analytics.
+    Key data flows:
+      - INPUT: Tool name, request lifecycle state, duration, status, error message, project identity.
+      - PROCESSING: Ensure metrics schema, record best-effort events, aggregate per-tool and runtime stats.
+      - OUTPUT: MCP stats payloads for dashboard and readiness reporting.
+    Critical invariants:
+      - Recording failures must not fail MCP tool calls.
+      - Metrics must not bloat command token-savings analytics queries.
+  IMPLEMENTATION_STRATEGY:
+    Approach: Isolate metrics schema and queries in a tracking submodule, then call it from MCP handler and dashboard.
+    Complexity_areas: SQLite migration compatibility, high-frequency write cost, project identity reuse.
+    Patterns_applied: best-effort writes, aggregate query DTOs, explicit retention bounds.
+  VERIFICATION_INTENT:
+    I expect the following to be true after implementation:
+    - tracking::mcp_metrics tests pass
+    - MyGRACE verify gates pass
+  RISKS_ACKNOWLEDGED:
+    - Per-request SQLite writes can become costly if not scoped and bounded.
+</BELIEF_STATE>

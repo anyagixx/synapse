@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-CONTRACT-GENERATOR" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-CONTRACT-GENERATOR</NAME>
+  <PURPOSE>Language-aware GRACE contract generator and safe MODULE_CONTRACT repair engine</PURPOSE>
+  <SCOPE>Contract repair request/result models, module contract generation, function contract generation, dry-run repair, write-mode repair, and missing-contract failure extraction</SCOPE>
+  <FILES>
+    <FILE>src/grace/contract_generator.rs</FILE>
+    <FILE>syn-engine/src/grace/contract_generator.rs</FILE>
+  </FILES>
+  <DEPENDS>M-INDEXER-WALKER</DEPENDS>
+  <LINKS>UC-002,NFR-002,V-M-GRACE-CONTRACT-GENERATOR</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-CONTRACT-GENERATOR</VERIFICATION_REF>
+</MODULE>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TELEMETRY" module="M-TELEMETRY" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test telemetry --lib</COMMAND>
+    <COMMAND>cargo test --all-targets --features telemetry</COMMAND>
+    <COMMAND>cargo clippy --all-targets --all-features -- -D warnings</COMMAND>
+    <COMMAND>syn config get telemetry.enabled</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Telemetry is disabled by default and keeps JSON tracing on stderr only.</ASSERTION>
+    <ASSERTION>telemetry.enabled=true without the cargo feature falls back to stderr tracing with a warning.</ASSERTION>
+    <ASSERTION>With the telemetry feature, OTLP exporter initialization uses configured endpoint, service name, sampling, batch interval, and resource attributes.</ASSERTION>
+    <ASSERTION>TelemetryGuard shutdown flushes the SDK provider when OTLP export was enabled.</ASSERTION>
+    <ASSERTION>Sampler parsing accepts always_on, always_off, and ratio:0..1 values while rejecting invalid ratios.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-93</PHASE_GATE>
+</VERIFICATION>

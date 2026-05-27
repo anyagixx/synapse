@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-38" status="done">
+  <NAME>RTK Package And Language Filter Expansion</NAME>
+  <GOAL>Expand the RTK built-in filter pack with package-manager and language build filters for Python, PHP, Ruby, Swift, and Elixir workflows.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-PROXY-FILTER" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-PROXY-FILTER" status="done">Add RTK-style named filters and inline tests for poetry-install, composer-install, bundle-install, swift-build, mix-compile, and mix-format.</step-1>
+    <step-2 module="M-PROXY-FILTER" status="done">Verify the expanded package and language filter pack through syn filters verify.</step-2>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter poetry-install</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter composer-install</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter bundle-install</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter swift-build</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter mix-compile</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify --filter mix-format</CHECK>
+    <CHECK status="passed">cargo run --quiet -- filters verify</CHECK>
+    <CHECK status="passed">cargo test proxy::toml_filter::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

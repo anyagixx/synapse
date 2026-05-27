@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-COVERAGE-MATRIX" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned visibility matrix for module coverage across evidence types.
+    Key data flows:
+      - INPUT: project root and sharded MyGRACE indexes
+      - PROCESSING: discover modules index-first, count contracts, verification shards, mental tests, guides, LOG markers, and verify status
+      - OUTPUT: human table or JSON summary with covered, partial, and uncovered modules
+    Critical invariants:
+      - Graph index is read before per-module shards
+      - JSON output remains stable for automation
+  IMPLEMENTATION_STRATEGY:
+    Approach: reuse existing MyGRACE scanners instead of string-scanning whole project state where helpers exist
+    Complexity_areas: evidence attribution, large project performance, output stability
+    Patterns_applied: index-first scan, structured summary, bounded table rendering
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - coverage matrix works on Minimal and MultiModule fixtures
+    - uncovered modules are visible without failing unrelated gates by default
+  RISKS_ACKNOWLEDGED:
+    - Direct file scanning can violate MyGRACE token-economy assumptions if not scoped
+</BELIEF_STATE>

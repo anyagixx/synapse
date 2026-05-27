@@ -1,0 +1,25 @@
+[package]
+name = "syn-skills"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Synapse skills crate — GRACE workflow skill engine and capabilities registry"
+
+[dependencies]
+syn-core = { path = "../syn-core" }
+syn-engine = { path = "../syn-engine" }
+syn-run = { path = "../syn-run" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+regex.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
+tempfile.workspace = true
+
+[lib]
+name = "syn_skills"
+path = "src/lib.rs"

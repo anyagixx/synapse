@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-PROXY" type="INTEGRATION" status="active">
+  <NAME>M-PROXY</NAME>
+  <PURPOSE>Proxy executor — routes shell commands, applies trusted TOML filters, records telemetry span fields, and reports token tracking degradation</PURPOSE>
+  <SCOPE>Proxy struct, command-router integration, trusted FilterEngine integration, filter dry-run submodule declaration, async-friendly configurable CommandRunner integration, raw evidence metadata, token tracking with degraded-mode logging, and proxy.execute tracing fields</SCOPE>
+  <FILES>
+    <FILE>src/proxy/mod.rs</FILE>
+    <FILE>syn-proxy/src/proxy/mod.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-TRACKING,M-PROXY-ROUTER,M-PROXY-RUNNER,M-PROXY-FILTER,M-UTILS</DEPENDS>
+  <LINKS>M-PROXY-ROUTER,M-PROXY-FILTER,M-TRACKING,UC-002,NFR-003</LINKS>
+  <VERIFICATION_REF>V-M-PROXY</VERIFICATION_REF>
+</MODULE>

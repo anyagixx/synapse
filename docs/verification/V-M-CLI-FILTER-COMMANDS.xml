@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CLI-FILTER-COMMANDS" module="M-CLI-FILTER-COMMANDS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test cli::filter_commands --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo run --quiet -- filters dry-run --filter dotnet-build --input - --show-input</COMMAND>
+    <COMMAND>cargo run --quiet -- filters dry-run --filter dotnet-build --sample 'Build succeeded.' --format json</COMMAND>
+    <COMMAND>cargo run --quiet -- filters verify --list</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>filters dry-run selects a TOML filter by exact name or by command match without executing the command.</ASSERTION>
+    <ASSERTION>filters dry-run reads sample output from --input file, --input -, or hidden test --sample.</ASSERTION>
+    <ASSERTION>filters dry-run --show-input renders before/after text while preserving stage-decision output.</ASSERTION>
+    <ASSERTION>filters dry-run --format json reports filter name, byte counts, token estimates, reduction_pct, output, and stage decisions.</ASSERTION>
+    <ASSERTION>filters verify --list lists loaded filter names for discoverability.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-68</PHASE_GATE>
+</VERIFICATION>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-WORKSPACE-MCP" type="WORKSPACE_CRATE" status="planned">
+  <NAME>syn-mcp</NAME>
+  <PURPOSE>MCP crate — JSON-RPC MCP server exposing 48 tools for code search, GraphRAG queries, GRACE verification, review, autonomous runs, cascade updates, and user-defined tools</PURPOSE>
+  <SCOPE>MCP stdio server, tools/list and tools/call dispatch, 32 core tools (semantic_search, view_signatures, graphrag_query, verify_project, review_code, project_status, analyze_logs, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run, traceability_report, cascade_impact, cascade_execute, run_test_guide, submit_test_report, self_heal, advance_phase, pre_commit_check, token_savings, compress_text, refresh_project, diagnose_failure, repair_contract, suggest_contract, lsp_hover, lsp_references, tools/recommend, compact_evidence, check_budget, context_pressure), 16 GRACE workflow tools, LSP manager, response economy, cache hints, pipeline, telemetry spans, budget gates, user-defined tools</SCOPE>
+  <FILES>
+    <FILE>syn-mcp/src/lib.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_code_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_grace_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_cascade_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_run_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_response.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_telemetry.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_budget_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_contract_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_pressure.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_tools_pressure.rs</FILE>
+    <FILE>syn-mcp/src/mcp/pipeline.rs</FILE>
+    <FILE>syn-mcp/src/mcp/lsp.rs</FILE>
+    <FILE>syn-mcp/src/mcp/lsp_manager.rs</FILE>
+    <FILE>syn-mcp/src/mcp/tool_recommend.rs</FILE>
+    <FILE>syn-mcp/src/mcp/user_tools.rs</FILE>
+  </FILES>
+  <DEPENDS>M-WORKSPACE-CORE,M-WORKSPACE-ENGINE,M-WORKSPACE-RUN,M-WORKSPACE-SKILLS</DEPENDS>
+  <LINKS>
+    <LINK type="depends">M-WORKSPACE-CORE</LINK>
+    <LINK type="depends">M-WORKSPACE-ENGINE</LINK>
+    <LINK type="depends">M-WORKSPACE-RUN</LINK>
+    <LINK type="depends">M-WORKSPACE-SKILLS</LINK>
+    <LINK type="verified_by">V-M-WORKSPACE-MCP</LINK>
+    <LINK type="implements">Phase-97</LINK>
+  </LINKS>
+  <VERIFICATION_REF>V-M-WORKSPACE-MCP</VERIFICATION_REF>
+</MODULE>

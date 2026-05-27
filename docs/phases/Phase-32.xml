@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-32" status="done">
+  <NAME>RTK Shell Prefix Builtin Parity</NAME>
+  <GOAL>Extend shell-aware Synapse rewrite to preserve RTK shell prefix builtins such as builtin and nocorrect before proxied commands.</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CLI-RTK-COMMANDS" />
+    <MODULE_REF id="M-HOOK-OPENCODE-REWRITE" />
+    <MODULE_REF id="M-TESTS-INTEGRATION" />
+  </MODULE_REFS>
+  <STEPS>
+    <step-1 module="M-CLI-RTK-COMMANDS" status="done">Route builtin and nocorrect prefixes as transparent shell modifiers before CommandRouter classification.</step-1>
+    <step-2 module="M-HOOK-OPENCODE-REWRITE" status="done">Verify OpenCode hook delegation receives shell prefix behavior through syn rewrite only.</step-2>
+    <step-3 module="M-TESTS-INTEGRATION" status="done">Add CLI regression coverage for prefixed rewrite output.</step-3>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo fmt --all -- --check</CHECK>
+    <CHECK status="passed">cargo check --all-targets</CHECK>
+    <CHECK status="passed">cargo test cli::rtk_commands::tests --lib</CHECK>
+    <CHECK status="passed">cargo test --test integration_test test_rewrite_cli_delegates_to_router</CHECK>
+    <CHECK status="passed">cargo test --all-targets --no-fail-fast</CHECK>
+    <CHECK status="passed">cargo clippy --all-targets --all-features -- -D warnings</CHECK>
+    <CHECK status="passed">cargo run --quiet -- refresh --json</CHECK>
+    <CHECK status="passed">cargo run --quiet -- verify --ci</CHECK>
+    <CHECK status="passed">cargo run --quiet -- review --mode full --ci</CHECK>
+  </VERIFICATION>
+</PHASE>

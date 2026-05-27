@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-WORKSPACE-CORE" module="M-WORKSPACE-CORE" priority="critical" status="complete">
+  <UNIT_TESTS>
+    <TEST>cargo test -p syn-core</TEST>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <MARKER>[Core][init][START]</MARKER>
+    <MARKER>[Core][tracking][DB_OPEN]</MARKER>
+    <MARKER>[Core][config][LOAD]</MARKER>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>All 39 unit tests pass</ASSERTION>
+    <ASSERTION>No clippy warnings</ASSERTION>
+    <ASSERTION>MODULE_CONTRACT present with valid PURPOSE</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-97</PHASE_GATE>
+  <EVIDENCE>
+    <CHECK name="cargo test -p syn-core" result="PASS" date="2025-07-17">39 passed; 0 failed</CHECK>
+    <CHECK name="cargo build --workspace" result="PASS" date="2025-07-17">Compiles successfully</CHECK>
+  </EVIDENCE>
+</VERIFICATION>

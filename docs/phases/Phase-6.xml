@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-6" status="done">
+  <NAME>Actions Runtime Hardening</NAME>
+  <GOAL>Remove GitHub Actions Node.js 20 deprecation exposure while preserving Linux/macOS release and install gates</GOAL>
+  <MODULE_REFS>
+    <MODULE_REF id="M-CI" />
+    <MODULE_REF id="M-CI-RELEASE-SMOKE" />
+  </MODULE_REFS>
+  <ACCEPTANCE>
+    <CHECK>CI workflow uses Node 24-ready major versions for GitHub-maintained Node actions</CHECK>
+    <CHECK>CI workflow installs Rust through retrying rustup shell steps instead of a third-party Node/composite toolchain action</CHECK>
+    <CHECK>Release workflow uses Node 24-ready checkout, upload, and release actions while downloading workflow artifacts through GitHub CLI</CHECK>
+    <CHECK>Linux/macOS release smoke matrix remains unchanged</CHECK>
+    <CHECK>Full local MyGRACE and CI gates pass</CHECK>
+    <CHECK>Hosted main CI completes without Node.js 20 deprecation annotations or third-party Node runtime deprecation log noise</CHECK>
+  </ACCEPTANCE>
+  <EVIDENCE>
+    <LOCAL_GATE>scripts/ci.sh, docs_parity, refresh, verify --ci, and review --mode full passed after workflow hardening</LOCAL_GATE>
+    <HOSTED_CI>https://github.com/anyagixx/synapse/actions/runs/26120689647</HOSTED_CI>
+    <RELEASE_RUN>https://github.com/anyagixx/synapse/actions/runs/26120421918</RELEASE_RUN>
+    <RELEASE_URL>https://github.com/anyagixx/synapse/releases/tag/v2.3.5</RELEASE_URL>
+    <LOG_SCAN>Release and main CI logs contain no Node.js 20, DEP0040, DEP0005, or deprecation markers after hardening</LOG_SCAN>
+    <LIVE_INSTALL>Public main installer installed v2.3.5 from release artifact with SHA256 verification on Linux x86_64</LIVE_INSTALL>
+  </EVIDENCE>
+</PHASE>

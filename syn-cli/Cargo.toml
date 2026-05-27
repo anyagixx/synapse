@@ -1,0 +1,69 @@
+[package]
+name = "syn-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Synapse CLI crate — command dispatch, dashboard, workspace, tests"
+
+[features]
+default = []
+telemetry = ["syn-core/telemetry"]
+
+[dependencies]
+syn-core = { path = "../syn-core" }
+syn-engine = { path = "../syn-engine" }
+syn-proxy = { path = "../syn-proxy" }
+syn-run = { path = "../syn-run" }
+syn-skills = { path = "../syn-skills" }
+syn-mcp = { path = "../syn-mcp" }
+clap.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+axum.workspace = true
+tower-http.workspace = true
+chrono.workspace = true
+colored.workspace = true
+dirs.workspace = true
+tempfile.workspace = true
+regex.workspace = true
+toml.workspace = true
+notify.workspace = true
+walkdir.workspace = true
+rusqlite.workspace = true
+sha2.workspace = true
+globset.workspace = true
+tree-sitter.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+criterion.workspace = true
+
+[[bin]]
+name = "syn"
+path = "src/main.rs"
+
+[lib]
+name = "syn_cli"
+path = "src/lib.rs"
+
+[[bench]]
+name = "search"
+path = "../benches/search.rs"
+harness = false
+
+[[bench]]
+name = "graph"
+path = "../benches/graph.rs"
+harness = false
+
+[[bench]]
+name = "cascade"
+path = "../benches/cascade.rs"
+harness = false
+
+

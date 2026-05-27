@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-85" status="done">
+  <NAME>UPGRADE_4 MCP Cache Hints</NAME>
+  <GOAL>Implement T5 prompt caching hints with ETag, TTL metadata, conditional _if_none_match, and bounded in-memory cache.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T5-prompt-caching-hints.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-RESPONSE" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-CODE-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-GRACE-TOOLS" />
+    <MODULE_REF id="M-TESTS-MCP-PROTOCOL" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-85-1">Cacheable tools compute a stable cache key from tool name and normalized arguments.</FLOW>
+    <FLOW id="DF-85-2">First response stores and returns an ETag plus ttl_secs under _meta.cache.</FLOW>
+    <FLOW id="DF-85-3">A later request with matching _if_none_match returns _not_modified without replaying the full response body.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-MCP-SERVER-RESPONSE" status="done">Add CacheMetadata, cache_ttl_for_tool, compute_etag, and result_with_cache helpers.</step-1>
+    <step-2 module="M-MCP-SERVER" status="done">Add an in-memory ETag cache with deterministic keys and clear-on-over-100 eviction.</step-2>
+    <step-3 module="M-MCP-SERVER" status="done">Honor _if_none_match before expensive cacheable handlers when a cached ETag is available.</step-3>
+    <step-4 module="M-MCP-SERVER-TOOLS" status="done">Expose _if_none_match in cacheable tool schemas without making it required.</step-4>
+    <step-5 module="M-TESTS-MCP-PROTOCOL" status="done">Test cache metadata for cacheable tools and ttl_secs=0 behavior for volatile tools.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="done">cargo test mcp::server_response::tests --lib</CHECK>
+    <CHECK status="done">cargo test cache --lib</CHECK>
+    <CHECK status="done">project_status returns _meta.cache.etag and ttl_secs.</CHECK>
+    <CHECK status="done">graphrag_query overview returns cache metadata.</CHECK>
+    <CHECK status="done">matching _if_none_match returns _not_modified=true.</CHECK>
+    <CHECK status="done">semantic_search returns ttl_secs=0 or no cache hit path.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-85-1">ETag based on non-normalized arguments can miss cache hits; canonicalize argument JSON before hashing.</RISK>
+    <RISK id="R-85-2">Caching verification or review too long can hide fresh failures; keep short TTLs for state-sensitive tools.</RISK>
+  </RISKS>
+</PHASE>

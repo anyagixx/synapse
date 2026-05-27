@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-PROXY-FILTER" type="INTEGRATION" status="active">
+  <NAME>M-PROXY-FILTER</NAME>
+  <PURPOSE>TOML filter engine — applies regex-based output transformations from trusted TOML filter definitions</PURPOSE>
+  <SCOPE>FilterDef, ReplaceRule, MatchOutputRule, FilterFile, FilterEngine with find_filter/apply/verify/dry-run, project-local trust gating, split Synapse/RTK built-in filter catalogues, 8-stage pipeline</SCOPE>
+  <FILES>
+    <FILE>src/proxy/filter_dry_run.rs</FILE>
+    <FILE>src/proxy/filter_trust.rs</FILE>
+    <FILE>src/proxy/toml_filter.rs</FILE>
+    <FILE>syn-proxy/src/proxy/filter_dry_run.rs</FILE>
+    <FILE>syn-proxy/src/proxy/filter_trust.rs</FILE>
+    <FILE>syn-proxy/src/proxy/toml_filter.rs</FILE>
+  </FILES>
+  <DEPENDS>M-UTILS</DEPENDS>
+  <LINKS>M-PROXY-FILTER,M-UTILS,Phase-68,V-M-PROXY-FILTER,Phase-24,Phase-37</LINKS>
+  <VERIFICATION_REF>V-M-PROXY-FILTER</VERIFICATION_REF>
+</MODULE>

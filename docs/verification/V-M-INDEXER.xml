@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-INDEXER" module="M-INDEXER" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_search_reports_poisoned_storage_lock --lib</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_search_expands_module_identifier_terms --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_search_in_root_with_filters_applies_metadata --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_hybrid_search_uses_graph_call_edges_for_related_results --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_hybrid_search_uses_multi_hop_graph_proximity --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_index_delta_upserts_changed_files --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::tests::test_index_delta_removes_deleted_files --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::embedding --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test indexer::pipeline --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test --test reliability_test test_corrupted_index_is_reported</COMMAND>
+    <COMMAND>cargo test --test reliability_test test_index_rebuild_removes_deleted_files</COMMAND>
+    <COMMAND>cargo test --test reliability_test test_index_no_git_indexes_gitignored_files</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Search fails with an actionable rebuild message when index storage loaded from corrupted JSON.</ASSERTION>
+    <ASSERTION>Poisoned indexer storage locks return errors instead of panicking.</ASSERTION>
+    <ASSERTION>Full re-indexing removes stale search entries for files deleted from disk.</ASSERTION>
+    <ASSERTION>syn index --no-git disables .gitignore filtering for source discovery in git projects.</ASSERTION>
+    <ASSERTION>Explicit-root search helpers let graph-aware indexer tests run in parallel without mutating process cwd.</ASSERTION>
+    <ASSERTION>Filtered search entrypoints apply SearchFilters before mapping stored blocks into SearchResult payloads.</ASSERTION>
+    <ASSERTION>Full index rebuilds invalidate GraphBuilder cache entries for the indexed root so hybrid search and MCP GraphRAG do not serve stale graph data.</ASSERTION>
+    <ASSERTION>Full index rebuilds delegate StoredBlock construction to the pipeline module while preserving deterministic search data.</ASSERTION>
+    <ASSERTION>Incremental indexing upserts changed-file blocks and removes deleted-file blocks without a full project rebuild.</ASSERTION>
+    <ASSERTION>Indexer declares the embedding provider boundary before semantic vector storage and search integration.</ASSERTION>
+    <ASSERTION>Full and incremental indexing attempt configured embeddings before persistence, then continue with lexical blocks when embedding assets are disabled or fail.</ASSERTION>
+    <ASSERTION>Filtered search and hybrid search prefer compatible semantic vectors when available and fall back to lexical or n-gram ranking otherwise.</ASSERTION>
+    <ASSERTION>index_directory_with_gitignore records an indexer.index_directory span with root, gitignore mode, file count, and block count.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-58,Phase-62,Phase-64,Phase-65,Phase-66,Phase-93</PHASE_GATE>
+</VERIFICATION>

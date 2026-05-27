@@ -1,0 +1,126 @@
+# MODULE_CONTRACT
+# MODULE_ID: M-CI
+# PURPOSE: GitHub Actions CI workflow — full workspace quality gate on every push and PR to main
+# SCOPE: checkout → build → test → clippy → fmt → bench-compile → GRACE verify → GRACE refresh
+# DEPENDS: M-BUILD, M-TESTS-PARITY, M-GRACE-VERIFY, M-GRACE-REFRESH
+# LINKS:
+#   → Phase-101 (implements) — CI/CD pipeline
+#   ← V-M-CI (verified_by) — CI verification shard
+
+# START_MODULE_MAP
+# ci — Full CI pipeline: check, test, clippy, fmt, bench-compile, verify, refresh
+# END_MODULE_MAP
+
+# START_CHANGE_SUMMARY
+# LAST_CHANGE: [v1.0.0 — Phase-101 CI/CD pipeline for 7-crate workspace]
+# END_CHANGE_SUMMARY
+
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ── Quality Gates ──
+  quality:
+    name: Check + Test + Clippy + Fmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+          components: clippy, rustfmt
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Check compilation (workspace)
+        run: cargo check --workspace
+
+      - name: Run tests (workspace, skip e2e)
+        run: cargo test --workspace -- --skip e2e
+
+      - name: Lint (clippy)
+        run: cargo clippy --all-targets --all-features --workspace -- -D warnings
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  # ── Benchmarks (compile only) ──
+  bench-check:
+    name: Benchmarks Compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-bench-
+
+      - name: Check bench targets compile
+        run: cargo bench --no-run
+
+  # ── GRACE Verification ──
+  grace:
+    name: GRACE Verify + Refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-grace-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-grace-
+
+      - name: Build binary (required for syn verify)
+        run: cargo build --release
+
+      - name: GRACE refresh (sync canonical artifacts)
+        run: cargo run --release --quiet -- refresh --fix
+
+      - name: GRACE verify (all gates)
+        run: cargo run --release --quiet -- verify
+
+      - name: GRACE status (project health)
+        run: cargo run --release --quiet -- status

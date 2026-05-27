@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-TEST-FIXTURE" module="M-TEST-FIXTURE" priority="critical" status="active">
+  <UNIT_TESTS>
+    <TEST>Minimal fixture creates synapsec.toml, sharded docs indexes, module shard, verification shard, phase shard, and src/main.rs.</TEST>
+    <TEST>MultiModule fixture creates M-CORE, M-AUTH, and M-STORAGE with DataFlow and mental-test evidence.</TEST>
+    <TEST>Broken fixture contains intentional missing contract and corrupted XML errors.</TEST>
+    <TEST>with_file overrides template files deterministically.</TEST>
+  </UNIT_TESTS>
+  <INTEGRATION_TESTS>
+    <TEST>cargo test fixture tests pass with isolated data and config homes.</TEST>
+  </INTEGRATION_TESTS>
+  <REQUIRED_LOG_MARKERS>
+    <LOG>fixture_build_started</LOG>
+    <LOG>fixture_build_completed</LOG>
+  </REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>Every fixture uses temp directories and cleans up on drop.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-76</PHASE_GATE>
+</VERIFICATION>

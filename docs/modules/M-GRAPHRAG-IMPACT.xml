@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRAPHRAG-IMPACT" type="CORE_LOGIC" status="active">
+  <NAME>M-GRAPHRAG-IMPACT</NAME>
+  <PURPOSE>GraphRAG impact analysis for bounded dependency blast-radius estimation.</PURPOSE>
+  <SCOPE>Impact target modeling, direct/transitive dependent traversal, affected verification/use-case extraction, advisory risk scoring, and suggested actions.</SCOPE>
+  <FILES>
+    <FILE>src/graphrag/impact.rs</FILE>
+    <FILE>syn-engine/src/graphrag/impact.rs</FILE>
+  </FILES>
+  <DEPENDS>M-GRAPHRAG-TYPES</DEPENDS>
+  <LINKS>M-GRAPHRAG-TYPES,UC-001,NFR-002</LINKS>
+  <VERIFICATION_REF>V-M-GRAPHRAG-IMPACT</VERIFICATION_REF>
+</MODULE>

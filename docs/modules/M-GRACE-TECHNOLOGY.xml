@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-GRACE-TECHNOLOGY" type="CORE_LOGIC" status="active">
+  <NAME>M-GRACE-TECHNOLOGY</NAME>
+  <PURPOSE>Technology stack parser, validator, dependency detector, and generator for GRACE Stage 2 artifacts</PURPOSE>
+  <SCOPE>TechnologyReport, DetectedDependency, TechnologyComponent, pending decision artifacts, concrete detected-stack generation, file validation, dependency detection, compatibility checks</SCOPE>
+  <FILES>
+    <FILE>src/grace/technology.rs</FILE>
+    <FILE>syn-engine/src/grace/technology.rs</FILE>
+  </FILES>
+  <DEPENDS></DEPENDS>
+  <LINKS>V-M-GRACE-TECHNOLOGY</LINKS>
+  <VERIFICATION_REF>V-M-GRACE-TECHNOLOGY</VERIFICATION_REF>
+</MODULE>

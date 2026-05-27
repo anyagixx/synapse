@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-CLI-TEST-COMMANDS" type="CORE_LOGIC" status="active">
+  <NAME>M-CLI-TEST-COMMANDS</NAME>
+  <PURPOSE>Structured Synapse test command dispatcher with E2E/MCP/coverage/perf/contract/resilience/snapshot handlers and RTK legacy fallback.</PURPOSE>
+  <SCOPE>syn test e2e, mcp, snapshot, coverage, perf, contract, resilience, E2E scenario execution, MCP cargo target execution, evidence and code coverage rendering, perf baseline/check execution, contract differential spec execution, resilience spec discovery/execution, snapshot listing, and legacy RTK fallback dispatch.</SCOPE>
+  <FILES>
+    <FILE>src/cli/test_commands.rs</FILE>
+    <FILE>syn-cli/src/cli/test_commands.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CLI,M-CLI-RTK-COMMANDS,M-TEST-HARNESS,M-TEST-E2E-RUNNER,M-TEST-MCP-REGRESSION,M-TEST-COVERAGE-MATRIX,M-TEST-PERF-REGRESSION,M-TEST-CONTRACT-DIFFERENTIAL,M-TEST-RESILIENCE-CHAOS,M-TEST-SNAPSHOT</DEPENDS>
+  <LINKS>Phase-76,Phase-78,Phase-79,Phase-94,Phase-80,Phase-81,M-CLI-RTK-COMMANDS,M-TEST-MCP-REGRESSION,M-TEST-COVERAGE-MATRIX,M-TEST-PERF-REGRESSION,M-TEST-CONTRACT-DIFFERENTIAL,M-TEST-RESILIENCE-CHAOS,V-M-CLI-TEST-COMMANDS</LINKS>
+  <VERIFICATION_REF>V-M-CLI-TEST-COMMANDS</VERIFICATION_REF>
+</MODULE>

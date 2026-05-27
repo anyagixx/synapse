@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-CLI-AGENT-COMMANDS" module="M-CLI-AGENT-COMMANDS" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test cli::agent_commands --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>syn agent resume/status resolve the latest incomplete run when --run-id is omitted.</ASSERTION>
+    <ASSERTION>syn agent resume/status can render JSON for machine handoff and compact text for humans.</ASSERTION>
+    <ASSERTION>Missing resumable run returns an explicit actionable error.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-74,Phase-75</PHASE_GATE>
+</VERIFICATION>

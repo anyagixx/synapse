@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-MCP-LSP" module="M-MCP-LSP" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test mcp::lsp::tests::test_protocol_position_zero_line_is_safe --lib</COMMAND>
+    <COMMAND>cargo test mcp::lsp::tests --lib</COMMAND>
+    <COMMAND>cargo test mcp::lsp_manager::tests --lib</COMMAND>
+    <COMMAND>cargo test mcp::lsp_manager --lib -- --test-threads=8</COMMAND>
+    <COMMAND>cargo test mcp::lsp::tests::test_document_text_prefers_content_override --lib -- --test-threads=8</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>LSP line zero is handled without unsigned underflow before request dispatch.</ASSERTION>
+    <ASSERTION>Missing LSP stdin pipes return errors instead of unwrap panics.</ASSERTION>
+    <ASSERTION>LSP parse error previews use Unicode-safe truncation.</ASSERTION>
+    <ASSERTION>LSP command detection prefers configured lsp.servers overrides and falls back to built-in defaults.</ASSERTION>
+    <ASSERTION>LSP requests use persistent manager-backed connections with Content-Length message framing.</ASSERTION>
+    <ASSERTION>First LSP request sends didOpen with the current or caller-provided document content and repeated opens do not duplicate didOpen.</ASSERTION>
+    <ASSERTION>LSP connection drop sends didClose for all tracked opened documents before shutdown/exit cleanup.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-59,Phase-68</PHASE_GATE>
+</VERIFICATION>

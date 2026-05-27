@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-DASHBOARD" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Axum web dashboard — serves project health plus GRACE belief, mental-test, traceability, token-economy, cascade, and run cockpit views/APIs
+    Key data flows:
+      - INPUT: Use MODULE_CONTRACT, sharded docs, and execution context: Phase-14 baseline: read MODULE_CONTRACT, module shard, verification shard, and product traceability defaults before public release.
+      - PROCESSING: Implement only the declared scope while preserving dependencies: M-GRACE-STATUS, M-GRACE-BELIEF-STATE, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRAPHRAG, M-TRACKING, M-RUNNER, M-CONFIG
+      - OUTPUT: Updated code/artifacts that verify against MyGRACE gates
+    Critical invariants:
+      - Scope remains bounded to: HTTP server with health/status/graph/tokens APIs including adapter/session stats, GRACE state pages, traceability queries, run queue/blocked cockpit views, review/approve actions, selected-run replay, cascade previews, and cascade history
+      - MODULE_CONTRACT, MODULE_MAP, CHANGE_SUMMARY, and semantic anchors stay synchronized
+  IMPLEMENTATION_STRATEGY:
+    Approach: Read sharded artifacts first, preserve public contracts, make scoped edits, then run verification gates
+    Complexity_areas: artifact drift, backward compatibility, verification coverage
+    Patterns_applied: explicit data flow, typed semantic links, bounded semantic blocks
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - belief-state-exists reports no malformed BELIEF_STATE blocks
+    - verify_project, review_code, and relevant unit tests pass after implementation
+  RISKS_ACKNOWLEDGED:
+    - This scaffold is generated from artifacts and should be refined by the implementing agent before substantial code generation
+    - Incomplete module artifacts can make the first belief state too generic
+</BELIEF_STATE>

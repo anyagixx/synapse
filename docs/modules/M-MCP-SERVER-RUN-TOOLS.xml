@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-MCP-SERVER-RUN-TOOLS" type="INTEGRATION" status="active">
+  <NAME>M-MCP-SERVER-RUN-TOOLS</NAME>
+  <PURPOSE>MCP handlers for bounded run phase advancement, evidence compaction, and pre-commit verification tools.</PURPOSE>
+  <SCOPE>tools/recommend handler, work-phase detection from run state and context, bounded recommendation lists, and custom tools/list profile construction.</SCOPE>
+  <FILES>
+    <FILE>src/mcp/server_run_tools.rs</FILE>
+    <FILE>src/mcp/tool_recommend.rs</FILE>
+    <FILE>syn-mcp/src/mcp/server_run_tools.rs</FILE>
+    <FILE>syn-mcp/src/mcp/tool_recommend.rs</FILE>
+  </FILES>
+  <DEPENDS>M-RUNNER,M-RUNNER-PHASE-ENGINE,M-RUNNER-PRECOMMIT,M-MCP-SERVER-RESPONSE,M-RUNNER-AGENT-CONTEXT</DEPENDS>
+  <LINKS>M-RUNNER,M-RUNNER-PHASE-ENGINE,M-RUNNER-PRECOMMIT,UC-002,M-RUNNER-AGENT-CONTEXT,M-MCP-SERVER-RESPONSE,NFR-003</LINKS>
+  <VERIFICATION_REF>V-M-MCP-SERVER-RUN-TOOLS</VERIFICATION_REF>
+</MODULE>

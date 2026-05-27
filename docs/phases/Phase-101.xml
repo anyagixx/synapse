@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-101" status="planned">
+  <NAME>CI/CD Pipeline + Production Baseline</NAME>
+  <GOAL>Initialize Git repository, create `.github/workflows/ci.yml` with full workspace pipeline (check → test → clippy → bench → verify → release-dry), and establish the first green CI run as the production quality baseline.</GOAL>
+  <PRIORITY>critical</PRIORITY>
+  <EFFORT>1 day</EFFORT>
+  <DEPENDS_ON>Phase-97 Phase-98 Phase-99 Phase-100</DEPENDS_ON>
+
+  <SOURCE>Honest assessment gap #1: no CI/CD, no git repo, no automated quality gates. Every check runs manually. This is the #1 blocker to production readiness.</SOURCE>
+
+  <DELIVERABLES>
+    <DELIVERABLE id="D-101-1">Git init + .gitignore audit (target/, node_modules/, coverage/, *.db, .env, opencode.jsonc)</DELIVERABLE>
+    <DELIVERABLE id="D-101-2">`.github/workflows/ci.yml` — full pipeline: checkout → build → test --workspace → clippy → fmt-check → bench --no-run → verify → refresh → release-dry</DELIVERABLE>
+    <DELIVERABLE id="D-101-3">`.github/workflows/release.yml` — on tag v*: build-release → tarpaulin → package → smoke-test → upload-artifacts</DELIVERABLE>
+    <DELIVERABLE id="D-101-4">First green CI run on push — all gates pass OR documented known failures (e2e×2, traceability advisory)</DELIVERABLE>
+    <DELIVERABLE id="D-101-5">CI badge in README.md</DELIVERABLE>
+  </DELIVERABLES>
+
+  <DATA_FLOWS>
+    <FLOW id="DF-101-1">Push to main → CI trigger → cargo check --workspace → cargo test --workspace → cargo clippy → cargo fmt --check</FLOW>
+    <FLOW id="DF-101-2">CI → cargo bench --no-run (verify bench compile) → cargo run -- verify → cargo run -- refresh --fix</FLOW>
+    <FLOW id="DF-101-3">Tag v* → release trigger → cargo build --release → cargo tarpaulin → tarball + SHA256 → upload to GitHub Releases</FLOW>
+  </DATA_FLOWS>
+
+  <VERIFICATION>
+    <CHECK>CI passes on push: check ✅, test ✅ (e2e skipped), clippy ✅, fmt ✅</CHECK>
+    <CHECK>Bench targets compile in CI (cargo bench --no-run)</CHECK>
+    <CHECK>GRACE verify passes in CI (wave ✅, phase ✅)</CHECK>
+    <CHECK>Release workflow dry-run succeeds on tag</CHECK>
+  </VERIFICATION>
+
+  <RISKS>
+    <RISK id="R-101-1">GitHub Actions macOS runner may not have Rust 1.95.0. Mitigation: use rust-toolchain.toml or actions-rs/toolchain.</RISK>
+    <RISK id="R-101-2">E2E tests require syn binary in PATH — will fail in CI. Mitigation: skip e2e in CI, add `cargo install --path .` step.</RISK>
+    <RISK id="R-101-3">cargo-tarpaulin may timeout on GitHub Actions (2-core limit). Mitigation: use --skip-clean, limit to --workspace --exclude-files.</RISK>
+  </RISKS>
+</PHASE>

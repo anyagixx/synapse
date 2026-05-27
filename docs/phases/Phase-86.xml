@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-86" status="done">
+  <NAME>UPGRADE_4 Predictive Tool Recommendation</NAME>
+  <GOAL>Implement T8 tools/recommend so agents can request no more than eight context-relevant tools before listing schemas.</GOAL>
+  <SOURCE_PLAN>/home/truffle/Загрузки/synapse-main/UPGRADE_4/T8-predictive-tool-preselection.md</SOURCE_PLAN>
+  <MODULE_REFS>
+    <MODULE_REF id="M-MCP-SERVER" />
+    <MODULE_REF id="M-MCP-SERVER-TOOLS" />
+    <MODULE_REF id="M-MCP-SERVER-RUN-TOOLS" />
+    <MODULE_REF id="M-RUNNER" />
+    <MODULE_REF id="M-RUNNER-AGENT-CONTEXT" />
+    <MODULE_REF id="M-TESTS-MCP-PROTOCOL" />
+  </MODULE_REFS>
+  <DATA_FLOWS>
+    <FLOW id="DF-86-1">tools/recommend reads optional context text and optional run_id.</FLOW>
+    <FLOW id="DF-86-2">Recommendation engine detects work phase from run state first, then context keywords, then general fallback.</FLOW>
+    <FLOW id="DF-86-3">Response returns recommended_tools with name, relevance, reason, phase, and a suggested custom tools/list profile.</FLOW>
+  </DATA_FLOWS>
+  <STEPS>
+    <step-1 module="M-MCP-SERVER-TOOLS" status="done">Add tools/recommend tool schema.</step-1>
+    <step-2 module="M-MCP-SERVER" status="done">Route tools/recommend through MCP tools/call and support a direct JSON-RPC method alias only if protocol tests allow it.</step-2>
+    <step-3 module="M-RUNNER-AGENT-CONTEXT" status="done">Provide compact run-state signals needed for recommendation: status, current gate, module, and next action.</step-3>
+    <step-4 module="M-MCP-SERVER-RUN-TOOLS" status="done">Map run state and context to init, plan, implement, verify, debug, or general work phases.</step-4>
+    <step-5 module="M-TESTS-MCP-PROTOCOL" status="done">Test verify contracts, debug M-AUTH, no context, and run_id-aware recommendations.</step-5>
+  </STEPS>
+  <VERIFICATION>
+    <CHECK status="passed">cargo test mcp::tool_recommend::tests --lib</CHECK>
+    <CHECK status="passed">tools/recommend context='verify contracts' includes verify_project, review_code, and traceability_report.</CHECK>
+    <CHECK status="passed">tools/recommend context='debug M-AUTH' includes diagnose_failure, self_heal, and analyze_logs.</CHECK>
+    <CHECK status="passed">tools/recommend without context returns general essentials.</CHECK>
+    <CHECK status="passed">tools/recommend with run_id returns phase-dependent recommendations.</CHECK>
+    <CHECK status="passed">tools/recommend plus custom terse tools/list stays at or below 300 estimated schema tokens.</CHECK>
+  </VERIFICATION>
+  <RISKS>
+    <RISK id="R-86-1">Keyword-only recommendation can be noisy; prioritize persisted run state when run_id is present.</RISK>
+    <RISK id="R-86-2">A direct method named tools/recommend may conflict with MCP method namespace; keep tool-call path authoritative.</RISK>
+  </RISKS>
+</PHASE>

@@ -1,0 +1,10 @@
+name = "bad-config"
+fixture = "minimal"
+
+[[cases]]
+name = "invalid-user-config-falls-back-gracefully"
+command = { args = ["config", "list"], expect_exit = 0, stdout_contains = ["project.name = my-project"] }
+
+[[cases.actions]]
+kind = "write-user-config"
+content = "project = ["

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-104" status="planned">
+  <NAME>Code Health: File Size Reduction + Benchmark Gaps + Production Readiness</NAME>
+  <GOAL>Reduce 62 files exceeding 500-line target (Phase-2 maintainability gate) by extracting test modules and splitting large match blocks. Add 3 missing benchmarks (proxy filter chain, tracking DB writes, token compression). Document Windows support plan and MacOS Intel mitigation. Update product-readiness-assessment with honest post-audit scores.</GOAL>
+  <PRIORITY>medium</PRIORITY>
+  <EFFORT>5 days</EFFORT>
+  <DEPENDS_ON>Phase-103</DEPENDS_ON>
+
+  <SOURCE>Honest assessment: 62 files >500 lines (maintainability debt), benchmark gaps (proxy filter, tracking, compression — core features untested for perf), Windows deferred without plan, PRA scores self-assessed at 9.8/10.</SOURCE>
+
+  <DELIVERABLES>
+    <DELIVERABLE id="D-104-1">File size reduction wave 1 — top 10 largest files:
+      syn-run/src/run/mod.rs: 1300→900 (extract test helpers to test_helpers.rs)
+      syn-core/src/config.rs: 1288→900 (extract test module to tests/config_tests.rs)
+      syn-engine/src/grace/contract.rs: 1281→900 (split contract validator and generator)
+      syn-engine/src/grace/verify.rs: 1125→900 (extract check functions per gate)
+      syn-engine/src/grace/cascade.rs: 1108→900 (split impact analysis and execution)
+      syn-core/src/hooks/mod.rs: 1094→900 (extract hook installers)
+      syn-engine/src/grace/technology.rs: 1091→900 (split tech stack validator)
+      syn-mcp/src/mcp/server.rs: 1300→900 (extract request router)
+      syn-mcp/src/mcp/server_code_tools.rs: 1264→900 (split by tool category)
+      syn-cli/src/dashboard.rs: 1266→900 (extract route handlers)
+    </DELIVERABLE>
+    <DELIVERABLE id="D-104-2">Add 3 benchmarks:
+      (a) benches/filter.rs — proxy filter chain: 30 filters on 10KB output, measure throughput
+      (b) benches/tracking.rs — tracking DB: 1000 concurrent event writes, measure P50/P99 latency
+      (c) benches/compress.rs — token compression: 100KB context → compressed, measure ratio + speed
+    </DELIVERABLE>
+    <DELIVERABLE id="D-104-3">Windows support plan: document technical blockers (tree-sitter, fastembed, notify), estimate effort (2-3 weeks), define MVP scope (CLI only, no embedding, no LSP).</DELIVERABLE>
+    <DELIVERABLE id="D-104-4">MacOS Intel mitigation: document ORT_DYLIB_PATH requirement in INSTALL.md, add preflight check to install.sh --diagnose.</DELIVERABLE>
+    <DELIVERABLE id="D-104-5">Update docs/product-readiness-assessment.xml with honest post-audit scores (overall: 7.5→8.5 target).</DELIVERABLE>
+  </DELIVERABLES>
+
+  <DATA_FLOWS>
+    <FLOW id="DF-104-1">Top-10 files → extract test modules → extract helper functions → verify no regression → re-measure lines</FLOW>
+    <FLOW id="DF-104-2">New benchmarks → register in syn-cli/Cargo.toml → cargo bench --bench filter → baseline numbers</FLOW>
+    <FLOW id="DF-104-3">Windows plan → docs/windows-plan.xml → linked from README</FLOW>
+  </DATA_FLOWS>
+
+  <VERIFICATION>
+    <CHECK>10 target files reduced to ≤900 lines each; 0 files >1300 lines; ≤40 files >500 lines (from 62)</CHECK>
+    <CHECK>3 new benchmarks operational: filter, tracking, compress</CHECK>
+    <CHECK>docs/windows-plan.xml created with MVP scope and effort estimate</CHECK>
+    <CHECK>install.sh --diagnose reports MacOS Intel embedding runtime status</CHECK>
+    <CHECK>PRA scores updated: overall 7.5→8.0 (post-Phase-104), target 8.5 after user feedback</CHECK>
+    <CHECK>syn verify: all gates PASS, 0 advisories</CHECK>
+  </VERIFICATION>
+
+  <RISKS>
+    <RISK id="R-104-1">File splitting may break MODULE_ID contract references. Mitigation: run `syn refresh --fix` after each split; verify contracts resolve.</RISK>
+    <RISK id="R-104-2">Extracted test files need MODULE_CONTRACT headers — adds GRACE overhead. Mitigation: template minimal contract header for test files.</RISK>
+    <RISK id="R-104-3">Benchmarks for tracking DB require concurrent SQLite writes — may hit locking contention. Mitigation: use WAL mode, measure under realistic contention.</RISK>
+    <RISK id="R-104-4">Windows support may reveal deep platform assumptions (fork, symlinks, file permissions). Mitigation: scope MVP to CLI-only; defer embedding/LSP.</RISK>
+  </RISKS>
+</PHASE>

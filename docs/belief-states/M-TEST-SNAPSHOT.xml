@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BELIEF_STATE module="M-TEST-SNAPSHOT" version="1.0">
+  UNDERSTANDING:
+    Module responsibility: Planned golden snapshot assertion engine for command outputs.
+    Key data flows:
+      - INPUT: snapshot name, actual output, snapshots directory, and update flag
+      - PROCESSING: normalize volatile output, create or compare snapshot, compute bounded diff
+      - OUTPUT: SnapshotResult and summary counts
+    Critical invariants:
+      - CI check mode never silently updates snapshots
+      - Normalization removes known volatile values without hiding real output changes
+  IMPLEMENTATION_STRATEGY:
+    Approach: keep snapshot logic local and deterministic with explicit update mode
+    Complexity_areas: path normalization, timing noise, diff size limits
+    Patterns_applied: golden files, stable normalization, bounded diffs
+  VERIFICATION_INTENT:
+    I expect the following to be true after my code runs:
+    - matching snapshots pass
+    - mismatches produce actionable line diffs
+    - update mode rewrites baselines only when requested
+  RISKS_ACKNOWLEDGED:
+    - Over-aggressive normalization can mask real regressions
+</BELIEF_STATE>

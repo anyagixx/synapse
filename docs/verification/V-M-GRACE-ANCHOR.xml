@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VERIFICATION id="V-M-GRACE-ANCHOR" module="M-GRACE-ANCHOR" priority="normal" status="active">
+  <UNIT_TESTS>
+    <COMMAND>cargo test --all-targets</COMMAND>
+    <COMMAND>cargo test grace::anchor --lib</COMMAND>
+    <COMMAND>cargo test grace::semantic::tests::test_extract_blocks_supports_xml_like_anchors --lib</COMMAND>
+    <COMMAND>cargo test grace::contract::tests::test_scan_file_with_xml_like_contracts --lib</COMMAND>
+  </UNIT_TESTS>
+  <REQUIRED_LOG_MARKERS></REQUIRED_LOG_MARKERS>
+  <TRACE_ASSERTIONS>
+    <ASSERTION>XML-like BLOCK anchors normalize to legacy START/END markers for existing semantic parsing.</ASSERTION>
+    <ASSERTION>XML-like FUNCTION_CONTRACT and MODULE_CONTRACT anchors normalize for existing contract parsing.</ASSERTION>
+    <ASSERTION>anchor_syntax_report detects files that mix XML-like and START/END anchor styles.</ASSERTION>
+  </TRACE_ASSERTIONS>
+  <PHASE_GATE>Phase-13</PHASE_GATE>
+</VERIFICATION>

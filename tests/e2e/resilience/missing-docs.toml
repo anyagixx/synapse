@@ -1,0 +1,10 @@
+name = "missing-docs"
+fixture = "minimal"
+
+[[cases]]
+name = "init-recovers-missing-docs-directory"
+command = { args = ["init"], expect_exit = 0, paths_exist = ["docs/graph-index.xml", "docs/plan-index.xml", "docs/verification-index.xml"] }
+
+[[cases.actions]]
+kind = "remove-dir"
+path = "docs"
