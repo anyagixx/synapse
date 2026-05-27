@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.7.3 (2025-07-17)
+- **Phase-106**: Production Validation Suite — config defaults, JSON-RPC fuzzing (0 panics), cross-crate integration chain. 543 workspace tests.
+
+## 2.7.2 (2025-07-17)
+- **MyGRACE Protocol**: agents follow GRACE voluntarily. Rewrote rules as professional methodology, not threats.
+
 ## 2.7.1 (2025-07-17)
 
 ### GRACE Enforcement — Agents CANNOT bypass contracts anymore
