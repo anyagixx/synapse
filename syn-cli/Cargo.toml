@@ -66,4 +66,9 @@ name = "cascade"
 path = "../benches/cascade.rs"
 harness = false
 
+[[bench]]
+name = "filter"
+path = "../benches/filter.rs"
+harness = false
+
 

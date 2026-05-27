@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WINDOWS_SUPPORT_PLAN date="2025-07-17" status="planned" target="v3.0.0">
+  <SUMMARY>Windows x86_64 support plan for Synapse. Currently deferred — Linux/macOS are the supported platforms for v2.x release line.</SUMMARY>
+
+  <TECHNICAL_BLOCKERS>
+    <BLOCKER component="tree-sitter" severity="high">
+      Tree-sitter grammars compile on Windows via MSVC but require cmake + C++ build tools.
+      Mitigation: bundle pre-compiled grammars via tree-sitter-loader or use conditional compilation.
+      Effort: 2 days.
+    </BLOCKER>
+    <BLOCKER component="fastembed" severity="high">
+      ONNX Runtime embedding requires platform-specific libonnxruntime.dll.
+      Mitigation: feature-gate embeddings on Windows (lexical-only search), same as MacOS Intel approach.
+      Effort: 1 day.
+    </BLOCKER>
+    <BLOCKER component="notify" severity="medium">
+      File watcher (notify crate) uses different backend on Windows (ReadDirectoryChangesW).
+      API is cross-platform but edge cases differ.
+      Mitigation: test watcher on Windows CI; add retry logic for transient locking.
+      Effort: 1 day.
+    </BLOCKER>
+    <BLOCKER component="file-permissions" severity="medium">
+      Unix-specific operations: symlinks, chmod, shebang scripts.
+      Mitigation: gate Unix-specific code behind #[cfg(unix)], provide Windows equivalents where needed.
+      Effort: 2 days.
+    </BLOCKER>
+  </TECHNICAL_BLOCKERS>
+
+  <MVP_SCOPE>
+    <INCLUDE>CLI commands (init, verify, review, refresh, status, mcp)</INCLUDE>
+    <INCLUDE>Code indexer (lexical search, no embeddings)</INCLUDE>
+    <INCLUDE>GraphRAG (knowledge graph, impact analysis)</INCLUDE>
+    <INCLUDE>GRACE methodology (all verification gates)</INCLUDE>
+    <INCLUDE>Proxy command execution (PowerShell + cmd fallback)</INCLUDE>
+    <EXCLUDE>Embedding search (ONNX Runtime dependency)</EXCLUDE>
+    <EXCLUDE>LSP integration (platform-specific process management)</EXCLUDE>
+    <EXCLUDE>File watcher (optional, can use polling fallback)</EXCLUDE>
+  </MVP_SCOPE>
+
+  <EFFORT>
+    <TOTAL>2-3 weeks (one developer)</TOTAL>
+    <BREAKDOWN>
+      <ITEM>Initial Windows build (MSVC toolchain, dependency resolution): 3 days</ITEM>
+      <ITEM>Unix-gate refactoring (#[cfg(unix)] annotations): 2 days</ITEM>
+      <ITEM>Windows CI workflow (.github/workflows/ci.yml windows matrix): 1 day</ITEM>
+      <ITEM>Testing + bug fixes: 5 days</ITEM>
+      <ITEM>Documentation (INSTALL.md windows section): 1 day</ITEM>
+    </BREAKDOWN>
+  </EFFORT>
+
+  <CI_MATRIX>
+    <OS name="windows-latest" target="x86_64-pc-windows-msvc" />
+  </CI_MATRIX>
+
+  <PHASE_GATE>Phase-110 (planned, post v2.x release line)</PHASE_GATE>
+</WINDOWS_SUPPORT_PLAN>
