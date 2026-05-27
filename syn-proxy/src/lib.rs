@@ -24,7 +24,7 @@ pub mod proxy;
 // PURPOSE: Re-export proxy types for downstream consumers
 // OUTPUTS: { CommandRouter — token-saving command dispatch }, { CommandRunner — sandboxed command execution }, { FilterEngine — TOML-based filter chain }
 // LINKS:
-//   → Phase-97 (traces_to) — workspace split metadata
+//   → NFR-002 (traces_to) — type exports enable reliable downstream usage
 // START_public_api
 pub use proxy::router::CommandRouter;
 pub use proxy::runner::CommandRunner;

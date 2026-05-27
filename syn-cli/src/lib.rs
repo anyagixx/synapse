@@ -30,7 +30,7 @@ pub mod test;
 // PURPOSE: Export compile-time crate metadata constants
 // OUTPUTS: { VERSION — crate version string }, { NAME — binary name }
 // LINKS:
-//   → Phase-97 (traces_to) — workspace split metadata
+//   → NFR-002 (traces_to) — version constants support reproducible debugging
 // START_public_api
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const NAME: &str = "syn";

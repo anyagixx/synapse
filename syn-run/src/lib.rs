@@ -24,7 +24,7 @@ pub mod run;
 // PURPOSE: Re-export core run types for downstream consumers
 // OUTPUTS: { RunManager, RunRecord, RunReplayEvent, RunStatus, RunGate, RunGateStatus, agent_context, scenario, actions, self_heal, handoff, phase, pre_commit }
 // LINKS:
-//   → Phase-97 (traces_to) — workspace split metadata
+//   → NFR-002 (traces_to) — type exports enable reliable downstream usage
 // START_public_api
 pub use run::RunManager;
 pub use run::RunRecord;

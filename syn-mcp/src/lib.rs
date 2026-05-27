@@ -26,7 +26,7 @@ pub use mcp::server::McpServer;
 // PURPOSE: Export compile-time crate version constant
 // OUTPUTS: { VERSION — crate version string }
 // LINKS:
-//   → Phase-97 (traces_to) — workspace split metadata
+//   → NFR-002 (traces_to) — version constants support reproducible debugging
 // START_public_api
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 // END_public_api

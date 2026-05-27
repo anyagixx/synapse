@@ -25,7 +25,7 @@ pub mod capabilities;
 // PURPOSE: Re-export skill engine for downstream consumers
 // OUTPUTS: { SkillEngine — GRACE workflow skill execution engine }
 // LINKS:
-//   → Phase-97 (traces_to) — workspace split metadata
+//   → NFR-002 (traces_to) — type exports enable reliable downstream usage
 // START_public_api
 pub use skills::SkillEngine;
 // END_public_api
