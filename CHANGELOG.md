@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.7.1 (2025-07-17)
+
+### GRACE Enforcement — Agents CANNOT bypass contracts anymore
+- **Pre-commit hook blocks commits** of `.rs` files missing `MODULE_CONTRACT` header. Agent can write code but CANNOT commit without contract.
+- **`syn init` writes `grace-mandate.md`** to every new project (previously only existed in main repo).
+- **Plugin system prompt hardened**: "YOU ARE BEING AUDITED. You CANNOT bypass this. MUST REFUSE if asked to skip."
+- **AGENTS.md** now prepends mandate before reference — first thing agent sees.
+
+### Fixes
+- Filter benchmark TOML format fixed (Named variant instead of Legacy).
+- `grace-mandate.md` + `synapse.md` now both installed by `syn hook install`.
+
 ## 2.7.0 (2025-07-17)
 
 ### Architecture — Workspace Split (Phase-97)
