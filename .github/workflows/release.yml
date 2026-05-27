@@ -1,18 +1,18 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI-RELEASE-SMOKE
-# PURPOSE: GitHub Actions release workflow — on tag v*, build release binaries, package tarballs, generate SHA256 checksums, and publish to GitHub Releases
-# SCOPE: Linux x86_64 binary build, tarball packaging, SHA256 checksums, GitHub Release upload
+# PURPOSE: GitHub Actions release workflow — on tag v*, build release binaries for Linux (x86_64, aarch64) and macOS (x86_64, arm64), generate SHA256SUMS, and publish to GitHub Releases
+# SCOPE: Multi-platform release builds, tarball packaging, SHA256 verification, GitHub Release publishing
 # DEPENDS: M-BUILD, M-INSTALL
 # LINKS:
 #   → Phase-101 (implements) — CI/CD pipeline
 #   ← V-M-CI-RELEASE-SMOKE (verified_by) — release smoke verification
 
 # START_MODULE_MAP
-# release — Build, package, checksum, and publish release artifacts
+# release — Build, package, checksum, and publish multi-platform release artifacts
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.0.0 — Phase-101 release workflow for workspace builds]
+# LAST_CHANGE: [v2.7.3 — Multi-platform: Linux x86_64/aarch64 + macOS x86_64/arm64]
 # END_CHANGE_SUMMARY
 
 name: Release
@@ -26,46 +26,109 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # ── Build + Package + Publish ──
-  release:
-    name: Release ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            artifact: syn
-            archive: syn-linux-x86_64.tar.gz
-
+  # ── Build Linux x86_64 ──
+  linux-x86_64:
+    name: Linux x86_64
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.95.0"
-          targets: ${{ matrix.target }}
+          targets: x86_64-unknown-linux-gnu
+      - run: cargo build --release --locked --target x86_64-unknown-linux-gnu
+      - run: tar -czf syn-x86_64-unknown-linux-gnu.tar.gz -C target/x86_64-unknown-linux-gnu/release syn
+      - run: sha256sum syn-x86_64-unknown-linux-gnu.tar.gz > syn-x86_64-unknown-linux-gnu.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64
+          path: syn-x86_64-unknown-linux-gnu.tar.gz*
 
-      - name: Build release binary
-        run: cargo build --release --locked --target ${{ matrix.target }}
+  # ── Build Linux aarch64 ──
+  linux-aarch64:
+    name: Linux aarch64
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+          targets: aarch64-unknown-linux-gnu
+      - run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+      - run: cargo build --release --locked --target aarch64-unknown-linux-gnu
+      - run: tar -czf syn-aarch64-unknown-linux-gnu.tar.gz -C target/aarch64-unknown-linux-gnu/release syn
+      - run: sha256sum syn-aarch64-unknown-linux-gnu.tar.gz > syn-aarch64-unknown-linux-gnu.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-aarch64
+          path: syn-aarch64-unknown-linux-gnu.tar.gz*
 
-      - name: Package tarball
+  # ── Build macOS x86_64 (Intel) ──
+  macos-x86_64:
+    name: macOS x86_64
+    runs-on: macos-13
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+          targets: x86_64-apple-darwin
+      - run: cargo build --release --locked --target x86_64-apple-darwin
+      - run: tar -czf syn-x86_64-apple-darwin.tar.gz -C target/x86_64-apple-darwin/release syn
+      - run: shasum -a 256 syn-x86_64-apple-darwin.tar.gz > syn-x86_64-apple-darwin.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-x86_64
+          path: syn-x86_64-apple-darwin.tar.gz*
+
+  # ── Build macOS arm64 (Apple Silicon) ──
+  macos-arm64:
+    name: macOS arm64
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.95.0"
+          targets: aarch64-apple-darwin
+      - run: cargo build --release --locked --target aarch64-apple-darwin
+      - run: tar -czf syn-aarch64-apple-darwin.tar.gz -C target/aarch64-apple-darwin/release syn
+      - run: shasum -a 256 syn-aarch64-apple-darwin.tar.gz > syn-aarch64-apple-darwin.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64
+          path: syn-aarch64-apple-darwin.tar.gz*
+
+  # ── Generate SHA256SUMS + Publish Release ──
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: [linux-x86_64, linux-aarch64, macos-x86_64, macos-arm64]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          merge-multiple: true
+
+      - name: Generate SHA256SUMS
         run: |
-          cd target/${{ matrix.target }}/release
-          tar -czf ../../../${{ matrix.archive }} ${{ matrix.artifact }}
-          cd ../../..
+          cat syn-x86_64-unknown-linux-gnu.tar.gz.sha256 > SHA256SUMS
+          cat syn-aarch64-unknown-linux-gnu.tar.gz.sha256 >> SHA256SUMS
+          cat syn-x86_64-apple-darwin.tar.gz.sha256 >> SHA256SUMS
+          cat syn-aarch64-apple-darwin.tar.gz.sha256 >> SHA256SUMS
 
-      - name: Generate SHA256 checksum
-        run: sha256sum ${{ matrix.archive }} > ${{ matrix.archive }}.sha256
-
-      - name: Publish to GitHub Releases
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ matrix.archive }}
-            ${{ matrix.archive }}.sha256
+            syn-*.tar.gz
+            syn-*.tar.gz.sha256
+            SHA256SUMS
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,20 +140,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.95.0"
-
-      - name: Install tarpaulin
-        run: cargo install cargo-tarpaulin
-
-      - name: Run tarpaulin (workspace)
-        run: cargo tarpaulin --workspace --out Html --out Json --output-dir coverage --exclude-files 'tests/*' --exclude-files 'benches/*'
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+      - run: cargo install cargo-tarpaulin
+      - run: cargo tarpaulin --workspace --out Html --out Json --output-dir coverage --exclude-files 'tests/*' --exclude-files 'benches/*'
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
