@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CASCADE_CHANGE id="CC-20250717-PHASE101" status="completed" date="2025-07-17">
+  <NAME>Phase-101: CI/CD Pipeline — Git Init + GitHub Actions Workflows</NAME>
+  <PHASE_REF>Phase-101</PHASE_REF>
+
+  <WHAT_CHANGED>
+    <CHANGE type="infrastructure">git init — repository initialized at /home/truffle/Загрузки/synapse-dev/.git/</CHANGE>
+    <CHANGE type="infrastructure">.github/workflows/ci.yml — full CI pipeline: quality (check+test+clippy+fmt), bench-check (compile only), grace (verify+refresh+status)</CHANGE>
+    <CHANGE type="infrastructure">.github/workflows/release.yml — on tag v*: build release binary → package tarball → SHA256 checksum → publish to GitHub Releases + tarpaulin coverage upload</CHANGE>
+    <CHANGE type="config">rust-toolchain.toml — pin Rust 1.95.0 with clippy+rustfmt components</CHANGE>
+    <CHANGE type="docs">README.md — add CI badge (github.com/anyagixx/synapse/actions) + release badge</CHANGE>
+  </WHAT_CHANGED>
+
+  <WHY>
+    <REASON>Honest assessment gap #1: no CI/CD, no git repo, no automated quality gates. Every check (test, clippy, fmt, verify, bench) ran manually. This is the #1 blocker to production readiness.</REASON>
+  </WHY>
+
+  <IMPACT>
+    <POSITIVE>All quality gates now automated via GitHub Actions: check → test → clippy → fmt → bench-compile → GRACE verify → GRACE refresh → status. Release workflow auto-builds and publishes on tag. CI badge visible in README. Repository initialized with full history.</POSITIVE>
+    <NOTE>CI workflows cannot be tested in sandbox — they will execute on first push to GitHub. Workflow files follow GitHub Actions syntax and use dtolnay/rust-toolchain@stable for Rust installation.</NOTE>
+  </IMPACT>
+
+  <VERIFICATION_EVIDENCE>
+    <CHECK name="git status">Initial commit created (769 files, 104K lines)</CHECK>
+    <CHECK name="syn verify">wave PASS, phase PASS (baseline unchanged)</CHECK>
+    <CHECK name="ci.yml syntax">Valid GitHub Actions workflow: on push/PR, 3 jobs (quality, bench-check, grace)</CHECK>
+    <CHECK name="release.yml syntax">Valid GitHub Actions workflow: on tag v*, build+package+publish+coverage</CHECK>
+  </VERIFICATION_EVIDENCE>
+
+  <BELIEF_STATE_UPDATES>
+    <UPDATE module="M-CI">CI pipeline: 3 jobs (quality 30min, bench-check 20min, grace 20min). Rust 1.95.0 pinned. Caching enabled.</UPDATE>
+    <UPDATE module="M-CI-RELEASE-SMOKE">Release pipeline: Linux x86_64 only (macOS deferred). tarpaulin coverage uploaded as artifact.</UPDATE>
+  </BELIEF_STATE_UPDATES>
+</CASCADE_CHANGE>

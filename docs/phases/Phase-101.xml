@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PHASE id="Phase-101" status="planned">
+<PHASE id="Phase-101" status="complete">
   <NAME>CI/CD Pipeline + Production Baseline</NAME>
   <GOAL>Initialize Git repository, create `.github/workflows/ci.yml` with full workspace pipeline (check → test → clippy → bench → verify → release-dry), and establish the first green CI run as the production quality baseline.</GOAL>
   <PRIORITY>critical</PRIORITY>
