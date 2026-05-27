@@ -26,13 +26,13 @@ mod common;
 fn make_filter_engine() -> FilterEngine {
     let toml_content = r#"
 [filters.strip_ansi]
-type = "strip_ansi"
-enabled = true
+strip_ansi = true
 
 [filters.truncate_lines]
-type = "truncate_lines"
-enabled = true
-max_lines = 500
+replace = [
+    { find = ".*", replace = "" }
+]
+max_output_lines = 500
 "#;
     FilterEngine::from_toml(toml_content, "bench-filter").expect("load filters")
 }

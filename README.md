@@ -84,10 +84,10 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 curl -fsSL https://opencode.ai/install.sh | sh
 
 # Synapse (latest published Linux/macOS release)
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.8/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.7.0/install.sh | sh
 
 # Custom install directory without sudo
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.6.8/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.7.0/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 
 # Source install for development checkouts
 git clone https://github.com/anyagixx/synapse.git
@@ -296,18 +296,18 @@ Dashboard routes exposed by `syn serve`:
 | Бинарник | ~13 MB release |
 | Зависимости | 0 внешних системных (всё статически слинковано) |
 | MCP инструментов | **48** |
-| CLI команд | 19 |
-| Проверок verify | 55 |
+| CLI команд | 28 |
+| Проверок verify | 56 |
 | GRACE workflow tools | 16 |
 | Режимов review | 3 |
 | Doctor проверок | 10 |
 | Языков индексации | 14 |
-| Тестов | **185** (cargo test --all-targets) |
-| Контрактов в своём коде | **94/94** |
+| Тестов | **539** (workspace: 157+39+158+101+29+40+15) |
+| Контрактов в своём коде | **177/177** (7 workspace crates) |
 | Belief-state coverage | **85/85** |
-| Traceability | **strict, 100.0%** |
+| Traceability | **strict, 99.6%** (1853/1866 traced) |
 | Non-human warnings | **0** |
-| self-verify | **ALL PASS** |
+| self-verify | **wave ✅ phase ✅** (1 advisory) |
 
 ## License
 

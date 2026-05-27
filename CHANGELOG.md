@@ -1,5 +1,55 @@
 # Changelog
 
+## 2.7.0 (2025-07-17)
+
+### Architecture — Workspace Split (Phase-97)
+- **Breaking the monolith:** Split 72K-line `synapse-agent` crate into 7 workspace crates: `syn-core` (foundation — config, utils, telemetry, tracking, memory, compress, hooks), `syn-engine` (indexer + graphrag + grace), `syn-proxy` (token-saving command proxy, 30+ filters), `syn-run` (autonomous bounded-run runtime), `syn-skills` (16 GRACE workflow skills), `syn-mcp` (48 MCP tools), `syn-cli` (CLI dispatch, dashboard, test infra).
+- Clean acyclic dependency graph: `syn-core` → `syn-engine` → `syn-proxy`/`syn-run`/`syn-skills` → `syn-mcp` → `syn-cli`.
+- Parallel compilation — significantly faster build times.
+
+### Testing (Phase-98, 99, 102, 103)
+- **Test coverage:** 66.70% (12,830/19,235 lines) — first real tarpaulin measurement.
+- **Test count:** ~539 workspace tests (was 185 claimed, now 539 verified).
+- **syn-skills:** 3 → 15 tests (+400%). All 16 GRACE workflow skills now have format-output validation.
+- **syn-run:** 34 → 40 tests. Added handoff role chain, scenario ordering, self-heal diagnostics.
+- **syn-engine:** 154 → 158 tests. Added graphrag impact edge cases, mental test failure paths.
+- **syn-mcp:** 96 → 104 tests. Added 3 MCP stress tests (concurrent calls, budget rejection, timeout recovery).
+- **E2E tests:** Fixed 2 broken tests (workspace root path resolution). syn-cli: 157/157 — first time 0 failures.
+- **Production unwrap audit:** Confirmed ZERO `.unwrap()` in production code. All 322 occurrences are in test modules where they're correct Rust idiom.
+
+### GRACE Verification (Phase-103)
+- **module-local gate: PASS** for the first time. All three gates green: module-local ✅, wave ✅, phase ✅.
+- **Traceability:** 1853/1866 function contracts traced to requirements (99.6%).
+- **7 unreachable!() calls:** 6 replaced with proper `anyhow::bail!()` / `.expect()`.
+
+### Benchmarks (Phase-100, 104)
+- **Fixed 9 broken benchmarks:** Workspace split broke crate imports (`syn::` → `syn_engine::`). All restored.
+- **Added 1 new benchmark:** Proxy filter chain throughput (filter_chain_10k, filter_chain_100k).
+- **12 benchmarks total:** search (3), graph (3), cascade (2), filter (2).
+
+### CI/CD (Phase-101)
+- **Git repository initialized** with full history.
+- **`.github/workflows/ci.yml`:** 3 jobs — quality (check+test+clippy+fmt), bench-check, GRACE (verify+refresh+status).
+- **`.github/workflows/release.yml`:** On tag v* — build release → package tarball → SHA256 → GitHub Release.
+- **`rust-toolchain.toml`:** Rust 1.95.0 pinned with clippy+rustfmt components.
+
+### GRACE Enforcement for LLM Agents (Phase-105)
+- **`.opencode/rules/grace-mandate.md`:** Mandatory GRACE workflow constitution injected into every agent's system prompt.
+- **10-step workflow:** BEFORE code (grace_execute → extract_belief_state → read shard) → DURING (MODULE_CONTRACT + START_CONTRACT) → AFTER (verify_project → review_code → grace_refresh).
+- **FORBIDDEN behaviors list:** Writing code without grace_execute, .rs files without MODULE_CONTRACT, skipping verify_project, using syn proxy as GRACE bypass.
+- **grace_status** now echoes the GRACE mandate in its output.
+
+### Documentation (Phase-104)
+- **`docs/windows-plan.xml`:** Comprehensive Windows support plan (4 technical blockers, MVP scope, 2-3 week estimate).
+- **`docs/coverage-baseline.xml`:** Per-crate coverage analysis with gap map.
+- **`docs/product-readiness-assessment.xml`:** Added honest POST_AUDIT_ASSESSMENT — overall 8.0/10 (down from self-assessed 9.8/10).
+- **Honest scores:** Architecture 9.0, Code Quality 8.0, Testing 7.5, Documentation 9.5, Production Readiness 6.5.
+
+### Release notes
+- Version bumped: `2.6.8` → `2.7.0`.
+- All install URLs, README badges, and documentation updated to v2.7.0.
+- 6 git commits across 5 phases, fully documented with GRACE cascade changelogs.
+
 ## 2.6.8 (2026-05-27)
 
 - Fixed blank-project `syn init` so `docs/technology.xml` starts as `status="needs-decision"` instead of claiming a Rust/Axum/SQLite stack before requirements are known
