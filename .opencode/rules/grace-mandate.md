@@ -1,101 +1,91 @@
-# GRACE Constitution — MANDATORY WORKFLOW
+# GRACE Protocol — Synapse v2.7.1
 
-> **YOU ARE A GRACE-GOVERNED AGENT.**
-> Every code change MUST follow these steps. This is NON-NEGOTIABLE.
-> Skipping steps WILL be detected by `grace_audit` and your changes MAY be rejected.
+## Navigation Rule #1 (CRITICAL)
+**ALWAYS start with index files.** Read `docs/graph-index.xml` (maps all modules), then `docs/plan-index.xml` (current phase), then the specific module shard you're working on. Never read the full knowledge graph — index files are ~30 lines. Full files waste tokens.
 
----
-
-## Mandatory workflow per module
-
-### Phase A — BEFORE any code (MANDATORY)
-
-```
-1. grace_execute(module_id="M-XXX", phase="Phase-N")
-   → Returns step-by-step instructions for this module
-2. extract_belief_state(module_id="M-XXX")
-   → Verifies your understanding before you touch code
-3. Read docs/modules/M-XXX.xml
-   → Know the module's PURPOSE, SCOPE, DEPENDS, VERIFICATION_REF
-```
-
-### Phase B — DURING coding (MANDATORY)
-
-```
-4. Every .rs file MUST have:
-   // MODULE_CONTRACT
-   // MODULE_ID: M-XXX
-   // PURPOSE: ... (one sentence)
-   // DEPENDS: ...
-   // LINKS: ...
-   
-5. Every public function MUST have:
-   // START_CONTRACT_function_name
-   // PURPOSE: ...
-   // INPUTS: ...
-   // OUTPUTS: ...
-   
-6. Every file MUST have:
-   // START_MODULE_MAP / END_MODULE_MAP
-   // START_CHANGE_SUMMARY / END_CHANGE_SUMMARY
-```
-
-### Phase C — AFTER code (MANDATORY)
-
-```
-7. verify_project(level="module-local")
-   → If FAIL: STOP. FIX. Re-verify. DO NOT PROCEED until PASS.
-8. review_code(scope="module")
-   → Fix critical issues before next module
-9. grace_refresh
-   → Sync canonical artifacts (graph-index, plan-index, verification-index)
-10. grace_gate_complete(module_id="M-XXX")
-   → Records completion in GRACE tracking
-```
+## Token Budget Reality
+Reading full module files directly: ~5000 tokens. Reading via indexes + lazy-loading: ~200 tokens. **You save 96% of context window.** Spend saved tokens on code quality, not navigation.
 
 ---
 
-## FORBIDDEN behaviors
+## Six Core Principles
 
-| ❌ FORBIDDEN | ✅ REQUIRED instead |
-|-------------|-------------------|
-| Writing code without `grace_execute` first | Call `grace_execute` → follow instructions |
-| `.rs` files without `MODULE_CONTRACT` header | Add full MODULE_CONTRACT block |
-| Skipping `verify_project` after changes | Run verify → fix → re-verify |
-| Using `syn proxy` to bypass GRACE | Proxy is for shell commands, NOT code writes |
-| "I'll add contracts later" | Contracts are PART of the code, not an afterthought |
-| Declaring done without `grace_gate_complete` | Call `grace_gate_complete(module_id)` |
+### 1. Never Write Code Without a Contract
+Every `.rs` file starts with `// MODULE_CONTRACT`. Before generating code, know the module's PURPOSE, SCOPE, and DEPENDS. The contract is the source of truth.
+
+### 2. Semantic Markup Is Load-Bearing Structure
+`// START_CONTRACT_fnName`, `// START_MODULE_MAP`, `// START_CHANGE_SUMMARY` — these anchors let future agents (and you) navigate deterministically. Keep them paired, unique, and proportional to a working window.
+
+### 3. Knowledge Graph Is Always Current
+When you add a module, move exports, or rename dependencies — update `docs/graph-index.xml`. It's the project map. Stale maps waste everyone's tokens.
+
+### 4. Verify Before You Declare Done
+After every module change: `verify_project(level="module-local")`. If it fails — fix and re-verify. Don't continue to next module with failing checks.
+
+### 5. Top-Down Synthesis
+`grace_plan → grace_execute → code with contracts → verify_project → review_code → grace_refresh`. Never jump to code when planning or verification are unclear.
+
+### 6. Governed Autonomy
+You have freedom in HOW to implement. You do NOT have freedom to skip contracts, skip verification, or skip graph updates. Those are the rails.
 
 ---
 
-## Detection — you WILL be caught
+## The Workflow (call this sequence)
 
+**Before code:**
+1. `grace_plan` or `grace_execute` — get phase/module instructions
+2. `extract_belief_state(module_id)` — verify your understanding
+3. Read `docs/modules/M-XXX.xml` — know the contract
+
+**During code:**
+4. Write file with `// MODULE_CONTRACT` header
+5. Every public function gets `// START_CONTRACT_fnName` block
+6. Update `// START_MODULE_MAP` with new exports
+7. Add `// START_CHANGE_SUMMARY` entry
+
+**After code:**
+8. `verify_project(level="module-local")` — if FAIL, fix and re-verify
+9. `review_code(scope="module")` — catch issues
+10. `grace_refresh` — sync artifacts
+
+---
+
+## File Structure (← ALWAYS read first)
 ```
-grace_audit(module_id="M-XXX")
-→ Shows: which GRACE steps were DONE vs SKIPPED
-→ Your compliance score is VISIBLE to the user
-→ Repeated violations WILL be flagged
+docs/
+  graph-index.xml          ← maps all modules (~30 lines)
+  plan-index.xml           ← current active phase
+  modules/M-XXX.xml        ← per-module contracts
+  phases/Phase-N.xml       ← per-phase goals
+  verification/V-M-XXX.xml ← per-module checks
+src/
+  ... code with MODULE_CONTRACT + semantic markup ...
 ```
 
 ---
 
-## Quick reference
+## Self-Check (run after changes)
+```bash
+syn verify                # all gates: module-local, wave, phase
+syn lint                  # structural integrity
+syn status                # project health
+```
 
-| I want to... | Call this |
-|-------------|-----------|
-| Start a new module | `grace_execute(module_id, phase)` |
-| Check my understanding | `extract_belief_state(module_id)` |
-| Verify my code | `verify_project(level="module-local")` |
-| Review for issues | `review_code(scope="module")` |
-| Sync artifacts | `grace_refresh` |
-| Mark module done | `grace_gate_complete(module_id)` |
-| Check compliance | `grace_audit(module_id)` |
-| See project health | `grace_status` |
-| Find existing patterns | `semantic_search(query)` |
-| Navigate dependencies | `graphrag_query(operation="find-path")` |
+If `syn verify` fails — STOP and fix. Don't push broken verification.
 
 ---
 
-> **Remember:** GRACE is not optional. It is the operating system of this project.
-> Every successful agent follows these steps. Every failed agent skips them.
-> The choice is yours — but the audit trail is permanent.
+## MCP Tools (call proactively)
+
+| Tool | When |
+|------|------|
+| `semantic_search` | Find existing patterns before writing |
+| `graphrag_query` | Navigate module relationships |
+| `verify_project` | After every code change |
+| `review_code` | Before declaring module done |
+| `grace_execute` | Before starting any module |
+| `grace_plan` | When planning new feature |
+| `grace_status` | Check project health |
+| `grace_refresh` | Sync canonical artifacts |
+
+Shell commands auto-proxy through `syn proxy` for token savings.

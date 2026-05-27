@@ -84,10 +84,10 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 curl -fsSL https://opencode.ai/install.sh | sh
 
 # Synapse (latest published Linux/macOS release)
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.7.1/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.7.2/install.sh | sh
 
 # Custom install directory without sudo
-curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.7.1/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
+curl -fsSL https://raw.githubusercontent.com/anyagixx/synapse/v2.7.2/install.sh | SYN_INSTALL_DIR="$HOME/.local/bin" sh
 
 # Source install for development checkouts
 git clone https://github.com/anyagixx/synapse.git
