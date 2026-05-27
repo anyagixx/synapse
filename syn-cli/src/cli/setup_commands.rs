@@ -41,10 +41,9 @@ impl InitCmd {
 
         let agents_path = root.join("AGENTS.md");
         if !agents_path.exists() {
-            std::fs::write(
-                &agents_path,
-                include_str!("../../../.opencode/rules/synapse.md"),
-            )?;
+            let mandate = include_str!("../../../.opencode/rules/grace-mandate.md");
+            let reference = include_str!("../../../.opencode/rules/synapse.md");
+            std::fs::write(&agents_path, format!("{mandate}\n\n---\n\n{reference}"))?;
         }
 
         let opencode_dir = root.join(".opencode");
@@ -74,6 +73,13 @@ impl InitCmd {
             std::fs::write(
                 &rules_path,
                 include_str!("../../../.opencode/rules/synapse.md"),
+            )?;
+        }
+        let mandate_path = rules_dir.join("grace-mandate.md");
+        if !mandate_path.exists() {
+            std::fs::write(
+                &mandate_path,
+                include_str!("../../../.opencode/rules/grace-mandate.md"),
             )?;
         }
 
@@ -108,6 +114,7 @@ impl InitCmd {
         );
         println!("  .opencode/plugins/synapse.ts — auto-proxy + GRACE system context");
         println!("  .opencode/rules/synapse.md   — tool reference for LLM");
+        println!("  .opencode/rules/grace-mandate.md — MANDATORY GRACE workflow (FORBIDDEN list)");
         println!();
         println!("Done. Now run: opencode");
         if matches!(

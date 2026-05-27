@@ -408,6 +408,9 @@ impl HookManager {
         let rules_content = include_str!("../../../.opencode/rules/synapse.md");
         std::fs::write(rules_dir.join("synapse.md"), rules_content)?;
         println!("  .opencode/rules/synapse.md");
+        let mandate_content = include_str!("../../../.opencode/rules/grace-mandate.md");
+        std::fs::write(rules_dir.join("grace-mandate.md"), mandate_content)?;
+        println!("  .opencode/rules/grace-mandate.md");
 
         // 2. MCP auto-start config
         let oc_config_path = root.join("opencode.jsonc");
