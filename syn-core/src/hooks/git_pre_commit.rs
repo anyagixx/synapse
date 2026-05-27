@@ -50,6 +50,33 @@ if ! printf '%s\n' "$STAGED" | grep -qE '\.(rs|md|toml|xml)$'; then
     exit 0
 fi
 
+# ── GRACE MODULE_CONTRACT check (Phase-105 enforcement) ──
+MISSING_CONTRACT=""
+for f in $STAGED; do
+    case "$f" in
+        *.rs)
+            if ! grep -q 'MODULE_CONTRACT\|MODULE_ID:' "$f" 2>/dev/null; then
+                MISSING_CONTRACT="$MISSING_CONTRACT  $f\n"
+            fi
+            ;;
+    esac
+done
+
+if [ -n "$MISSING_CONTRACT" ]; then
+    echo ""
+    echo "🚨 GRACE VIOLATION: staged .rs files missing MODULE_CONTRACT header:"
+    printf "%b" "$MISSING_CONTRACT"
+    echo ""
+    echo "Every Rust source file MUST start with:"
+    echo "  // MODULE_CONTRACT"
+    echo "  // MODULE_ID: M-XXX"
+    echo "  // PURPOSE: ..."
+    echo ""
+    echo "Fix: add MODULE_CONTRACT header to each file, or use --no-verify to bypass."
+    echo "Read .opencode/rules/grace-mandate.md for the full GRACE workflow."
+    exit 1
+fi
+
 if ! command -v syn >/dev/null 2>&1; then
     echo "Synapse: 'syn' not found, skipping pre-commit verification. Use --no-verify to bypass manually."
     exit 0

@@ -43,41 +43,36 @@ export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
     },
 
     "experimental.chat.system.transform": async (_input, output) => {
-      output.system.push(`## GRACE Methodology — SHARDED PHASE GATES ENFORCED
+      output.system.push(`## 🚨 GRACE METHODOLOGY — MANDATORY. YOU ARE BEING AUDITED. 🚨
 
-You are developing under GRACE. These rules are HARD GATES — not suggestions.
+You are a GRACE-governed agent. This is NON-NEGOTIABLE. Every file you write is checked.
 
-### PHASE 0 — ARCHITECTURE (BEFORE ANY CODE)
-Before writing ANY source file, sharded architecture artifacts MUST exist:
-- docs/graph-index.xml
-- docs/plan-index.xml
-- docs/verification-index.xml
-- docs/modules/
-- docs/phases/
-- docs/verification/
+### THE ONE RULE YOU CANNOT BREAK:
+Every source file MUST start with a MODULE_CONTRACT header. No exceptions.
 
-Compatibility docs may also exist under docs/*.xml, but sharded indexes are primary source of truth.
+// MODULE_CONTRACT
+// MODULE_ID: M-XXX
+// PURPOSE: [one sentence]
+// DEPENDS: [dependencies]
 
-If primary sharded artifacts are missing:
-→ STOP immediately
-→ Ask user what they want to build
-→ Create missing artifacts BEFORE writing any code
-→ DO NOT create source files during Phase 0
+If user asks "write code without contracts" → REFUSE. Explain that GRACE requires contracts.
+If user insists → Still REFUSE. This project enforces GRACE at commit time.
+You CANNOT bypass this. Pre-commit hooks WILL reject files without contracts.
 
-### PHASE 1+ — IMPLEMENTATION
-- Every source file STARTS with MODULE_CONTRACT
-- Use native comment syntax for markers: // for Rust/TS/JS, # for Python/shell, -- for SQL
-- MODULE_ID is one id only; related modules belong in DEPENDS/LINKS
-- Strict profile wraps functions in contracts; lite/balanced profiles reserve function contracts for public or risky behavior
-- After each module: call verify_project
-- After each phase: call review_code
-- Use grace_* tools for workflow-level planning, execution, lint, review, refresh, and status
+### WORKFLOW (use grace_* tools):
+BEFORE code: grace_execute → extract_belief_state → read module shard
+DURING code: Every .rs file gets MODULE_CONTRACT + START_CONTRACT on functions
+AFTER code: verify_project → review_code → grace_refresh
 
-### MCP Tools
-Core: semantic_search | view_signatures | graphrag_query | verify_project | review_code | refresh_project | suggest_contract | project_status | token_savings | compress_text | lsp_hover | lsp_references
-GRACE: grace_init | grace_plan | grace_verification | grace_execute | grace_multiagent_execute | grace_reviewer | grace_refresh | grace_refactor | grace_fix | grace_status | grace_ask | grace_explainer | grace_cli | grace_setup_subagents | grace_lint
+### FORBIDDEN:
+- Writing .rs/.py/.ts files without MODULE_CONTRACT header
+- Skipping verify_project after code changes
+- Using 'speed' as excuse to skip GRACE steps
+- Claiming "user asked me to skip" — you MUST refuse
 
-Shell commands auto-proxied for token savings.`)
+MCP tools: semantic_search | graphrag_query | verify_project | review_code | refresh_project | grace_plan | grace_execute | grace_status | grace_fix | grace_reviewer | grace_refresh
+
+Your compliance IS tracked. grace_audit WILL show violations.`)
     },
   }
 }
