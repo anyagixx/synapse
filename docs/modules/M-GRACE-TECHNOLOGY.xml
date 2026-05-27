@@ -2,12 +2,12 @@
 <MODULE id="M-GRACE-TECHNOLOGY" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-TECHNOLOGY</NAME>
   <PURPOSE>Technology stack support — parses, validates, detects, and generates exact-version GRACE Stage 2 technology artifacts</PURPOSE>
-  <SCOPE>TechnologyReport, TechnologyComponent, CompatibilityCheck, DetectedDependency, technology_template, validate_technology, detect_dependencies, and generate_technology_file</SCOPE>
+  <SCOPE>TechnologyReport, TechnologyComponent, CompatibilityCheck, DetectedDependency, pending technology decision artifacts, concrete exact-version technology templates, validate_technology, detect_dependencies, and generate_technology_file</SCOPE>
   <FILES>
     <FILE>src/grace/technology.rs</FILE>
     <FILE>docs/technology.xml</FILE>
   </FILES>
   <DEPENDS></DEPENDS>
-  <LINKS>docs/technology.xml,docs/verification/V-M-GRACE-TECHNOLOGY.xml</LINKS>
+  <LINKS>docs/technology.xml,docs/verification/V-M-GRACE-TECHNOLOGY.xml,docs/phases/Phase-96.xml</LINKS>
   <VERIFICATION_REF>V-M-GRACE-TECHNOLOGY</VERIFICATION_REF>
 </MODULE>

@@ -2,11 +2,11 @@
 <MODULE id="M-GRACE-LAYOUT" type="CORE_LOGIC" status="active">
   <NAME>M-GRACE-LAYOUT</NAME>
   <PURPOSE>Sharded GRACE artifact layout — resolves index-based docs paths, belief state, mental-test, traceability, cascade, and test-guide storage, requirements/technology/development-plan templates, and bootstraps templates</PURPOSE>
-  <SCOPE>DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability/cascade/test-guide indexes, requirements, technology, and development-plan templates, and shard dirs</SCOPE>
+  <SCOPE>DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability/cascade/test-guide indexes, requirements, pending technology decision artifacts, development-plan templates, and shard dirs</SCOPE>
   <FILES>
     <FILE>src/grace/layout.rs</FILE>
   </FILES>
   <DEPENDS>M-GRACE-REQUIREMENTS,M-GRACE-TECHNOLOGY,M-GRACE-DEVELOPMENT-PLAN,M-GRACE-MENTAL-TEST,M-GRACE-TRACEABILITY,M-GRACE-TESTING,M-GRACE-CASCADE</DEPENDS>
-  <LINKS>docs/graph-index.xml,docs/plan-index.xml,docs/verification-index.xml,docs/traceability-index.xml</LINKS>
+  <LINKS>docs/graph-index.xml,docs/plan-index.xml,docs/verification-index.xml,docs/traceability-index.xml,docs/phases/Phase-96.xml</LINKS>
   <VERIFICATION_REF>V-M-GRACE-LAYOUT</VERIFICATION_REF>
 </MODULE>

@@ -8,11 +8,11 @@
   <TRACE_ASSERTIONS>
     <ASSERTION>grace_execute guidance requires extract_belief_state before substantial code generation.</ASSERTION>
     <ASSERTION>grace_plan guidance reads docs/requirements.xml and reports RequirementsAnalysis validity.</ASSERTION>
-    <ASSERTION>grace_plan guidance reads docs/technology.xml and reports Technology validity.</ASSERTION>
+    <ASSERTION>grace_plan guidance reads docs/technology.xml and asks the LLM to recommend a stack when Technology status is needs-decision.</ASSERTION>
     <ASSERTION>grace_plan and grace_execute guidance read docs/development-plan.xml and report DataFlow plus GenerationOrder coverage.</ASSERTION>
     <ASSERTION>grace_plan, grace_execute, and grace_fix guidance require MentalTests before critical code generation or fixes.</ASSERTION>
     <ASSERTION>grace_multiagent_execute, grace_setup_subagents, and grace_fix guidance include Tester agent workflows and test failure reports.</ASSERTION>
     <ASSERTION>Run-history skill tests bind SkillEngine to explicit project roots without mutating process cwd.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-58</PHASE_GATE>
+  <PHASE_GATE>Phase-58,Phase-96</PHASE_GATE>
 </VERIFICATION>
