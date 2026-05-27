@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-SKILLS-ENGINE
 // PURPOSE: Skill execution engine — dispatches 16 GRACE skill tools to deterministic project-aware summaries
-// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, technology, development plan, mental tests, traceability, tester-agent workflow, belief state, and project workflows
+// SCOPE: SkillEngine state, execute logic, helper formatters for sharded layout, requirements, pending/concrete technology decisions, development plan, mental tests, traceability, tester-agent workflow, belief state, and project workflows
 // DEPENDS: M-CONFIG, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LAYOUT, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-SKILLS-REGISTRY, M-SKILLS-TYPES
 // LINKS:
 //   -> M-SKILLS (depends) - skill runtime facade
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.23.0 — Added explicit-root test construction for parallel test isolation]
+// LAST_CHANGE: [v2.24.0 - Teach planning guidance to handle pending technology decisions]
 // END_CHANGE_SUMMARY
 
 use super::registry::{find_skill, SKILL_DEFS};
@@ -131,14 +131,34 @@ impl SkillEngine {
                 let technology_hint = technology
                     .as_ref()
                     .map(|t| {
-                        format!(
-                            "components={}, compatibility_checks={}, valid={}",
-                            t.components.len(),
-                            t.compatibility_checks.len(),
-                            t.valid
-                        )
+                        if t.decision_pending {
+                            format!(
+                                "status={}, valid={}, action=recommend stack from requirements before implementation",
+                                t.status, t.valid
+                            )
+                        } else {
+                            format!(
+                                "status={}, components={}, compatibility_checks={}, valid={}",
+                                t.status,
+                                t.components.len(),
+                                t.compatibility_checks.len(),
+                                t.valid
+                            )
+                        }
                     })
                     .unwrap_or_else(|| "no technology report available".into());
+                let technology_step = technology
+                    .as_ref()
+                    .map(|t| {
+                        if t.decision_pending {
+                            "read docs/technology.xml; if status=needs-decision, recommend stack from requirements and constraints before implementation"
+                        } else {
+                            "read docs/technology.xml and confirm exact pinned versions plus compatibility checks"
+                        }
+                    })
+                    .unwrap_or(
+                        "read docs/technology.xml and either resolve needs-decision or confirm exact pinned versions",
+                    );
                 let development_plan_hint = development_plan
                     .as_ref()
                     .map(|p| {
@@ -163,7 +183,7 @@ impl SkillEngine {
                     })
                     .unwrap_or_else(|| "no mental test report available".into());
                 format!(
-                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nTechnology: {}\nDevelopmentPlan: {}\nMentalTests: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. read docs/technology.xml and confirm exact pinned versions plus compatibility checks\n3. read docs/development-plan.xml and confirm DataFlows, GenerationOrder, and which algorithms need MentalTests\n4. scaffold or update <MentalTests> before code for critical/complex modules\n5. confirm module boundaries in docs/modules/\n6. confirm phase order in docs/phases/\n7. confirm verification coverage in docs/verification/\n8. implement only next bounded module step after mental tests pass",
+                    "Planning skill ready.\n\nActive phase: {}\nGoal: {}\nConstraints: {}\nRequirements: {}\nTechnology: {}\nDevelopmentPlan: {}\nMentalTests: {}\nDrift: {}\nNext action: {}\n\nPlan in this order:\n1. read docs/requirements.xml and confirm Goals, DomainModel, Actors, UseCases, NFRs, Constraints, and Glossary\n2. {}\n3. read docs/development-plan.xml and confirm DataFlows, GenerationOrder, and which algorithms need MentalTests\n4. scaffold or update <MentalTests> before code for critical/complex modules\n5. confirm module boundaries in docs/modules/\n6. confirm phase order in docs/phases/\n7. confirm verification coverage in docs/verification/\n8. implement only next bounded module step after mental tests pass",
                     active_phase,
                     string_arg(&request.arguments, "goal", "Define architecture and delivery plan"),
                     string_arg(&request.arguments, "constraints", "none provided"),
@@ -173,6 +193,7 @@ impl SkillEngine {
                     mental_tests_hint,
                     drift_hint,
                     next_hint,
+                    technology_step,
                 )
             }
             "grace_verification" => format!(
@@ -454,6 +475,24 @@ fn first_module_id(layout: &DocsLayout) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn grace_plan_guidance_flags_pending_technology_decision() {
+        let dir = tempfile::tempdir().unwrap();
+        let layout = DocsLayout::new(dir.path());
+        layout.ensure_initialized().unwrap();
+        let config = Config::default();
+        let engine = SkillEngine::new_with_root(&config, dir.path().to_path_buf());
+        let response = engine
+            .execute(SkillRequest {
+                name: "grace_plan".into(),
+                arguments: serde_json::json!({}),
+            })
+            .await
+            .unwrap();
+        assert!(response.body.contains("status=needs-decision"));
+        assert!(response.body.contains("recommend stack from requirements"));
+    }
 
     #[tokio::test]
     async fn grace_run_history_reports_current_run_state() {

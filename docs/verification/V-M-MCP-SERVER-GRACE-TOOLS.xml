@@ -26,7 +26,7 @@
     <ASSERTION>MCP analyze_logs reads a structured LOG file and returns an XML LogAnalysisReport.</ASSERTION>
     <ASSERTION>MCP extract_belief_state writes a validated docs/belief-states artifact.</ASSERTION>
     <ASSERTION>MCP generate_requirements writes a validated docs/requirements.xml RequirementsAnalysis artifact.</ASSERTION>
-    <ASSERTION>MCP generate_technology writes a validated docs/technology.xml Technology artifact.</ASSERTION>
+    <ASSERTION>MCP generate_technology writes a validated docs/technology.xml Technology artifact and reports selected versus needs-decision status explicitly.</ASSERTION>
     <ASSERTION>MCP generate_development_plan writes a validated docs/development-plan.xml DevelopmentPlan artifact with DataFlows and GenerationOrder.</ASSERTION>
     <ASSERTION>MCP mental_test_run writes docs/mental-tests trace output and returns a MentalTestRun report.</ASSERTION>
     <ASSERTION>MCP traceability_report writes docs/traceability-index.xml and returns a scoped TraceabilityReport.</ASSERTION>

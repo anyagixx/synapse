@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-STATUS
 // PURPOSE: Project health collector — aggregates contracts, requirements, technology, development plan, mental tests, traceability, cascade state, non-human patterns, belief states, semantic, verification, drift, token economy, RTK adoption, phase state, and system info
-// SCOPE: StatusCollector, StatusReport, TokenEconomy, RtkAdoption, SystemInfo, requirements/technology/development-plan/mental-test/traceability/cascade/non-human pattern and belief-state coverage, print_report, active-phase display helpers
+// SCOPE: StatusCollector, StatusReport, TokenEconomy, RtkAdoption, SystemInfo, requirements/technology selected-or-pending state, development-plan/mental-test/traceability/cascade/non-human pattern and belief-state coverage, print_report, active-phase display helpers
 // DEPENDS: M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY, M-GRACE-REFRESH, M-TRACKING, M-CONFIG
 // LINKS: docs/
 
@@ -14,7 +14,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.24.0 - Added RTK adoption diagnostics to status]
+// LAST_CHANGE: [v2.25.0 - Display pending technology decision status]
 // END_CHANGE_SUMMARY
 
 use crate::config::Config;
@@ -440,6 +440,7 @@ impl StatusCollector {
         println!("║  Valid:          {:<20}║", report.requirements.valid);
         println!("╠══════════════════════════════════════╣");
         println!("║ TECHNOLOGY                           ║");
+        println!("║  Status:         {:<20}║", report.technology.status);
         println!(
             "║  Components:     {:<20}║",
             report.technology.components.len()

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-VERIFY
 // PURPOSE: 3-level verification facade — module-local, wave, delegated phase, and staged git checks for profile-aware GRACE compliance
-// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology, development-plan, mental-tests, traceability, cascade-no-drift, non-human patterns, anchor syntax validation, verify_all, verify_all_with_profile telemetry span, verify_staged_with_profile, verify_module_local, verify_wave, delegated verify_phase
+// SCOPE: Verifier struct, typed LINKS, structured LOG, belief-state, requirements, technology selected/pending decision checks, development-plan, mental-tests, traceability, cascade-no-drift, non-human patterns, anchor syntax validation, verify_all, verify_all_with_profile telemetry span, verify_staged_with_profile, verify_module_local, verify_wave, delegated verify_phase
 // DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-GRACE-VERIFY-PHASE, M-GRACE-VERIFY-TYPES, M-INDEXER-WALKER
 // LINKS: docs/requirements.xml, docs/technology.xml, docs/development-plan.xml, docs/verification-plan.xml, docs/knowledge-graph.xml
 
@@ -13,7 +13,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.24.0 - Added grace.verify telemetry span fields]
+// LAST_CHANGE: [v2.25.0 - Clarified pending technology decision verification details]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -538,15 +538,22 @@ impl Verifier {
         checks.push(CheckResult {
             name: "technology-language-defined".into(),
             passed: technology.has_language_defined(),
-            details: format!(
-                "{} language entries parsed from Technology",
-                technology.languages.len()
-            ),
+            details: if technology.decision_pending {
+                "Technology decision pending; no concrete Language selected yet".into()
+            } else {
+                format!(
+                    "{} language entries parsed from Technology",
+                    technology.languages.len()
+                )
+            },
         });
         checks.push(CheckResult {
             name: "technology-dependencies-compatible".into(),
             passed: technology.dependencies_compatible(),
-            details: if technology.dependencies_compatible() {
+            details: if technology.decision_pending {
+                "Technology decision pending; compatibility checks deferred until stack selection"
+                    .into()
+            } else if technology.dependencies_compatible() {
                 format!(
                     "{} compatibility checks passed",
                     technology.compatibility_checks.len()
@@ -561,7 +568,9 @@ impl Verifier {
         checks.push(CheckResult {
             name: "technology-no-version-guessing".into(),
             passed: technology.has_no_version_guessing(),
-            details: if technology.has_no_version_guessing() {
+            details: if technology.decision_pending {
+                "Technology decision pending; no versioned components selected yet".into()
+            } else if technology.has_no_version_guessing() {
                 format!(
                     "{} versioned components use exact versions",
                     technology.components.len()

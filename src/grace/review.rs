@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-REVIEW
 // PURPOSE: GRACE integrity review — checks semantic markup, anchor syntax, requirements, technology, development plan, mental tests, traceability, cascade history, non-human patterns, profile-aware contracts, typed LINKS, structured LOGs, belief states, canonical shards, naming, secrets
-// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology, development plan, mental tests, traceability, cascade history, non-human patterns, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
+// SCOPE: Reviewer struct, ReviewReport, ReviewSection, typed LINKS, structured LOG, requirements, technology selected-or-pending state, development plan, mental tests, traceability, cascade history, non-human patterns, belief state and anchor syntax review, scoped_gate, wave_audit, full_integrity
 // DEPENDS: M-GRACE-ANCHOR, M-GRACE-BELIEF-STATE, M-GRACE-CASCADE, M-GRACE-CASCADE-CHANGE, M-GRACE-CONTRACT, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-NON-HUMAN-PATTERNS, M-GRACE-INVENTORY, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-SEMANTIC, M-INDEXER-WALKER
 // LINKS: docs/graph-index.xml, docs/verification-index.xml
 
@@ -12,7 +12,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Added cascade history review section]
+// LAST_CHANGE: [v2.23.0 - Report pending technology decision status in review details]
 // END_CHANGE_SUMMARY
 
 use crate::grace::contract::{ContractValidator, GraceProfile};
@@ -249,7 +249,9 @@ impl Reviewer {
             name: "technology-stack".into(),
             passed: technology.valid,
             details: format!(
-                "languages={} components={} compatibility_checks={} known_issues={} detected_dependencies={}",
+                "status={} decision_pending={} languages={} components={} compatibility_checks={} known_issues={} detected_dependencies={}",
+                technology.status,
+                technology.decision_pending,
                 technology.languages.len(),
                 technology.components.len(),
                 technology.compatibility_checks.len(),

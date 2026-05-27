@@ -11,11 +11,11 @@
     <ASSERTION>Status output reports no active phase when plan-index ACTIVE_PHASE points at a completed phase shard.</ASSERTION>
     <ASSERTION>Status JSON and text output include belief state coverage and invalid belief state counts.</ASSERTION>
     <ASSERTION>Status JSON and text output include RequirementsAnalysis entity/use-case counts and validity.</ASSERTION>
-    <ASSERTION>Status JSON and text output include Technology component/compatibility counts and validity.</ASSERTION>
+    <ASSERTION>Status JSON and text output include Technology selected-or-pending status, component/compatibility counts, and validity.</ASSERTION>
     <ASSERTION>Status JSON and text output include DevelopmentPlan DataFlow, GenerationOrder, and completed module counts.</ASSERTION>
     <ASSERTION>Status JSON and text output include MentalTests total, passed, failed, and required target counts.</ASSERTION>
     <ASSERTION>Status JSON and text output include non-human pattern score, files scanned, error count, and warning count.</ASSERTION>
     <ASSERTION>Status JSON and text output include RTK adoption diagnostics as advisory metadata that does not weaken MyGRACE gates.</ASSERTION>
   </TRACE_ASSERTIONS>
-  <PHASE_GATE>Phase-49</PHASE_GATE>
+  <PHASE_GATE>Phase-49,Phase-96</PHASE_GATE>
 </VERIFICATION>

@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-TESTS-PARITY
 // PURPOSE: Ensure README, docs, install scripts, release workflow, and code claims match product capabilities
-// SCOPE: Compare README tool count, README command count, token-economy gate claims, UPGRADE_5 workspace/tools/hooks/telemetry/coverage/benchmark claims, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit/cc-economics flags, public docs, install docs, supported Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
+// SCOPE: Compare README tool count, README command count, token-economy gate claims, new-project technology decision truth, UPGRADE_5 workspace/tools/hooks/telemetry/coverage/benchmark claims, verify check count, CLI flag truth including route/session/adapter/rewrite/filter/local RTK adapter/discover/learn/hooks-audit/cc-economics flags, public docs, install docs, supported Linux/macOS release matrix, checksum integrity, release freshness, installer source fallback, and release smoke coverage
 // DEPENDS: M-CAPABILITIES, M-CLI, M-CLI-SETUP-COMMANDS, M-INSTALL, M-CI, M-CI-RELEASE-SMOKE, M-SKILLS-REGISTRY
 // LINKS: docs/phases/Phase-27.xml, docs/phases/Phase-88.xml
 
@@ -27,11 +27,12 @@
 // test_mcp_help_hides_unimplemented_flags — MCP CLI truth check
 // test_installer_dry_run_maps_linux_macos_artifacts — Installer dry-run mapping check
 // test_token_economy_gate_claims_are_enforced — Token economy gate check
+// test_new_project_technology_decision_truth_is_enforced — Blank project technology decision check
 // test_upgrade5_surfaces_are_documented_and_gated — UPGRADE_5 capability/docs/CI gate check
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v5.10.0 - Added UPGRADE_5 integration parity checks]
+// LAST_CHANGE: [v5.11.0 - Added new-project technology decision parity check]
 // END_CHANGE_SUMMARY
 
 use syn::capabilities;
@@ -45,6 +46,9 @@ const TOKEN_ECONOMY_GATE: &str = include_str!("../scripts/token_economy_gate.sh"
 const RELEASE_FRESHNESS_GUARD: &str = include_str!("../scripts/release_freshness_guard.sh");
 const RELEASE_SMOKE_SCRIPT: &str = include_str!("../scripts/release_install_smoke.sh");
 const SETUP_COMMANDS: &str = include_str!("../src/cli/setup_commands.rs");
+const GRACE_LAYOUT_RS: &str = include_str!("../src/grace/layout.rs");
+const GRACE_TECHNOLOGY_RS: &str = include_str!("../src/grace/technology.rs");
+const SKILLS_ENGINE_RS: &str = include_str!("../src/skills/engine.rs");
 const CI_WORKFLOW: &str = include_str!("../.github/workflows/ci.yml");
 const RELEASE_WORKFLOW: &str = include_str!("../.github/workflows/release.yml");
 const RELEASE_VERSION_GUARD: &str = include_str!("../scripts/release_version_guard.sh");
@@ -777,6 +781,27 @@ fn test_token_economy_gate_claims_are_enforced() {
             "README must document token-economy MCP tool {marker}"
         );
     }
+}
+
+#[test]
+// START_CONTRACT_test_new_project_technology_decision_truth_is_enforced
+// PURPOSE: Verify blank project init and planning guidance cannot publish Rust/Axum/SQLite as a selected stack
+fn test_new_project_technology_decision_truth_is_enforced() {
+    assert!(
+        GRACE_TECHNOLOGY_RS.contains("technology_decision_template")
+            && GRACE_TECHNOLOGY_RS.contains("status=\"needs-decision\""),
+        "technology module must expose an explicit pending decision artifact"
+    );
+    assert!(
+        GRACE_LAYOUT_RS.contains("technology_decision_template(\"my-project\"")
+            && !GRACE_LAYOUT_RS.contains("technology_template(\"my-project\", &[]"),
+        "syn init layout must write pending technology decisions for blank projects"
+    );
+    assert!(
+        SKILLS_ENGINE_RS.contains("status=needs-decision")
+            && SKILLS_ENGINE_RS.contains("recommend stack from requirements"),
+        "grace_plan guidance must route pending technology to LLM recommendation"
+    );
 }
 
 #[test]

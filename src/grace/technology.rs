@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-TECHNOLOGY
 // PURPOSE: Technology stack parser, validator, dependency detector, and generator for GRACE Stage 2 artifacts
-// SCOPE: TechnologyReport, DetectedDependency, TechnologyComponent, template generation, file validation, dependency detection, compatibility checks
+// SCOPE: TechnologyReport, DetectedDependency, TechnologyComponent, pending decision artifacts, concrete detected-stack generation, file validation, dependency detection, compatibility checks
 // DEPENDS: N/A
 // LINKS:
 //   → V-M-GRACE-TECHNOLOGY (verified_by) — technology parser, validator, detector, and generator tests
@@ -9,14 +9,15 @@
 // START_MODULE_MAP
 // DetectedDependency — One dependency discovered from manifest or lock files
 // TechnologyReport — Completeness report for docs/technology.xml
-// technology_template — Full Technology XML template with exact versions and compatibility matrix
+// technology_decision_template — Pending Technology XML for blank projects awaiting stack selection
+// technology_template — Detected Technology XML template with exact versions and compatibility matrix
 // validate_technology — Parse and validate docs/technology.xml
 // detect_dependencies — Detect dependencies from common package manifests
 // generate_technology_file — Generate and validate docs/technology.xml
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v1.1.0 - Named Go module parsing arity constants for GRACE pattern cleanliness]
+// LAST_CHANGE: [v1.2.0 - Split blank-project technology decisions from detected concrete stacks]
 // END_CHANGE_SUMMARY
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -64,6 +65,8 @@ pub struct TechnologyReport {
     pub path: String,
     pub exists: bool,
     pub valid: bool,
+    pub status: String,
+    pub decision_pending: bool,
     pub languages: Vec<TechnologyComponent>,
     pub components: Vec<TechnologyComponent>,
     pub compatibility_checks: Vec<CompatibilityCheck>,
@@ -77,22 +80,25 @@ pub struct TechnologyReport {
 
 impl TechnologyReport {
     // START_CONTRACT_TechnologyReport::has_language_defined
-    // PURPOSE: Return true when at least one language has an exact version
+    // PURPOSE: Return true when technology is pending decision or at least one language has an exact version
     // OUTPUTS: { bool }
     // START_technology_report_has_language_defined
     pub fn has_language_defined(&self) -> bool {
-        self.languages
-            .iter()
-            .any(|component| is_exact_version(&component.version))
+        self.decision_pending
+            || self
+                .languages
+                .iter()
+                .any(|component| is_exact_version(&component.version))
     }
     // END_technology_report_has_language_defined
 
     // START_CONTRACT_TechnologyReport::dependencies_compatible
-    // PURPOSE: Return true when compatibility checks exist and none are incompatible
+    // PURPOSE: Return true when technology is pending decision or compatibility checks exist and none are incompatible
     // OUTPUTS: { bool }
     // START_technology_report_dependencies_compatible
     pub fn dependencies_compatible(&self) -> bool {
-        !self.compatibility_checks.is_empty() && self.incompatible_checks.is_empty()
+        self.decision_pending
+            || (!self.compatibility_checks.is_empty() && self.incompatible_checks.is_empty())
     }
     // END_technology_report_dependencies_compatible
 
@@ -101,7 +107,7 @@ impl TechnologyReport {
     // OUTPUTS: { bool }
     // START_technology_report_has_no_version_guessing
     pub fn has_no_version_guessing(&self) -> bool {
-        self.missing_versions.is_empty() && !self.components.is_empty()
+        self.decision_pending || (self.missing_versions.is_empty() && !self.components.is_empty())
     }
     // END_technology_report_has_no_version_guessing
 
@@ -115,8 +121,42 @@ impl TechnologyReport {
     // END_technology_report_has_known_issues
 }
 
+// START_CONTRACT_technology_decision_template
+// PURPOSE: Build a Technology XML artifact that records an explicit pending stack decision
+// INPUTS: { project_name: &str }, { updated: &str }
+// OUTPUTS: { String }
+// START_technology_decision_template
+pub fn technology_decision_template(project_name: &str, updated: &str) -> String {
+    let project_name = xml_text(&fallback(project_name, "MyProject"));
+    let updated = xml_text(&fallback(updated, "2026-05-20"));
+    format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<Technology project="{project_name}" version="1.0" updated="{updated}" status="needs-decision">
+  <DecisionPolicy mode="llm-recommended">
+    <Purpose>Select a concrete stack from requirements before implementation.</Purpose>
+    <RequirementsRef>docs/requirements.xml</RequirementsRef>
+    <DecisionOwner>planning-agent</DecisionOwner>
+    <Instruction>Recommend language, runtime, framework, database, package manager, test runner, deployment, and compatibility checks from project requirements and constraints. Do not treat bootstrap placeholders as selected technology.</Instruction>
+  </DecisionPolicy>
+  <DecisionInputs>
+    <Input path="docs/requirements.xml" required="true" />
+    <Input path="docs/graph-index.xml" required="true" />
+    <Input path="docs/plan-index.xml" required="true" />
+  </DecisionInputs>
+  <KnownIssues>
+    <Issue id="KI-PENDING-STACK" component="TechnologyDecision" version="1.0.0">
+      <Description>No concrete technology stack has been selected yet.</Description>
+      <Workaround>Run MyGRACE planning or generate_technology after requirements are known, then replace this pending artifact with exact versions.</Workaround>
+    </Issue>
+  </KnownIssues>
+</Technology>
+"#
+    )
+}
+// END_technology_decision_template
+
 // START_CONTRACT_technology_template
-// PURPOSE: Build a complete Technology XML template with exact versions and compatibility checks
+// PURPOSE: Build a detected Technology XML template with exact versions and compatibility checks
 // INPUTS: { project_name: &str }, { dependencies: &[DetectedDependency] }, { updated: &str }
 // OUTPUTS: { String }
 // START_technology_template
@@ -125,37 +165,20 @@ pub fn technology_template(
     dependencies: &[DetectedDependency],
     updated: &str,
 ) -> String {
+    if dependencies.is_empty() {
+        return technology_decision_template(project_name, updated);
+    }
+
     let project_name = xml_text(&fallback(project_name, "MyProject"));
     let updated = xml_text(&fallback(updated, "2026-05-20"));
-    let rust_version = command_version("rustc", "--version").unwrap_or_else(|| "1.95.0".into());
-    let cargo_version = command_version("cargo", "--version").unwrap_or_else(|| "1.95.0".into());
-    let axum = dependency_version(dependencies, "axum").unwrap_or_else(|| "0.7.9".into());
-    let tokio = dependency_version(dependencies, "tokio").unwrap_or_else(|| "1.48.0".into());
-    let rusqlite = dependency_version(dependencies, "rusqlite").unwrap_or_else(|| "0.31.0".into());
-    let testing = dependency_version(dependencies, "tempfile").unwrap_or_else(|| "3.23.0".into());
+    let stack = stack_xml(dependencies);
     let libraries = dependency_xml(dependencies);
-    let checks = compatibility_xml(dependencies, &axum, &tokio, &rusqlite);
+    let checks = compatibility_xml(dependencies);
     format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
-<Technology project="{project_name}" version="1.0" updated="{updated}">
+<Technology project="{project_name}" version="1.0" updated="{updated}" status="selected">
   <Stack>
-    <Language name="Rust" version="{rust_version}">
-      <Runtime name="native-binary" version="{rust_version}" />
-      <PackageManager name="Cargo" version="{cargo_version}" />
-    </Language>
-    <Framework name="Axum" version="{axum}">
-      <Purpose>HTTP dashboard and API server for Synapse local tooling</Purpose>
-      <Documentation>https://docs.rs/axum/0.7/axum/</Documentation>
-      <Installation>cargo add axum@{axum}</Installation>
-    </Framework>
-    <Database name="SQLite" version="3.45.0">
-      <Driver name="rusqlite" version="{rusqlite}" />
-    </Database>
-    <Testing name="cargo test" version="{cargo_version}">
-      <Purpose>Rust unit, integration, protocol, release, and support tests</Purpose>
-      <Configuration>Cargo.toml</Configuration>
-      <Library name="tempfile" version="{testing}" />
-    </Testing>
+{stack}
     <Libraries>
 {libraries}
     </Libraries>
@@ -172,7 +195,7 @@ pub fn technology_template(
   <DevOps>
     <CI name="GitHub Actions">
       <Config>.github/workflows/ci.yml</Config>
-      <RustVersion>{rust_version}</RustVersion>
+      <StackSource>detected-manifests</StackSource>
     </CI>
     <Container name="none" version="1.0.0">
       <BaseImage>not-used</BaseImage>
@@ -216,8 +239,11 @@ pub fn validate_technology(root: &Path) -> anyhow::Result<TechnologyReport> {
 // OUTPUTS: { TechnologyReport }
 // START_parse_technology_content
 pub fn parse_technology_content(content: &str) -> TechnologyReport {
+    let status = root_status(content);
     let mut report = TechnologyReport {
         exists: true,
+        status: status.clone(),
+        decision_pending: status == "needs-decision",
         languages: extract_components(content, "Language"),
         components: extract_all_components(content),
         compatibility_checks: extract_compatibility_checks(content),
@@ -273,8 +299,12 @@ pub fn generate_technology_file(
         Vec::new()
     };
     let project_name = project_name(root);
-    let mut content = technology_template(&project_name, &deps, &current_date());
-    if !compatibility_check {
+    let mut content = if deps.is_empty() {
+        technology_decision_template(&project_name, &current_date())
+    } else {
+        technology_template(&project_name, &deps, &current_date())
+    };
+    if !compatibility_check && !deps.is_empty() {
         content = content.replace("<Status>compatible</Status>", "<Status>unchecked</Status>");
     }
     std::fs::write(docs.join("technology.xml"), content)?;
@@ -287,6 +317,29 @@ pub fn generate_technology_file(
 fn validate_report_shape(content: &str, report: &mut TechnologyReport) {
     if !content.contains("<Technology") {
         report.errors.push("Root tag must be Technology".into());
+    }
+    if report.decision_pending {
+        if !content.contains("<DecisionPolicy") {
+            report
+                .errors
+                .push("Pending Technology must define DecisionPolicy".into());
+        }
+        if !content.contains("<RequirementsRef>docs/requirements.xml</RequirementsRef>") {
+            report
+                .errors
+                .push("Pending Technology must reference docs/requirements.xml".into());
+        }
+        if !report.components.is_empty() {
+            report
+                .errors
+                .push("Pending Technology must not define selected stack components".into());
+        }
+        if !report.has_known_issues() {
+            report
+                .errors
+                .push("KnownIssues must document at least one Issue entry".into());
+        }
+        return;
     }
     if !report.has_language_defined() {
         report
@@ -535,34 +588,195 @@ fn dependency_xml(dependencies: &[DetectedDependency]) -> String {
         .join("\n")
 }
 
-fn compatibility_xml(
-    dependencies: &[DetectedDependency],
-    axum: &str,
-    tokio: &str,
-    rusqlite: &str,
-) -> String {
+fn stack_xml(dependencies: &[DetectedDependency]) -> String {
+    let mut sections = Vec::new();
+    if has_ecosystem(dependencies, "rust") {
+        sections.push(rust_stack_xml(dependencies));
+    }
+    if has_ecosystem(dependencies, "npm") {
+        sections.push(npm_stack_xml(dependencies));
+    }
+    if has_ecosystem(dependencies, "python") {
+        sections.push(python_stack_xml(dependencies));
+    }
+    if has_ecosystem(dependencies, "go") {
+        sections.push(go_stack_xml(dependencies));
+    }
+    sections.join("\n")
+}
+
+fn rust_stack_xml(dependencies: &[DetectedDependency]) -> String {
+    let rust_version = command_version("rustc", "--version").unwrap_or_else(|| "1.95.0".into());
+    let cargo_version = command_version("cargo", "--version").unwrap_or_else(|| "1.95.0".into());
+    let mut sections = vec![format!(
+        "    <Language name=\"Rust\" version=\"{}\">\n      <Runtime name=\"native-binary\" version=\"{}\" />\n      <PackageManager name=\"Cargo\" version=\"{}\" />\n    </Language>",
+        xml_text(&rust_version),
+        xml_text(&rust_version),
+        xml_text(&cargo_version)
+    )];
+    if let Some(axum) = dependency_version(dependencies, "axum") {
+        sections.push(format!(
+            "    <Framework name=\"Axum\" version=\"{}\">\n      <Purpose>Detected Rust HTTP framework dependency</Purpose>\n      <Documentation>https://docs.rs/axum/</Documentation>\n      <Installation>cargo add axum@{}</Installation>\n    </Framework>",
+            xml_text(&axum),
+            xml_text(&axum)
+        ));
+    }
+    if let Some(rusqlite) = dependency_version(dependencies, "rusqlite") {
+        sections.push(format!(
+            "    <Database name=\"SQLite\" version=\"3.45.0\">\n      <Driver name=\"rusqlite\" version=\"{}\" />\n    </Database>",
+            xml_text(&rusqlite)
+        ));
+    }
+    let tempfile = dependency_version(dependencies, "tempfile")
+        .map(|version| {
+            format!(
+                "\n      <Library name=\"tempfile\" version=\"{}\" />",
+                xml_text(&version)
+            )
+        })
+        .unwrap_or_default();
+    sections.push(format!(
+        "    <Testing name=\"cargo test\" version=\"{}\">\n      <Purpose>Detected Rust test runner for Cargo projects</Purpose>\n      <Configuration>Cargo.toml</Configuration>{}\n    </Testing>",
+        xml_text(&cargo_version),
+        tempfile
+    ));
+    sections.join("\n")
+}
+
+fn npm_stack_xml(dependencies: &[DetectedDependency]) -> String {
+    let node_version = command_version("node", "--version").unwrap_or_else(|| "20.11.1".into());
+    let npm_version = command_version("npm", "--version").unwrap_or_else(|| "10.2.4".into());
+    let mut sections = vec![format!(
+        "    <Language name=\"JavaScript\" version=\"{}\">\n      <Runtime name=\"Node.js\" version=\"{}\" />\n      <PackageManager name=\"npm\" version=\"{}\" />\n    </Language>",
+        xml_text(&node_version),
+        xml_text(&node_version),
+        xml_text(&npm_version)
+    )];
+    for (name, label) in [
+        ("next", "Next.js"),
+        ("react", "React"),
+        ("vite", "Vite"),
+        ("express", "Express"),
+        ("@nestjs/core", "NestJS"),
+    ] {
+        if let Some(version) = dependency_version(dependencies, name) {
+            sections.push(format!(
+                "    <Framework name=\"{}\" version=\"{}\">\n      <Purpose>Detected npm application dependency</Purpose>\n      <Documentation>package.json</Documentation>\n    </Framework>",
+                label,
+                xml_text(&version)
+            ));
+        }
+    }
+    let test_runner = dependency_version(dependencies, "vitest")
+        .map(|version| ("Vitest", version))
+        .or_else(|| dependency_version(dependencies, "jest").map(|version| ("Jest", version)))
+        .unwrap_or_else(|| ("npm test", npm_version.clone()));
+    sections.push(format!(
+        "    <Testing name=\"{}\" version=\"{}\">\n      <Purpose>Detected npm test runner or package-manager script</Purpose>\n      <Configuration>package.json</Configuration>\n    </Testing>",
+        test_runner.0,
+        xml_text(&test_runner.1)
+    ));
+    sections.join("\n")
+}
+
+fn python_stack_xml(dependencies: &[DetectedDependency]) -> String {
+    let python_version = command_version("python3", "--version").unwrap_or_else(|| "3.12.0".into());
+    let pip_version = command_version("pip3", "--version").unwrap_or_else(|| "24.0.0".into());
+    let mut sections = vec![format!(
+        "    <Language name=\"Python\" version=\"{}\">\n      <Runtime name=\"CPython\" version=\"{}\" />\n      <PackageManager name=\"pip\" version=\"{}\" />\n    </Language>",
+        xml_text(&python_version),
+        xml_text(&python_version),
+        xml_text(&pip_version)
+    )];
+    for (name, label) in [
+        ("fastapi", "FastAPI"),
+        ("django", "Django"),
+        ("flask", "Flask"),
+    ] {
+        if let Some(version) = dependency_version(dependencies, name) {
+            sections.push(format!(
+                "    <Framework name=\"{}\" version=\"{}\">\n      <Purpose>Detected Python application dependency</Purpose>\n      <Documentation>requirements.txt</Documentation>\n    </Framework>",
+                label,
+                xml_text(&version)
+            ));
+        }
+    }
+    let test_runner = dependency_version(dependencies, "pytest")
+        .map(|version| ("pytest", version))
+        .unwrap_or_else(|| ("unittest", python_version.clone()));
+    sections.push(format!(
+        "    <Testing name=\"{}\" version=\"{}\">\n      <Purpose>Detected Python test runner or standard-library fallback</Purpose>\n      <Configuration>requirements.txt</Configuration>\n    </Testing>",
+        test_runner.0,
+        xml_text(&test_runner.1)
+    ));
+    sections.join("\n")
+}
+
+fn go_stack_xml(dependencies: &[DetectedDependency]) -> String {
+    let go_version = command_version("go", "version").unwrap_or_else(|| "1.22.0".into());
+    let mut sections = vec![format!(
+        "    <Language name=\"Go\" version=\"{}\">\n      <Runtime name=\"go-runtime\" version=\"{}\" />\n      <PackageManager name=\"Go modules\" version=\"{}\" />\n    </Language>",
+        xml_text(&go_version),
+        xml_text(&go_version),
+        xml_text(&go_version)
+    )];
+    if let Some(version) = dependency_version(dependencies, "github.com/gin-gonic/gin") {
+        sections.push(format!(
+            "    <Framework name=\"Gin\" version=\"{}\">\n      <Purpose>Detected Go HTTP framework dependency</Purpose>\n      <Documentation>go.mod</Documentation>\n    </Framework>",
+            xml_text(&version)
+        ));
+    }
+    sections.push(format!(
+        "    <Testing name=\"go test\" version=\"{}\">\n      <Purpose>Detected Go test runner for module projects</Purpose>\n      <Configuration>go.mod</Configuration>\n    </Testing>",
+        xml_text(&go_version)
+    ));
+    sections.join("\n")
+}
+
+fn compatibility_xml(dependencies: &[DetectedDependency]) -> String {
     let status = known_compatibility_status(dependencies);
-    let mut checks = vec![
-        format!(
-            "    <CompatibilityCheck id=\"CHECK-001\">\n      <ComponentA>Axum {}</ComponentA>\n      <ComponentB>Tokio {}</ComponentB>\n      <Status>{}</Status>\n      <Note>Axum 0.7 runs on Tokio 1.x for async HTTP serving.</Note>\n      <VerifiedAt>{}</VerifiedAt>\n    </CompatibilityCheck>",
-            xml_text(axum),
-            xml_text(tokio),
+    let mut checks = Vec::new();
+    if let (Some(axum), Some(tokio)) = (
+        dependency_version(dependencies, "axum"),
+        dependency_version(dependencies, "tokio"),
+    ) {
+        let check_id = checks.len() + 1;
+        checks.push(format!(
+            "    <CompatibilityCheck id=\"CHECK-{check_id:03}\">\n      <ComponentA>Axum {}</ComponentA>\n      <ComponentB>Tokio {}</ComponentB>\n      <Status>{}</Status>\n      <Note>Axum runs on Tokio for async HTTP serving when both dependencies are detected.</Note>\n      <VerifiedAt>{}</VerifiedAt>\n    </CompatibilityCheck>",
+            xml_text(&axum),
+            xml_text(&tokio),
             status,
             current_date()
-        ),
-        format!(
-            "    <CompatibilityCheck id=\"CHECK-002\">\n      <ComponentA>rusqlite {}</ComponentA>\n      <ComponentB>SQLite 3.45.0</ComponentB>\n      <Status>compatible</Status>\n      <Note>rusqlite is built with the bundled SQLite feature in Cargo.toml.</Note>\n      <VerifiedAt>{}</VerifiedAt>\n    </CompatibilityCheck>",
-            xml_text(rusqlite),
-            current_date()
-        ),
-    ];
-    if dependencies.iter().any(|dep| !dep.exact) {
+        ));
+    }
+    if let Some(rusqlite) = dependency_version(dependencies, "rusqlite") {
+        let check_id = checks.len() + 1;
         checks.push(format!(
-            "    <CompatibilityCheck id=\"CHECK-003\">\n      <ComponentA>Manifest dependency ranges</ComponentA>\n      <ComponentB>Lockfile exact versions</ComponentB>\n      <Status>compatible</Status>\n      <Note>Cargo.lock/package lock files provide exact versions for code generation.</Note>\n      <VerifiedAt>{}</VerifiedAt>\n    </CompatibilityCheck>",
+            "    <CompatibilityCheck id=\"CHECK-{check_id:03}\">\n      <ComponentA>rusqlite {}</ComponentA>\n      <ComponentB>SQLite 3.45.0</ComponentB>\n      <Status>compatible</Status>\n      <Note>SQLite is selected only because rusqlite was detected in the project dependencies.</Note>\n      <VerifiedAt>{}</VerifiedAt>\n    </CompatibilityCheck>",
+            xml_text(&rusqlite),
+            current_date()
+        ));
+    }
+    if dependencies.iter().any(|dep| !dep.exact) {
+        let check_id = checks.len() + 1;
+        checks.push(format!(
+            "    <CompatibilityCheck id=\"CHECK-{check_id:03}\">\n      <ComponentA>Manifest dependency ranges</ComponentA>\n      <ComponentB>Exact dependency resolution</ComponentB>\n      <Status>compatible</Status>\n      <Note>Lockfiles or explicit planning decisions must provide exact versions before implementation.</Note>\n      <VerifiedAt>{}</VerifiedAt>\n    </CompatibilityCheck>",
+            current_date()
+        ));
+    }
+    if checks.is_empty() {
+        let check_id = checks.len() + 1;
+        checks.push(format!(
+            "    <CompatibilityCheck id=\"CHECK-{check_id:03}\">\n      <ComponentA>Detected project manifests</ComponentA>\n      <ComponentB>Selected technology stack</ComponentB>\n      <Status>{}</Status>\n      <Note>Concrete stack sections were generated only from detected dependencies.</Note>\n      <VerifiedAt>{}</VerifiedAt>\n    </CompatibilityCheck>",
+            status,
             current_date()
         ));
     }
     checks.join("\n")
+}
+
+fn has_ecosystem(dependencies: &[DetectedDependency], ecosystem: &str) -> bool {
+    dependencies.iter().any(|dep| dep.ecosystem == ecosystem)
 }
 
 fn known_compatibility_status(dependencies: &[DetectedDependency]) -> &'static str {
@@ -591,6 +805,13 @@ fn is_exact_version(version: &str) -> bool {
         && !matches!(value, "*" | "x" | "X" | "latest" | "LATEST" | "tbd" | "TBD")
         && !value.contains(['^', '~', '>', '<', '=', '*'])
         && value.chars().any(|ch| ch.is_ascii_digit())
+}
+
+fn root_status(content: &str) -> String {
+    start_tags(content, "Technology")
+        .first()
+        .and_then(|start| attr_value(start, "status"))
+        .unwrap_or_else(|| "selected".into())
 }
 
 fn start_tags(content: &str, tag: &str) -> Vec<String> {
@@ -695,21 +916,79 @@ fn xml_text(value: &str) -> String {
 mod tests {
     use super::*;
 
+    fn rust_dep(name: &str, version: &str) -> DetectedDependency {
+        DetectedDependency {
+            ecosystem: "rust".into(),
+            name: name.into(),
+            version: version.into(),
+            source: "test".into(),
+            exact: true,
+        }
+    }
+
     // START_CONTRACT_test_technology_template_is_complete
-    // PURPOSE: Verify generated technology includes exact versions, compatibility checks, and known issues
+    // PURPOSE: Verify detected Rust technology includes exact versions, compatibility checks, and known issues
     // OUTPUTS: { () }
     // START_test_technology_template_is_complete
     #[test]
     fn test_technology_template_is_complete() {
-        let xml = technology_template("Synapse", &[], "2026-05-20");
+        let deps = vec![
+            rust_dep("axum", "0.7.9"),
+            rust_dep("tokio", "1.48.0"),
+            rust_dep("rusqlite", "0.31.0"),
+            rust_dep("tempfile", "3.23.0"),
+        ];
+        let xml = technology_template("Synapse", &deps, "2026-05-20");
         let report = parse_technology_content(&xml);
         assert!(report.valid, "{:?}", report.errors);
+        assert_eq!(report.status, "selected");
+        assert!(!report.decision_pending);
         assert!(report.has_language_defined());
         assert!(report.dependencies_compatible());
         assert!(report.has_no_version_guessing());
         assert!(report.has_known_issues());
+        assert!(xml.contains("Axum"));
+        assert!(xml.contains("SQLite"));
     }
     // END_test_technology_template_is_complete
+
+    // START_CONTRACT_test_pending_technology_decision_template_is_valid_and_unselected
+    // PURPOSE: Verify pending technology decisions are valid without claiming a concrete stack
+    // OUTPUTS: { () }
+    // START_test_pending_technology_decision_template_is_valid_and_unselected
+    #[test]
+    fn test_pending_technology_decision_template_is_valid_and_unselected() {
+        let xml = technology_decision_template("BlankProject", "2026-05-20");
+        let report = parse_technology_content(&xml);
+        assert!(report.valid, "{:?}", report.errors);
+        assert_eq!(report.status, "needs-decision");
+        assert!(report.decision_pending);
+        assert!(report.components.is_empty());
+        assert!(xml.contains("<DecisionPolicy"));
+        assert!(!xml.contains("Rust"));
+        assert!(!xml.contains("Axum"));
+        assert!(!xml.contains("SQLite"));
+        assert!(!xml.contains("Cargo"));
+    }
+    // END_test_pending_technology_decision_template_is_valid_and_unselected
+
+    // START_CONTRACT_test_detected_rust_dependency_does_not_imply_axum_or_sqlite
+    // PURPOSE: Verify generic Rust dependencies do not trigger ghost framework or database claims
+    // OUTPUTS: { () }
+    // START_test_detected_rust_dependency_does_not_imply_axum_or_sqlite
+    #[test]
+    fn test_detected_rust_dependency_does_not_imply_axum_or_sqlite() {
+        let deps = vec![rust_dep("regex", "1.11.1")];
+        let xml = technology_template("RegexTool", &deps, "2026-05-20");
+        let report = parse_technology_content(&xml);
+        assert!(report.valid, "{:?}", report.errors);
+        assert!(!report.decision_pending);
+        assert!(xml.contains("Rust"));
+        assert!(xml.contains("regex"));
+        assert!(!xml.contains("Axum"));
+        assert!(!xml.contains("SQLite"));
+    }
+    // END_test_detected_rust_dependency_does_not_imply_axum_or_sqlite
 
     // START_CONTRACT_test_incomplete_technology_reports_errors
     // PURPOSE: Verify legacy stub technology fails completeness validation
@@ -756,19 +1035,57 @@ mod tests {
     }
     // END_test_detect_cargo_dependencies_uses_lock_versions
 
-    // START_CONTRACT_test_generate_technology_file_writes_valid_artifact
-    // PURPOSE: Verify generator writes docs/technology.xml and validates it
+    // START_CONTRACT_test_generate_technology_file_detects_existing_dependencies_for_concrete_stack
+    // PURPOSE: Verify generator writes a selected stack only from detected dependencies
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: writes temp Cargo manifests and docs/technology.xml
+    // START_test_generate_technology_file_detects_existing_dependencies_for_concrete_stack
+    #[test]
+    fn test_generate_technology_file_detects_existing_dependencies_for_concrete_stack() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        std::fs::write(
+            dir.path().join("Cargo.toml"),
+            "[package]\nname = \"regex-tool\"\nversion = \"0.1.0\"\n\n[dependencies]\nregex = \"1\"\n",
+        )
+        .expect("write manifest");
+        std::fs::write(
+            dir.path().join("Cargo.lock"),
+            "[[package]]\nname = \"regex\"\nversion = \"1.11.1\"\n",
+        )
+        .expect("write lock");
+        let report = generate_technology_file(dir.path(), true, true).expect("generate technology");
+        assert!(report.valid, "{:?}", report.errors);
+        assert!(!report.decision_pending);
+        assert!(report
+            .components
+            .iter()
+            .any(|component| component.name == "Rust"));
+        let xml = std::fs::read_to_string(dir.path().join("docs/technology.xml")).expect("read");
+        assert!(xml.contains("regex"));
+        assert!(!xml.contains("Axum"));
+        assert!(!xml.contains("SQLite"));
+    }
+    // END_test_generate_technology_file_detects_existing_dependencies_for_concrete_stack
+
+    // START_CONTRACT_test_generate_technology_file_writes_pending_artifact_without_detected_deps
+    // PURPOSE: Verify generator writes pending docs/technology.xml when no dependencies are detected
     // OUTPUTS: { () }
     // SIDE_EFFECTS: writes temp docs/technology.xml
-    // START_test_generate_technology_file_writes_valid_artifact
+    // START_test_generate_technology_file_writes_pending_artifact_without_detected_deps
     #[test]
-    fn test_generate_technology_file_writes_valid_artifact() {
+    fn test_generate_technology_file_writes_pending_artifact_without_detected_deps() {
         let dir = tempfile::tempdir().expect("tempdir");
         let report =
             generate_technology_file(dir.path(), false, true).expect("generate technology");
         assert!(report.valid, "{:?}", report.errors);
+        assert!(report.decision_pending);
+        assert!(report.components.is_empty());
+        let xml = std::fs::read_to_string(dir.path().join("docs/technology.xml")).expect("read");
+        assert!(!xml.contains("Axum"));
+        assert!(!xml.contains("SQLite"));
+        assert!(!xml.contains("Rust"));
         assert!(dir.path().join("docs/technology.xml").exists());
     }
-    // END_test_generate_technology_file_writes_valid_artifact
+    // END_test_generate_technology_file_writes_pending_artifact_without_detected_deps
 }
 // END_public_api

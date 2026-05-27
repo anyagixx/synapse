@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-MCP-SERVER-GRACE-TOOLS
 // PURPOSE: MCP handlers for MyGRACE verification, review, status, refresh, requirements, technology, development plan, mental tests, traceability, agent-based testing, self-heal, log analysis, belief extraction, compression, tracking, skills, and response economy
-// SCOPE: profile-aware verify_project/review_code with response economy, project_status response economy, self_heal, analyze_logs response economy, extract_belief_state, generate_requirements, generate_technology, generate_development_plan, mental_test_run response economy, traceability_report response economy, run_test_guide, submit_test_report, token_savings with adapter/session stats and response economy, compress_text, refresh_project response economy, language-aware suggest_contract, grace_* handlers
+// SCOPE: profile-aware verify_project/review_code with response economy, project_status response economy, self_heal, analyze_logs response economy, extract_belief_state, generate_requirements, generate_technology selected/pending reporting, generate_development_plan, mental_test_run response economy, traceability_report response economy, run_test_guide, submit_test_report, token_savings with adapter/session stats and response economy, compress_text, refresh_project response economy, language-aware suggest_contract, grace_* handlers
 // DEPENDS: M-GRACE, M-GRACE-BELIEF-STATE, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-LOG, M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-RUNNER-SELF-HEAL, M-TRACKING, M-COMPRESS, M-SKILLS-ENGINE, M-MCP-SERVER-RESPONSE
 // LINKS:
 //   -> docs/modules/M-MCP-SERVER.xml (depends) - MCP server parent module
@@ -15,7 +15,7 @@
 // handle_analyze_logs — Runs structured LOG trajectory/anomaly/compare analysis
 // handle_extract_belief_state — Stores observable AI belief state scaffold for a module
 // handle_generate_requirements — Generates and validates docs/requirements.xml with AAG notation
-// handle_generate_technology — Generates and validates docs/technology.xml with exact versions
+// handle_generate_technology — Generates and validates selected or pending docs/technology.xml artifacts
 // handle_generate_development_plan — Generates and validates docs/development-plan.xml with DataFlows and GenerationOrder
 // handle_mental_test_run — Runs one DevelopmentPlan MentalTest and persists trace output
 // handle_traceability_report — Builds end-to-end traceability matrix and updates docs/traceability-index.xml
@@ -307,7 +307,7 @@ pub(crate) async fn handle_generate_requirements(
 // END_handle_generate_requirements
 
 // START_CONTRACT_handle_generate_technology
-// PURPOSE: Generate and validate a complete Technology artifact from detected dependency manifests
+// PURPOSE: Generate and validate a selected Technology artifact from detected manifests or a pending decision artifact for blank projects
 // INPUTS: { id: Option<serde_json::Value> }, { args: &serde_json::Value }
 // OUTPUTS: { serde_json::Value }
 // SIDE_EFFECTS: writes docs/technology.xml
@@ -340,9 +340,11 @@ pub(crate) async fn handle_generate_technology(
     ) {
         Ok(report) => {
             let text = format!(
-                "<TechnologyGeneration valid=\"{}\">\n  <Path>{}</Path>\n  <Languages>{}</Languages>\n  <Components>{}</Components>\n  <CompatibilityChecks>{}</CompatibilityChecks>\n  <KnownIssues>{}</KnownIssues>\n  <DetectedDependencies>{}</DetectedDependencies>\n</TechnologyGeneration>",
+                "<TechnologyGeneration valid=\"{}\">\n  <Path>{}</Path>\n  <Status>{}</Status>\n  <DecisionPending>{}</DecisionPending>\n  <Languages>{}</Languages>\n  <Components>{}</Components>\n  <CompatibilityChecks>{}</CompatibilityChecks>\n  <KnownIssues>{}</KnownIssues>\n  <DetectedDependencies>{}</DetectedDependencies>\n</TechnologyGeneration>",
                 report.valid,
                 report.path,
+                report.status,
+                report.decision_pending,
                 report.languages.len(),
                 report.components.len(),
                 report.compatibility_checks.len(),
@@ -979,6 +981,8 @@ mod tests {
             .as_str()
             .expect("text response");
         assert!(text.contains("<TechnologyGeneration valid=\"true\""));
+        assert!(text.contains("<Status>needs-decision</Status>"));
+        assert!(text.contains("<DecisionPending>true</DecisionPending>"));
         assert!(dir.path().join("docs/technology.xml").exists());
     }
     // END_test_handle_generate_technology_writes_valid_artifact

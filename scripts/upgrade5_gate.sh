@@ -2,7 +2,7 @@
 # MODULE_CONTRACT
 # MODULE_ID: M-CI
 # PURPOSE: UPGRADE_5 integration gate for cross-cutting command, docs, coverage, workspace, hooks, tools, telemetry, and benchmark surfaces
-# SCOPE: Targeted docs parity, workspace CLI smoke, user tool safety tests, hook CLI smoke, code coverage parser tests, Makefile dry-run gates, and telemetry config tests
+# SCOPE: Targeted docs parity, workspace CLI smoke, user tool safety tests, hook CLI smoke, code coverage parser tests, Makefile declaration checks, and telemetry config tests
 # DEPENDS: M-CAPABILITIES, M-TESTS-PARITY, M-WORKSPACE, M-MCP-USER-TOOLS, M-HOOKS, M-TEST-COVERAGE-MATRIX, M-CONFIG
 # LINKS: docs/phases/Phase-95.xml, docs/verification/V-M-CI.xml
 
@@ -11,13 +11,13 @@
 # END_MODULE_MAP
 
 # START_CHANGE_SUMMARY
-# LAST_CHANGE: [v1.0.0 - Added UPGRADE_5 integration gate]
+# LAST_CHANGE: [v1.1.0 - Clarified local declaration checks versus hosted coverage and benchmark execution]
 # END_CHANGE_SUMMARY
 
 # START_CONTRACT_run_upgrade5_gate
-# PURPOSE: Execute targeted UPGRADE_5 checks without duplicating the full release smoke suite
+# PURPOSE: Execute targeted UPGRADE_5 checks without duplicating hosted coverage and benchmark gates
 # OUTPUTS: { exit code 0 - all UPGRADE_5 checks passed }
-# SIDE_EFFECTS: invokes cargo tests and Makefile dry-run targets
+# SIDE_EFFECTS: invokes cargo tests and Makefile declaration dry-runs
 # LINKS:
 #   -> Phase-95 (implements) - UPGRADE_5 integration gate
 #   -> NFR-002 (traces_to) - release verification commands must fail clearly
@@ -37,11 +37,11 @@ cargo test cli::tools_commands --lib -- --test-threads=8
 echo "[CI][upgrade5][HOOKS] Checking pre-commit hook CLI smoke"
 cargo test --test integration_test test_hook_pre_commit_cli_round_trip -- --test-threads=1
 
-echo "[CI][upgrade5][COVERAGE] Checking coverage parser and Makefile target"
+echo "[CI][upgrade5][COVERAGE] Checking coverage parser and local Makefile declaration"
 cargo test code_coverage --lib -- --test-threads=8
 make -n coverage
 
-echo "[CI][upgrade5][BENCH] Checking benchmark target declarations"
+echo "[CI][upgrade5][BENCH] Checking benchmark target declaration; hosted CI runs real benchmark jobs"
 make -n bench
 
 echo "[CI][upgrade5][TELEMETRY] Checking telemetry config defaults"

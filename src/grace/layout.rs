@@ -1,7 +1,7 @@
 // MODULE_CONTRACT
 // MODULE_ID: M-GRACE-LAYOUT
 // PURPOSE: Sharded GRACE artifact layout — resolves index-based docs paths, belief state, mental-test, traceability, cascade, and test-guide storage, requirements/technology/development-plan templates, and bootstraps templates
-// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability/cascade/test-guide indexes, requirements, technology, and development-plan templates, and shard dirs
+// SCOPE: DocsLayout struct, path helpers, initialization of graph/plan/verification/belief-state/mental-test/traceability/cascade/test-guide indexes, requirements, pending technology decisions, development-plan templates, and shard dirs
 // DEPENDS: M-GRACE-REQUIREMENTS, M-GRACE-TECHNOLOGY, M-GRACE-DEVELOPMENT-PLAN, M-GRACE-MENTAL-TEST, M-GRACE-TRACEABILITY, M-GRACE-TESTING, M-GRACE-CASCADE
 // LINKS: docs/graph-index.xml, docs/plan-index.xml, docs/verification-index.xml
 
@@ -11,7 +11,7 @@
 // END_MODULE_MAP
 
 // START_CHANGE_SUMMARY
-// LAST_CHANGE: [v2.22.0 - Added docs/cascade layout paths]
+// LAST_CHANGE: [v2.23.0 - Bootstrap blank projects with pending technology decisions]
 // END_CHANGE_SUMMARY
 
 use std::path::{Path, PathBuf};
@@ -345,7 +345,7 @@ impl DocsLayout {
         );
         self.write_if_missing(&self.docs_dir().join("requirements.xml"), &requirements)?;
         let technology =
-            crate::grace::technology::technology_template("my-project", &[], "2026-05-20");
+            crate::grace::technology::technology_decision_template("my-project", "2026-05-20");
         self.write_if_missing(&self.docs_dir().join("technology.xml"), &technology)?;
         let development_plan =
             crate::grace::development_plan::development_plan_template("my-project", &[]);
@@ -388,6 +388,34 @@ impl DocsLayout {
         }
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // START_CONTRACT_ensure_initialized_writes_pending_technology_decision_for_blank_project
+    // PURPOSE: Verify blank-project bootstrap does not claim a concrete Rust/Axum/SQLite stack
+    // OUTPUTS: { () }
+    // SIDE_EFFECTS: writes temp docs layout
+    // START_ensure_initialized_writes_pending_technology_decision_for_blank_project
+    #[test]
+    fn ensure_initialized_writes_pending_technology_decision_for_blank_project() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let layout = DocsLayout::new(dir.path());
+        layout.ensure_initialized().expect("initialize docs");
+        let technology =
+            std::fs::read_to_string(dir.path().join("docs/technology.xml")).expect("technology");
+        let report = crate::grace::technology::parse_technology_content(&technology);
+        assert!(report.valid, "{:?}", report.errors);
+        assert!(report.decision_pending);
+        assert!(technology.contains("needs-decision"));
+        assert!(!technology.contains("Rust"));
+        assert!(!technology.contains("Axum"));
+        assert!(!technology.contains("SQLite"));
+        assert!(!technology.contains("Cargo"));
+    }
+    // END_ensure_initialized_writes_pending_technology_decision_for_blank_project
 }
 
 // END_public_api
