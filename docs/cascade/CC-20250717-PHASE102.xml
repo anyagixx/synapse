@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CASCADE_CHANGE id="CC-20250717-PHASE102" status="completed" date="2025-07-17">
+  <NAME>Phase-102: E2E Fix + First Coverage Baseline (66.70%)</NAME>
+  <PHASE_REF>Phase-102</PHASE_REF>
+
+  <WHAT_CHANGED>
+    <CHANGE type="fix">syn-cli/src/test/e2e.rs: resolve_scenario_path added workspace root fallback. E2E tests now find scenario files at ../tests/e2e/scenarios/ from syn-cli crate directory. 2 previously broken tests now pass.</CHANGE>
+    <CHANGE type="measurement">cargo tarpaulin --workspace: first real coverage measurement — 66.70% (12830/19235 lines).</CHANGE>
+    <CHANGE type="docs">docs/coverage-baseline.xml: per-crate analysis, gap map, target ≥75%.</CHANGE>
+  </WHAT_CHANGED>
+
+  <WHY>
+    <REASON>E2E tests broken since Phase-97 workspace split — scenario files resolved relative to syn-cli/ instead of workspace root. Tarpaulin was blocked by e2e panics. Real coverage was UNKNOWN.</REASON>
+  </WHY>
+
+  <IMPACT>
+    <POSITIVE>syn-cli: 157/157 tests pass (first time 0 failures). Coverage measured: 66.70%. Key gaps identified: syn-skills execution paths, syn-mcp concurrent access, syn-proxy dispatch edge cases.</POSITIVE>
+  </IMPACT>
+
+  <VERIFICATION_EVIDENCE>
+    <CHECK name="cargo test -p syn-cli -- e2e_test">8 passed, 0 failed</CHECK>
+    <CHECK name="cargo test -p syn-cli">157 passed, 0 failed</CHECK>
+    <CHECK name="cargo tarpaulin --workspace">66.70% coverage, 12830/19235 lines</CHECK>
+  </VERIFICATION_EVIDENCE>
+
+  <BELIEF_STATE_UPDATES>
+    <UPDATE module="M-TEST-E2E-RUNNER">E2E tests now pass. resolve_scenario_path checks cwd → manifest dir → workspace root. 3-level fallback.</UPDATE>
+    <UPDATE module="M-TEST-COVERAGE-MATRIX">Coverage baseline: 66.70%. Phase-103 target: ≥75%.</UPDATE>
+  </BELIEF_STATE_UPDATES>
+</CASCADE_CHANGE>

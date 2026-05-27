@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<COVERAGE_BASELINE date="2025-07-17" tool="cargo-tarpaulin" overall="66.70%">
+  <TOTAL lines="19235" covered="12830" />
+
+  <PER_CRATE>
+    <CRATE name="syn-core" coverage="~70%" estimate="true">
+      <NOTE>Tracking, config, hooks — core logic well covered; telemetry and compress less tested</NOTE>
+    </CRATE>
+    <CRATE name="syn-engine" coverage="~68%" estimate="true">
+      <NOTE>Indexer storage 17 tests, graphrag 17 tests, grace modules well covered</NOTE>
+    </CRATE>
+    <CRATE name="syn-proxy" coverage="~65%" estimate="true">
+      <NOTE>Filter engine 8+ tests; router and runner need more edge cases</NOTE>
+    </CRATE>
+    <CRATE name="syn-run" coverage="~72%" estimate="true">
+      <NOTE>Strong coverage: mod.rs 358/383 (93%), phase 140/150 (93%), scenario 72/88 (82%). Weaker: self_heal 150/181 (83%), handoff 62/77 (80%), agent_context 64/77 (83%)</NOTE>
+    </CRATE>
+    <CRATE name="syn-skills" coverage="45%" estimate="true">
+      <NOTE>Weakest: engine.rs 142/212 (67%), capabilities.rs well covered. 15 tests for 16 skills but only format-output validation, not execution paths</NOTE>
+    </CRATE>
+    <CRATE name="syn-mcp" coverage="~65%" estimate="true">
+      <NOTE>48+ MCP tools; server and tools well tested; user_tools, pipeline, LSP less covered</NOTE>
+    </CRATE>
+    <CRATE name="syn-cli" coverage="~70%" estimate="true">
+      <NOTE>CLI commands, dashboard, test infra well covered; RTK adapters have less coverage</NOTE>
+    </CRATE>
+  </PER_CRATE>
+
+  <GAPS>
+    <GAP severity="high">syn-skills engine.rs: execution paths not tested (only format output validation)</GAP>
+    <GAP severity="medium">syn-mcp user_tools: error paths (timeout, disallowed paths) covered but no concurrent access tests</GAP>
+    <GAP severity="medium">syn-proxy router: command dispatch edge cases under-tested</GAP>
+    <GAP severity="low">syn-core telemetry: OTLP export path not tested (requires external collector)</GAP>
+  </GAPS>
+
+  <TARGET>Phase-103+104 target: ≥75% overall coverage</TARGET>
+</COVERAGE_BASELINE>

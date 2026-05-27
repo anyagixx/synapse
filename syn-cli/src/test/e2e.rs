@@ -229,7 +229,19 @@ fn resolve_scenario_path(scenario_path: &Path) -> anyhow::Result<PathBuf> {
     if manifest_path.exists() {
         return Ok(manifest_path);
     }
-    Ok(scenario_path.to_path_buf())
+    // Workspace root fallback (for workspace crate members like syn-cli)
+    let workspace_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .map(|p| p.join(scenario_path))
+        .filter(|p| p.exists());
+    if let Some(path) = workspace_path {
+        return Ok(path);
+    }
+    anyhow::bail!(
+        "scenario file not found: {} (checked cwd, manifest dir {:?}, and workspace root)",
+        scenario_path.display(),
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+    )
 }
 // END_resolve_scenario_path
 
