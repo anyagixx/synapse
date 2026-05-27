@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CASCADE_CHANGE id="CC-20250717-PHASE105" status="completed" date="2025-07-17">
+  <NAME>Phase-105: GRACE Enforcement — Constitution + Mandate for LLM Agents</NAME>
+  <PHASE_REF>Phase-105</PHASE_REF>
+
+  <WHAT_CHANGED>
+    <CHANGE type="constitution">.opencode/rules/grace-mandate.md — punchy mandatory GRACE workflow for LLM agents. 3 phases (BEFORE/DURING/AFTER code), FORBIDDEN behaviors list, quick reference table. Designed to be injected into agent system prompt by opencode.</CHANGE>
+    <CHANGE type="skill">syn-skills/src/skills/engine.rs: grace_status now includes GRACE MANDATE section reminding agents of mandatory workflow.</CHANGE>
+  </WHAT_CHANGED>
+
+  <WHY>
+    <REASON>Field test: LLM agent ignored all 48 GRACE tools and wrote code directly, admitting "syn proxy is just a shortcut." Root cause: agents see tools as optional. Fix: constitution rules file (Layer 1) + grace_status mandate reminder. Gate tools, hooks, and audit trail (Layers 2-5) deferred to post-Phase-105 based on field feedback.</REASON>
+  </WHY>
+
+  <IMPACT>
+    <POSITIVE>Every new agent session in this project will have grace-mandate.md injected into their system prompt. The mandate uses FORBIDDEN/REQUIRED language, lists exact tool calls, and warns that violations are detectable. grace_status now echoes the mandate. This closes the "agent ignores GRACE" gap at the prompt level.</POSITIVE>
+    <DEFERRED>Gate tools (grace_gate_start/check/complete), pre-commit hooks (grace_contract_hook), audit trail (grace_audit MCP tool) — require deeper Tracker integration. Deferred to Phase-106 based on Phase-105 field results.</DEFERRED>
+  </IMPACT>
+
+  <VERIFICATION_EVIDENCE>
+    <CHECK name=".opencode/rules/grace-mandate.md">Created with 10-step mandatory workflow, 6 FORBIDDEN behaviors, quick reference</CHECK>
+    <CHECK name="syn verify">wave PASS, phase PASS, 1 advisory (non-human-explicit-flow in grace_status string)</CHECK>
+    <CHECK name="cargo test -p syn-skills">15 passed, 0 failed (grace_status test updated)</CHECK>
+  </VERIFICATION_EVIDENCE>
+</CASCADE_CHANGE>

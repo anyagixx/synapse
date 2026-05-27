@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-WORKSPACE-SKILLS" module="M-WORKSPACE-SKILLS" priority="high" status="complete">
+<VERIFICATION id="V-M-WORKSPACE-SKILLS" module="M-WORKSPACE-SKILLS" priority="normal" status="active">
   <UNIT_TESTS>
     <TEST>cargo test -p syn-skills</TEST>
   </UNIT_TESTS>

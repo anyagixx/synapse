@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-WORKSPACE-CLI" module="M-WORKSPACE-CLI" priority="critical" status="complete">
+<VERIFICATION id="V-M-WORKSPACE-CLI" module="M-WORKSPACE-CLI" priority="normal" status="active">
   <UNIT_TESTS>
     <TEST>cargo test -p syn-cli</TEST>
   </UNIT_TESTS>

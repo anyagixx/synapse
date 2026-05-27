@@ -345,7 +345,7 @@ impl SkillEngine {
                 )
             }
             "grace_status" => format!(
-                "Status skill overview:\n- root: {}\n- detail level: {}\n- skill count: {}\n\nPrimary model:\n- {}\n- {}\n- {}\n- {}\n\nUse project_status for machine report, traceability_report for requirement/code chains, and grace_lint for structural integrity.",
+                "Status skill overview:\n- root: {}\n- detail level: {}\n- skill count: {}\n\nPrimary model:\n- {}\n- {}\n- {}\n- {}\n\nUse project_status for machine report, traceability_report for requirement/code chains, and grace_lint for structural integrity.\n\nGRACE MANDATE (read .opencode/rules/grace-mandate.md):\n- REQUIRED: grace_execute → MODULE_CONTRACT → verify_project → review_code → grace_refresh\n- FORBIDDEN: code without grace_execute, .rs without MODULE_CONTRACT, skipping verify",
                 self.context.root.display(),
                 string_arg(&request.arguments, "detail_level", "standard"),
                 SKILL_DEFS.len(),

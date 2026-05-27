@@ -582,6 +582,7 @@
     <REL source="M-TEST-MCP-REGRESSION" target="M-TEST-FIXTURE" type="DEPENDS" />
     <REL source="M-TEST-PERF-REGRESSION" target="M-TEST-FIXTURE" type="DEPENDS" />
     <REL source="M-TEST-PERF-REGRESSION" target="M-GRACE-CASCADE" type="DEPENDS" />
+    <REL source="M-TEST-PERF-REGRESSION" target="M-PROXY-FILTER" type="DEPENDS" />
     <REL source="M-TEST-PERF-REGRESSION" target="M-GRAPHRAG" type="DEPENDS" />
     <REL source="M-TEST-PERF-REGRESSION" target="M-INDEXER" type="DEPENDS" />
     <REL source="M-TEST-PERF-REGRESSION" target="M-GRACE-VERIFY" type="DEPENDS" />

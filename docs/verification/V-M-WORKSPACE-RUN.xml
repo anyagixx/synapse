@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-WORKSPACE-RUN" module="M-WORKSPACE-RUN" priority="high" status="complete">
+<VERIFICATION id="V-M-WORKSPACE-RUN" module="M-WORKSPACE-RUN" priority="normal" status="active">
   <UNIT_TESTS>
     <TEST>cargo test -p syn-run</TEST>
   </UNIT_TESTS>

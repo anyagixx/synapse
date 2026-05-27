@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<VERIFICATION id="V-M-WORKSPACE-MCP" module="M-WORKSPACE-MCP" priority="critical" status="complete">
+<VERIFICATION id="V-M-WORKSPACE-MCP" module="M-WORKSPACE-MCP" priority="normal" status="active">
   <UNIT_TESTS>
     <TEST>cargo test -p syn-mcp</TEST>
   </UNIT_TESTS>
