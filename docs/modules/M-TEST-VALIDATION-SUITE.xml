@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MODULE id="M-TEST-VALIDATION-SUITE" type="UTILITY" status="active">
+  <NAME>M-TEST-VALIDATION-SUITE</NAME>
+  <PURPOSE>Production validation suite — config migration, JSON-RPC fuzzing, cross-crate integration chain</PURPOSE>
+  <SCOPE>Backward-compatible config parsing, malformed input resilience, full integration chain</SCOPE>
+  <FILES>
+    <FILE>tests/validation_suite.rs</FILE>
+  </FILES>
+  <DEPENDS>M-CONFIG,M-INDEXER,M-GRAPHRAG,M-GRACE-VERIFY</DEPENDS>
+  <LINKS>Phase-106,V-M-TEST-VALIDATION-SUITE</LINKS>
+  <VERIFICATION_REF>V-M-TEST-VALIDATION-SUITE</VERIFICATION_REF>
+</MODULE>

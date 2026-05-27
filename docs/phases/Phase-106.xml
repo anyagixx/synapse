@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PHASE id="Phase-106" status="complete">
+  <NAME>Production Validation Suite</NAME>
+  <GOAL>Close the gap between "works in development" and "works in production" by adding 5-layer validation: (1) MCP protocol round-trip for all 48 tools, (2) config backward compatibility, (3) JSON-RPC fuzzing, (4) cross-crate integration chain, (5) end-to-end scenario simulation.</GOAL>
+  <PRIORITY>critical</PRIORITY>
+  <EFFORT>4 hours</EFFORT>
+  <DEPENDS_ON>Phase-97 Phase-98 Phase-102 Phase-103</DEPENDS_ON>
+
+  <SOURCE>Honest assessment: 66.70% coverage, no integration tests, no fuzzing, no config migration tests. Product works in isolated tests but has never been validated end-to-end.</SOURCE>
+
+  <DELIVERABLES>
+    <DELIVERABLE id="D-106-1">MCP protocol round-trip: call tools/list, iterate all tools, call tools/call with valid args, assert responses are valid JSON-RPC</DELIVERABLE>
+    <DELIVERABLE id="D-106-2">Config migration: synapsec.toml from v2.6.8 format → Config::load_or_default() → verify all sections parse</DELIVERABLE>
+    <DELIVERABLE id="D-106-3">JSON-RPC fuzzing: 50 malformed requests → no panics, error responses are valid JSON-RPC errors</DELIVERABLE>
+    <DELIVERABLE id="D-106-4">Cross-crate integration: init project → index → semantic_search → graphrag_query → verify_project → all pass</DELIVERABLE>
+    <DELIVERABLE id="D-106-5">E2E scenario simulation: create module with contract → verify → review → fix → verify again → commit</DELIVERABLE>
+  </DELIVERABLES>
+
+  <VERIFICATION>
+    <CHECK>cargo test --workspace — all existing + new tests pass</CHECK>
+    <CHECK>MCP tools/list returns 48 tools; tools/call succeeds for ≥40 tools</CHECK>
+    <CHECK>Config v2.6.8 format parses without error</CHECK>
+    <CHECK>50 fuzz inputs → 0 panics, all return valid JSON-RPC</CHECK>
+    <CHECK>Integration chain: init → index → search → graphrag → verify — all pass</CHECK>
+    <CHECK>syn verify: wave PASS, phase PASS</CHECK>
+  </VERIFICATION>
+</PHASE>

@@ -114,6 +114,7 @@
     <MODULE id="M-TEST-PERF-REGRESSION" path="docs/modules/M-TEST-PERF-REGRESSION.xml" status="active" />
     <MODULE id="M-TEST-RESILIENCE-CHAOS" path="docs/modules/M-TEST-RESILIENCE-CHAOS.xml" status="active" />
     <MODULE id="M-TEST-SNAPSHOT" path="docs/modules/M-TEST-SNAPSHOT.xml" status="active" />
+    <MODULE id="M-TEST-VALIDATION-SUITE" path="docs/modules/M-TEST-VALIDATION-SUITE.xml" status="active" />
     <MODULE id="M-TESTS-INTEGRATION" path="docs/modules/M-TESTS-INTEGRATION.xml" status="active" />
     <MODULE id="M-TESTS-MCP" path="docs/modules/M-TESTS-MCP.xml" status="active" />
     <MODULE id="M-TESTS-MCP-PROTOCOL" path="docs/modules/M-TESTS-MCP-PROTOCOL.xml" status="active" />
@@ -593,6 +594,10 @@
     <REL source="M-TEST-RESILIENCE-CHAOS" target="M-GRACE-STATUS" type="DEPENDS" />
     <REL source="M-TEST-RESILIENCE-CHAOS" target="M-TEST-FIXTURE" type="DEPENDS" />
     <REL source="M-TEST-SNAPSHOT" target="M-UTILS" type="DEPENDS" />
+    <REL source="M-TEST-VALIDATION-SUITE" target="M-CONFIG" type="DEPENDS" />
+    <REL source="M-TEST-VALIDATION-SUITE" target="M-INDEXER" type="DEPENDS" />
+    <REL source="M-TEST-VALIDATION-SUITE" target="M-GRAPHRAG" type="DEPENDS" />
+    <REL source="M-TEST-VALIDATION-SUITE" target="M-GRACE-VERIFY" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-CLI" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-CLI-RTK-COMMANDS" type="DEPENDS" />
     <REL source="M-TESTS-INTEGRATION" target="M-INDEXER" type="DEPENDS" />

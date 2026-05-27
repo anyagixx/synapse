@@ -71,4 +71,8 @@ name = "filter"
 path = "../benches/filter.rs"
 harness = false
 
+[[test]]
+name = "validation_suite"
+path = "../tests/validation_suite.rs"
+
 

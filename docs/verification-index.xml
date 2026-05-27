@@ -114,6 +114,7 @@
     <VERIFICATION id="V-M-TEST-PERF-REGRESSION" module="M-TEST-PERF-REGRESSION" path="docs/verification/V-M-TEST-PERF-REGRESSION.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TEST-RESILIENCE-CHAOS" module="M-TEST-RESILIENCE-CHAOS" path="docs/verification/V-M-TEST-RESILIENCE-CHAOS.xml" priority="critical" status="active" />
     <VERIFICATION id="V-M-TEST-SNAPSHOT" module="M-TEST-SNAPSHOT" path="docs/verification/V-M-TEST-SNAPSHOT.xml" priority="normal" status="active" />
+    <VERIFICATION id="V-M-TEST-VALIDATION-SUITE" module="M-TEST-VALIDATION-SUITE" path="docs/verification/V-M-TEST-VALIDATION-SUITE.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TESTS-INTEGRATION" module="M-TESTS-INTEGRATION" path="docs/verification/V-M-TESTS-INTEGRATION.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TESTS-MCP" module="M-TESTS-MCP" path="docs/verification/V-M-TESTS-MCP.xml" priority="normal" status="active" />
     <VERIFICATION id="V-M-TESTS-MCP-PROTOCOL" module="M-TESTS-MCP-PROTOCOL" path="docs/verification/V-M-TESTS-MCP-PROTOCOL.xml" priority="normal" status="active" />
