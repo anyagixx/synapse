@@ -3,7 +3,7 @@ members = ["syn-core", "syn-engine", "syn-proxy", "syn-run", "syn-skills", "syn-
 resolver = "2"
 
 [workspace.package]
-version = "2.7.4"
+version = "2.7.5"
 edition = "2021"
 authors = ["Synapse Contributors"]
 license = "Apache-2.0"
