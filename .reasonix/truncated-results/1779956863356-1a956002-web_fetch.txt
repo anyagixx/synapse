@@ -1,0 +1,246 @@
+Plugins | OpenCode
+https://opencode.ai/docs/plugins
+
+<!DOCTYPE html> Plugins | OpenCode
+
+Skip to content 
+
+OpenCode 
+
+app.header.homeapp.header.docs 
+
+Search CtrlK 
+Cancel 
+
+Plugins
+
+Write your own plugins to extend OpenCode.
+
+Plugins allow you to extend OpenCode by hooking into various events and customizing behavior. You can create plugins to add new features, integrate with external services, or modify OpenCode’s default behavior.
+
+For examples, check out the plugins created by the community.
+
+Use a plugin
+
+There are two ways to load plugins.
+
+From local files
+
+Place JavaScript or TypeScript files in the plugin directory.
+
+.opencode/plugins/ - Project-level plugins
+
+~/.config/opencode/plugins/ - Global plugins
+
+Files in these directories are automatically loaded at startup.
+
+From npm
+
+Specify npm packages in your config file.
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"$schema"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"https://opencode.ai/config.json"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"plugin"</span><span style="--0:#24292E;--1:#E1E4E8">: [</span><span style="--0:#032F62;--1:#9ECBFF">"opencode-helicone-session"</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#032F62;--1:#9ECBFF">"opencode-wakatime"</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#032F62;--1:#9ECBFF">"@my-org/custom-plugin"</span><span style="--0:#24292E;--1:#E1E4E8">]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Both regular and scoped npm packages are supported.
+
+Browse available plugins in the ecosystem.
+
+How plugins are installed
+
+npm plugins are installed automatically using Bun at startup. Packages and their dependencies are cached in ~/.cache/opencode/node_modules/.
+
+Local plugins are loaded directly from the plugin directory. To use external packages, you must create a package.json within your config directory (see Dependencies), or publish the plugin to npm and add it to your config.
+
+Load order
+
+Plugins are loaded from all sources and all hooks run in sequence. The load order is:
+
+Global config (~/.config/opencode/opencode.json)
+
+Project config (opencode.json)
+
+Global plugin directory (~/.config/opencode/plugins/)
+
+Project plugin directory (.opencode/plugins/)
+
+Duplicate npm packages with the same name and version are loaded once. However, a local plugin and an npm plugin with similar names are both loaded separately.
+
+Create a plugin
+
+A plugin is a JavaScript/TypeScript module that exports one or more plugin
+functions. Each function receives a context object and returns a hooks object.
+
+Dependencies
+
+Local plugins and custom tools can use external npm packages. Add a package.json to your config directory with the dependencies you need.
+
+.opencode/package.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"dependencies"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"shescape"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"^2.1.0"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+OpenCode runs bun install at startup to install these. Your plugins and tools can then import them.
+
+.opencode/plugins/my-plugin.ts<code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">import</span><span style="--0:#24292E;--1:#E1E4E8"> { escape } </span><span style="--0:#BF3441;--1:#F97583">from</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"shescape"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">export</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">MyPlugin</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> (</span><span style="--0:#AE4B07;--1:#FFAB70">ctx</span><span style="--0:#24292E;--1:#E1E4E8">) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">"tool.execute.before"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> (</span><span style="--0:#AE4B07;--1:#FFAB70">input</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">output</span><span style="--0:#24292E;--1:#E1E4E8">) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">if</span><span style="--0:#24292E;--1:#E1E4E8"> (input.tool </span><span style="--0:#BF3441;--1:#F97583">===</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"bash"</span><span style="--0:#24292E;--1:#E1E4E8">) {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">output.args.command </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">escape</span><span style="--0:#24292E;--1:#E1E4E8">(output.args.command)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Basic structure
+
+.opencode/plugins/example.js<code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">export</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">MyPlugin</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> ({ </span><span style="--0:#AE4B07;--1:#FFAB70">project</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">client</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">$</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">directory</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">worktree</span><span style="--0:#24292E;--1:#E1E4E8"> }) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">console.</span><span style="--0:#6F42C1;--1:#B392F0">log</span><span style="--0:#24292E;--1:#E1E4E8">(</span><span style="--0:#032F62;--1:#9ECBFF">"Plugin initialized!"</span><span style="--0:#24292E;--1:#E1E4E8">)</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#616972;--1:#99A0A6">// Hook implementations go here</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+The plugin function receives:
+
+project: The current project information.
+
+directory: The current working directory.
+
+worktree: The git worktree path.
+
+client: An opencode SDK client for interacting with the AI.
+
+$: Bun’s shell API for executing commands.
+
+TypeScript support
+
+For TypeScript plugins, you can import types from the plugin package:
+
+my-plugin.ts<code><div class="ec-line highlight mark"><div class="code"><span style="--0:#8f2731;--1:#fb9fa9">import</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#8f2731;--1:#fb9fa9">type</span><span style="--0:#24292E;--1:#E1E4E8"> { Plugin } </span><span style="--0:#8f2731;--1:#fb9fa9">from</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"@opencode-ai/plugin"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">export</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">MyPlugin</span><span style="--0:#BF3441;--1:#F97583">:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">Plugin</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> ({ </span><span style="--0:#AE4B07;--1:#FFAB70">project</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">client</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">$</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">directory</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">worktree</span><span style="--0:#24292E;--1:#E1E4E8"> }) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#616972;--1:#99A0A6">// Type-safe hook implementations</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Events
+
+Plugins can subscribe to events as seen below in the Examples section. Here is a list of the different events available.
+
+Command Events
+
+command.executed
+
+File Events
+
+file.edited
+
+file.watcher.updated
+
+Installation Events
+
+installation.updated
+
+LSP Events
+
+lsp.client.diagnostics
+
+lsp.updated
+
+Message Events
+
+message.part.removed
+
+message.part.updated
+
+message.removed
+
+message.updated
+
+Permission Events
+
+permission.asked
+
+permission.replied
+
+Server Events
+
+server.connected
+
+Session Events
+
+session.created
+
+session.compacted
+
+session.deleted
+
+session.diff
+
+session.error
+
+session.idle
+
+session.status
+
+session.updated
+
+Todo Events
+
+todo.updated
+
+Shell Events
+
+shell.env
+
+Tool Events
+
+tool.execute.after
+
+tool.execute.before
+
+TUI Events
+
+tui.prompt.append
+
+tui.command.execute
+
+tui.toast.show
+
+Examples
+
+Here are some examples of plugins you can use to extend opencode.
+
+Send notifications
+
+Send notifications when certain events occur:
+
+.opencode/plugins/notification.js<code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">export</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">NotificationPlugin</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> ({ </span><span style="--0:#AE4B07;--1:#FFAB70">project</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">client</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">$</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">directory</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">worktree</span><span style="--0:#24292E;--1:#E1E4E8"> }) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#6F42C1;--1:#B392F0">event</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> ({ </span><span style="--0:#AE4B07;--1:#FFAB70">event</span><span style="--0:#24292E;--1:#E1E4E8"> }) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#616972;--1:#99A0A6">// Send notification on session completion</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">if</span><span style="--0:#24292E;--1:#E1E4E8"> (event.type </span><span style="--0:#BF3441;--1:#F97583">===</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"session.idle"</span><span style="--0:#24292E;--1:#E1E4E8">) {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">await</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">$</span><span style="--0:#032F62;--1:#9ECBFF">`osascript -e 'display notification "Session completed!" with title "opencode"'`</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+We are using osascript to run AppleScript on macOS. Here we are using it to send notifications.
+
+.env protection
+
+Prevent opencode from reading .env files:
+
+.opencode/plugins/env-protection.js<code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">export</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">EnvProtection</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> ({ </span><span style="--0:#AE4B07;--1:#FFAB70">project</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">client</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">$</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">directory</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">worktree</span><span style="--0:#24292E;--1:#E1E4E8"> }) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">"tool.execute.before"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> (</span><span style="--0:#AE4B07;--1:#FFAB70">input</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">output</span><span style="--0:#24292E;--1:#E1E4E8">) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">if</span><span style="--0:#24292E;--1:#E1E4E8"> (input.tool </span><span style="--0:#BF3441;--1:#F97583">===</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"read"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">&&</span><span style="--0:#24292E;--1:#E1E4E8"> output.args.filePath.</span><span style="--0:#6F42C1;--1:#B392F0">includes</span><span style="--0:#24292E;--1:#E1E4E8">(</span><span style="--0:#032F62;--1:#9ECBFF">".env"</span><span style="--0:#24292E;--1:#E1E4E8">)) {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">throw</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">new</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">Error</span><span style="--0:#24292E;--1:#E1E4E8">(</span><span style="--0:#032F62;--1:#9ECBFF">"Do not read .env files"</span><span style="--0:#24292E;--1:#E1E4E8">)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Inject environment variables
+
+Inject environment variables into all shell execution (AI tools and user terminals):
+
+.opencode/plugins/inject-env.js<code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">export</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">InjectEnvPlugin</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> () </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">"shell.env"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> (</span><span style="--0:#AE4B07;--1:#FFAB70">input</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">output</span><span style="--0:#24292E;--1:#E1E4E8">) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">output.env.</span><span style="--0:#005CC5;--1:#79B8FF">MY_API_KEY</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"secret"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">output.env.</span><span style="--0:#005CC5;--1:#79B8FF">PROJECT_ROOT</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> input.cwd</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Custom tools
+
+Plugins can also add custom tools to opencode:
+
+.opencode/plugins/custom-tools.ts<code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">import</span><span style="--0:#24292E;--1:#E1E4E8"> { </span><span style="--0:#BF3441;--1:#F97583">type</span><span style="--0:#24292E;--1:#E1E4E8"> Plugin, tool } </span><span style="--0:#BF3441;--1:#F97583">from</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"@opencode-ai/plugin"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">export</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">CustomToolsPlugin</span><span style="--0:#BF3441;--1:#F97583">:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">Plugin</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> (</span><span style="--0:#AE4B07;--1:#FFAB70">ctx</span><span style="--0:#24292E;--1:#E1E4E8">) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">tool: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">mytool: </span><span style="--0:#6F42C1;--1:#B392F0">tool</span><span style="--0:#24292E;--1:#E1E4E8">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">description: </span><span style="--0:#032F62;--1:#9ECBFF">"This is a custom tool"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">args: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">foo: tool.schema.</span><span style="--0:#6F42C1;--1:#B392F0">string</span><span style="--0:#24292E;--1:#E1E4E8">(),</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">execute</span><span style="--0:#24292E;--1:#E1E4E8">(</span><span style="--0:#AE4B07;--1:#FFAB70">args</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#AE4B07;--1:#FFAB70">context</span><span style="--0:#24292E;--1:#E1E4E8">) {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> { </span><span style="--0:#005CC5;--1:#79B8FF">directory</span><span style="--0:#24292E;--1:#E1E4E8">, </span><span style="--0:#005CC5;--1:#79B8FF">worktree</span><span style="--0:#24292E;--1:#E1E4E8"> } </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> context</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">`Hello ${</span><span style="--0:#24292E;--1:#E1E4E8">args</span><span style="--0:#032F62;--1:#9ECBFF">.</span><span style="--0:#24292E;--1:#E1E4E8">foo</span><span style="--0:#032F62;--1:#9ECBFF">} from ${</span><span style="--0:#24292E;--1:#E1E4E8">directory</span><span style="--0:#032F62;--1:#9ECBFF">} (worktree: ${</span><span style="--0:#24292E;--1:#E1E4E8">worktree</span><span style="--0:#032F62;--1:#9ECBFF">})`</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}),</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+The tool helper creates a custom tool that opencode can call. It takes a Zod schema function and returns a tool definition with:
+
+description: What the tool does
+
+args: Zod schema for the tool’s arguments
+
+execute: Function that runs when the tool is called
+
+Your custom tools will be available to opencode alongside built-in tools.
+
+Logging
+
+Use client.app.log() instead of console.log for structured logging:
+
+.opencode/plugins/my-plugin.ts<code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">export</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">const</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">MyPlugin</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">async</span><span style="--0:#24292E;--1:#E1E4E8"> ({ </span><span style="--0:#AE4B07;--1:#FFAB70">client</span><span style="--0:#24292E;--1:#E1E4E8"> }) </span><span style="--0:#BF3441;--1:#F97583">=></span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#BF3441;--1:#F97583">await</span><span style="--0:#24292E;--1:#E1E4E8"> client.app.</span><span style="--0:#6F42C1;--1:#B392F0">log</span><span style="--0:#24292E;--1:#E1E4E8">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">body: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">service: </span><span style="--0:#032F62;--1:#9ECBFF">"my-plugin"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">level: </span><span style="--0:#032F62;--1:#9ECBFF">"info"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">message: </span><span style="--0:#032F62;--1:#9ECBFF">"Plugin initialized"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">extra: { foo: </span><span style="--0:#032F62;--1:#9ECBFF">"bar"</span><span style="--0:#24292E;--1:#E1E4E8"> },</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">})</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Levels: debug, info, warn, error. See SDK documentation for details.
+
+Compaction hooks
+
+Customize the context included when a session is compacted:
+
+.opencode/plugins/compaction.ts<code><div class="e
+
+[… truncated 8553 chars …]

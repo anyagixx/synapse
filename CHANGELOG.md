@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.7.4
+
+- **GRACE rules FIRST**: plugin uses unshift() — Navigation Rule #1 now at TOP of system prompt, before opencode defaults. Agents see GRACE before anything else, exactly like MyGRACE.
+- **Six Core Principles** rewritten as professional methodology (Never Write Code Without a Contract, Semantic Markup Is Load-Bearing, etc.)
+
 ## 2.7.3 (2025-07-17)
 - **Phase-106**: Production Validation Suite — config defaults, JSON-RPC fuzzing (0 panics), cross-crate integration chain. 543 workspace tests.
 

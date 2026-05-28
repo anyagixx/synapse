@@ -1,0 +1,224 @@
+Agents | OpenCode
+https://opencode.ai/docs/agents
+
+<!DOCTYPE html> Agents | OpenCode
+
+Skip to content 
+
+OpenCode 
+
+app.header.homeapp.header.docs 
+
+Search CtrlK 
+Cancel 
+
+Agents
+
+Configure and use specialized agents.
+
+Agents are specialized AI assistants that can be configured for specific tasks and workflows. They allow you to create focused tools with custom prompts, models, and tool access.
+
+You can switch between agents during a session or invoke them with the @ mention.
+
+Types
+
+There are two types of agents in OpenCode; primary agents and subagents.
+
+Primary agents
+
+Primary agents are the main assistants you interact with directly. You can cycle through them using the Tab key, or your configured switch_agent keybind. These agents handle your main conversation. Tool access is configured via permissions — for example, Build has all tools enabled while Plan is restricted.
+
+OpenCode comes with two built-in primary agents, Build and Plan. We’ll
+look at these below.
+
+Subagents
+
+Subagents are specialized assistants that primary agents can invoke for specific tasks. You can also manually invoke them by @ mentioning them in your messages.
+
+OpenCode comes with three built-in subagents, General, Explore, and Scout. We’ll look at this below.
+
+Built-in
+
+OpenCode comes with two built-in primary agents and three built-in subagents.
+
+Use build
+
+Mode: primary
+
+Build is the default primary agent with all tools enabled. This is the standard agent for development work where you need full access to file operations and system commands.
+
+Use plan
+
+Mode: primary
+
+A restricted agent designed for planning and analysis. We use a permission system to give you more control and prevent unintended changes.
+By default, all of the following are set to ask:
+
+file edits: All writes, patches, and edits
+
+bash: All bash commands
+
+This agent is useful when you want the LLM to analyze code, suggest changes, or create plans without making any actual modifications to your codebase.
+
+Use general
+
+Mode: subagent
+
+A general-purpose agent for researching complex questions and executing multi-step tasks. Has full tool access (except todo), so it can make file changes when needed. Use this to run multiple units of work in parallel.
+
+Use explore
+
+Mode: subagent
+
+A fast, read-only agent for exploring codebases. Cannot modify files. Use this when you need to quickly find files by patterns, search code for keywords, or answer questions about the codebase.
+
+Use scout
+
+Mode: subagent
+
+A read-only agent for external docs and dependency research. Use this when you need to clone a dependency repository into OpenCode’s managed cache, inspect library source, or cross-reference local code against upstream implementations without modifying your workspace.
+
+Use compaction
+
+Mode: primary
+
+Hidden system agent that compacts long context into a smaller summary. It runs automatically when needed and is not selectable in the UI.
+
+Use title
+
+Mode: primary
+
+Hidden system agent that generates short session titles. It runs automatically and is not selectable in the UI.
+
+Use summary
+
+Mode: primary
+
+Hidden system agent that creates session summaries. It runs automatically and is not selectable in the UI.
+
+Usage
+
+For primary agents, use the Tab key to cycle through them during a session. You can also use your configured switch_agent keybind.
+
+Subagents can be invoked:
+
+Automatically by primary agents for specialized tasks based on their descriptions.
+
+Manually by @ mentioning a subagent in your message. For example.
+
+<code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">@general help me search for this function</span></div></div></code>
+
+Navigation between sessions: When subagents create child sessions, use session_child_first (default: <Leader>+Down) to enter the first child session from the parent.
+
+Once you are in a child session, use:
+
+session_child_cycle (default: Right) to cycle to the next child session
+
+session_child_cycle_reverse (default: Left) to cycle to the previous child session
+
+session_parent (default: Up) to return to the parent session
+
+This lets you switch between the main conversation and specialized subagent work.
+
+Configure
+
+You can customize the built-in agents or create your own through configuration. Agents can be configured in two ways:
+
+JSON
+
+Configure agents in your opencode.json config file:
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"$schema"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"https://opencode.ai/config.json"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"build"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"mode"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"primary"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"model"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"anthropic/claude-sonnet-4-20250514"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"prompt"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"{file:./prompts/build.txt}"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"permission"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"edit"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"allow"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"bash"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"allow"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"plan"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"mode"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"primary"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"model"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"anthropic/claude-haiku-4-20250514"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"permission"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"edit"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"deny"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"bash"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"deny"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"code-reviewer"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"description"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"Reviews code for best practices and potential issues"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"mode"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"subagent"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"model"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"anthropic/claude-sonnet-4-20250514"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"prompt"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"You are a code reviewer. Focus on security, performance, and maintainability."</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"permission"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"edit"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"deny"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Markdown
+
+You can also define agents using markdown files. Place them in:
+
+Global: ~/.config/opencode/agents/
+
+Per-project: .opencode/agents/
+
+~/.config/opencode/agents/review.md<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">---</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">description</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">Reviews code for quality and best practices</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">mode</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">subagent</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">model</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">anthropic/claude-sonnet-4-20250514</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">temperature</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">0.1</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">permission</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#1E7734;--1:#85E89D">edit</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deny</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#1E7734;--1:#85E89D">bash</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deny</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">---</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">You are in code review mode. Focus on:</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">-</span><span style="--0:#24292E;--1:#E1E4E8"> Code quality and best practices</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">-</span><span style="--0:#24292E;--1:#E1E4E8"> Potential bugs and edge cases</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">-</span><span style="--0:#24292E;--1:#E1E4E8"> Performance implications</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">-</span><span style="--0:#24292E;--1:#E1E4E8"> Security considerations</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">Provide constructive feedback without making direct changes.</span></div></div></code>
+
+The markdown file name becomes the agent name. For example, review.md creates a review agent.
+
+Options
+
+Let’s look at these configuration options in detail.
+
+Description
+
+Use the description option to provide a brief description of what the agent does and when to use it.
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"review"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"description"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"Reviews code for best practices and potential issues"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+This is a required config option.
+
+Temperature
+
+Control the randomness and creativity of the LLM’s responses with the temperature config.
+
+Lower values make responses more focused and deterministic, while higher values increase creativity and variability.
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"plan"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"temperature"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">0.1</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"creative"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"temperature"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">0.8</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Temperature values typically range from 0.0 to 1.0:
+
+0.0-0.2: Very focused and deterministic responses, ideal for code analysis and planning
+
+0.3-0.5: Balanced responses with some creativity, good for general development tasks
+
+0.6-1.0: More creative and varied responses, useful for brainstorming and exploration
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"analyze"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"temperature"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">0.1</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"prompt"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"{file:./prompts/analysis.txt}"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"build"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"temperature"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">0.3</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"brainstorm"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"temperature"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">0.7</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"prompt"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"{file:./prompts/creative.txt}"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+If no temperature is specified, OpenCode uses model-specific defaults; typically 0 for most models, 0.55 for Qwen models.
+
+Max steps
+
+Control the maximum number of agentic iterations an agent can perform before being forced to respond with text only. This allows users who wish to control costs to set a limit on agentic actions.
+
+If this is not set, the agent will continue to iterate until the model chooses to stop or the user interrupts the session.
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"quick-thinker"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"description"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"Fast reasoning with limited iterations"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"prompt"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"You are a quick thinker. Solve problems with minimal steps."</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"steps"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">5</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+When the limit is reached, the agent receives a special system prompt instructing it to respond with a summarization of its work and recommended remaining tasks.
+
+Disable
+
+Set to true to disable the agent.
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"review"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"disable"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+Prompt
+
+Specify a custom system prompt file for this agent with the prompt config. The prompt file should contain instructions specific to the agent’s purpose.
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"review"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"prompt"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"{file:./prompts/code-review.txt}"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+This path is relative to where the config file is located. So this works for both the global OpenCode config and the project specific config.
+
+Model
+
+Use the model config to override the model for this agent. Useful for using different models optimized for different tasks. For example, a faster model for planning, a more capable model for implementation.
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"plan"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"model"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"anthropic/claude-haiku-4-20250514"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+The model ID in your OpenCode config uses the format provider/model-id. For example, if you’re using OpenCode Zen, you would use opencode/gpt-5.1-codex for GPT 5.1 Codex.
+
+Tools (deprecated)
+
+tools is deprecated. Prefer the agent’s permission field for new configs, updates and more fine-grained control.
+
+Allows you to control which tools are available in this agent. You can enable or disable specific tools by setting them to true or false. In an agent’s tools config, true is equivalent to {"*": "allow"} permission and false is equivalent to {"*": "deny"} permission.
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"$schema"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"https://opencode.ai/config.json"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line highlight mark"><div class="code"><span class="indent"> </span><span style="--0:#004ba0;--1:#81bcff">"tools"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line highlight mark"><div class="code"><span class="indent"> </span><span style="--0:#004ba0;--1:#81bcff">"write"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#004ba0;--1:#81bcff">true</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line highlight mark"><div class="code"><span class="indent"> </span><span style="--0:#004ba0;--1:#81bcff">"bash"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#004ba0;--1:#81bcff">true</span></div></div><div class="ec-line highlight mark"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">},</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"plan"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line highlight mark"><div class="code"><span class="indent"> </span><span style="--0:#004ba0;--1:#81bcff">"tools"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line highlight mark"><div class="code"><span class="indent"> </span><span style="--0:#004ba0;--1:#81bcff">"write"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#004ba0;--1:#81bcff">false</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line highlight mark"><div class="code"><span class="indent"> </span><span style="--0:#004ba0;--1:#81bcff">"bash"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#004ba0;--1:#81bcff">false</span></div></div><div class="ec-line highlight mark"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8"> </span></span><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code>
+
+You can also use wildcards in legacy tools entries to control multiple tools at once. For example, to disable all tools from an MCP server:
+
+opencode.json<code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">{</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"$schema"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"https://opencode.ai/config.json"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"agent"</span><span style="--0:#24292E;--1:#E1E4E8">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#005CC5;--1:#79B8FF">"r
+
+[… truncated 33994 chars …]

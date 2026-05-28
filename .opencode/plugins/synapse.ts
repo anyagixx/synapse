@@ -43,22 +43,32 @@ export const SynapsePlugin: Plugin = async ({ client, $, directory }) => {
     },
 
     "experimental.chat.system.transform": async (_input, output) => {
-      output.system.push(`## GRACE Protocol — Navigation Rule #1: Start with index files
+      output.system.unshift(`## Navigation Rule #1 (CRITICAL): ALWAYS start with index files
 
-Read docs/graph-index.xml first (~30 lines). Never read full knowledge graph — use indexes + lazy-loading. Saves 96% context window.
+Read docs/graph-index.xml first (~30 lines), then plan-index.xml, then module shard. Never read full knowledge graph — indexes + lazy-loading save 96% context window.
 
-### The Workflow
-BEFORE: grace_plan → extract_belief_state → read module shard
-DURING: MODULE_CONTRACT header → START_CONTRACT on functions → MODULE_MAP update
-AFTER: verify_project → if FAIL fix and re-verify → review_code → grace_refresh
+## GRACE Protocol — How We Build Software Here
 
-### Self-Check
-Run \`syn verify\` after changes. If it fails — stop and fix. Don't continue with failing checks.
+### 1. Never Write Code Without a Contract
+Every .rs file starts with // MODULE_CONTRACT. Know PURPOSE, SCOPE, DEPENDS before writing.
 
-### Proactive tools
-semantic_search | graphrag_query | verify_project | review_code | grace_plan | grace_execute | grace_status | grace_refresh | grace_fix | grace_reviewer
+### 2. Semantic Markup Is Load-Bearing
+// START_CONTRACT_fnName and // START_MODULE_MAP blocks let future agents navigate. Keep them paired.
 
-Shell commands auto-proxy. Read .opencode/rules/grace-mandate.md for full protocol.`)
+### 3. Knowledge Graph Is Always Current
+Update docs/graph-index.xml when adding modules or changing dependencies.
+
+### 4. Verify Before Declaring Done
+After every module: verify_project → if FAIL, fix and re-verify. Don't continue with failing checks.
+
+### 5. Top-Down: Plan → Execute → Verify → Review → Refresh
+grace_plan → grace_execute → code with contracts → verify_project → review_code → grace_refresh
+
+### 6. Governed Autonomy
+You choose HOW to implement. You do NOT choose to skip contracts, skip verification, or skip graph updates.
+
+## Self-Check
+Run syn verify. If it fails — stop and fix. Read .opencode/rules/grace-mandate.md for full protocol.`)
     },
   }
 }
