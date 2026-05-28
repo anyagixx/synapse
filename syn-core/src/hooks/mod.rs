@@ -75,6 +75,22 @@ pub fn merge_synapse_mcp_config(existing: &str) -> anyhow::Result<String> {
         }),
     );
 
+    // Inject GRACE instructions for ALL modes (Plan, Build, Chat)
+    root.entry("instructions".to_string())
+        .or_insert_with(|| serde_json::json!(
+            "## GRACE Protocol — Navigation Rule #1: Start with index files\n\n\
+            Read docs/graph-index.xml first (~30 lines). Never read full knowledge graph — use indexes + lazy-loading. Saves 96% context window.\n\n\
+            ### The Workflow (follow this sequence)\n\
+            BEFORE code: grace_plan or grace_execute → extract_belief_state → read module shard from docs/modules/\n\
+            DURING code: MODULE_CONTRACT header on every .rs file → START_CONTRACT on every function → MODULE_MAP update\n\
+            AFTER code: verify_project → if FAIL fix and re-verify → review_code → grace_refresh → update graph-index.xml\n\n\
+            ### Self-Check\n\
+            Run syn verify after changes. If it fails — stop and fix. Don't continue with failing checks.\n\n\
+            ### Proactive tools\n\
+            semantic_search | graphrag_query | verify_project | review_code | grace_plan | grace_execute | grace_fix | grace_status | grace_refresh | grace_reviewer | grace_verification | grace_lint\n\n\
+            Shell commands auto-proxy through syn for token savings. Read .opencode/rules/grace-mandate.md for full protocol."
+        ));
+
     Ok(serde_json::to_string_pretty(&current)?)
 }
 // END_merge_synapse_mcp_config
