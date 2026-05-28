@@ -92,6 +92,8 @@ pub enum Command {
     Verify(VerifyCmd),
     Review(ReviewCmd),
     Status(StatusCmd),
+    #[command(about = "Invoke a GRACE workflow tool directly")]
+    Grace(GraceCmd),
     #[command(about = "Read files through the token-saving proxy")]
     Read(RtkProxyCmd),
     #[command(about = "List directory contents through the token-saving proxy")]
@@ -316,6 +318,7 @@ impl RunCommand for Command {
             Command::Verify(cmd) => cmd.run(config).await,
             Command::Review(cmd) => cmd.run(config).await,
             Command::Status(cmd) => cmd.run(config).await,
+            Command::Grace(cmd) => cmd.run().await,
             Command::Read(cmd) => {
                 cmd.run_as(config, "cat", true, "Usage: syn read <file>...")
                     .await
@@ -643,6 +646,93 @@ pub struct ReviewCmd {
     pub ci: bool,
 }
 // END_ReviewCmd
+
+// START_GraceCmd
+#[derive(clap::Args)]
+#[command(about = "Invoke a GRACE workflow tool directly (16 tools)")]
+pub struct GraceCmd {
+    #[arg(long, help = "List all 16 GRACE workflow tools")]
+    pub list: bool,
+    #[arg(help = "Tool name: init, plan, verification, execute, multiagent, reviewer, refresh, refactor, fix, status, run-history, ask, explainer, cli, setup-subagents, lint")]
+    pub tool: Option<String>,
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true, num_args = 0..)]
+    pub args: Vec<String>,
+}
+
+impl GraceCmd {
+    pub async fn run(&self) -> anyhow::Result<()> {
+        if self.list {
+            println!("GRACE workflow tools (use: syn grace <tool> [args]):\n");
+            for (name, desc) in &[
+                ("init", "Initialize GRACE architecture for a new project"),
+                ("plan", "Plan modules and phases"),
+                ("verification", "Plan verification checks for a module"),
+                ("execute", "Execute the next bounded implementation step"),
+                ("multiagent", "Split work across planner/implementer/tester/reviewer roles"),
+                ("reviewer", "Run full integrity review workflow"),
+                ("refresh", "Sync canonical GRACE artifacts"),
+                ("refactor", "Plan a refactor under GRACE governance"),
+                ("fix", "Diagnose and fix a bug with GRACE evidence"),
+                ("status", "Show project health and GRACE compliance"),
+                ("run-history", "Show history of autonomous bounded runs"),
+                ("ask", "Ask questions about GRACE artifacts and code"),
+                ("explainer", "Explain code and architecture"),
+                ("cli", "Help with Synapse and OpenCode CLI usage"),
+                ("setup-subagents", "Configure subagent roles and workflows"),
+                ("lint", "Check structural integrity of GRACE artifacts"),
+            ] {
+                println!("  {:<20} {}", name, desc);
+            }
+            return Ok(());
+        }
+
+        let tool = self.tool.as_deref().unwrap_or("list");
+        let instruction = match tool {
+            "init" => "Initialize GRACE architecture: create sharded layout with graph-index.xml, plan-index.xml, verification-index.xml, module/phase/verification directories. Set up .opencode integration. DO NOT write code before Phase 0 artifacts exist.",
+            "plan" => "Plan modules and phases. Create phase shards, module shards, and verification shards in docs/. Update graph-index.xml and plan-index.xml. Present the plan for approval.",
+            "verification" => "Plan verification checks for a module. Read the verification shard, define module-local/wave/phase checks, required log markers, and trace assertions.",
+            "execute" => "Execute the next bounded implementation step. Read module shard, call extract_belief_state, write code with MODULE_CONTRACT headers, run verify_project after. Do not continue until this module passes.",
+            "multiagent" => "Split work across roles: planner, implementer, tester, reviewer, verifier, fixer. Assign one worker per module boundary. Include tester workflow: run_test_guide → submit_test_report.",
+            "reviewer" => "Run full integrity review: review_code, inspect shard/index consistency, verify contract coverage, confirm verification refs and phase refs.",
+            "refresh" => "Sync canonical GRACE artifacts. Detect drift between code and artifacts. Fix orphaned refs, missing shards, stale docs. Update indexes.",
+            "refactor" => "Plan a refactor: update module shards, check verification impact, verify dependencies and cross-links. Run verify_project + review_code after refactor.",
+            "fix" => "Diagnose and fix a bug. Read failure evidence from logs. Find root cause via semantic_search + graphrag_query. Apply fix, verify, review, refresh.",
+            "status" => "Show project health: module coverage, verification state, active phase, compliance gaps. Use project_status for machine report.",
+            "run-history" => "Show history of autonomous bounded runs: run records, phase transitions, self-heal cycles, handoffs, provenance events.",
+            "ask" => "Query GRACE artifacts and code: knowledge graph, module shards, verification state, code structure. Get answers grounded in project docs.",
+            "explainer" => "Explain code and architecture using: architecture shards, verification shards, code signatures, semantic search, graph relationships.",
+            "cli" => "Show Synapse and OpenCode CLI commands, usage patterns, and integration guides.",
+            "setup-subagents" => "Configure subagent roles (planner/implementer/tester/reviewer/verifier/fixer) with tools, knowledge bases, and workflows.",
+            "lint" => "Check structural integrity: verify shard directories exist, indexes are consistent, refs are not orphaned, module/verification coverage aligns.",
+            _ => anyhow::bail!("Unknown GRACE tool: {}. Available: init, plan, verification, execute, multiagent, reviewer, refresh, refactor, fix, status, run-history, ask, explainer, cli, setup-subagents, lint", tool),
+        };
+
+        let args = if self.args.is_empty() {
+            String::new()
+        } else {
+            format!("\n\nAdditional context: {}", self.args.join(" "))
+        };
+
+        println!("\n╔══════════════════════════════════════════╗");
+        println!("║  GRACE: {} ║", tool);
+        println!("╠══════════════════════════════════════════╣");
+        println!("║                                          ║");
+        for line in instruction.lines().take(3) {
+            println!("║  {}║", line);
+        }
+        println!("║                                          ║");
+        println!("╠══════════════════════════════════════════╣");
+        println!("║  Send this to the LLM agent:            ║");
+        println!("╚══════════════════════════════════════════╝");
+        println!();
+        println!("{}", instruction);
+        println!("{}", args);
+        println!();
+        println!("--- Copy the text above and send to the LLM agent ---");
+        Ok(())
+    }
+}
+// END_GraceCmd
 
 // START_StatusCmd
 #[derive(clap::Args)]
